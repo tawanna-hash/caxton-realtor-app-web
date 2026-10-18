@@ -22,6 +22,7 @@ const ERROR_TEXT = /application error|something went wrong|internal server error
 
 async function signIn(page: Page) {
   await page.goto('/portal/login');
+  await page.waitForLoadState('networkidle');
   await page.getByLabel('Email', { exact: true }).fill(EMAIL);
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: /^sign in$/i }).click();
@@ -30,6 +31,7 @@ async function signIn(page: Page) {
 
 test('login page renders with forgot-password link', async ({ page }) => {
   await page.goto('/portal/login');
+  await page.waitForLoadState('networkidle');
   await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /forgot your password/i })).toBeVisible();
@@ -37,6 +39,7 @@ test('login page renders with forgot-password link', async ({ page }) => {
 
 test('forgot password shows a generic confirmation for an unknown email', async ({ page }) => {
   await page.goto('/portal/login');
+  await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: /forgot your password/i }).click();
   await page.getByLabel('Email', { exact: true }).fill('nobody-regression@example.com');
   await page.getByRole('button', { name: /send reset link/i }).click();
@@ -48,6 +51,7 @@ test('forgot password shows a generic confirmation for an unknown email', async 
 test('wrong password is rejected', async ({ page }) => {
   test.skip(!EMAIL, 'PORTAL_EMAIL not set');
   await page.goto('/portal/login');
+  await page.waitForLoadState('networkidle');
   await page.getByLabel('Email', { exact: true }).fill(EMAIL);
   await page.getByLabel('Password', { exact: true }).fill('definitely-wrong-password');
   await page.getByRole('button', { name: /^sign in$/i }).click();
@@ -57,6 +61,7 @@ test('wrong password is rejected', async ({ page }) => {
 
 test('reset page rejects a bad token and a missing token', async ({ page }) => {
   await page.goto('/portal/reset?token=not-a-real-token-value');
+  await page.waitForLoadState('networkidle');
   await page.getByLabel('New password', { exact: true }).fill('SomethingLong123');
   await page.getByLabel('Confirm new password', { exact: true }).fill('SomethingLong123');
   await page.getByRole('button', { name: /set new password/i }).click();
