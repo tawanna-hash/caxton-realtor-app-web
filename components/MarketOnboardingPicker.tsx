@@ -38,7 +38,14 @@ export default function MarketOnboardingPicker() {
     // Closing Time has its own host and no publication picker; the market chooser would cover its landing page.
     if (/(^|\.)itsalmostclosingtime\.com$/i.test(window.location.hostname)) return;
     // Client portal links and signing links are private pages for a client. They never pick a market.
-    if (window.location.pathname.startsWith('/deal-portal/') || window.location.pathname.startsWith('/sign/')) return;
+    if (
+      window.location.pathname.startsWith('/deal-portal/') ||
+      window.location.pathname.startsWith('/sign/') ||
+      // Partner portal (login, reset, dashboard) is private to a partner and never picks a market.
+      window.location.pathname === '/portal' ||
+      window.location.pathname.startsWith('/portal/')
+    )
+      return;
     // Dashboard owns its sign-in and publication flow. Showing this global
     // picker there created two stacked market-selection screens and hid the
     // account actions underneath.

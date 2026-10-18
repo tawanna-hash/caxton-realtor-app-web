@@ -34,6 +34,11 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      name: 'safari',
+      // Desktop Safari engine (WebKit).
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
       name: 'mobile-safari',
       // Mirrors the iOS app's WebView so smoke tests catch iPhone-only regressions.
       use: { ...devices['iPhone 14'] },
