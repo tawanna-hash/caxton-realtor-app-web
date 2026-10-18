@@ -62,8 +62,12 @@ test('wrong password is rejected', async ({ page }) => {
 test('reset page rejects a bad token and a missing token', async ({ page }) => {
   await page.goto('/portal/reset?token=not-a-real-token-value');
   await page.waitForLoadState('networkidle');
-  await page.getByLabel('New password', { exact: true }).fill('SomethingLong123');
-  await page.getByLabel('Confirm new password', { exact: true }).fill('SomethingLong123');
+  // Retry: WebKit can hydrate between the two fills and clear the first field.
+  await expect(async () => {
+    await page.getByLabel('New password', { exact: true }).fill('SomethingLong123');
+    await page.getByLabel('Confirm new password', { exact: true }).fill('SomethingLong123');
+    await expect(page.getByLabel('New password', { exact: true })).toHaveValue('SomethingLong123');
+  }).toPass({ timeout: 10_000 });
   await page.getByRole('button', { name: /set new password/i }).click();
   await expect(page.getByText(/invalid or has expired/i)).toBeVisible();
   await page.goto('/portal/reset');
