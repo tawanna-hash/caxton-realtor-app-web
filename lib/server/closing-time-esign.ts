@@ -1,3 +1,4 @@
+import { liveDealIds } from '@/lib/server/closing-time-deal-cleanup';
 import { createHash, createHmac, randomBytes, randomUUID } from 'crypto';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { getAgentAccountDetails } from '@/lib/server/agent-account-details';
@@ -368,8 +369,15 @@ export async function runSignReminders(origin: string): Promise<{ sent: number; 
        AND s.reminders_sent < COALESCE((r.opts->>'maxReminders')::int,0)
        AND COALESCE(s.last_reminded_at, r.created_at) <= NOW() - (COALESCE((r.opts->>'remindEvery')::int,0) || ' days')::interval`);
   let sent = 0; const errors: string[] = [];
+  const liveByAgent = new Map<string, Set<string>>();
   for (const r of rows) {
     try {
+      // No reminders for a deal that was removed, closed or is a template.
+      if (!liveByAgent.has(r.realtor_id)) {
+        const w = await query<{ workspace: unknown }>(`SELECT workspace FROM agent_command_center_workspaces WHERE realtor_id=$1`, [r.realtor_id]);
+        liveByAgent.set(r.realtor_id, liveDealIds(w[0]?.workspace));
+      }
+      if (!liveByAgent.get(r.realtor_id)!.has(r.deal_id)) continue;
       const brand: Brand = { name: r.opts.brandName || r.agent_name, logo: r.opts.logo ?? '', accent: r.opts.accent ?? '#301D5D' };
       const res = await sendEmail({ to: r.email, replyTo: r.agent_email || undefined, subject: `Reminder: please sign ${r.document} - ${r.property}`, html: mail(`Hello ${r.name},\n\nThis is a reminder that ${r.agent_name} is waiting for your signature on "${r.document}" for ${r.property}.`, { href: `${origin}/sign/${tokenFor(r.rid, r.idx, r.nonce!)}`, label: 'Review And Sign' }, brand) });
       if (!res.ok) { errors.push(r.email); continue; }

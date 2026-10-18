@@ -1,4 +1,5 @@
 import { query } from '@/lib/server/db/neon';
+import { liveDealIds, retireDealNotifications } from '@/lib/server/closing-time-deal-cleanup';
 import {
   agentCommandCenterWorkspaceSchema,
   type AgentCommandCenterWorkspace,
@@ -100,6 +101,10 @@ export async function saveAgentCommandCenterWorkspace(
      RETURNING workspace, version, updated_at`,
     [realtorId, serialized, expectedVersion],
   );
-  if (rows[0]) return { saved: true, record: toStoredWorkspace(rows[0]) };
+  if (rows[0]) {
+    // A removed or closed deal stops sending right away.
+    await retireDealNotifications(realtorId, liveDealIds(rows[0].workspace)).catch(() => undefined);
+    return { saved: true, record: toStoredWorkspace(rows[0]) };
+  }
   return { saved: false, current: await getAgentCommandCenterWorkspace(realtorId) };
 }

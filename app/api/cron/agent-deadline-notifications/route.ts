@@ -3,6 +3,7 @@ import {
   isAgentDeadlineDeliveryWindow,
   runAgentDeadlineNotifications,
 } from '@/lib/server/agent-deadline-notifications';
+import { retireAllOrphanNotifications } from '@/lib/server/closing-time-deal-cleanup';
 import { syncAllMailboxes } from '@/lib/server/closing-time-mailbox';
 import { runSignReminders } from '@/lib/server/closing-time-esign';
 import { runDocChase, runWeeklyUpdates, runClosingCountdown, runPostClose, runAnniversaries } from '@/lib/server/closing-time-automations';
@@ -39,6 +40,8 @@ export async function GET(req: Request) {
   if (testRealtor && secret && (req.headers.get('authorization') ?? '') === `Bearer ${secret}` && /^[0-9a-f-]{36}$/i.test(testRealtor)) {
     return NextResponse.json({ ok: true, test: true, ...(await runAgentDeadlineNotifications(new Date(), { realtorId: testRealtor })) });
   }
+  // First, stop anything queued for a deal that was removed or has closed.
+  out.retired = await retireAllOrphanNotifications().catch((e) => ({ agents: 0, errors: [String(e)] }));
   if (isAgentDeadlineDeliveryWindow()) {
     Object.assign(out, await runAgentDeadlineNotifications());
     out.signatureReminders = await runSignatureReminders().catch((e) => ({ sent: 0, escalated: 0, errors: [String(e)] }));

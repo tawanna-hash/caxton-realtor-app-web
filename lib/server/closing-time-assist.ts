@@ -407,7 +407,7 @@ export async function runDailySummaries(today: string): Promise<{ sent: number; 
   for (const row of rows) {
     const parsed = agentCommandCenterWorkspaceSchema.safeParse(row.workspace);
     if (!parsed.success || !parsed.data.notificationPreferences.emailEnabled || !row.email) continue;
-    const deals = parsed.data.deals.filter((d) => d.status !== 'completed');
+    const deals = parsed.data.deals.filter((d) => d.status !== 'completed' && !d.isTemplate);
     if (!deals.length) continue;
     const sections: string[] = [];
     for (const deal of deals) {
@@ -582,7 +582,7 @@ export async function runAutoIntros(): Promise<{ sent: number; errors: string[] 
     const parsed = agentCommandCenterWorkspaceSchema.safeParse(a.workspace);
     if (!parsed.success) continue;
     for (const deal of parsed.data.deals) {
-      if (deal.status === 'completed' || !deal.effectiveDate) continue;
+      if (deal.status === 'completed' || deal.isTemplate || !deal.effectiveDate) continue;
       const parties = await query<PartyRow>(`SELECT id, deal_id, role, name, email FROM closing_time_parties WHERE realtor_id=$1 AND deal_id=$2 AND role IN ('lender','title','coop_agent') AND email <> ''`, [a.realtor_id, deal.id]);
       for (const party of parties) {
         const done = await query<{ id: string }>(`SELECT id FROM closing_time_followups WHERE realtor_id=$1 AND deal_id=$2 AND kind='intro' AND LOWER(to_email)=LOWER($3) AND status IN ('sent','dismissed') LIMIT 1`, [a.realtor_id, deal.id, party.email]);
