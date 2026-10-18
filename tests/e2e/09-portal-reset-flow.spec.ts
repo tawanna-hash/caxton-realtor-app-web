@@ -18,16 +18,24 @@ test('emailed reset link sets a new password, works once, and signs in', async (
   await page.waitForLoadState('networkidle');
   await expect(page.getByRole('heading', { name: /choose a new password/i })).toBeVisible();
   await expect(page.locator('div.fixed img[alt]').first()).toBeVisible();
-  await page.getByLabel('New password', { exact: true }).fill(PASSWORD);
-  await page.getByLabel('Confirm new password', { exact: true }).fill(PASSWORD);
+  // Retry: WebKit can hydrate between the two fills and clear the first field.
+  await expect(async () => {
+    await page.getByLabel('New password', { exact: true }).fill(PASSWORD);
+    await page.getByLabel('Confirm new password', { exact: true }).fill(PASSWORD);
+    await expect(page.getByLabel('New password', { exact: true })).toHaveValue(PASSWORD);
+  }).toPass({ timeout: 10_000 });
   await page.getByRole('button', { name: /set new password/i }).click();
   await expect(page.getByText(/your password has been updated/i)).toBeVisible();
 
   // Same link again must fail.
   await page.goto(`/portal/reset?token=${encodeURIComponent(token)}`);
   await page.waitForLoadState('networkidle');
-  await page.getByLabel('New password', { exact: true }).fill(PASSWORD);
-  await page.getByLabel('Confirm new password', { exact: true }).fill(PASSWORD);
+  // Retry: WebKit can hydrate between the two fills and clear the first field.
+  await expect(async () => {
+    await page.getByLabel('New password', { exact: true }).fill(PASSWORD);
+    await page.getByLabel('Confirm new password', { exact: true }).fill(PASSWORD);
+    await expect(page.getByLabel('New password', { exact: true })).toHaveValue(PASSWORD);
+  }).toPass({ timeout: 10_000 });
   await page.getByRole('button', { name: /set new password/i }).click();
   await expect(page.getByText(/invalid or has expired/i)).toBeVisible();
 
