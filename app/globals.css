@@ -2213,3 +2213,9 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 [data-admin-ui='true'] a[class*='px-'][class*='bg-']:is([class~='inline-flex'], [class~='inline-block']) {
   border-radius: var(--admin-pill-radius);
 }
+
+/* Closing Time (limited edition): serif page titles like the Realty News Now pages (Builders, Guides). */
+#agent-desk.ct-lite :is(h1, h2) { font-family: var(--font-serif) !important; font-weight: 400 !important; color: #2A1B5B !important; letter-spacing: -0.01em !important; }
+#agent-desk.ct-lite h1 { font-size: 2.25rem !important; line-height: 1.15 !important; }
+#agent-desk.ct-lite h2 { font-size: 1.5rem !important; line-height: 1.25 !important; }
+@media (min-width: 1024px) { #agent-desk.ct-lite h1 { font-size: 2.75rem !important; } }
