@@ -72,6 +72,7 @@ const CSRF_PROTECTED_PREFIXES = [
   '/api/closing-time/data',
   '/api/closing-time/automation',
   '/api/closing-time/legal',
+  '/api/contract-dates',
 ];
 const CSRF_PROTECTED_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
 
