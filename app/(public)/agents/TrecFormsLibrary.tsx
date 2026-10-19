@@ -37,6 +37,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
   const [page, setPage] = useState(1);
   const [ownCategory, setCategory] = useState<'All Forms' | TrecFormLibraryCategory>('All Forms');
   const category = pickedCategory ?? ownCategory;
+  const fillable = (family: string) => versions.some((v) => v.formFamily === family && v.isActive && v.fields.length > 0);
   const activeByFamily = useMemo(
     () => new Map(versions.filter((version) => version.isActive).map((version) => [version.formFamily, version])),
     [versions],
@@ -163,13 +164,15 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
               <div className="grid grid-cols-2 gap-2">
                 <a
                   href={openAsPdf
-                    ? `/api/agent-command-center/form-pdf?src=${encodeURIComponent(form.pdfUrl)}&name=${encodeURIComponent(`TREC-${form.formNumber.replace(/\s+/g, '-')}`)}`
+                    ? (fillable(form.formFamily)
+                      ? `/contracts/forms/fill?form=${encodeURIComponent(form.formFamily)}`
+                      : `/api/agent-command-center/form-pdf?src=${encodeURIComponent(form.pdfUrl)}&name=${encodeURIComponent(`TREC-${form.formNumber.replace(/\s+/g, '-')}`)}`)
                     : form.category === 'TR Forms' ? form.pdfUrl : `/agents/closing-time?form=${encodeURIComponent(form.formFamily)}#trec-form-workspace`}
-                  {...(openAsPdf || form.category === 'TR Forms' ? { target: '_blank', rel: 'noreferrer' } : {})}
+                  {...((openAsPdf && !fillable(form.formFamily)) || (!openAsPdf && form.category === 'TR Forms') ? { target: '_blank', rel: 'noreferrer' } : {})}
                   className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-3 text-sm font-bold text-white transition hover:bg-[#42277C]"
                 >
                   <PencilLine className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  {openAsPdf ? 'Open' : 'Open & Fill'}
+                  {openAsPdf && !fillable(form.formFamily) ? 'Open' : 'Open & Fill'}
                 </a>
                 <a
                   href={`/api/agent-command-center/form-pdf?src=${encodeURIComponent(form.pdfUrl)}&name=${encodeURIComponent(`TREC-${form.formNumber.replace(/\s+/g, '-')}`)}&download=1`}
