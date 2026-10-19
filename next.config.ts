@@ -155,6 +155,17 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/rnn-platinum", destination: "/agents", permanent: true },
+      // Realty News Now calculators moved into Closing Time (limited edition).
+      { source: '/resources', destination: '/contracts/calculators', permanent: false },
+      { source: '/resources/mortgage-calculator', destination: '/contracts/calculators?c=mortgage', permanent: false },
+      { source: '/resources/commission-calculator', destination: '/contracts/calculators?c=commission', permanent: false },
+      { source: '/resources/title-rate-calculator', destination: '/contracts/calculators?c=title', permanent: false },
+      { source: '/resources/seller-net-sheet', destination: '/contracts/calculators?c=net-sheet', permanent: false },
+      { source: '/resources/buyer-closing-costs', destination: '/contracts/calculators?c=closing', permanent: false },
+      { source: '/resources/seller-concessions-limits', destination: '/contracts/calculators?c=concessions', permanent: false },
+      { source: '/resources/rent-vs-buy', destination: '/contracts/calculators?c=rent-vs-buy', permanent: false },
+      { source: '/resources/investment-property', destination: '/contracts/calculators?c=investment', permanent: false },
+      { source: '/resources/1031-exchange', destination: '/contracts/calculators?c=exchange', permanent: false },
       // Sunset domains: newslinesa.com and realtyline.us (San Antonio /
       // Austin legacy publication sites) now point their DNS at this
       // Vercel project so they get a free, valid TLS cert instead of

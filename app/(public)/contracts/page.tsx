@@ -6,7 +6,7 @@ import ContractsClient from './ContractsClient';
 import ContractsNav from './ContractsNav';
 
 export const metadata: Metadata = {
-  title: 'Contract Dates | Realty News Now',
+  title: 'Closing Time (limited edition) | Realty News Now',
   description: 'Upload a Texas TREC contract, confirm the important dates, and get deadline alerts by email or push.',
 };
 

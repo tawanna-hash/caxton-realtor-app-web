@@ -146,10 +146,10 @@ export default function ContractsClient({
   const set = (key: keyof Fields) => (e: React.ChangeEvent<HTMLInputElement>) => setDraft((d) => (d ? { ...d, [key]: e.target.value } : d));
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 text-[#1B1726]">
+    <main className="w-full px-4 py-6 text-[#1B1726] sm:px-6 lg:px-8">
       <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#7059A8]">Realty News Now</p>
-      <h1 className="mt-1 text-3xl font-bold text-[#301D5D]">Contract Dates</h1>
-      <p className="mt-2 max-w-2xl text-sm text-[#5B5470]">
+      <h1 className="mt-1 text-3xl font-bold text-[#301D5D]">Closing Time (limited edition)</h1>
+      <p className="mt-2 max-w-3xl text-sm text-[#5B5470]">
         Upload a Texas TREC contract. We read the dates, you confirm them, and we alert you by email or push before each one is due.
         This is a reminder tool, not legal advice. Always check dates against the contract.
       </p>

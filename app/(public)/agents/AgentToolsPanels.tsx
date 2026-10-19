@@ -101,7 +101,7 @@ export function WorkFasterPanel({ onOpenTool }: { onOpenTool?: (toolView: string
               <p className="ds-subtitle">Client-ready tools, one click away.</p>
             </div>
             {!onOpenTool && (
-              <Link href="/resources" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#42277C]">
+              <Link href="/contracts/calculators" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-bold text-[#301D5D] hover:text-[#42277C]">
                 See Every Agent Tool
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>

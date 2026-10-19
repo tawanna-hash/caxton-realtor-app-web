@@ -52,16 +52,6 @@ const ADVERTISE: Entry[] = [
 
 // Realtor tools / lead magnets
 const RESOURCES: Entry[] = [
-  { path: '/resources',                          changeFrequency: 'monthly', priority: 0.7 },
-  { path: '/resources/mortgage-calculator',      changeFrequency: 'yearly',  priority: 0.7 },
-  { path: '/resources/commission-calculator',    changeFrequency: 'yearly',  priority: 0.7 },
-  { path: '/resources/title-rate-calculator',    changeFrequency: 'yearly',  priority: 0.6 },
-  { path: '/resources/seller-net-sheet',         changeFrequency: 'yearly',  priority: 0.6 },
-  { path: '/resources/buyer-closing-costs',      changeFrequency: 'yearly',  priority: 0.6 },
-  { path: '/resources/seller-concessions-limits',changeFrequency: 'yearly',  priority: 0.5 },
-  { path: '/resources/rent-vs-buy',              changeFrequency: 'yearly',  priority: 0.5 },
-  { path: '/resources/investment-property',      changeFrequency: 'yearly',  priority: 0.5 },
-  { path: '/resources/1031-exchange',            changeFrequency: 'yearly',  priority: 0.5 },
 ];
 
 // Conversion + retention

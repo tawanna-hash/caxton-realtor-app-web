@@ -1,15 +1,15 @@
 import Link from 'next/link';
 
 const ITEMS = [
-  { href: '/contracts', label: 'Contract Dates', key: 'dates' },
+  { href: '/contracts', label: 'Contracts', key: 'dates' },
   { href: '/contracts/forms', label: 'TREC Library', key: 'forms' },
-  { href: '/resources', label: 'Calculators', key: 'calculators' },
+  { href: '/contracts/calculators', label: 'Calculators', key: 'calculators' },
   { href: '/testimonial-hub', label: 'Testimonial HUB', key: 'testimonials' },
 ] as const;
 
-export default function ContractsNav({ active }: { active: 'dates' | 'forms' }) {
+export default function ContractsNav({ active }: { active: 'dates' | 'forms' | 'calculators' | 'testimonials' }) {
   return (
-    <nav aria-label="Agent tools" className="mx-auto w-full max-w-3xl px-4 pt-6">
+    <nav aria-label="Agent tools" className="w-full px-4 pt-6 sm:px-6 lg:px-8">
       <ul className="flex flex-wrap gap-2">
         {ITEMS.map((item) => (
           <li key={item.key}>

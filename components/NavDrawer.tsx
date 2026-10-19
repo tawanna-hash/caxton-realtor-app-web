@@ -114,11 +114,11 @@ const DRAWER_SECTIONS: NavSection[] = [
     title: 'Agent Tools',
     items: [
       { label: 'Closing Time', href: '/agents' },
-      { label: 'Contract Dates', href: '/contracts' },
+      { label: 'Closing Time (limited edition)', href: '/contracts' },
       { label: 'TREC Library', href: '/contracts/forms' },
       { label: 'Testimonials HUB', href: '/testimonial-hub' },
       { label: 'Custom Designer', href: '/custom-designer' },
-      { label: 'REALTOR® Calculators & Quick References', href: '/resources' },
+      { label: 'Calculators', href: '/contracts/calculators' },
       { label: 'REALTOR® Downloadable Guides', href: '/resources/guides' },
     ],
   },
