@@ -12,9 +12,9 @@ const ITEMS = [
 export default function ContractsNav({ active }: { active: 'dates' | 'forms' | 'calculators' | 'email' | 'testimonials' }) {
   return (
     <nav aria-label="Agent tools" className="w-full">
-      <ul className="flex flex-wrap gap-2">
+      <ul className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
         {ITEMS.map((item) => (
-          <li key={item.key}>
+          <li key={item.key} className="shrink-0 snap-start">
             <Link
               href={item.href}
               aria-current={item.key === active ? 'page' : undefined}

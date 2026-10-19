@@ -45,14 +45,14 @@ export default function FillClient({ version }: { version: TrecFormVersion }) {
           <h2 className="text-lg font-semibold text-[#301D5D]">TREC {version.formNumber} · {version.title}</h2>
           <p className="text-sm text-[#5B5470]">{filled} fields filled. Your entries stay in this browser until you download.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <Link href="/contracts/forms" className={BTN_SECONDARY}>Back To Library</Link>
           <button type="button" className={BTN} onClick={() => { if (window.confirm('Clear everything you typed on this form?')) setValues({}); }}>Clear</button>
           <button type="button" className={BTN_PRIMARY} disabled={busy} onClick={() => void download()}>{busy ? 'Building...' : 'Download Filled PDF'}</button>
         </div>
       </div>
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-      <div className="overflow-hidden rounded-lg border border-[#D9D2E9] bg-white">
+      <div className="overflow-x-auto rounded-lg border border-[#D9D2E9] bg-white"><div className="min-w-[720px]">
         <TrecPdfPagePreview
           pdfUrl={version.pdfUrl}
           pageNumber={page}
@@ -61,7 +61,7 @@ export default function FillClient({ version }: { version: TrecFormVersion }) {
           values={values}
           onFieldChange={(id, value) => setValues((v) => ({ ...v, [id]: value }))}
         />
-      </div>
+      </div></div>
       <div className="flex items-center justify-between gap-3">
         <button type="button" className={BTN_SECONDARY} disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Back</button>
         <p className="text-center text-sm font-semibold text-[#301D5D]">Page {page} of {version.pageCount}</p>

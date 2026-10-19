@@ -2224,3 +2224,11 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 #agent-desk.ct-lite :is(p, dd)[class*='text-'] , #agent-desk.ct-lite :is(span, div, li, label, a)[class*='text-slate-'], #agent-desk.ct-lite :is(span, div, li, label, p, a)[class*='text-gray-'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#5B5470]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#4A4757]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#1B1726]'] { color: #301D5D !important; }
 #agent-desk.ct-lite p:not([class*='font-semibold']):not([class*='font-bold']):not([class*='uppercase']) { font-weight: 300; }
 #agent-desk.ct-lite :is(.text-red-700, [class*='text-red-']) { color: #B42318 !important; }
+
+/* Closing Time (limited edition) on phones: 16px form controls stop iOS zoom, tighter title, stacked hero. */
+@media (max-width: 639px) {
+  #agent-desk.ct-lite :is(input:not([type='checkbox']):not([type='radio']), select, textarea) { font-size: 16px !important; }
+  #agent-desk.ct-lite h1 { font-size: 1.875rem !important; }
+  #agent-desk.ct-lite h2 { font-size: 1.25rem !important; }
+  #agent-desk.ct-lite section { min-width: 0; }
+}

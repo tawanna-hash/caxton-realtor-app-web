@@ -16,9 +16,9 @@ export default function SidebarWindow({
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
       <nav aria-label={label}>
-        <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
+        <ul className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:flex-col lg:overflow-visible">
           {items.map((item, i) => (
-            <li key={item.id} className="shrink-0">
+            <li key={item.id} className="shrink-0 snap-start lg:shrink">
               {item.heading && (i === 0 || items[i - 1]?.heading !== item.heading) && (
                 <p className="mb-2 mt-3 hidden text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5B5470] lg:block">{item.heading}</p>
               )}
@@ -26,7 +26,7 @@ export default function SidebarWindow({
                 type="button"
                 aria-current={item.id === selected ? 'true' : undefined}
                 onClick={() => onSelect(item.id)}
-                className={`${item.id === selected ? BTN_PRIMARY : BTN_SECONDARY} !w-full !justify-start !text-left`}
+                className={`${item.id === selected ? BTN_PRIMARY : BTN_SECONDARY} lg:!w-full !justify-start !text-left max-w-[16rem] lg:max-w-none`}
               >
                 <span className="truncate">{item.label}</span>
               </button>
