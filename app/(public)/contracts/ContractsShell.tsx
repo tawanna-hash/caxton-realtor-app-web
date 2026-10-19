@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import ContractsNav from './ContractsNav';
 
-type Active = 'dates' | 'forms' | 'calculators' | 'testimonials';
+type Active = 'dates' | 'forms' | 'calculators' | 'email' | 'testimonials';
 
 const STEPS: Array<[string, string, string]> = [
   ['01', 'Upload Your TREC Contract', 'We read the effective date and period terms.'],
