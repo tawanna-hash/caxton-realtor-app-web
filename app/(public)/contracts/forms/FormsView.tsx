@@ -17,7 +17,7 @@ export default function FormsView({ versions }: { versions: TrecFormVersion[] })
     >
       <section className="rounded-lg border border-[#D9D2E9] bg-white p-5">
         <h2 className="text-lg font-semibold text-[#301D5D]">{category === 'All Forms' ? 'TREC Library' : category}</h2>
-        <TrecFormsLibrary versions={versions} embedded category={category} hideCategoryTabs />
+        <TrecFormsLibrary versions={versions} embedded category={category} hideCategoryTabs openAsPdf />
       </section>
     </SidebarWindow>
   );

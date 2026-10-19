@@ -1,7 +1,5 @@
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 import ContractsNav from './ContractsNav';
-import { BTN_PRIMARY, BTN_SECONDARY } from './ui';
 
 type Active = 'dates' | 'forms' | 'calculators' | 'testimonials';
 
@@ -35,16 +33,6 @@ export default function ContractsShell({
               <h1 className="ds-title mt-2 sm:!text-[2rem]">{title}</h1>
               {subtitle && <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-slate-900">{subtitle}</p>}
               {description && <p className="ds-subtitle max-w-2xl leading-7">{description}</p>}
-              {hero && (
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <a href="#add-contract" className={BTN_PRIMARY}>
-                    Upload A Contract
-                  </a>
-                  <Link href="/contracts/forms" className={BTN_SECONDARY}>
-                    Open TREC Library
-                  </Link>
-                </div>
-              )}
             </div>
             {hero && (
               <aside className="ds-card">

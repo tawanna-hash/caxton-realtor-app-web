@@ -32,7 +32,7 @@ function formatEffectiveDate(value: string): string {
 
 const FORMS_PER_PAGE = 10;
 
-export default function TrecFormsLibrary({ versions, embedded = false, dealContext, category: pickedCategory, hideCategoryTabs = false }: { versions: TrecFormVersion[]; embedded?: boolean; dealContext?: TrecLibraryDealContext; category?: 'All Forms' | TrecFormLibraryCategory; hideCategoryTabs?: boolean }) {
+export default function TrecFormsLibrary({ versions, embedded = false, dealContext, category: pickedCategory, hideCategoryTabs = false, openAsPdf = false }: { versions: TrecFormVersion[]; embedded?: boolean; dealContext?: TrecLibraryDealContext; category?: 'All Forms' | TrecFormLibraryCategory; hideCategoryTabs?: boolean; openAsPdf?: boolean }) {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [ownCategory, setCategory] = useState<'All Forms' | TrecFormLibraryCategory>('All Forms');
@@ -162,12 +162,14 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <a
-                  href={form.category === 'TR Forms' ? form.pdfUrl : `/agents/closing-time?form=${encodeURIComponent(form.formFamily)}#trec-form-workspace`}
-                  {...(form.category === 'TR Forms' ? { target: '_blank', rel: 'noreferrer' } : {})}
+                  href={openAsPdf
+                    ? `/api/agent-command-center/form-pdf?src=${encodeURIComponent(form.pdfUrl)}&name=${encodeURIComponent(`TREC-${form.formNumber.replace(/\s+/g, '-')}`)}`
+                    : form.category === 'TR Forms' ? form.pdfUrl : `/agents/closing-time?form=${encodeURIComponent(form.formFamily)}#trec-form-workspace`}
+                  {...(openAsPdf || form.category === 'TR Forms' ? { target: '_blank', rel: 'noreferrer' } : {})}
                   className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-3 text-sm font-bold text-white transition hover:bg-[#42277C]"
                 >
                   <PencilLine className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  Open &amp; Fill
+                  {openAsPdf ? 'Open' : 'Open & Fill'}
                 </a>
                 <a
                   href={`/api/agent-command-center/form-pdf?src=${encodeURIComponent(form.pdfUrl)}&name=${encodeURIComponent(`TREC-${form.formNumber.replace(/\s+/g, '-')}`)}&download=1`}
