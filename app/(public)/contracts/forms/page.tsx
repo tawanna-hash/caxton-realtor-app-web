@@ -17,7 +17,7 @@ export default async function ContractsFormsPage() {
   if (!user) redirect('/login?next=%2Fcontracts%2Fforms');
   const versions = await listTrecFormVersions();
   return (
-    <ContractsShell active="forms" title="TREC Library" description="Texas Real Estate Commission forms, ready to open, fill and download.">
+    <ContractsShell active="forms">
       <TrecFormsLibrary versions={versions} embedded />
     </ContractsShell>
   );
