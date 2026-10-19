@@ -138,7 +138,7 @@ async function BuildersContent() {
 export default function BuildersHubPage() {
   return (
     <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 py-8 sm:px-8 sm:py-12">
         <header className="mb-8">
           <Link
             href="/advertisers"
