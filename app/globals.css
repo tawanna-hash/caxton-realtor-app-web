@@ -2215,7 +2215,13 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 }
 
 /* Closing Time (limited edition): serif page titles like the Realty News Now pages (Builders, Guides). */
-#agent-desk.ct-lite :is(h1, h2) { font-family: var(--font-serif) !important; font-weight: 400 !important; color: #2A1B5B !important; letter-spacing: -0.01em !important; }
+#agent-desk.ct-lite :is(h1, h2) { font-family: var(--font-serif) !important; font-weight: 400 !important; color: #301D5D !important; letter-spacing: -0.01em !important; }
 #agent-desk.ct-lite h1 { font-size: 2.25rem !important; line-height: 1.15 !important; }
 #agent-desk.ct-lite h2 { font-size: 1.5rem !important; line-height: 1.25 !important; }
 @media (min-width: 1024px) { #agent-desk.ct-lite h1 { font-size: 2.75rem !important; } }
+/* Same text color as the Realty News Now pages: deep indigo for titles and copy, light weight for paragraphs. */
+#agent-desk.ct-lite, #agent-desk.ct-lite :is(h3, h4, p, li, dt, dd, label, td, th, legend, summary) { color: #301D5D; }
+#agent-desk.ct-lite :is(p, dd)[class*='text-'] , #agent-desk.ct-lite :is(span, div, li, label, a)[class*='text-slate-'], #agent-desk.ct-lite :is(span, div, li, label, p, a)[class*='text-gray-'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#5B5470]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#4A4757]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#1B1726]'] { color: #301D5D !important; }
+#agent-desk.ct-lite p:not([class*='font-semibold']):not([class*='font-bold']):not([class*='uppercase']) { font-weight: 300; }
+#agent-desk.ct-lite :is(.text-white, [class*='text-white']) { color: #fff !important; }
+#agent-desk.ct-lite :is(.text-red-700, [class*='text-red-']) { color: #B42318 !important; }
