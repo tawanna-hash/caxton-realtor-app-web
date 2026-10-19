@@ -113,8 +113,7 @@ const DRAWER_SECTIONS: NavSection[] = [
   {
     title: 'Agent Tools',
     items: [
-      { label: 'Closing Time', href: '/agents' },
-      { label: 'Closing Time (limited edition)', href: '/contracts' },
+      { label: 'Closing Time', href: '/contracts' },
       { label: 'TREC Library', href: '/contracts/forms' },
       { label: 'Testimonials HUB', href: '/testimonial-hub' },
       { label: 'Custom Designer', href: '/custom-designer' },

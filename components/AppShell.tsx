@@ -58,7 +58,7 @@ const PUB_COLORS: Record<string, string> = {
 // from the hamburger for less-frequent destinations (FAQs, About, Profile).
 const PUBLIC_DESKTOP_LINKS: { label: string; href: string }[] = [
   { label: 'Home',        href: '/dashboard' },
-  { label: 'Closing Time', href: '/agents' },
+  { label: 'Closing Time', href: '/contracts' },
   { label: 'Calendar',    href: '/calendar' },
   { label: 'Builders / Developers',    href: '/builders' },
   { label: 'Partners', href: '/partners' },
@@ -71,6 +71,7 @@ function isPublicLinkActive(pathname: string, href: string): boolean {
   // (root '/' redirects to /dashboard so other public routes would never
   // satisfy startsWith('/dashboard'), but the exact check is still clearer).
   if (href === '/dashboard') return pathname === '/dashboard';
+  if (href === '/contracts' && (pathname === '/testimonial-hub' || pathname.startsWith('/testimonial-hub/'))) return true;
   return pathname === href || pathname.startsWith(href + '/');
 }
 
