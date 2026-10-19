@@ -27,7 +27,7 @@ export default function ContractsShell({
     <main id="agent-desk" className="ct-lite min-h-screen overflow-x-hidden bg-white pb-28 text-[#1B1726] sm:pb-16">
       {title && (
         <section className="border-b border-[#E6E5EC] bg-white">
-          <div className={`mx-auto max-w-7xl px-4 py-8 sm:px-8 ${hero ? 'grid gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-start' : ''}`}>
+          <div className={`mx-auto max-w-7xl px-4 py-8 sm:px-8 ${hero ? 'grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-start' : ''}`}>
             <div>
               <p className="ds-eyebrow">Closing Time (limited edition)</p>
               <h1 className="ds-title mt-2 sm:!text-[2rem]">{title}</h1>

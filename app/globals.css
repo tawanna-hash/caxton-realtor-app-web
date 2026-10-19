@@ -2232,3 +2232,13 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   #agent-desk.ct-lite h2 { font-size: 1.25rem !important; }
   #agent-desk.ct-lite section { min-width: 0; }
 }
+
+/* Grids with only breakpoint column classes get an implicit auto column that grows to its widest child and pushes the page off screen. Pin them to the screen width. */
+@media (max-width: 1023px) {
+  #agent-desk.ct-lite .grid:not([class^='grid-cols-']):not([class*=' grid-cols-']):not([class*='sm:grid-cols']):not([class*='md:grid-cols']) { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 639px) {
+  #agent-desk.ct-lite .grid[class*='sm:grid-cols']:not([class^='grid-cols-']):not([class*=' grid-cols-']):not([class*='md:grid-cols']) { grid-template-columns: minmax(0, 1fr); }
+  #agent-desk.ct-lite .grid[class*='md:grid-cols']:not([class^='grid-cols-']):not([class*=' grid-cols-']) { grid-template-columns: minmax(0, 1fr); }
+  #agent-desk.ct-lite :is(.grid, .flex) > * { min-width: 0; }
+}

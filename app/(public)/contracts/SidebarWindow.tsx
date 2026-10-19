@@ -14,7 +14,7 @@ export default function SidebarWindow({
   children: ReactNode;
 }) {
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
       <nav aria-label={label}>
         <ul className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:flex-col lg:overflow-visible">
           {items.map((item, i) => (

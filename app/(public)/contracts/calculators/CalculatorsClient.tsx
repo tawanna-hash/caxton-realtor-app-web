@@ -40,7 +40,7 @@ function CalcCard({ calc, contracts }: { calc: Calculator; contracts: ContractOp
     <section className="rounded-lg border border-[#D9D2E9] bg-white p-5" aria-label={calc.title}>
       <h2 className="text-xl font-semibold text-[#301D5D]">{calc.title}</h2>
       <p className="mt-1 text-sm text-[#5B5470]">{calc.blurb}</p>
-      <div className="mt-5 grid gap-6 xl:grid-cols-2">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-2">
         <form className="grid content-start gap-4" onSubmit={(e) => e.preventDefault()} aria-label={`${calc.title} inputs`}>
           {hasDate && (
             <label className="block text-sm font-medium">Use a saved contract&apos;s closing date
