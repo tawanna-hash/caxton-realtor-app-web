@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import PushOptInButton from '@/components/PushOptInButton';
 import { calculateTrecDeadlines } from '@/lib/trec-deadlines';
+import { BTN, BTN_PRIMARY, BTN_SECONDARY } from './ui';
 
 type Alerts = { emailEnabled: boolean; pushEnabled: boolean; reminderOffsets: Array<0 | 1 | 3 | 7> };
 type Fields = {
@@ -31,7 +32,6 @@ const DAY_FIELDS: Array<[keyof Fields, string]> = [
 
 const OFFSETS: Array<0 | 1 | 3 | 7> = [7, 3, 1, 0];
 const input = 'mt-1 w-full rounded-md border border-[#D9D2E9] bg-white px-3 py-2 text-sm text-[#1B1726] focus:border-[#301D5D] focus:outline-none focus:ring-2 focus:ring-[#301D5D]/20';
-const button = 'inline-flex min-h-[44px] items-center justify-center !rounded-lg hover:!rounded-lg focus-visible:!rounded-lg active:!rounded-lg px-5 text-sm font-semibold transition disabled:opacity-50';
 
 function fmt(value: string): string {
   const d = new Date(`${value}T12:00:00Z`);
@@ -157,12 +157,12 @@ export default function ContractsClient({
           <h2 className="text-lg font-semibold text-[#301D5D]">Add a contract</h2>
           <p className="mt-1 text-sm text-[#5B5470]">PDF, PNG, JPG or WEBP, up to 15 MB. Your file is read once and is not stored.</p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <label className={`${button} cursor-pointer bg-[#301D5D] text-white hover:bg-[#241546] ${busy ? 'pointer-events-none opacity-50' : ''}`}>
+            <label className={`${BTN_PRIMARY} cursor-pointer ${busy ? 'pointer-events-none opacity-50' : ''}`}>
               {busy === 'read' ? 'Reading contract...' : 'Upload contract'}
               <input ref={fileRef} type="file" accept="application/pdf,image/png,image/jpeg,image/webp" className="sr-only" disabled={busy !== ''}
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) void readFile(f); }} />
             </label>
-            <button type="button" className={`${button} border border-[#301D5D] text-[#301D5D] hover:bg-[#F4F0FA]`} onClick={() => setDraft({ ...EMPTY })} disabled={busy !== ''}>
+            <button type="button" className={BTN_SECONDARY} onClick={() => setDraft({ ...EMPTY })} disabled={busy !== ''}>
               Enter dates myself
             </button>
           </div>
@@ -201,10 +201,10 @@ export default function ContractsClient({
           )}
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <button type="button" className={`${button} bg-[#301D5D] text-white hover:bg-[#241546]`} onClick={() => void save()} disabled={busy !== '' || !draft.effectiveDate || draft.propertyAddress.trim().length < 3}>
+            <button type="button" className={BTN_PRIMARY} onClick={() => void save()} disabled={busy !== '' || !draft.effectiveDate || draft.propertyAddress.trim().length < 3}>
               {busy === 'save' ? 'Saving...' : 'Save contract'}
             </button>
-            <button type="button" className={`${button} border border-[#D9D2E9] text-[#301D5D] hover:bg-[#F4F0FA]`} onClick={() => { setDraft(null); setWarnings([]); setError(''); }} disabled={busy !== ''}>Cancel</button>
+            <button type="button" className={BTN_SECONDARY} onClick={() => { setDraft(null); setWarnings([]); setError(''); }} disabled={busy !== ''}>Cancel</button>
           </div>
         </section>
       )}
@@ -247,7 +247,7 @@ export default function ContractsClient({
                     <p className="break-words font-semibold text-[#301D5D]">{c.propertyAddress}</p>
                     <p className="text-xs text-[#5B5470]">Effective {fmt(c.effectiveDate)}</p>
                   </div>
-                  <button type="button" className="min-h-[44px] shrink-0 px-2 text-sm font-medium text-red-700 hover:underline" onClick={() => void remove(c.id)}>Remove</button>
+                  <button type="button" className={`${BTN} !border-red-200 !bg-white !text-red-700 hover:!bg-red-50`} onClick={() => void remove(c.id)}>Remove</button>
                 </div>
                 <ul className="mt-2 divide-y divide-[#EEE9F6] text-sm">
                   {c.deadlines.map((d) => (

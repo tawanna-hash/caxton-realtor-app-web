@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import ContractsNav from './ContractsNav';
+import { BTN_PRIMARY, BTN_SECONDARY } from './ui';
 
 type Active = 'dates' | 'forms' | 'calculators' | 'testimonials';
 
@@ -36,10 +37,10 @@ export default function ContractsShell({
               {description && <p className="ds-subtitle max-w-2xl leading-7">{description}</p>}
               {hero && (
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <a href="#add-contract" className="inline-flex h-[40px] items-center justify-center gap-2 rounded-lg bg-[#301D5D] px-4 text-sm font-semibold text-white transition hover:bg-[#42277C]">
+                  <a href="#add-contract" className={BTN_PRIMARY}>
                     Upload A Contract
                   </a>
-                  <Link href="/contracts/forms" className="inline-flex h-[40px] items-center justify-center gap-2 rounded-lg border border-[#E6E5EC] bg-white px-4 text-sm font-medium text-slate-900 transition hover:bg-[#F6F3FB]">
+                  <Link href="/contracts/forms" className={BTN_SECONDARY}>
                     Open TREC Library
                   </Link>
                 </div>

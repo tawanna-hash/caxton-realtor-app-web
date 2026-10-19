@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { BTN_PRIMARY, BTN_SECONDARY } from '../ui';
 import {
   CALCULATORS, defaults, runCalculator,
   type Calculator, type Field, type Output, type Values,
@@ -25,9 +26,7 @@ export default function CalculatorsClient({ contracts, initialId }: { contracts:
                   type="button"
                   aria-current={c.id === current.id ? 'true' : undefined}
                   onClick={() => setId(c.id)}
-                  className={`!h-11 w-full rounded-md border !px-3 text-left !text-sm font-semibold transition ${
-                    c.id === current.id ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#D9D2E9] bg-white text-[#301D5D] hover:bg-[#F4F0FA]'
-                  }`}
+                  className={`${c.id === current.id ? BTN_PRIMARY : BTN_SECONDARY} !w-full !justify-start`}
                 >{c.title}</button>
               </li>
             ))}

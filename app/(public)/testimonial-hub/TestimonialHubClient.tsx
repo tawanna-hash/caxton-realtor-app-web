@@ -112,7 +112,8 @@ function statusClass(status: Testimonial['status']): string {
   return 'bg-[#EFEAF8] text-[#4A4757] border-[#E6E5EC]';
 }
 
-const BTN = 'inline-flex min-h-[36px] items-center justify-center gap-2 rounded-md border border-[#E6E5EC] bg-white px-3 text-[13px] font-medium text-[#301D5D] hover:!bg-[#EFEAF8] hover:!text-[#301D5D] disabled:opacity-50';
+import { BTN_SECONDARY } from '../contracts/ui';
+const BTN = `${BTN_SECONDARY} gap-2`;
 const LABEL = 'text-[11px] font-medium uppercase tracking-[0.06em] text-[#7A7787]';
 
 export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } = {}) {
