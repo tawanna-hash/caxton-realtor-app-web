@@ -50,15 +50,21 @@ export async function GET(req: NextRequest) {
     const row = rows[0];
     // Password-reset links only work on /portal/reset.
     if (row.created_by === 'portal-reset') return redirectToError(req, 'invalid');
-    if (!isLinkConsumable(row)) return redirectToError(req, 'expired');
+    // Invoice links never expire and can be opened any number of times (email
+    // scanners and a client coming back later must not burn them). Only an
+    // explicit revoke stops one. Every other link type stays single-use.
+    const isInvoiceLink = row.purpose === 'pay_invoice';
+    if (isInvoiceLink ? row.revoked_at : !isLinkConsumable(row)) return redirectToError(req, 'expired');
 
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? null;
     const ua = req.headers.get('user-agent') ?? null;
-    const sessionExpires = new Date(Date.now() + PORTAL_SESSION_TTL_MS).toISOString();
+    const sessionExpires = new Date(
+      Date.now() + (isInvoiceLink ? PORTAL_SESSION_TTL_MS * 6 : PORTAL_SESSION_TTL_MS),
+    ).toISOString();
 
     await sql`
       UPDATE portal_magic_links
-      SET consumed_at = NOW(),
+      SET consumed_at = COALESCE(consumed_at, NOW()),
           session_expires_at = ${sessionExpires},
           ip_consumed = ${ip},
           user_agent_consumed = ${ua}
