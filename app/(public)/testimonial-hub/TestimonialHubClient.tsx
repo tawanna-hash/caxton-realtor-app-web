@@ -1,7 +1,7 @@
 'use client';
 
 import MasterDetail from '../agents/MasterDetail';
-import SectionNav from '../agents/SectionNav';
+import SidebarWindow from '../contracts/SidebarWindow';
 import Switch from '../agents/Switch';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -125,6 +125,7 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [section, setSection] = useState('library');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -575,16 +576,22 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
 
       {embedded ? (
         <div className="mt-6">
-          <SectionNav
-            testId="testimonials-sections"
-            backLabel="Testimonials Hub"
-            sections={[
-              { id: 'library', title: 'Your Library', sub: 'Saved testimonials', trailing: String(items.length), content: libraryBlock },
-              { id: 'collect', title: 'Collect Testimonials', sub: 'Your collection link', content: collectBlock },
-              { id: 'profile', title: 'Profile Settings', sub: 'Your public proof page', content: profileBlock },
-              { id: 'embed', title: 'Embed Anywhere', sub: 'Add testimonials to your website', content: embedBlock },
+          <SidebarWindow
+            label="Testimonials Hub sections"
+            items={[
+              { id: 'library', label: 'Your Library' },
+              { id: 'collect', label: 'Collect Testimonials' },
+              { id: 'profile', label: 'Profile Settings' },
+              { id: 'embed', label: 'Embed Anywhere' },
             ]}
-          />
+            selected={section}
+            onSelect={setSection}
+          >
+            {section === 'library' && libraryBlock}
+            {section === 'collect' && collectBlock}
+            {section === 'profile' && profileBlock}
+            {section === 'embed' && embedBlock}
+          </SidebarWindow>
         </div>
       ) : (
       <section className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.6fr)]">
