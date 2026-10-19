@@ -115,6 +115,7 @@ const DRAWER_SECTIONS: NavSection[] = [
     items: [
       { label: 'Closing Time', href: '/agents' },
       { label: 'Contract Dates', href: '/contracts' },
+      { label: 'TREC Library', href: '/contracts/forms' },
       { label: 'Testimonials HUB', href: '/testimonial-hub' },
       { label: 'Custom Designer', href: '/custom-designer' },
       { label: 'REALTOR® Calculators & Quick References', href: '/resources' },
