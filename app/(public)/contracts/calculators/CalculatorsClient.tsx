@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { BTN_PRIMARY, BTN_SECONDARY } from '../ui';
+import SidebarWindow from '../SidebarWindow';
 import {
   CALCULATORS, defaults, runCalculator,
   type Calculator, type Field, type Output, type Values,
@@ -17,23 +17,9 @@ export default function CalculatorsClient({ contracts, initialId }: { contracts:
   const current = CALCULATORS.find((c) => c.id === id) ?? CALCULATORS[0]!;
   return (
     <div>
-      <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
-        <nav aria-label="Calculators">
-          <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
-            {CALCULATORS.map((c) => (
-              <li key={c.id} className="shrink-0">
-                <button
-                  type="button"
-                  aria-current={c.id === current.id ? 'true' : undefined}
-                  onClick={() => setId(c.id)}
-                  className={`${c.id === current.id ? BTN_PRIMARY : BTN_SECONDARY} !w-full !justify-start`}
-                >{c.title}</button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+      <SidebarWindow label="Calculators" items={CALCULATORS.map((c) => ({ id: c.id, label: c.title }))} selected={current.id} onSelect={setId}>
         <CalcCard key={current.id} calc={current} contracts={contracts} />
-      </div>
+      </SidebarWindow>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PushOptInButton from '@/components/PushOptInButton';
 import { calculateTrecDeadlines } from '@/lib/trec-deadlines';
+import SidebarWindow from './SidebarWindow';
 import { BTN, BTN_PRIMARY, BTN_SECONDARY } from './ui';
 
 type Alerts = { emailEnabled: boolean; pushEnabled: boolean; reminderOffsets: Array<0 | 1 | 3 | 7> };
@@ -78,6 +79,13 @@ export default function ContractsClient({
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const [view, setView] = useState<string>('attention');
+  useEffect(() => {
+    const fromHash = () => { if (window.location.hash === '#add-contract') setView('add'); };
+    fromHash();
+    window.addEventListener('hashchange', fromHash);
+    return () => window.removeEventListener('hashchange', fromHash);
+  }, []);
 
   const preview = useMemo(() => {
     if (!draft) return [];
@@ -92,7 +100,7 @@ export default function ContractsClient({
   }, [draft]);
 
   async function readFile(file: File) {
-    setError(''); setNotice(''); setBusy('read');
+    setError(''); setNotice(''); setBusy('read'); setView('add');
     try {
       const body = new FormData();
       body.append('contract', file);
@@ -119,7 +127,7 @@ export default function ContractsClient({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Could not save this contract.');
       setContracts((c) => [data.contract, ...c]);
-      setDraft(null); setWarnings([]);
+      setDraft(null); setWarnings([]); setView(data.contract.id);
       setNotice('Saved. You will get alerts before each date.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save this contract.');
@@ -130,7 +138,7 @@ export default function ContractsClient({
     if (!window.confirm('Remove this contract and stop its alerts?')) return;
     setError('');
     const res = await fetch(`/api/contract-dates?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-    if (res.ok) setContracts((c) => c.filter((x) => x.id !== id)); else setError('Could not remove this contract.');
+    if (res.ok) { setContracts((c) => c.filter((x) => x.id !== id)); setView('attention'); } else setError('Could not remove this contract.');
   }
 
   async function updateAlerts(patch: Partial<Alerts>) {
@@ -145,13 +153,23 @@ export default function ContractsClient({
 
   const set = (key: keyof Fields) => (e: React.ChangeEvent<HTMLInputElement>) => setDraft((d) => (d ? { ...d, [key]: e.target.value } : d));
 
+  const selected = contracts.find((x) => x.id === view) ?? null;
+  const items = [
+    { id: 'attention', label: 'What Needs Attention' },
+    { id: 'add', label: 'Add A Contract' },
+    { id: 'alerts', label: 'How You Are Alerted' },
+    ...contracts.map((x) => ({ id: x.id, label: x.propertyAddress, heading: 'Saved Contracts' })),
+  ];
+
   return (
-    <div className="space-y-6">
-      <AttentionCard contracts={contracts} />
+    <SidebarWindow label="Closing Time sections" items={items} selected={view} onSelect={(id) => { setView(id); setError(''); setNotice(''); }}>
+      {view === 'attention' && <AttentionCard contracts={contracts} />}
 
       {error && <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
       {notice && <p role="status" className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-900">{notice}</p>}
 
+      {view === 'add' && (
+        <>
       {!draft && (
         <section id="add-contract" className="scroll-mt-20 rounded-lg border border-[#D9D2E9] bg-white p-5">
           <h2 className="text-lg font-semibold text-[#301D5D]">Add a contract</h2>
@@ -209,6 +227,10 @@ export default function ContractsClient({
         </section>
       )}
 
+        </>
+      )}
+
+      {view === 'alerts' && (
       <section className="rounded-lg border border-[#D9D2E9] bg-white p-5" aria-label="Alert settings">
         <h2 className="text-lg font-semibold text-[#301D5D]">How you are alerted</h2>
         <div className="mt-3 space-y-3 text-sm">
@@ -233,33 +255,28 @@ export default function ContractsClient({
           </fieldset>
         </div>
       </section>
+      )}
 
-      <section aria-label="Saved contracts">
-        <h2 className="text-lg font-semibold text-[#301D5D]">Your contracts</h2>
-        {contracts.length === 0 ? (
-          <p className="mt-2 text-sm text-[#5B5470]">No contracts yet. Upload one to see its dates here.</p>
-        ) : (
-          <ul className="mt-3 space-y-4">
-            {contracts.map((c) => (
-              <li key={c.id} className="rounded-lg border border-[#D9D2E9] bg-white p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="break-words font-semibold text-[#301D5D]">{c.propertyAddress}</p>
-                    <p className="text-xs text-[#5B5470]">Effective {fmt(c.effectiveDate)}</p>
-                  </div>
-                  <button type="button" className={`${BTN} !border-red-200 !bg-white !text-red-700 hover:!bg-red-50`} onClick={() => void remove(c.id)}>Remove</button>
-                </div>
-                <ul className="mt-2 divide-y divide-[#EEE9F6] text-sm">
-                  {c.deadlines.map((d) => (
-                    <li key={d.id} className="flex justify-between gap-3 py-1.5"><span>{d.label}</span><span className="font-medium">{fmt(d.date)}</span></li>
-                  ))}
-                </ul>
-              </li>
+      {selected && (
+        <section aria-label="Contract details" className="rounded-lg border border-[#D9D2E9] bg-white p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="break-words text-lg font-semibold text-[#301D5D]">{selected.propertyAddress}</h2>
+              <p className="text-sm text-[#5B5470]">Effective {fmt(selected.effectiveDate)}</p>
+              {(selected.buyerNames || selected.sellerNames) && (
+                <p className="mt-1 text-sm text-[#5B5470]">{[selected.buyerNames && `Buyer: ${selected.buyerNames}`, selected.sellerNames && `Seller: ${selected.sellerNames}`].filter(Boolean).join(' · ')}</p>
+              )}
+            </div>
+            <button type="button" className={`${BTN} !border-red-200 !bg-white !text-red-700 hover:!bg-red-50`} onClick={() => void remove(selected.id)}>Remove</button>
+          </div>
+          <ul className="mt-3 divide-y divide-[#EEE9F6] text-sm">
+            {selected.deadlines.map((d) => (
+              <li key={d.id} className="flex justify-between gap-3 py-2"><span>{d.label}</span><span className="font-medium">{fmt(d.date)}</span></li>
             ))}
           </ul>
-        )}
-      </section>
-    </div>
+        </section>
+      )}
+    </SidebarWindow>
   );
 }
 

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/server/auth/user';
 import { listTrecFormVersions } from '@/lib/server/trec-form-versions';
-import TrecFormsLibrary from '../../agents/TrecFormsLibrary';
+import FormsView from './FormsView';
 import ContractsShell from '../ContractsShell';
 
 export const metadata: Metadata = {
@@ -17,8 +17,8 @@ export default async function ContractsFormsPage() {
   if (!user) redirect('/login?next=%2Fcontracts%2Fforms');
   const versions = await listTrecFormVersions();
   return (
-    <ContractsShell active="forms" title="TREC Library" description="Texas Real Estate Commission forms, ready to open, fill and download.">
-      <TrecFormsLibrary versions={versions} embedded />
+    <ContractsShell active="forms">
+      <FormsView versions={versions} />
     </ContractsShell>
   );
 }

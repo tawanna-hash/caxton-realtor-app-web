@@ -32,10 +32,11 @@ function formatEffectiveDate(value: string): string {
 
 const FORMS_PER_PAGE = 10;
 
-export default function TrecFormsLibrary({ versions, embedded = false, dealContext }: { versions: TrecFormVersion[]; embedded?: boolean; dealContext?: TrecLibraryDealContext }) {
+export default function TrecFormsLibrary({ versions, embedded = false, dealContext, category: pickedCategory, hideCategoryTabs = false }: { versions: TrecFormVersion[]; embedded?: boolean; dealContext?: TrecLibraryDealContext; category?: 'All Forms' | TrecFormLibraryCategory; hideCategoryTabs?: boolean }) {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [category, setCategory] = useState<'All Forms' | TrecFormLibraryCategory>('All Forms');
+  const [ownCategory, setCategory] = useState<'All Forms' | TrecFormLibraryCategory>('All Forms');
+  const category = pickedCategory ?? ownCategory;
   const activeByFamily = useMemo(
     () => new Map(versions.filter((version) => version.isActive).map((version) => [version.formFamily, version])),
     [versions],
@@ -79,11 +80,11 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
             />
           </label>
         </div>
-        <div className="ds-tabs overflow-x-auto" role="tablist" aria-label="Filter TREC forms by category">
+        {!hideCategoryTabs && <div className="ds-tabs overflow-x-auto" role="tablist" aria-label="Filter TREC forms by category">
           {TREC_FORM_LIBRARY_CATEGORIES.map((option) => (
             <button key={option} type="button" role="tab" aria-selected={category === option} onClick={() => { setCategory(option); setPage(1); }} className="ds-tab !flex-none !whitespace-nowrap">{option}</button>
           ))}
-        </div>
+        </div>}
 
         <div className="mt-4 flex items-center justify-between gap-3">
           <p className="text-sm font-semibold text-slate-700">{visibleForms.length} {visibleForms.length === 1 ? 'form' : 'forms'}</p>
