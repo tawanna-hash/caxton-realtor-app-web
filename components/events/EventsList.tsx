@@ -91,7 +91,7 @@ export function EventsList({ pub, events, loading, error, onBack, onSelect, topB
           <PageTitle size="md">
             Calendar of Events
           </PageTitle>
-          <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+          <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
             {pub === 'realtyline-dallas'
               ? `Explore Dallas/Ft. Worth\u2019s real estate events with RealtyLine Dallas/Ft. Worth \u2014 MetroTex classes, CE courses, area meetings, and association events across the metroplex.`
               : pub === 'newsline'
