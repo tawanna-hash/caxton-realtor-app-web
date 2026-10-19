@@ -55,8 +55,6 @@ const CSRF_ALLOWED_HOSTS = [
   'newslinesa.com',
   '.newslinesa.com',
   'app.myrealtyline.com',
-  'itsalmostclosingtime.com',
-  '.itsalmostclosingtime.com',
   // Vercel preview deploys land on *.vercel.app
   '.vercel.app',
 ];
@@ -262,15 +260,6 @@ function handlePubPermalink(req: NextRequest): NextResponse | null {
 // Entry point
 // ============================================================================
 
-const CLOSING_TIME_PATHS = [
-  '/login', '/auth', '/agents', '/privacy', '/terms', '/disclaimer', '/sms', '/security', '/developers',
-  '/sign', '/deal-portal', '/book', '/api', '/portal', '/unsubscribe', '/account-delete', '/profile',
-  '/closing-time-signup', '/closing-time-home', '/closing-time-legal', '/e', '/r', '/c', '/product-tour',
-];
-function isClosingTimePath(pathname: string): boolean {
-  if (pathname === '/') return true;
-  return CLOSING_TIME_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
-}
 
 export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
@@ -290,29 +279,10 @@ export async function proxy(req: NextRequest) {
     return NextResponse.json({ error: 'Preview mode is read-only.' }, { status: 403 });
   }
 
-  // 1b. Closing Time's own domain: the home page is the Closing Time desk.
   const host = (req.headers.get('host') ?? '').toLowerCase().split(':')[0];
   // 1a. One canonical host per site: www forwards to the bare domain.
-  if ((host === 'www.itsalmostclosingtime.com' || host === 'www.realtynewsnow.app') && (req.method === 'GET' || req.method === 'HEAD')) {
+  if (host === 'www.realtynewsnow.app' && (req.method === 'GET' || req.method === 'HEAD')) {
     return NextResponse.redirect(`https://${host.slice(4)}${pathname}${search}`, 308);
-  }
-
-  // Closing Time's domain serves only Closing Time. Realty News Now pages go back to realtynewsnow.app.
-  if (host === 'itsalmostclosingtime.com' && (req.method === 'GET' || req.method === 'HEAD') && !isClosingTimePath(pathname)) {
-    return NextResponse.redirect(`https://realtynewsnow.app${pathname}${search}`, 307);
-  }
-
-  if ((host === 'itsalmostclosingtime.com' || host === 'www.itsalmostclosingtime.com') && pathname === '/') {
-    const url = req.nextUrl.clone();
-    url.pathname = '/closing-time-home';
-    return NextResponse.rewrite(url);
-  }
-
-  // 1b-2. Closing Time legal pages on its own domain.
-  if ((host === 'itsalmostclosingtime.com' || host === 'www.itsalmostclosingtime.com') && ['/privacy', '/terms', '/disclaimer', '/sms'].includes(pathname)) {
-    const url = req.nextUrl.clone();
-    url.pathname = '/closing-time-legal' + pathname;
-    return NextResponse.rewrite(url);
   }
 
   // 1c-2. Booking management, closing scheduling, and the deal portal live in the
@@ -330,7 +300,7 @@ export async function proxy(req: NextRequest) {
 
   // 1c. Closing Time lives on its own domain; the old address forwards there.
   if ((host === 'realtynewsnow.app' || host === 'www.realtynewsnow.app') && req.method === 'GET' && (pathname === '/agents/closing-time' || pathname.startsWith('/agents/closing-time/') || pathname.startsWith('/book/') || pathname.startsWith('/deal-portal/'))) {
-    return NextResponse.redirect(`https://itsalmostclosingtime.com${pathname}${search}`, 307);
+    return NextResponse.redirect(`https://closingtimetexas.com${pathname}${search}`, 307);
   }
 
   // 2. Publication permalink handling — applies to every page route.

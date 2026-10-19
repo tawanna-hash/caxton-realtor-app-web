@@ -6,7 +6,6 @@ import Script from 'next/script';
 
 /**
  * Google tag (gtag.js) for our two public domains, each with its own GA4 property:
- *   itsalmostclosingtime.com -> Closing Time       (NEXT_PUBLIC_CLOSING_TIME_GA_ID, default G-W5T3JMEHCH)
  *   realtynewsnow.app        -> Realty News Now    (NEXT_PUBLIC_RNN_GA_ID,          default G-3S5FD2JSCQ)
  * Renders nothing on any other host (localhost, previews, the native shell on another origin).
  *
@@ -18,7 +17,6 @@ import Script from 'next/script';
  */
 
 const SITES: Record<string, string | undefined> = {
-  'itsalmostclosingtime.com': process.env.NEXT_PUBLIC_CLOSING_TIME_GA_ID || 'G-W5T3JMEHCH',
   'realtynewsnow.app': process.env.NEXT_PUBLIC_RNN_GA_ID || 'G-3S5FD2JSCQ',
 };
 

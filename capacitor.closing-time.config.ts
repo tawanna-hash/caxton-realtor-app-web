@@ -1,18 +1,18 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-// Closing Time - separate native shell. Loads https://itsalmostclosingtime.com.
+// Closing Time - separate native shell. Loads https://closingtimetexas.com.
 // The Realty News Now app (capacitor.config.ts) is unchanged and keeps loading realtynewsnow.app.
 // appId confirmed by the owner on 2026-10-06. It cannot be changed after the first submission.
 const config: CapacitorConfig = {
-  appId: 'com.itsalmostclosingtime.app',
+  appId: 'com.closingtimetexas.app',
   appName: 'Closing Time',
   webDir: 'public',
   server: {
-    url: 'https://itsalmostclosingtime.com',
+    url: 'https://closingtimetexas.com',
     cleartext: false,
     androidScheme: 'https',
     iosScheme: 'https',
-    allowNavigation: ['itsalmostclosingtime.com', '*.itsalmostclosingtime.com'],
+    allowNavigation: ['closingtimetexas.com', '*.closingtimetexas.com'],
   },
   ios: { contentInset: 'always', scrollEnabled: true, limitsNavigationsToAppBoundDomains: false, backgroundColor: '#301D5D' },
   plugins: {

@@ -66,19 +66,6 @@ const cspString = Object.entries(cspDirectives)
   .map(([k, v]) => (v.length ? `${k} ${v.join(' ')}` : k))
   .join('; ');
 
-// Enforced policy for the Closing Time domain only (itsalmostclosingtime.com). The rest of the site stays Report-Only.
-// Adds Vercel Speed Insights, blob workers (PDF viewer) and blob iframes (uploaded contract preview).
-const closingTimeCsp = Object.entries({
-  ...cspDirectives,
-  'script-src': [...cspDirectives['script-src'], 'https://va.vercel-scripts.com', 'https://www.googletagmanager.com'],
-  'connect-src': [...cspDirectives['connect-src'], 'https://va.vercel-scripts.com', 'https://www.googletagmanager.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com'],
-  'frame-src': [...cspDirectives['frame-src'], 'blob:'],
-  'worker-src': ["'self'", 'blob:'],
-})
-  .map(([k, v]) => (v.length ? `${k} ${v.join(' ')}` : k))
-  .join('; ');
-const closingTimeHost = [{ type: 'host' as const, value: '(www\\.)?itsalmostclosingtime\\.com' }];
-
 // Report-Only policies ignore upgrade-insecure-requests and log a console error for it, so leave it out there.
 const reportOnlyCsp = cspString.replace('; upgrade-insecure-requests', '');
 
@@ -213,13 +200,9 @@ const nextConfig: NextConfig = {
       // Short aliases (old bookmarks, tests, marketing links) land on the same modal.
       { source: '/sign-in', destination: '/dashboard?auth=login', permanent: false },
       { source: '/signin', destination: '/dashboard?auth=login', permanent: false },
-      { source: '/sign-up', has: closingTimeHost, destination: '/closing-time-signup', permanent: false },
       { source: '/sign-up', destination: '/dashboard?auth=signup', permanent: false },
-      { source: '/signup', has: closingTimeHost, destination: '/closing-time-signup', permanent: false },
       { source: '/signup', destination: '/dashboard?auth=signup', permanent: false },
       { source: '/auth/sign-in', destination: '/dashboard?auth=login', permanent: false },
-      { source: '/auth/sign-up', has: closingTimeHost, destination: '/closing-time-signup', permanent: false },
-      { source: '/auth/signup', has: closingTimeHost, destination: '/closing-time-signup', permanent: false },
       { source: '/auth/sign-up', destination: '/dashboard?auth=signup', permanent: false },
       { source: '/auth/signup', destination: '/dashboard?auth=signup', permanent: false },
       { source: '/auth/forgot-password', destination: '/dashboard?auth=forgot', permanent: false },
@@ -247,18 +230,6 @@ const nextConfig: NextConfig = {
       {
         source: '/:path*',
         headers: securityHeaders,
-      },
-      {
-        source: '/:path*',
-        has: closingTimeHost,
-        headers: [{ key: 'Content-Security-Policy', value: closingTimeCsp }],
-      },
-      {
-        source: '/api/agent-command-center/contracts/original',
-        has: closingTimeHost,
-        headers: [
-          { key: 'Content-Security-Policy', value: closingTimeCsp.replace("frame-ancestors 'none'", "frame-ancestors 'self'") },
-        ],
       },
       // The saved original contract PDF is previewed in an iframe on our own
       // Agent Desk page, so allow same-origin framing for this route only.

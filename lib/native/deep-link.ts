@@ -50,7 +50,6 @@ export async function installDeepLinkListener(router: DeepLinkRouter): Promise<v
         const allowed =
           host === 'realtynewsnow.app' ||
           host.endsWith('.realtynewsnow.app') ||
-          host === 'itsalmostclosingtime.com' ||
           host === 'myrealtyline.com' ||
           host.endsWith('.myrealtyline.com');
         if (!allowed) return;

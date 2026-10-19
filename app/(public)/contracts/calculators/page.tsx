@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/server/auth/user';
 import { listContracts } from '@/lib/server/contract-dates';
-import ContractsNav from '../ContractsNav';
+import ContractsShell from '../ContractsShell';
 import CalculatorsClient from './CalculatorsClient';
 
 export const metadata: Metadata = {
@@ -19,9 +19,8 @@ export default async function CalculatorsPage({ searchParams }: { searchParams: 
   const { contracts } = await listContracts(user.realtorId);
   const options = contracts.map((c) => ({ id: c.id, address: c.propertyAddress, closingDate: c.closingDate }));
   return (
-    <>
-      <ContractsNav active="calculators" />
+    <ContractsShell active="calculators" title="Calculators" description="Estimates for planning and client conversations. They are not a loan estimate or a title quote.">
       <CalculatorsClient contracts={options} initialId={c} />
-    </>
+    </ContractsShell>
   );
 }

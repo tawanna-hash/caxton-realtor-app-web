@@ -29,7 +29,7 @@ export const GUIDES: Guide[] = [
     intro: 'Follow these steps in order. The whole setup takes about five minutes.',
     steps: [
       { step: "Before You Start", text: "A scheduler is a booking page. People pick an open time and it lands on your calendar. To book onto your own calendar and skip your busy times, open Integrations and connect Google Calendar or Outlook first. You can skip this and use the Closing Time Calendar, which emails you each booking with a calendar file." },
-      { step: "Set Your Custom URL", text: "On My Scheduling, find Your Custom Scheduler URL and choose Edit. Type your slug, for example your name, then choose Save. Every scheduler you make lives under this address, as in itsalmostclosingtime.com/book/your-slug." },
+      { step: "Set Your Custom URL", text: "On My Scheduling, find Your Custom Scheduler URL and choose Edit. Type your slug, for example your name, then choose Save. Every scheduler you make lives under this address, as in closingtimetexas.com/book/your-slug." },
       { step: "Start A Scheduler", text: "Under Schedulers, choose New Scheduler. On a first visit the button reads Create Your First Scheduler. A five-step builder opens with a live preview on the right. Choose Continue at the bottom of each step to move on, and Back to return to the previous one." },
       { step: "Step 1, Select Calendars: Calendar And Name", text: "Choose Select Booking Calendar: pick your connected calendar, or Closing Time Calendar. Type a Scheduler Name such as Home Inspection Walkthrough. This is the title on the booking page. Optionally type Your Name, which is shown to people booking. Leave it blank to hide your name." },
       { step: "Step 1, Select Calendars: Web Address", text: "Under Scheduler URL, choose Custom Alias and type a short word such as inspection. The page becomes /book/your-slug/inspection. Or choose Use Root URL for no alias. Only one scheduler can use the root. If you want to block busy times on other calendars, check up to six under Additional Calendars. Then choose Continue." },
@@ -108,7 +108,7 @@ export const GUIDES: Guide[] = [
       { step: "Choose When", text: "Check any of 7 Days Before, 3 Days Before, 1 Day Before and Due Today. You can choose more than one." },
       { step: "Enter Effective Dates", text: "On each deal, enter the Effective Date so the deadlines fill in. Alerts only send for active deals that have dates, and not for deadlines you have checked off as done." },
       { step: "Know When They Arrive", text: "Alerts go out between 8 and 10 AM Central on the days you choose, and each one carries the property address." },
-      { step: "If Alerts Stop", text: "Open the full Alert Setup guide from Settings for iPhone, Android, Mac, Windows and email steps. If the button says Notifications Blocked, allow notifications for itsalmostclosingtime.com in your browser's site settings and connect again." },
+      { step: "If Alerts Stop", text: "Open the full Alert Setup guide from Settings for iPhone, Android, Mac, Windows and email steps. If the button says Notifications Blocked, allow notifications for closingtimetexas.com in your browser's site settings and connect again." },
     ],
     tour: [
       { title: 'Turn On Deadline Alerts', text: 'This walkthrough points at each alert setting on the Settings page. Press Esc to stop at any time.', view: 'coordinator' },

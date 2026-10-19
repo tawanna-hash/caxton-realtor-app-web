@@ -15,11 +15,8 @@ export default function CalculatorsClient({ contracts, initialId }: { contracts:
   const [id, setId] = useState(CALCULATORS.some((c) => c.id === initialId) ? initialId! : CALCULATORS[0]!.id);
   const current = CALCULATORS.find((c) => c.id === id) ?? CALCULATORS[0]!;
   return (
-    <main className="w-full px-4 py-6 text-[#1B1726] sm:px-6 lg:px-8">
-      <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#7059A8]">Closing Time (limited edition)</p>
-      <h1 className="mt-1 text-3xl font-bold text-[#301D5D]">Calculators</h1>
-      <p className="mt-2 text-sm text-[#5B5470]">Estimates for planning and client conversations. They are not a loan estimate or a title quote.</p>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
+    <div>
+      <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
         <nav aria-label="Calculators">
           <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
             {CALCULATORS.map((c) => (
@@ -38,7 +35,7 @@ export default function CalculatorsClient({ contracts, initialId }: { contracts:
         </nav>
         <CalcCard key={current.id} calc={current} contracts={contracts} />
       </div>
-    </main>
+    </div>
   );
 }
 

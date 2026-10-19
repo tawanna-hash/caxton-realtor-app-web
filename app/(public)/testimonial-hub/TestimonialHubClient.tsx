@@ -538,7 +538,7 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
   );
 
   return (
-    <Tag className={embedded ? 'ct-hub space-y-4' : 'mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-8'}>
+    <Tag className={embedded ? 'ct-hub space-y-4' : 'mx-auto max-w-6xl px-4 py-8 sm:px-6'}>
       <header className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${embedded ? '' : 'border-b border-[#E6E5EC] pb-6'}`}>
         <div>
           {embedded ? null : <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Subscriber Tools</p>}

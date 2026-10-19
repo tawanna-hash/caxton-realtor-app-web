@@ -5,11 +5,9 @@ import { headers } from 'next/headers';
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const initialPub = await getServerPub();
-  const host = ((await headers()).get('x-forwarded-host') ?? (await headers()).get('host') ?? '').toLowerCase();
-  const chromeless = host === 'itsalmostclosingtime.com' || host.endsWith('.itsalmostclosingtime.com');
   return (
     <PublicationProvider initialPub={initialPub}>
-      <AppShell variant="public" initialPub={initialPub} chromeless={chromeless}>
+      <AppShell variant="public" initialPub={initialPub}>
         {children}
       </AppShell>
     </PublicationProvider>

@@ -8,7 +8,7 @@ import { logDealEvent } from '@/lib/server/closing-time-events';
  * and is recorded here when it is opened. Deleting a deal never gives a free slot back, because the ledger is kept
  * apart from the workspace. Accounts that already had deals when the ledger started are counted from those deals.
  */
-const EXEMPT_EMAILS = new Set(['tawanna@verock.com', 'tawanna@myrealtyline.com', 'tawanna@itsalmostclosingtime.com']);
+const EXEMPT_EMAILS = new Set(['tawanna@verock.com', 'tawanna@myrealtyline.com']);
 export const isBillingExempt = (email: string | null | undefined): boolean => EXEMPT_EMAILS.has((email ?? '').trim().toLowerCase());
 
 let ready: Promise<void> | null = null;

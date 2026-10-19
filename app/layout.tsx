@@ -161,7 +161,7 @@ export default function RootLayout({
             CLS, INP, FCP, TTFB) and surfaces them in the Vercel dashboard.
             Loaded after the app tree so it never blocks initial render. */}
         <SpeedInsights />
-        {/* Google tags: Closing Time on itsalmostclosingtime.com, Realty News Now on realtynewsnow.app (host checked in the component). */}
+        {/* Google tags: Realty News Now on realtynewsnow.app (host checked in the component). */}
         <SiteGA />
       </body>
     </html>

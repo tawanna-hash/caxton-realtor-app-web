@@ -58,10 +58,7 @@ function LoginInner() {
         if (j?.details?.twoFactorRequired) setNeedCode(true);
         throw new Error(j.error || j.message || `Sign-in failed (${r.status})`);
       }
-      // On itsalmostclosingtime.com, land on the Agent Desk. Realty News Now pages such as /dashboard
-      // would be sent to realtynewsnow.app by the domain split.
-      const onCt = /(^|\.)itsalmostclosingtime\.com$/i.test(window.location.hostname);
-      const dest = onCt && !/^\/(agents\/closing-time|book|deal-portal|closing-time)(\/|\?|$)/.test(rawNext ?? '') ? '/agents/closing-time' : next;
+      const dest = next;
       router.push(dest);
       router.refresh();
     } catch (e: unknown) {
@@ -71,24 +68,17 @@ function LoginInner() {
     }
   }
 
-  const [onClosingTimeHost, setOnClosingTimeHost] = useState(false);
-  useEffect(() => {
-    const ct = /(^|\.)itsalmostclosingtime\.com$/i.test(window.location.hostname);
-    setOnClosingTimeHost(ct);
-    if (ct) document.title = "Sign In | It's Almost Closing Time!";
-  }, []);
-
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
         <p className="text-sm uppercase tracking-[0.2em] text-brand-700 font-medium mb-2 text-center">
-          {onClosingTimeHost ? 'It\u2019s Almost Closing Time!' : 'Realty News Now'}
+          Realty News Now
         </p>
         <h1 className="text-2xl font-semibold text-gray-900 text-center mb-2">
           Sign in or Create an Account
         </h1>
         <p className="text-sm text-gray-500 font-light text-center mb-6">
-          {onClosingTimeHost ? 'Sign in to your Agent Desk.' : 'Sign in to access your market feed.'}
+          Sign in to access your market feed.
         </p>
 
         <form onSubmit={submit} className="space-y-3">
@@ -145,7 +135,7 @@ function LoginInner() {
           <Link href="/auth/forgot-password" className="text-gray-500 underline">
             Forgot password?
           </Link>
-          <Link href={onClosingTimeHost ? '/auth/sign-up' : '/subscribe'} className="text-brand-700 font-medium underline">
+          <Link href="/subscribe" className="text-brand-700 font-medium underline">
             Create an account
           </Link>
         </div>

@@ -146,19 +146,14 @@ export default function ContractsClient({
   const set = (key: keyof Fields) => (e: React.ChangeEvent<HTMLInputElement>) => setDraft((d) => (d ? { ...d, [key]: e.target.value } : d));
 
   return (
-    <main className="w-full px-4 py-6 text-[#1B1726] sm:px-6 lg:px-8">
-      <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#7059A8]">Realty News Now</p>
-      <h1 className="mt-1 text-3xl font-bold text-[#301D5D]">Closing Time (limited edition)</h1>
-      <p className="mt-2 max-w-3xl text-sm text-[#5B5470]">
-        Upload a Texas TREC contract. We read the dates, you confirm them, and we alert you by email or push before each one is due.
-        This is a reminder tool, not legal advice. Always check dates against the contract.
-      </p>
+    <div className="space-y-6">
+      <AttentionCard contracts={contracts} />
 
-      {error && <p role="alert" className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
-      {notice && <p role="status" className="mt-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-900">{notice}</p>}
+      {error && <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
+      {notice && <p role="status" className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-900">{notice}</p>}
 
       {!draft && (
-        <section className="mt-6 rounded-lg border border-[#D9D2E9] bg-white p-5">
+        <section id="add-contract" className="scroll-mt-20 rounded-lg border border-[#D9D2E9] bg-white p-5">
           <h2 className="text-lg font-semibold text-[#301D5D]">Add a contract</h2>
           <p className="mt-1 text-sm text-[#5B5470]">PDF, PNG, JPG or WEBP, up to 15 MB. Your file is read once and is not stored.</p>
           <div className="mt-4 flex flex-wrap gap-3">
@@ -175,7 +170,7 @@ export default function ContractsClient({
       )}
 
       {draft && (
-        <section className="mt-6 rounded-lg border border-[#D9D2E9] bg-white p-5" aria-label="Confirm contract dates">
+        <section id="add-contract" className="scroll-mt-20 rounded-lg border border-[#D9D2E9] bg-white p-5" aria-label="Confirm contract dates">
           <h2 className="text-lg font-semibold text-[#301D5D]">Confirm the dates</h2>
           <p className="mt-1 text-sm text-[#5B5470]">We filled in what we could read. Fix anything that looks wrong before saving.</p>
           {warnings.length > 0 && (
@@ -214,7 +209,7 @@ export default function ContractsClient({
         </section>
       )}
 
-      <section className="mt-6 rounded-lg border border-[#D9D2E9] bg-white p-5" aria-label="Alert settings">
+      <section className="rounded-lg border border-[#D9D2E9] bg-white p-5" aria-label="Alert settings">
         <h2 className="text-lg font-semibold text-[#301D5D]">How you are alerted</h2>
         <div className="mt-3 space-y-3 text-sm">
           <label className="flex min-h-[44px] items-center gap-3"><input type="checkbox" className="h-5 w-5" checked={alerts.emailEnabled} onChange={(e) => void updateAlerts({ emailEnabled: e.target.checked })} />Email, sent to your account email at about 8 a.m. Central</label>
@@ -239,7 +234,7 @@ export default function ContractsClient({
         </div>
       </section>
 
-      <section className="mt-6" aria-label="Saved contracts">
+      <section aria-label="Saved contracts">
         <h2 className="text-lg font-semibold text-[#301D5D]">Your contracts</h2>
         {contracts.length === 0 ? (
           <p className="mt-2 text-sm text-[#5B5470]">No contracts yet. Upload one to see its dates here.</p>
@@ -264,6 +259,57 @@ export default function ContractsClient({
           </ul>
         )}
       </section>
-    </main>
+    </div>
+  );
+}
+
+function todayIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function daysUntil(date: string, today: string): number {
+  return Math.round((Date.parse(`${date}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86_400_000);
+}
+
+function AttentionCard({ contracts }: { contracts: Contract[] }) {
+  const today = todayIso();
+  const items = contracts
+    .flatMap((c) => c.deadlines.map((d) => ({ key: `${c.id}-${d.id}`, label: d.label, date: d.date, address: c.propertyAddress })))
+    .filter((i) => daysUntil(i.date, today) >= -3)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 5);
+  const closings = contracts.map((c) => c.closingDate).filter((d) => d && daysUntil(d, today) >= 0).sort();
+  const next = closings[0] ? daysUntil(closings[0], today) : null;
+  return (
+    <section className="rounded-lg border border-[#E6E5EC] bg-white p-4 sm:p-6" aria-label="What needs attention">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
+            All Contracts &middot; {contracts.length} Saved
+          </p>
+          <h2 className="mt-1 text-xl font-semibold tracking-[-0.025em] text-gray-900">What Needs Attention</h2>
+        </div>
+        <span className="bg-[#F6F3FB] px-3 py-2 text-xs font-bold text-[#301D5D]">
+          {next === null ? 'No upcoming closings' : next === 0 ? 'Next Closing Today' : `Next closing \u00b7 ${next} day${next === 1 ? '' : 's'}`}
+        </span>
+      </div>
+      <div className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+        {items.length === 0 ? (
+          <p className="py-4 text-sm text-slate-600">{contracts.length === 0 ? 'No contracts yet. Upload one to see its dates here.' : 'No upcoming dates or recent overdue deadlines.'}</p>
+        ) : items.map((i) => {
+          const diff = daysUntil(i.date, today);
+          return (
+            <div key={i.key} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-900">{i.label}</p>
+                <p className="text-xs text-slate-500">{i.address}</p>
+              </div>
+              <span className={`text-xs font-bold ${diff < 0 ? 'text-[#661102]' : 'text-[#301D5D]'}`}>{diff < 0 ? 'Overdue' : diff === 0 ? 'Due Today' : fmt(i.date)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }

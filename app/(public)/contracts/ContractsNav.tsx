@@ -9,7 +9,7 @@ const ITEMS = [
 
 export default function ContractsNav({ active }: { active: 'dates' | 'forms' | 'calculators' | 'testimonials' }) {
   return (
-    <nav aria-label="Agent tools" className="w-full px-4 pt-6 sm:px-6 lg:px-8">
+    <nav aria-label="Agent tools" className="w-full">
       <ul className="flex flex-wrap gap-2">
         {ITEMS.map((item) => (
           <li key={item.key}>
