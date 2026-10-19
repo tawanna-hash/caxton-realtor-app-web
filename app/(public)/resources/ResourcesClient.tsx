@@ -41,7 +41,7 @@ export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesVi
   const copy = VIEW_COPY[view];
   return (
     <main className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
       {/* ── Page header ─────────────────────────────────────────────── */}
       <header className="mb-8 sm:mb-10">
         <p className={EYEBROW}>{copy.eyebrow}</p>
