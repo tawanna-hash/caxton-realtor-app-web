@@ -2223,5 +2223,4 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 #agent-desk.ct-lite, #agent-desk.ct-lite :is(h3, h4, p, li, dt, dd, label, td, th, legend, summary) { color: #301D5D; }
 #agent-desk.ct-lite :is(p, dd)[class*='text-'] , #agent-desk.ct-lite :is(span, div, li, label, a)[class*='text-slate-'], #agent-desk.ct-lite :is(span, div, li, label, p, a)[class*='text-gray-'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#5B5470]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#4A4757]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#1B1726]'] { color: #301D5D !important; }
 #agent-desk.ct-lite p:not([class*='font-semibold']):not([class*='font-bold']):not([class*='uppercase']) { font-weight: 300; }
-#agent-desk.ct-lite :is(.text-white, [class*='text-white']) { color: #fff !important; }
 #agent-desk.ct-lite :is(.text-red-700, [class*='text-red-']) { color: #B42318 !important; }

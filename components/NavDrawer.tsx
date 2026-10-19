@@ -327,28 +327,25 @@ export default function NavDrawer({
 
         {!isAdmin && (
           <div className="px-4 pt-4">
-            <Link
-              href="/agents"
-              onClick={onClose}
-              className="group block border border-white/20 bg-white p-4 text-[#301D5D] shadow-xl shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[#FFF8E6]"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xl font-semibold leading-tight tracking-[-0.025em] text-[#301D5D]">Closing Time</p>
-                  <p className="mt-2 text-sm font-semibold leading-5 text-[#42277C]">Keep Ahead of Contract Deadlines</p>
+            <div className="rounded-lg border border-[#F4D06F]/40 bg-white/10 p-4 shadow-xl shadow-black/20">
+              <Link href="/contracts" onClick={onClose} className="group flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#F4D06F]">Free For Subscribers</p>
+                  <p className="mt-2 font-serif text-2xl leading-tight text-white">Closing Time</p>
+                  <p className="mt-1 text-sm font-light leading-5 text-white/80">Upload a contract, get alerted before every deadline.</p>
                 </div>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#301D5D] text-[#F4D06F] transition group-hover:translate-x-0.5">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#F4D06F] text-[#301D5D] transition group-hover:translate-x-0.5">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M5 12h14M13 6l6 6-6 6" />
                   </svg>
                 </span>
+              </Link>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {([['Contracts', '/contracts'], ['TREC Forms', '/contracts/forms'], ['Run Numbers', '/contracts/calculators']] as const).map(([label, href]) => (
+                  <Link key={href} href={href} onClick={onClose} className="rounded-lg border border-white/25 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.11em] text-white transition hover:border-[#F4D06F] hover:bg-white/10 hover:text-[#F4D06F]">{label}</Link>
+                ))}
               </div>
-              <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-[0.11em] text-[#42277C]">
-                <span className="rounded-md bg-[#EFEAF8] px-3 py-1">TREC Forms</span>
-                <span className="rounded-md bg-[#EFEAF8] px-3 py-1">Run Numbers</span>
-                <span className="rounded-md bg-[#EFEAF8] px-3 py-1">Find Partners</span>
-              </div>
-            </Link>
+            </div>
           </div>
         )}
 
