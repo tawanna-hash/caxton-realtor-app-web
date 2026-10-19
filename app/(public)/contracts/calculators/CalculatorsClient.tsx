@@ -25,7 +25,7 @@ export default function CalculatorsClient({ contracts, initialId }: { contracts:
                   type="button"
                   aria-current={c.id === current.id ? 'true' : undefined}
                   onClick={() => setId(c.id)}
-                  className={`min-h-[44px] w-full rounded-md border px-3 text-left text-sm font-semibold transition ${
+                  className={`!h-11 w-full rounded-md border !px-3 text-left !text-sm font-semibold transition ${
                     c.id === current.id ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#D9D2E9] bg-white text-[#301D5D] hover:bg-[#F4F0FA]'
                   }`}
                 >{c.title}</button>
