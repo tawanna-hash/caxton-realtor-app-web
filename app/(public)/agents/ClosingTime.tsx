@@ -1708,7 +1708,7 @@ export default function ClosingTime({
   // Page title follows the current section so browser tabs and history entries are distinguishable.
   useEffect(() => {
     const label = DESK_VIEWS.find((v) => v.id === effectiveView)?.label ?? (effectiveView === 'deal-page' ? 'Deal' : 'Agent Desk');
-    document.title = `${label}${activeDeal && effectiveView !== 'deals' ? ` · ${activeDeal.propertyAddress || activeDeal.title || 'Deal'}` : ''} | It's Almost Closing Time!`;
+    document.title = `${label}${activeDeal && effectiveView !== 'deals' ? ` · ${activeDeal.propertyAddress || activeDeal.title || 'Deal'}` : ''} | Closing Time`;
   }, [effectiveView, activeDeal]);
   // Browser Back/Forward move between sections instead of leaving the app.
   const navStateRef = useRef<string>('');
@@ -3111,7 +3111,7 @@ export default function ClosingTime({
             <header className="ds-header">
               <div className="min-w-0">
                 <p className="ds-eyebrow ds-keep">{new Date(`${today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
-                <h2 className="ds-title">It&apos;s Almost Closing Time!</h2>
+                <h2 className="ds-title">Closing Time</h2>
                 <p className="ds-subtitle">{ready ? syncMessage : 'Loading your secure workspace.'}</p>
               </div>
               <div data-testid="text-next-closing-countdown" className="ds-pill-lg">

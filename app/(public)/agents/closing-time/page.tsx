@@ -13,7 +13,7 @@ import ComingSoon from '../ComingSoon';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: "Agent Desk | It's Almost Closing Time!",
+  title: "Agent Desk | Closing Time",
   description: 'Securely prepare deal dates, tasks, documents, and TREC contract details.',
 };
 

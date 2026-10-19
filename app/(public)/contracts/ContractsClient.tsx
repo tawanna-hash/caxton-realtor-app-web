@@ -31,7 +31,7 @@ const DAY_FIELDS: Array<[keyof Fields, string]> = [
 
 const OFFSETS: Array<0 | 1 | 3 | 7> = [7, 3, 1, 0];
 const input = 'mt-1 w-full rounded-md border border-[#D9D2E9] bg-white px-3 py-2 text-sm text-[#1B1726] focus:border-[#301D5D] focus:outline-none focus:ring-2 focus:ring-[#301D5D]/20';
-const button = 'inline-flex min-h-[44px] items-center justify-center rounded-full px-5 text-sm font-semibold transition disabled:opacity-50';
+const button = 'inline-flex min-h-[44px] items-center justify-center !rounded-lg hover:!rounded-lg focus-visible:!rounded-lg active:!rounded-lg px-5 text-sm font-semibold transition disabled:opacity-50';
 
 function fmt(value: string): string {
   const d = new Date(`${value}T12:00:00Z`);

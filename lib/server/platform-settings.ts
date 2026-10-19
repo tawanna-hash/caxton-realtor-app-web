@@ -163,8 +163,8 @@ export async function sendReleaseNotice(id: string, actor: string, smsEnabled: b
   const provider = getEmailProvider();
   let emailed = 0; const emailFailed: string[] = [];
   for (const u of users) {
-    const text = `${u.name ? `Hi ${u.name},\n\n` : ''}${rel.notice_body}\n\nScheduled update: ${when} Central.\n\nIt's Almost Closing Time`;
-    const html = `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;max-width:560px"><p>${u.name ? `Hi ${escapeHtml(u.name)},` : ''}</p>${rel.notice_body.split('\n').map((l) => `<p>${escapeHtml(l)}</p>`).join('')}<p><strong>Scheduled update:</strong> ${escapeHtml(when)} Central.</p><p style="color:#4A4757">It's Almost Closing Time</p></div>`;
+    const text = `${u.name ? `Hi ${u.name},\n\n` : ''}${rel.notice_body}\n\nScheduled update: ${when} Central.\n\nClosing Time`;
+    const html = `<div style="font-family:Inter,Arial,sans-serif;color:#1B1726;max-width:560px"><p>${u.name ? `Hi ${escapeHtml(u.name)},` : ''}</p>${rel.notice_body.split('\n').map((l) => `<p>${escapeHtml(l)}</p>`).join('')}<p><strong>Scheduled update:</strong> ${escapeHtml(when)} Central.</p><p style="color:#4A4757">Closing Time</p></div>`;
     try { const r = await provider.send({ to: { email: u.email, name: u.name }, subject: rel.notice_subject, text, html, emailType: 'closing-time-maintenance-notice', tags: ['maintenance-notice'], disableTracking: true }); if (r.success) emailed += 1; else emailFailed.push(u.email); } catch { emailFailed.push(u.email); }
   }
   let texted = 0; let textSkipped = 0; let textFailed = 0; let textNote = '';

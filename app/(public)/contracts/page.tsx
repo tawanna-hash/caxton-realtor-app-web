@@ -22,7 +22,7 @@ export default async function ContractsPage() {
       hero
       title="Keep Your Deals Moving"
       subtitle="Stay Ahead Of Deadlines."
-      description="Upload a Texas TREC contract. We read the dates, you confirm them, and we alert you by email or push before each one is due. This is a reminder tool, not legal advice. Always check dates against the contract."
+      description="Upload a Texas TREC contract. We read the dates, you confirm them, and we alert you by email or push before each one is due. Always check dates against the contract."
     >
       <ContractsClient realtorId={user.realtorId} initialContracts={contracts} initialAlerts={alerts} />
     </ContractsShell>
