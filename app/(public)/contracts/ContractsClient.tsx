@@ -155,7 +155,7 @@ export default function ContractsClient({
       {!draft && (
         <section id="add-contract" className="scroll-mt-20 rounded-lg border border-[#D9D2E9] bg-white p-5">
           <h2 className="text-lg font-semibold text-[#301D5D]">Add a contract</h2>
-          <p className="mt-1 text-sm text-[#5B5470]">Upload a Texas TREC contract (PDF, PNG, JPG or WEBP, up to 15 MB). We read the dates, you confirm them, and we alert you by email or push before each one is due. Your file is read once and is not stored. Always check dates against the contract.</p>
+          <p className="mt-1 text-sm text-[#5B5470]">PDF, PNG, JPG or WEBP, up to 15 MB. Your file is read once and is not stored.</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <label className={`${BTN_PRIMARY} cursor-pointer ${busy ? 'pointer-events-none opacity-50' : ''}`}>
               {busy === 'read' ? 'Reading contract...' : 'Upload contract'}

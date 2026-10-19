@@ -17,7 +17,13 @@ export default async function ContractsPage() {
   if (!user) redirect('/login?next=%2Fcontracts');
   const { contracts, alerts } = await listContracts(user.realtorId);
   return (
-    <ContractsShell active="dates">
+    <ContractsShell
+      active="dates"
+      hero
+      title="Keep Your Deals Moving"
+      subtitle="Stay Ahead Of Deadlines."
+      description="Upload a Texas TREC contract. We read the dates, you confirm them, and we alert you by email or push before each one is due. Always check dates against the contract."
+    >
       <ContractsClient realtorId={user.realtorId} initialContracts={contracts} initialAlerts={alerts} />
     </ContractsShell>
   );

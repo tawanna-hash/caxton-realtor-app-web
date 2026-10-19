@@ -19,7 +19,7 @@ export default async function CalculatorsPage({ searchParams }: { searchParams: 
   const { contracts } = await listContracts(user.realtorId);
   const options = contracts.map((c) => ({ id: c.id, address: c.propertyAddress, closingDate: c.closingDate }));
   return (
-    <ContractsShell active="calculators">
+    <ContractsShell active="calculators" title="Calculators" description="Estimates for planning and client conversations. They are not a loan estimate or a title quote.">
       <CalculatorsClient contracts={options} initialId={c} />
     </ContractsShell>
   );
