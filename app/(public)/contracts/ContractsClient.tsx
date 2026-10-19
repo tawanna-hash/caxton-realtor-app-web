@@ -11,14 +11,14 @@ type Fields = {
   propertyAddress: string; buyerNames: string; sellerNames: string; effectiveDate: string;
   optionPeriodDays: string; additionalEarnestMoneyDays: string; financingDeadlineDays: string;
   appraisalDeadlineDays: string; titleCommitmentDays: string; surveyDays: string;
-  titleObjectionDays: string; closingDate: string;
+  titleObjectionDays: string; closingDate: string; salesPrice: string; earnestMoney: string;
 };
 type Contract = Fields & { id: string; createdAt: string; deadlines: Array<{ id: string; label: string; date: string }> };
 
 const EMPTY: Fields = {
   propertyAddress: '', buyerNames: '', sellerNames: '', effectiveDate: '', optionPeriodDays: '',
   additionalEarnestMoneyDays: '', financingDeadlineDays: '', appraisalDeadlineDays: '',
-  titleCommitmentDays: '', surveyDays: '', titleObjectionDays: '', closingDate: '',
+  titleCommitmentDays: '', surveyDays: '', titleObjectionDays: '', closingDate: '', salesPrice: '', earnestMoney: '',
 };
 
 const DAY_FIELDS: Array<[keyof Fields, string]> = [
@@ -65,8 +65,12 @@ function fromExtraction(w: Record<string, string>): Fields {
     surveyDays: digits(w.surveyDays),
     titleObjectionDays: digits(w.titleObjectionDays),
     closingDate: isoDate(w.closingDate),
+    salesPrice: money(w.salesPrice),
+    earnestMoney: money(w.earnestMoney),
   };
 }
+
+const money = (v: unknown) => String(v ?? '').replace(/[^\d.]/g, '').replace(/^(\d*\.\d*).*$/, '$1').slice(0, 20);
 
 export default function ContractsClient({
   realtorId, initialContracts, initialAlerts,
@@ -200,6 +204,8 @@ export default function ContractsClient({
             <label className="text-sm font-medium">Seller<input className={input} value={draft.sellerNames} onChange={set('sellerNames')} maxLength={300} /></label>
             <label className="text-sm font-medium">Effective date<input type="date" className={input} value={draft.effectiveDate} onChange={set('effectiveDate')} /></label>
             <label className="text-sm font-medium">Closing date<input type="date" className={input} value={draft.closingDate} onChange={set('closingDate')} /></label>
+            <label className="text-sm font-medium">Sales price<input inputMode="decimal" className={input} value={draft.salesPrice} onChange={set('salesPrice')} maxLength={20} placeholder="450000" /></label>
+            <label className="text-sm font-medium">Earnest money<input inputMode="decimal" className={input} value={draft.earnestMoney} onChange={set('earnestMoney')} maxLength={20} placeholder="5000" /></label>
             {DAY_FIELDS.map(([key, label]) => (
               <label key={key} className="text-sm font-medium">{label}
                 <input inputMode="numeric" pattern="\d*" maxLength={3} className={input} value={draft[key]} onChange={set(key)} />

@@ -34,6 +34,8 @@ const contractSchema = z.object({
   surveyDays: days,
   titleObjectionDays: days,
   closingDate: date,
+  salesPrice: z.string().trim().max(20).regex(/^[\d.]*$/, 'Use numbers only').default(''),
+  earnestMoney: z.string().trim().max(20).regex(/^[\d.]*$/, 'Use numbers only').default(''),
 }).strict();
 
 const alertsSchema = z.object({

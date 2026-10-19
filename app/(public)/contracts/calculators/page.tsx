@@ -17,7 +17,7 @@ export default async function CalculatorsPage({ searchParams }: { searchParams: 
   const user = await getCurrentUser();
   if (!user) redirect('/login?next=%2Fcontracts%2Fcalculators');
   const { contracts } = await listContracts(user.realtorId);
-  const options = contracts.map((c) => ({ id: c.id, address: c.propertyAddress, closingDate: c.closingDate }));
+  const options = contracts.map((c) => ({ id: c.id, address: c.propertyAddress, closingDate: c.closingDate, price: c.salesPrice, earnest: c.earnestMoney }));
   return (
     <ContractsShell active="calculators">
       <CalculatorsClient contracts={options} initialId={c} />

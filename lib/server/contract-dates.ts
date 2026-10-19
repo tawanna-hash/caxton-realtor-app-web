@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import {
   agentCommandCenterWorkspaceSchema,
   agentDealSchema,
+  defaultAgentContractDetails,
   defaultAgentNotificationPreferences,
   type AgentCommandCenterWorkspace,
   type AgentDeal,
@@ -35,6 +36,8 @@ export type ContractDatesInput = {
   surveyDays: string;
   titleObjectionDays: string;
   closingDate: string;
+  salesPrice: string;
+  earnestMoney: string;
 };
 
 export type ContractSummary = ContractDatesInput & {
@@ -87,6 +90,7 @@ export function buildLiteDeal(input: ContractDatesInput, now = new Date()): Agen
     surveyDays: input.surveyDays,
     titleObjectionDays: input.titleObjectionDays,
     closingDate: input.closingDate,
+    contractDetails: { ...defaultAgentContractDetails(), salesPrice: input.salesPrice, earnestMoney: input.earnestMoney },
     status: 'active',
     createdAt: iso,
     updatedAt: iso,
@@ -109,6 +113,8 @@ export function summarize(deal: AgentDeal): ContractSummary {
     surveyDays: deal.surveyDays,
     titleObjectionDays: deal.titleObjectionDays,
     closingDate: deal.closingDate,
+    salesPrice: deal.contractDetails?.salesPrice ?? '',
+    earnestMoney: deal.contractDetails?.earnestMoney ?? '',
     deadlines: deadlinesFor(deal),
   };
 }

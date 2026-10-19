@@ -7,7 +7,7 @@ import {
   type Calculator, type Field, type Output, type Values,
 } from '@/lib/closing-time-calculators';
 
-type ContractOption = { id: string; address: string; closingDate: string };
+type ContractOption = { id: string; address: string; closingDate: string; price: string; earnest: string };
 
 const control = 'mt-1 w-full rounded-md border border-[#D9D2E9] bg-white px-3 py-2 text-sm text-[#1B1726] focus:border-[#301D5D] focus:outline-none focus:ring-2 focus:ring-[#301D5D]/20';
 const heading = 'text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5B5470]';
@@ -25,10 +25,20 @@ export default function CalculatorsClient({ contracts, initialId }: { contracts:
 }
 
 function CalcCard({ calc, contracts }: { calc: Calculator; contracts: ContractOption[] }) {
-  const [v, setV] = useState<Values>(() => defaults(calc));
-  const [contractId, setContractId] = useState('');
+  const keys = new Set(calc.fields.map((f) => f.key));
+  const fromContract = (c?: ContractOption): Values => {
+    const out: Values = {};
+    if (!c) return out;
+    if (c.closingDate && keys.has('date')) out.date = c.closingDate;
+    if (c.price && keys.has('price')) out.price = c.price;
+    if (c.earnest && keys.has('earnest')) out.earnest = c.earnest;
+    return out;
+  };
+  // The newest saved contract fills in automatically; pick another from the list, or type over any value.
+  const [contractId, setContractId] = useState(contracts[0]?.id ?? '');
+  const [v, setV] = useState<Values>(() => ({ ...defaults(calc), ...fromContract(contracts[0]) }));
   const set = (k: string, x: string | boolean) => setV((o) => ({ ...o, [k]: x }));
-  const hasDate = calc.fields.some((f) => f.key === 'date');
+  const canFill = keys.has('date') || keys.has('price') || keys.has('earnest');
   const groups = useMemo(() => [...new Set(calc.fields.map((f) => f.group ?? ''))], [calc]);
   const [out, setOut] = useState<Output | null>(null);
   useEffect(() => {
@@ -42,12 +52,12 @@ function CalcCard({ calc, contracts }: { calc: Calculator; contracts: ContractOp
       <p className="mt-1 text-sm text-[#5B5470]">{calc.blurb}</p>
       <div className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-2">
         <form className="grid content-start gap-4" onSubmit={(e) => e.preventDefault()} aria-label={`${calc.title} inputs`}>
-          {hasDate && (
-            <label className="block text-sm font-medium">Use a saved contract&apos;s closing date
+          {canFill && contracts.length > 0 && (
+            <label className="block text-sm font-medium">Fill from a saved contract
               <select className={control} value={contractId} onChange={(e) => {
                 const c = contracts.find((x) => x.id === e.target.value);
                 setContractId(e.target.value);
-                if (c?.closingDate) set('date', c.closingDate);
+                if (c) setV((o) => ({ ...o, ...fromContract(c) }));
               }}>
                 <option value="">None, enter it by hand</option>
                 {contracts.map((c) => <option key={c.id} value={c.id}>{c.address}</option>)}

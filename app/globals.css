@@ -2242,3 +2242,6 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   #agent-desk.ct-lite .grid[class*='md:grid-cols']:not([class^='grid-cols-']):not([class*=' grid-cols-']) { grid-template-columns: minmax(0, 1fr); }
   #agent-desk.ct-lite :is(.grid, .flex) > * { min-width: 0; }
 }
+
+/* Paragraphs run the full width of the window instead of a narrow column. */
+#agent-desk.ct-lite :is(p, .ds-subtitle) { max-width: none !important; text-wrap: wrap !important; }

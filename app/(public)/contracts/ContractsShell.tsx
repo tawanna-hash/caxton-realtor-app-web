@@ -31,8 +31,8 @@ export default function ContractsShell({
             <div>
               <p className="ds-eyebrow">Closing Time (limited edition)</p>
               <h1 className="ds-title mt-2 sm:!text-[2rem]">{title}</h1>
-              {subtitle && <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-slate-900">{subtitle}</p>}
-              {description && <p className="ds-subtitle max-w-2xl leading-7">{description}</p>}
+              {subtitle && <p className="mt-3 text-base font-semibold leading-7 text-slate-900">{subtitle}</p>}
+              {description && <p className="ds-subtitle leading-7">{description}</p>}
             </div>
             {hero && (
               <aside className="ds-card">

@@ -108,7 +108,7 @@ const netSheet: Calculator = {
 };
 
 const closing: Calculator = {
-  id: 'closing', title: 'Cash To Close', blurb: 'What the buyer brings to closing. Pick an under-contract contract to fill in its price, closing date and earnest money.',
+  id: 'closing', title: 'Cash To Close', blurb: 'What the buyer brings to closing. Fills in the price, closing date and earnest money from your saved contract.',
   fields: [
     m('price', 'Home Price', '450000', { group: 'The purchase' }), p('down', 'Down Payment', '20', { group: 'The purchase' }), p('rate', 'Interest Rate', '6.75', { group: 'The purchase' }),
     m('ins', 'Home Insurance Per Year', '1575', { group: 'The purchase' }), m('tax', 'Property Tax Per Year', '8100', { group: 'The purchase' }), { key: 'date', label: 'Closing Date', type: 'date', def: '', group: 'The purchase', hint: 'Sets the days of prepaid interest' },
