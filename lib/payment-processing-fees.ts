@@ -10,7 +10,7 @@ export const INVOICE_PAYMENT_METHODS: Array<{
     value: 'card',
     label: 'Credit or debit card',
     shortLabel: 'Card',
-    feeLabel: '2.9% + $0.30',
+    feeLabel: '3%',
   },
   {
     value: 'ach',
@@ -37,7 +37,7 @@ export function processingFeeCents(
   const amount = Math.max(0, Math.round(amountCents));
   if (method === 'ach') return Math.min(Math.round(amount * 0.008), 500);
   if (method === 'bnpl') return Math.round(amount * 0.0599) + 30;
-  return Math.round(amount * 0.029) + 30;
+  return Math.round(amount * 0.03);
 }
 
 export function paymentMethodLabel(method: InvoicePaymentMethod): string {
