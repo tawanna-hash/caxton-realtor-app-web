@@ -43,7 +43,7 @@ export default function PayoutsPanel() {
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} />
-        <select aria-label="Date range" value={range} onChange={(e) => setRange(e.target.value)} className="anchor-input rounded-full border border-[color:var(--ds-line)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]">
+        <select aria-label="Date range" value={range} onChange={(e) => setRange(e.target.value)} className="anchor-input rounded-[10px] border border-[color:var(--ds-line)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]">
           <option value="30-days">Last 30 days</option><option value="90-days">Last 90 days</option><option value="12-months">Last 12 months</option><option value="all">All time</option>
         </select>
         <a href="/admin/getpaid/stripepayouts" className={`${A.outline} ml-auto`}>Open in Get Paid</a>

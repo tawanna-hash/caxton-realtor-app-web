@@ -281,7 +281,7 @@ export default function BuilderClient() {
             <button type="button" aria-label="More actions" aria-haspopup="menu" aria-expanded={moreMenu} className={`${A.outline} px-3 text-lg leading-none`} onClick={() => { setMoreMenu((o) => !o); setSendMenu(false); }}>⋮</button>
             {moreMenu && (
               <div role="menu" className="absolute right-0 z-50 mt-2 w-48 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
-                <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-red-700" style={{ border: 0, background: 'transparent' }} onClick={() => { setMoreMenu(false); setDiscardOpen(true); }}>Discard draft</button>
+                <button type="button" role="menuitem" className="w-full rounded-[10px] px-3 py-2 text-left text-sm text-red-700" style={{ border: 0, background: 'transparent' }} onClick={() => { setMoreMenu(false); setDiscardOpen(true); }}>Discard draft</button>
               </div>
             )}
           </div>
@@ -291,8 +291,8 @@ export default function BuilderClient() {
             <button type="button" aria-label="More send options" aria-haspopup="menu" aria-expanded={sendMenu} className={`${A.primary} ml-px px-3 text-base leading-none`} disabled={problems.length > 0 || busy} onClick={() => { setSendMenu((o) => !o); setMoreMenu(false); }}>▾</button>
             {sendMenu && (
               <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
-                <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setSendOpen(true); }}>Send now by email</button>
-                <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setShareOpen(true); }}>Share by link</button>
+                <button type="button" role="menuitem" className="w-full rounded-[10px] px-3 py-2 text-left text-sm text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setSendOpen(true); }}>Send now by email</button>
+                <button type="button" role="menuitem" className="w-full rounded-[10px] px-3 py-2 text-left text-sm text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setShareOpen(true); }}>Share by link</button>
               </div>
             )}
           </div>
@@ -321,7 +321,7 @@ export default function BuilderClient() {
                 </div>
                 <div className="mt-4 flex rounded-full bg-[color:var(--ds-page)] p-1 text-sm" role="tablist">
                   {([['overview', 'Overview'], ['service', 'By service'], ['invoice', 'By invoice']] as const).map(([k, l]) => (
-                    <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`flex-1 rounded-full px-2 py-1.5 ${tab === k ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>
+                    <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`flex-1 rounded-[10px] px-2 py-1.5 ${tab === k ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>
                   ))}
                 </div>
                 {tab === 'overview' && (() => {
@@ -488,7 +488,7 @@ export default function BuilderClient() {
                   <span>Billing schedule display for automatic services</span>
                   <div className="inline-flex rounded-full bg-[color:var(--ds-page)] p-1" role="group" aria-label="Billing schedule display">
                     {([['timeline', 'Timeline'], ['occurrence', 'By billing occurrence']] as const).map(([k, l]) => (
-                      <button key={k} type="button" aria-pressed={doc.payment.schedule_view === k} onClick={() => update({ payment: { ...doc.payment, schedule_view: k } })} className={`rounded-full px-4 py-1.5 text-xs ${doc.payment.schedule_view === k ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>
+                      <button key={k} type="button" aria-pressed={doc.payment.schedule_view === k} onClick={() => update({ payment: { ...doc.payment, schedule_view: k } })} className={`rounded-[10px] px-4 py-1.5 text-xs ${doc.payment.schedule_view === k ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>
                     ))}
                   </div>
                 </div>
@@ -554,7 +554,7 @@ export default function BuilderClient() {
                     </div>
                     <div className="inline-flex rounded-full bg-[color:var(--ds-page)] p-1 text-sm" role="group" aria-label="Visibility">
                       {([true, false] as const).map((cf) => (
-                        <button key={String(cf)} type="button" aria-pressed={r.client_facing === cf} onClick={() => update({ refs: doc.refs.map((x, k) => (k === i ? { ...x, client_facing: cf } : x)) })} className={`rounded-full px-4 py-1.5 ${r.client_facing === cf ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{cf ? 'Client-facing' : 'Internal'}</button>
+                        <button key={String(cf)} type="button" aria-pressed={r.client_facing === cf} onClick={() => update({ refs: doc.refs.map((x, k) => (k === i ? { ...x, client_facing: cf } : x)) })} className={`rounded-[10px] px-4 py-1.5 ${r.client_facing === cf ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{cf ? 'Client-facing' : 'Internal'}</button>
                       ))}
                     </div>
                   </div>
@@ -832,7 +832,7 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
           <span>You are in preview mode. No activity will be saved.</span>
           <div className="flex items-center gap-3">
             <div className="inline-flex rounded-full bg-[color:var(--ds-page)] p-1 text-xs" role="group" aria-label="Device">
-              {([[false, 'Desktop'], [true, 'Mobile']] as const).map(([m, l]) => <button key={l} type="button" aria-pressed={mobile === m} onClick={() => setMobile(m)} className={`rounded-full px-3 py-1 ${mobile === m ? 'bg-white font-medium shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>)}
+              {([[false, 'Desktop'], [true, 'Mobile']] as const).map(([m, l]) => <button key={l} type="button" aria-pressed={mobile === m} onClick={() => setMobile(m)} className={`rounded-[10px] px-3 py-1 ${mobile === m ? 'bg-white font-medium shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>)}
             </div>
             <button type="button" aria-label="Close preview" onClick={onClose} className="text-xl leading-none" style={{ border: 0, background: 'transparent' }}>×</button>
           </div>
