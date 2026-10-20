@@ -20,7 +20,7 @@ export async function applyChoice(sql: Sql, agreementId: string, choice: { optio
   const meta = await getAgreementMeta(agreementId, sql);
   if (!meta) return { ok: false, error: 'This agreement has no choices to make.', status: 400 };
 
-  const lines = (await sql`SELECT line_no, amount_cents, unit_cents, ad_size, frequency, start_date, end_date FROM agreement_line_items WHERE agreement_id = ${agreementId} ORDER BY line_no`) as unknown as Array<{ line_no: number; amount_cents: number; unit_cents: number; ad_size: string | null; frequency: string | null; start_date: string | null; end_date: string | null }>;
+  const lines = (await sql`SELECT line_no, amount_cents, unit_cents, ad_size, frequency, start_date, end_date FROM agreement_line_items WHERE agreement_id = ${agreementId} ORDER BY line_no`) as unknown as Array<{ line_no: number; amount_cents: number; unit_cents: number; ad_size: string | null; frequency: string | null; start_date: string | Date | null; end_date: string | Date | null }>;
   const all = lines.map((l) => l.line_no);
   let keep = [...all];
 
@@ -38,11 +38,11 @@ export async function applyChoice(sql: Sql, agreementId: string, choice: { optio
 
   const removed = all.filter((n) => !keep.includes(n));
   if (removed.length) {
-    await sql`DELETE FROM agreement_line_items WHERE agreement_id = ${agreementId} AND line_no = ANY(${removed}::int[])`;
     const left = lines.filter((l) => keep.includes(l.line_no));
     const total = left.reduce((n, l) => n + l.amount_cents, 0);
-    const starts = left.map((l) => l.start_date).filter(Boolean).map(String).sort();
-    const ends = left.map((l) => l.end_date).filter(Boolean).map(String).sort();
+    const iso = (d: string | Date | null) => (d ? new Date(d).toISOString().slice(0, 10) : null);
+    const starts = left.map((l) => iso(l.start_date)).filter(Boolean).sort() as string[];
+    const ends = left.map((l) => iso(l.end_date)).filter(Boolean).sort() as string[];
     await sql`UPDATE agreements SET amount_cents = ${total}, ad_rate_cents = ${left[0].unit_cents}, ad_size = ${left[0].ad_size}, frequency = ${left[0].frequency},
       start_date = COALESCE(${starts[0] ?? null}::date, start_date), end_date = COALESCE(${ends[ends.length - 1] ?? null}::date, end_date), updated_at = NOW() WHERE id = ${agreementId}`;
     // The draft invoice lists one line per agreement line, in order.
@@ -53,6 +53,7 @@ export async function applyChoice(sql: Sql, agreementId: string, choice: { optio
     }
   }
 
+  if (removed.length) await sql`DELETE FROM agreement_line_items WHERE agreement_id = ${agreementId} AND line_no = ANY(${removed}::int[])`;
   await saveAgreementMeta(agreementId, {
     ...meta,
     options: options.length > 1 ? [options[Math.floor(Number(choice.option))]] : meta.options,
