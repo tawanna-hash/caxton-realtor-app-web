@@ -2293,3 +2293,14 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   color: #261e5a !important;
   font-weight: 500;
 }
+
+[data-admin-ui='true'] .anchor-toggle {
+  border: 0 !important;
+  border-radius: 9999px !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  height: 28px !important;
+  width: 48px !important;
+}
+[data-admin-ui='true'] .anchor-toggle[aria-checked='true'] { background-color: #5b3fe3 !important; }
+[data-admin-ui='true'] .anchor-toggle[aria-checked='false'] { background-color: #c9c6d8 !important; }

@@ -121,3 +121,38 @@ export async function deleteTemplate(id: string, sql: Sql = getSql()): Promise<v
   await ensure(sql);
   await sql`DELETE FROM agreements_v2_templates WHERE id = ${id}`;
 }
+
+/* ---------- Notification settings ---------- */
+
+export const NOTIFICATION_EVENTS = [
+  { key: 'client_new_partner_invite', audience: 'client', label: 'Agreement sent to a new partner', recipients: 'Partner contact' },
+  { key: 'client_renewal_invite', audience: 'client', label: 'Renewal link sent', recipients: 'Partner contact' },
+  { key: 'client_renewal_reminder', audience: 'client', label: 'Renewal reminder (7, 3 and 1 day before expiry)', recipients: 'Partner contact' },
+] as const;
+export type NotificationKey = (typeof NOTIFICATION_EVENTS)[number]['key'];
+export type NotificationSettings = Record<NotificationKey, boolean>;
+
+function defaultNotifications(): NotificationSettings {
+  return Object.fromEntries(NOTIFICATION_EVENTS.map((e) => [e.key, true])) as NotificationSettings;
+}
+
+/** Stored in row id 2 of agreements_v2_settings. Never throws: everything defaults to on. */
+export async function getNotifications(sql: Sql = getSql()): Promise<NotificationSettings> {
+  const out = defaultNotifications();
+  try {
+    await ensure(sql);
+    const rows = (await sql`SELECT value FROM agreements_v2_settings WHERE id = 2`) as Array<{ value: Record<string, unknown> }>;
+    const v = rows[0]?.value ?? {};
+    for (const e of NOTIFICATION_EVENTS) if (typeof v[e.key] === 'boolean') out[e.key] = v[e.key] as boolean;
+  } catch { /* defaults */ }
+  return out;
+}
+
+export async function saveNotifications(input: Record<string, unknown>, sql: Sql = getSql()): Promise<NotificationSettings> {
+  await ensure(sql);
+  const current = await getNotifications(sql);
+  for (const e of NOTIFICATION_EVENTS) if (typeof input[e.key] === 'boolean') current[e.key] = input[e.key] as boolean;
+  await sql`INSERT INTO agreements_v2_settings (id, value, updated_at) VALUES (2, ${JSON.stringify(current)}::jsonb, now())
+    ON CONFLICT (id) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`;
+  return current;
+}

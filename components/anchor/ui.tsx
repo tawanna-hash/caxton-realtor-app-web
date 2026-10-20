@@ -144,3 +144,90 @@ export function SettingRow({ label, hint, children }: { label: string; hint?: st
     </div>
   );
 }
+
+/* ---------- Edit columns (Anchor "Edit columns" popover) ---------- */
+
+export type ColumnDef = { key: string; label: string; /** 1-based position of the column in the table */ index: number };
+
+/** Remembers which optional columns are shown, per table, in this browser. */
+export function useColumns(storageKey: string, cols: ColumnDef[]) {
+  const all = cols.map((c) => c.key);
+  const [visible, setVisible] = useState<string[]>(all);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(`anchor-cols:${storageKey}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (Array.isArray(parsed)) setVisible(all.filter((k) => parsed.includes(k)));
+      }
+    } catch { /* keep defaults */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
+  const apply = (v: string[]) => {
+    setVisible(v);
+    try { window.localStorage.setItem(`anchor-cols:${storageKey}`, JSON.stringify(v)); } catch { /* noop */ }
+  };
+  return { visible, apply };
+}
+
+/** Hides unchecked columns. Rows with a colspan (loading, empty) are left alone. */
+export function ColumnStyle({ tableClass, cols, visible }: { tableClass: string; cols: ColumnDef[]; visible: string[] }) {
+  const css = cols
+    .filter((c) => !visible.includes(c.key))
+    .map((c) => `.${tableClass} :is(th,td):nth-child(${c.index}):not([colspan]){display:none}`)
+    .join('\n');
+  return css ? <style>{css}</style> : null;
+}
+
+export function EditColumns({ cols, visible, onApply }: { cols: ColumnDef[]; visible: string[]; onApply: (v: string[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<string[]>(visible);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
+  return (
+    <div className="relative" ref={ref}>
+      <button type="button" className={`${A.outline} inline-flex items-center gap-2`} aria-expanded={open} onClick={() => { setDraft(visible); setOpen((o) => !o); }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+        Edit columns
+      </button>
+      {open && (
+        <div className="absolute right-0 z-30 mt-2 w-64 rounded-lg border border-[#ECEAF4] bg-white p-4 shadow-lg" role="dialog" aria-label="Edit columns">
+          <div className="mb-3 flex items-center justify-between text-sm text-[#6E6A8A]">
+            Edit columns
+            <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="text-lg leading-none text-[#261E5A]">×</button>
+          </div>
+          {cols.map((c) => (
+            <label key={c.key} className="flex items-center gap-3 py-2 text-sm text-[#261E5A]">
+              <input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={draft.includes(c.key)} onChange={() => setDraft((d) => (d.includes(c.key) ? d.filter((x) => x !== c.key) : [...d, c.key]))} />
+              {c.label}
+            </label>
+          ))}
+          <button type="button" className={`${A.primary} mt-3 w-full`} onClick={() => { onApply(draft); setOpen(false); }}>Apply</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Anchor-style on/off switch. */
+export function Toggle({ on, onChange, label, disabled }: { on: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!on)}
+      className={`anchor-toggle relative h-7 w-12 shrink-0 rounded-full transition ${on ? 'bg-[#5B3FE3]' : 'bg-[#C9C6D8]'} ${disabled ? 'opacity-60' : ''}`}
+    >
+      <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
+    </button>
+  );
+}

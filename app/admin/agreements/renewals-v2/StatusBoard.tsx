@@ -5,7 +5,7 @@
 // agreements, the draft recurring-invoice schedule for review.
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { A, EmptyState, FilterChip, SearchBox } from '@/components/anchor/ui';
+import { A, ColumnStyle, EditColumns, EmptyState, FilterChip, SearchBox, useColumns, type ColumnDef } from '@/components/anchor/ui';
 
 type Item = {
   id: string;
@@ -21,6 +21,13 @@ type Item = {
   schedule_id: string | null;
   timeline: { count: number; amount_cents: number; start: string | null } | null;
 };
+
+const COLS: ColumnDef[] = [
+  { key: 'type', label: 'Type', index: 2 },
+  { key: 'status', label: 'Status', index: 3 },
+  { key: 'monthly', label: 'Monthly', index: 4 },
+  { key: 'billing', label: 'Billing', index: 5 },
+];
 
 const STAGE_LABEL: Record<Item['stage'], string> = { draft: 'Draft', sent: 'Sent', opened: 'Opened', signed: 'Signed' };
 const STAGE_STYLE: Record<Item['stage'], string> = {
@@ -47,6 +54,7 @@ export default function StatusBoard() {
   const [notice, setNotice] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
   const [q, setQ] = useState('');
+  const cols = useColumns('board', COLS);
   const [stages, setStages] = useState<Item['stage'][]>(['draft', 'sent', 'opened', 'signed']);
   const [kinds, setKinds] = useState<Item['kind'][]>(['new', 'renewal']);
   const reload = useCallback(() => setTick((t) => t + 1), []);
@@ -106,11 +114,13 @@ export default function StatusBoard() {
         <SearchBox value={q} onChange={setQ} label="Search agreements" />
         <FilterChip title="Status" value={stages} onApply={setStages} options={[{ value: 'draft', label: 'Draft' }, { value: 'sent', label: 'Sent' }, { value: 'opened', label: 'Opened' }, { value: 'signed', label: 'Signed' }]} />
         <FilterChip title="Type" value={kinds} onApply={setKinds} options={[{ value: 'new', label: 'New partner' }, { value: 'renewal', label: 'Renewal' }]} />
+        <div className="ml-auto"><EditColumns cols={COLS} visible={cols.visible} onApply={cols.apply} /></div>
       </div>
       {notice && <div className={A.notice}>{notice}</div>}
       {error && <div className={A.error}>{error}</div>}
       <div className="overflow-x-auto">
-        <table className={`${A.table} min-w-[760px]`}>
+        <ColumnStyle tableClass="cols-board" cols={COLS} visible={cols.visible} />
+        <table className={`${A.table} cols-board min-w-[760px]`}>
           <thead>
             <tr><th>Client</th><th>Type</th><th>Status</th><th>Monthly</th><th>Billing</th><th /></tr>
           </thead>
