@@ -5,6 +5,7 @@
 // draft linked by `renewed_from_id`, and reuses the live signing pipeline
 // (/api/ad-sign/[token]) to finalize. No live route or table is modified.
 
+import { getDefaults, renderIntro } from '@/lib/agreements-v2/settings';
 import { signToken } from '@/lib/sign-token';
 import { sendEmail } from '@/lib/email';
 import { brandForPublication } from '@/lib/email-templates';
@@ -234,13 +235,14 @@ export function renewalEmailHtml(params: {
   daysLeft: number | null;
   reminderStage?: number;
   rateLock: boolean;
+  intro?: string | null;
 }): string {
   const { ag, link } = params;
   const brand = brandForPublication(ag.publication);
   const exp = dateOnly(ag.start_date);
   const lead = params.reminderStage
     ? `This is a friendly reminder that your renewal is still waiting for your approval.`
-    : `Your advertising agreement is coming up for renewal. We pre-filled everything, so renewing takes about a minute.`;
+    : renderIntro(params.intro || 'Your advertising agreement is coming up for renewal. We pre-filled everything, so renewing takes about a minute.', ag);
   const lock = params.rateLock && ag.renewal_offer_expires_at
     ? `<p style="margin:16px 0 0 0;font-size:13px;color:#4A4757">Your renewal rate is held for 72 hours, until ${escapeHtml(new Date(ag.renewal_offer_expires_at).toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'full', timeStyle: 'short' }))} Central.</p>`
     : '';
@@ -284,7 +286,7 @@ export async function sendRenewalEmail(
     ag = { ...ag, renewal_offer_expires_at: deadline };
   }
   const link = renewalLink(renewalId);
-  const html = renewalEmailHtml({ ag, link, daysLeft: null, reminderStage: opts.reminderStage, rateLock });
+  const html = renewalEmailHtml({ ag, link, daysLeft: null, reminderStage: opts.reminderStage, rateLock, intro: (await getDefaults(sql)).intro_renewal });
   const subject = opts.reminderStage
     ? `Reminder: renew your advertising agreement, ${ag.company_name ?? ''}`.trim()
     : `Renew your advertising agreement, ${ag.company_name ?? ''}`.trim();
