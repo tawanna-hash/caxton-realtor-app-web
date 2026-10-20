@@ -264,7 +264,7 @@ ${lock}
 export async function sendRenewalEmail(
   sql: Sql,
   renewalId: string,
-  opts: { adminEmail?: string | null; to?: string | null; rateLock?: boolean; reminderStage?: number },
+  opts: { adminEmail?: string | null; to?: string | null; rateLock?: boolean; rateLockHours?: number; reminderStage?: number },
 ): Promise<{ ok: boolean; to?: string; error?: string; messageId?: string }> {
   const rows = await sql`SELECT * FROM agreements WHERE id = ${renewalId}` as unknown as Agreement[];
   let ag = rows[0];
@@ -274,7 +274,12 @@ export async function sendRenewalEmail(
 
   const rateLock = opts.rateLock !== false;
   if (!opts.reminderStage && rateLock) {
-    const deadline = renewalOfferDeadline().toISOString();
+    const hours = typeof opts.rateLockHours === 'number' && opts.rateLockHours >= 0 && opts.rateLockHours <= 720
+      ? opts.rateLockHours
+      : null;
+    const deadline = (hours == null
+      ? renewalOfferDeadline()
+      : new Date(Date.now() + hours * 3600_000)).toISOString();
     await sql`UPDATE agreements SET renewal_offer_expires_at = ${deadline}, updated_at = NOW() WHERE id = ${renewalId}`;
     ag = { ...ag, renewal_offer_expires_at: deadline };
   }
