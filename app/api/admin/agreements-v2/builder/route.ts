@@ -14,7 +14,7 @@ import { APP_AD_SLOTS, EBLASTS, PACKAGES, eblastPriceForPub, weeklyRateForMarket
 import { deleteDraft, getDraft, listDrafts, saveDraft } from '@/lib/agreements-v2/builder';
 import { docDates, docTotalCents, type BuilderDoc, type Catalog } from '@/lib/agreements-v2/builder-doc';
 import { getDefaults } from '@/lib/agreements-v2/settings';
-import { planDraftSchedule } from '@/lib/agreements-v2/recurring-draft';
+import { cleanBilling, cleanPayment, invoiceRows, planServiceBilling, summarize, termMonths } from '@/lib/agreements-v2/service-billing';
 import { withSurcharge } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
@@ -90,40 +90,25 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       const total = docTotalCents(doc);
       if (total <= 0) return NextResponse.json({ ok: false, reason: 'Add a priced service to see the billing timeline.' });
       const sign = typeof body.sign_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.sign_date) ? body.sign_date : new Date().toISOString().slice(0, 10);
-      const { start, end } = docDates(doc, sign);
+      const { start } = docDates(doc, sign);
       const defaults = await getDefaults(sql);
-      const pseudo = {
-        company_name: doc.new_client?.name ?? 'Client', ad_rate_cents: null, amount_cents: total, lines_total: total, frequency: null, ad_size: null,
-        start_date: start, end_date: end, billing_email: null, advertiser_email: null, billing_name: null, rep_name: null,
-      } as never;
-      const planned = planDraftSchedule(pseudo, defaults);
-      if (!planned.ok) return NextResponse.json({ ok: false, reason: planned.reason });
-      const p = planned.plan;
-      const addMonths = (iso: string, n: number) => {
-        const d = new Date(`${iso}T00:00:00Z`);
-        const day = d.getUTCDate();
-        d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + n);
-        d.setUTCDate(Math.min(day, new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate()));
-        return d.toISOString().slice(0, 10);
-      };
-      const addDays = (iso: string, n: number) => { const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
-      const invoices = Array.from({ length: p.occurrences }, (_, i) => {
-        const date = addMonths(p.first_run_date, i);
-        let left = p.amount_cents;
-        const items = doc.services.map((sv, k) => {
-          const cents = k === doc.services.length - 1 ? left : Math.round((p.amount_cents * sv.price_cents) / total);
-          left -= cents;
-          return { label: sv.name || 'Service', cents };
-        });
-        return { date, due: addDays(date, p.due_days), total: p.amount_cents, items };
-      });
+      const pay = cleanPayment(doc.payment);
+      const dueDays = pay.due_days ?? defaults.due_days ?? 15;
+      const billingDay = typeof defaults.billing_day === 'number' ? defaults.billing_day : Math.min(28, Math.max(1, Number(start.slice(8, 10)) || 1));
+      const plans = doc.services.map((sv) =>
+        planServiceBilling({ label: sv.name || 'Service', total_cents: sv.price_cents, billing: { ...cleanBilling(sv.billing), term_months: termMonths(sv) } }, { start, billing_day: billingDay }));
+      const invoices = invoiceRows(plans, dueDays);
+      const sum = summarize(plans, invoices);
+      if (!sum.first_invoice) return NextResponse.json({ ok: false, reason: 'Every service is billed manually, so nothing is scheduled. Choose a start option on a service to see invoices.' });
       return NextResponse.json({
         ok: true,
-        first_invoice: { date: invoices[0].date, cents: p.amount_cents },
-        recurring_annual_cents: p.amount_cents * 12,
-        total_cents: p.amount_cents * p.occurrences,
+        first_invoice: sum.first_invoice,
+        recurring_annual_cents: sum.recurring_annual_cents,
+        total_cents: sum.total_cents,
         invoices,
-        due_days: p.due_days,
+        services: plans.map((p) => ({ label: p.label, manual: p.manual, dates: p.dates })),
+        manual_labels: sum.manual_labels,
+        due_days: dueDays,
         card_today_cents: withSurcharge(total),
       });
     }

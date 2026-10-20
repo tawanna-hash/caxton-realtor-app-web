@@ -14,6 +14,8 @@ import type { Agreement } from '@/lib/agreements';
 import { freqMonths } from '@/lib/renewals-v2/pricing';
 import { recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
 import { getDefaults, type AgreementDefaults } from '@/lib/agreements-v2/settings';
+import { getAgreementMeta } from '@/lib/agreements-v2/builder';
+import { plansForLines } from '@/lib/agreements-v2/service-billing';
 
 type Sql = ReturnType<typeof getSql>;
 
@@ -119,7 +121,51 @@ export async function createDraftScheduleForAgreement(
     const existing = await sql`SELECT id FROM recurring_invoice_schedules WHERE agreement_id = ${agreementId} LIMIT 1` as unknown as Array<{ id: string }>;
     if (existing[0]) return { ok: true, created: false, schedule_id: existing[0].id };
 
-    const planned = planDraftSchedule(ag, await getDefaults(sql));
+    const baseDefaults = await getDefaults(sql);
+    const meta = await getAgreementMeta(agreementId, sql);
+    const defaults = { ...baseDefaults, due_days: meta?.payment?.due_days ?? baseDefaults.due_days };
+
+    // Per-service billing options saved with the agreement: one draft schedule per automatically billed service.
+    const startIso = iso(ag.start_date);
+    if (meta && startIso) {
+      const lines = await sql`SELECT line_no, package_label, amount_cents FROM agreement_line_items WHERE agreement_id = ${agreementId} ORDER BY line_no` as unknown as Array<{ line_no: number; package_label: string; amount_cents: number }>;
+      const plans = plansForLines(lines, meta.services, { start: startIso, billing_day: typeof defaults.billing_day === 'number' ? defaults.billing_day : Math.min(28, Math.max(1, parseInt(startIso.slice(8, 10), 10) || 1)) });
+      if (plans) {
+        const auto = plans.filter((p) => !p.manual);
+        let firstId: string | null = null;
+        const company = ag.company_name ?? 'Partner';
+        for (const p of auto) {
+          const lineItems = [{ description: p.label, qty: 1, unit_cents: p.amount_cents }];
+          const last = p.dates[p.dates.length - 1] ?? null;
+          const ins = await sql`
+            INSERT INTO recurring_invoice_schedules (
+              advertiser_id, agreement_id, name, status, frequency, interval_count, day_of_month,
+              amount_cents, tax_cents, line_items, memo, bill_to_name, bill_to_email,
+              auto_send, due_days, create_days_in_advance, template_mode,
+              start_date, end_date, max_occurrences, next_run_at, source, created_by
+            ) VALUES (
+              ${advertiserId}, ${agreementId}, ${`${company} — ${p.label}`}, 'paused', 'monthly', 1, ${p.day_of_month},
+              ${p.amount_cents}, 0, ${JSON.stringify(lineItems)}::jsonb,
+              ${'Draft created automatically when the agreement was signed. Review, then activate.'},
+              ${ag.billing_name ?? company}, ${ag.billing_email || ag.advertiser_email || null},
+              false, ${defaults.due_days ?? 15}, 0, 'scheduled',
+              ${p.first_run_date}, ${last}, ${p.occurrences}, ${`${p.first_run_date}T08:00:00.000Z`}, 'agreement', ${createdBy ?? 'agreements-beta'}
+            ) RETURNING id
+          ` as unknown as Array<{ id: string }>;
+          firstId = firstId ?? ins[0].id;
+        }
+        const manual = plans.filter((p) => p.manual).map((p) => p.label);
+        await recordNewPartnerEvent(
+          sql, agreementId, 'recurring_draft_created',
+          `Draft billing created per service: ${auto.length} schedule${auto.length === 1 ? '' : 's'}${auto.length ? ` (${auto.map((p) => `${p.label}: ${p.occurrences} x $${(p.amount_cents / 100).toFixed(2)} from ${p.first_run_date}`).join('; ')})` : ''}.${manual.length ? ` Billed manually, nothing scheduled: ${manual.join(', ')}.` : ''} Status: paused until reviewed.`,
+          createdBy,
+        );
+        if (!firstId) return { ok: false, reason: 'every service is billed manually, nothing was scheduled' };
+        return { ok: true, created: true, schedule_id: firstId };
+      }
+    }
+
+    const planned = planDraftSchedule(ag, defaults);
     if (!planned.ok) return { ok: false, reason: planned.reason };
     const p = planned.plan;
     const lineItems = [{ description: p.description, qty: 1, unit_cents: p.amount_cents }];

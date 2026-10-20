@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { A } from '@/components/anchor/ui';
+import { DEFAULT_BILLING, DEFAULT_PAYMENT, billingBadge, cleanBilling, termMonths, type ServiceBilling } from '@/lib/agreements-v2/service-billing';
 import {
   EMPTY_DOC, defaultPriceCents, docProblems, docTotalCents, quotePayload,
   type BuilderDoc, type Catalog, type Pub, type ServiceLine,
@@ -17,6 +18,7 @@ type DraftRow = { id: string; name: string; updated_at: string };
 type Timeline =
   | { ok: false; reason: string }
   | { ok: true; first_invoice: { date: string; cents: number }; recurring_annual_cents: number; total_cents: number; due_days: number; card_today_cents: number;
+      services: Array<{ label: string; manual: boolean; dates: string[] }>; manual_labels: string[];
       invoices: Array<{ date: string; due: string; total: number; items: Array<{ label: string; cents: number }> }> };
 
 const money = (c: number) => `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
@@ -102,7 +104,7 @@ export default function BuilderClient() {
         const id = draft || tpl;
         if (id) {
           const j = await fetch(`/api/admin/agreements-v2/builder?id=${id}`, { credentials: 'include' }).then((r) => r.json());
-          if (j.draft) { setDoc({ ...EMPTY_DOC, ...j.draft.doc }); if (draft) setDraftId(draft); }
+          if (j.draft) { setDoc({ ...EMPTY_DOC, ...j.draft.doc, payment: { ...DEFAULT_PAYMENT, ...(j.draft.doc.payment ?? {}) } }); if (draft) setDraftId(draft); }
         } else {
           setDoc((d) => ({ ...d, intro: b.intros.new_partner, expires_days: b.expiry_days ?? 30 }));
         }
@@ -190,7 +192,8 @@ export default function BuilderClient() {
             name: doc.name, intro: doc.intro, note: doc.note, ask_address: doc.ask_address,
             expires_days: doc.expires ? doc.expires_days : null,
             refs: doc.refs,
-            services: doc.services.map((s, i) => ({ line_no: i + 1, name: s.name, description: s.description })),
+            services: doc.services.map((s, i) => ({ line_no: i + 1, name: s.name, description: s.description, billing: { ...cleanBilling(s.billing), term_months: termMonths(s) } })),
+            payment: doc.payment,
           },
         }),
       });
@@ -268,10 +271,12 @@ export default function BuilderClient() {
                 {tab === 'overview' && <div className="mt-1 flex gap-1.5 text-[10px] text-[#6E6A8A]">{timeline.invoices.slice(0, 12).map((i) => <span key={i.date} className="flex-1 text-center">{new Date(`${i.date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })}</span>)}</div>}
                 {tab === 'service' && (
                   <ul className="mt-4 space-y-3 text-sm">
-                    {doc.services.map((s) => (
-                      <li key={s.id}>
-                        <div className="font-medium text-[#261E5A]">{svcLabel(s)}</div>
-                        <div className="mt-1 flex flex-wrap gap-1">{timeline.invoices.slice(0, 12).map((i) => <span key={i.date} className="rounded-full bg-[#EEF0FB] px-2 py-0.5 text-xs text-[#261E5A]">{new Date(`${i.date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>)}</div>
+                    {timeline.services.map((sv, i) => (
+                      <li key={i}>
+                        <div className="font-medium text-[#261E5A]">{sv.label}</div>
+                        {sv.manual ? <p className="mt-1 text-xs text-[#6E6A8A]">Billed manually. Nothing is scheduled.</p> : (
+                          <div className="mt-1 flex flex-wrap gap-1">{sv.dates.slice(0, 12).map((d) => <span key={d} className="rounded-full bg-[#EEF0FB] px-2 py-0.5 text-xs text-[#261E5A]">{new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>)}</div>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -293,6 +298,7 @@ export default function BuilderClient() {
                     </div>
                   );
                 })()}
+                {timeline.manual_labels.length > 0 && <p className="mt-3 text-xs text-[#6E6A8A]">Billed manually, not in this schedule: {timeline.manual_labels.join(', ')}.</p>}
                 <p className="mt-4 text-xs text-[#6E6A8A]">Partners who pay by card are charged {money(timeline.card_today_cents)} (3% surcharge included) when they sign. Invoices apply to partners who pay by check.</p>
               </div>
             )}
@@ -377,6 +383,7 @@ export default function BuilderClient() {
                     </div>
                     <div className="text-right font-semibold text-[#261E5A]">{money(s.price_cents)}</div>
                   </div>
+                  <BillingControls billing={s.billing ?? DEFAULT_BILLING} onChange={(b) => update({ services: doc.services.map((x) => (x.id === s.id ? { ...x, billing: b } : x)) })} />
                   <div className="mt-3 flex gap-2">
                     <button type="button" className={A.small} onClick={() => setEditIdx(i)}>Edit name and description</button>
                     <button type="button" className={A.small} onClick={() => update({ services: doc.services.filter((x) => x.id !== s.id) })}>Remove</button>
@@ -399,6 +406,23 @@ export default function BuilderClient() {
                 <div className="mb-1 text-sm text-[#261E5A]">Add a note to your agreement (optional)</div>
                 <textarea className={`${A.input} min-h-[160px]`} value={doc.note} placeholder="Add here anything you need that's not specified elsewhere" onChange={(e) => update({ note: e.target.value })} />
               </div>
+            </div>
+          </section>
+
+          {/* Payment settings */}
+          <section className={A.card}>
+            <h2 className="border-b border-[#ECEAF4] px-6 py-4 text-lg font-semibold text-[#261E5A]">Payment settings</h2>
+            <div className="space-y-4 p-6 text-sm text-[#261E5A]">
+              <div>
+                <div className="mb-2 font-medium">Payment methods the client can choose</div>
+                <label className="flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.card} onChange={(e) => update({ payment: { ...doc.payment, card: e.target.checked } })} />Credit card <span className="text-[#6E6A8A]">(3% surcharge added, charged when they sign)</span></label>
+                <label className="mt-2 flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.check} onChange={(e) => update({ payment: { ...doc.payment, check: e.target.checked } })} />Check <span className="text-[#6E6A8A]">(invoiced on the schedule; print agreements only)</span></label>
+              </div>
+              <Field label="Invoice due">
+                <input type="number" min={0} max={120} className={A.input} placeholder="Account default" value={doc.payment.due_days ?? ''} onChange={(e) => update({ payment: { ...doc.payment, due_days: e.target.value === '' ? null : Math.max(0, Math.min(120, Number(e.target.value) || 0)) } })} />
+              </Field>
+              <p className="-mt-2 text-xs text-[#6E6A8A]">Days after each invoice is issued. Leave blank for the account default.</p>
+              <label className="flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.show_schedule} onChange={(e) => update({ payment: { ...doc.payment, show_schedule: e.target.checked } })} />Show the billing schedule to the client</label>
             </div>
           </section>
 
@@ -475,6 +499,8 @@ export default function BuilderClient() {
             {doc.note && <p className="whitespace-pre-line rounded-md border border-[#ECEAF4] p-3 text-xs text-[#4A4767]">{doc.note}</p>}
             {doc.ask_address && <p className="text-xs text-[#6E6A8A]">The client will be asked for their address.</p>}
             {doc.expires && <p className="text-xs text-[#6E6A8A]">Expires {doc.expires_days} days after sending.</p>}
+            {doc.services.map((sv) => <p key={sv.id} className="text-xs text-[#6E6A8A]">{svcLabel(sv)}: {billingBadge(sv.billing ?? DEFAULT_BILLING).toLowerCase()}.</p>)}
+            <p className="text-xs text-[#6E6A8A]">Payment: {[doc.payment.card ? 'credit card' : null, doc.payment.check ? 'check' : null].filter(Boolean).join(' or ')}.</p>
             <p className="text-xs text-[#6E6A8A]">Effective {doc.effective === 'date' && doc.effective_date ? fmtDay(doc.effective_date) : 'on acceptance'}. The client then enters send or start dates for e-Blast and app services, chooses card or check, and signs.</p>
           </div>
         </Modal>
@@ -568,5 +594,51 @@ function EditServiceModal({ service, onClose, onSave }: { service: ServiceLine; 
         <button type="button" className={A.primary} disabled={!name.trim()} onClick={() => onSave({ name: name.trim(), description, price_cents: Math.round(Number(price) * 100) || service.price_cents })}>Save</button>
       </div>
     </Modal>
+  );
+}
+
+function BillingControls({ billing, onChange }: { billing: ServiceBilling; onChange: (b: ServiceBilling) => void }) {
+  const b = cleanBilling(billing);
+  const set = (p: Partial<ServiceBilling>) => onChange({ ...b, ...p });
+  const manual = b.start === 'manual';
+  return (
+    <div className="mt-4 space-y-3 border-t border-[#ECEAF4] pt-4">
+      <span className="inline-block rounded-full border border-[#D8D5E6] px-3 py-1 text-xs text-[#261E5A]">{billingBadge(b)}</span>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Billed" isSelect>
+          <select className={sel} value={b.cadence} onChange={(e) => set({ cadence: e.target.value as ServiceBilling['cadence'] })} disabled={manual}>
+            <option value="monthly">Monthly, over the service term</option>
+            <option value="one_time">One time</option>
+          </select>
+        </Field>
+        <Field label="Invoice at" isSelect>
+          <select className={sel} value={b.timing} onChange={(e) => set({ timing: e.target.value as ServiceBilling['timing'] })} disabled={manual || b.start === 'date'}>
+            <option value="start">The start of the billing cycle</option>
+            <option value="end">The end of the billing cycle</option>
+          </select>
+        </Field>
+        <Field label="Billing day" isSelect>
+          <select className={sel} value={b.day ?? ''} onChange={(e) => set({ day: e.target.value ? Number(e.target.value) : null })} disabled={manual || b.start === 'date'}>
+            <option value="">Account default</option>
+            {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>Day {d} of each month</option>)}
+          </select>
+        </Field>
+        <Field label="Starting" isSelect>
+          <select className={sel} value={b.start} onChange={(e) => set({ start: e.target.value as ServiceBilling['start'] })}>
+            <option value="next">On the next scheduled billing date</option>
+            <option value="date">On a specific date</option>
+            <option value="manual">Only after manual initiation</option>
+          </select>
+        </Field>
+      </div>
+      {b.start === 'date' && (
+        <input type="date" aria-label="First invoice date" value={b.start_date} onChange={(e) => set({ start_date: e.target.value })} className="w-full border border-[#D8D5E6] text-sm text-[#261E5A]" />
+      )}
+      <p className="text-xs text-[#6E6A8A]">
+        {b.start === 'next' && 'The first invoice goes out on the next billing day after the agreement takes effect.'}
+        {b.start === 'date' && 'The first invoice goes out on this exact date. Later invoices follow monthly. Past dates are invoiced right away.'}
+        {manual && 'Nothing is invoiced for this service until someone starts billing in Get Paid.'}
+      </p>
+    </div>
   );
 }
