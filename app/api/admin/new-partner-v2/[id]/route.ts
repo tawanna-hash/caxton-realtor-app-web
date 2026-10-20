@@ -8,7 +8,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
-import { agreementLink, sendNewPartnerEmail } from '@/lib/new-partner-v2/service';
+import { CHECK_APPROVED_EVENT } from '@/lib/agreements-v2/prepay';
+import { agreementLink, recordNewPartnerEvent, sendNewPartnerEmail } from '@/lib/new-partner-v2/service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,6 +35,11 @@ export const POST = withAdminTracking(async function POST(
     if (!rows[0]) return NextResponse.json({ error: 'not found' }, { status: 404 });
     if (rows[0].is_renewal) return NextResponse.json({ error: 'Renewals use the Renewals tab.' }, { status: 422 });
     if (rows[0].signed_at) return NextResponse.json({ error: 'Already signed.' }, { status: 409 });
+
+    if (body.action === 'approve_check') {
+      await recordNewPartnerEvent(sql, id, CHECK_APPROVED_EVENT, 'Admin approved paying by check. Services start when the check is received.', admin.email ?? null);
+      return NextResponse.json({ ok: true });
+    }
 
     const link = agreementLink(id);
     if (body.action !== 'send') return NextResponse.json({ ok: true, link });

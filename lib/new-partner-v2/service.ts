@@ -17,6 +17,7 @@ import { getAgreementMeta } from '@/lib/agreements-v2/builder';
 import { getNotifications, getDefaults, renderIntro } from '@/lib/agreements-v2/settings';
 
 type Sql = ReturnType<typeof getSql>;
+import { checkRequestState, type CheckRequestState } from '@/lib/agreements-v2/prepay';
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
 
@@ -38,6 +39,8 @@ export type NewPartnerCandidate = {
   state: NewPartnerState;
   last_sent_at: string | null;
   created_at: string | null;
+  /** Digital agreements: the partner asked to pay by check ('requested') or an admin allowed it ('approved'). */
+  check_request: CheckRequestState;
 };
 
 type Row = Agreement & { channel?: string | null; line_count?: number; lines_total?: number; pay_now_total?: number };
@@ -114,6 +117,7 @@ export async function listNewPartnerCandidates(sql: Sql): Promise<NewPartnerCand
       state,
       last_sent_at: sent.length ? sent[sent.length - 1].timestamp : null,
       created_at: r.created_at ? new Date(r.created_at).toISOString() : null,
+      check_request: checkRequestState(r.audit_log),
     };
   });
 }

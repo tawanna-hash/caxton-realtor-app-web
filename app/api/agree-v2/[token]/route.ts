@@ -27,6 +27,7 @@ import { channelOfRow, chargeBaseCents, needsFullForm, totalCents, recordNewPart
 import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
 import { getDefaults } from '@/lib/agreements-v2/settings';
 import { getAgreementMeta } from '@/lib/agreements-v2/builder';
+import { CHECK_REQUEST_EVENT, PREPAY_NOTE, checkRequestState, prepayRequired } from '@/lib/agreements-v2/prepay';
 import { cleanPayment, invoiceRows, occurrenceGroups, plansForLines, type PaymentSettings } from '@/lib/agreements-v2/service-billing';
 import { applyChoice } from '@/lib/agreements-v2/options';
 import { buildPlacementPatches, placementNeeds } from '@/lib/agreements-v2/placement';
@@ -81,6 +82,8 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       SELECT line_no, package_label, channel, ad_size, frequency, quantity, amount_cents, pay_now, start_date, end_date, preferred_send_dates
         FROM agreement_line_items WHERE agreement_id = ${ag.id} ORDER BY line_no
     `.catch(() => [])) as unknown as Array<Record<string, unknown>>;
+    const prepay = prepayRequired(channel, lines.map((l) => l.channel as string | null));
+    const checkState = checkRequestState(ag.audit_log);
     const base = chargeBaseCents(ag);
     const surcharged = base ? withSurcharge(base) : null;
     const defaults = await getDefaults(sql);
@@ -140,13 +143,13 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       card_available: isStripeConfigured() && base != null && payOpts.card,
       card_base_cents: base,
       card_charge_cents: surcharged,
-      timeline_check: !payOpts.show_schedule || !allowsCheckPayment(channel) ? null : perService ?? checkTimeline(tlAgreement, defaults),
+      timeline_check: !payOpts.show_schedule || !(prepay ? checkState === 'approved' : allowsCheckPayment(channel)) ? null : perService ?? checkTimeline(tlAgreement, defaults),
       annual_increase_pct: payOpts.annual_increase_pct,
-      timeline_bank_invoice: !payOpts.show_schedule ? null : perService ?? checkTimeline(tlAgreement, defaults),
+      timeline_bank_invoice: !payOpts.show_schedule || prepay ? null : perService ?? checkTimeline(tlAgreement, defaults),
       bank_now_available: isStripeConfigured() && base != null && payOpts.bank_now,
       bank_fee_cents: base != null ? processingFeeCents(base, 'ach') : null,
       bank_charge_cents: base != null ? base + processingFeeCents(base, 'ach') : null,
-      bank_invoice_available: payOpts.bank_invoice,
+      bank_invoice_available: payOpts.bank_invoice && !prepay,
       timeline_bank_now: payOpts.show_schedule && base != null
         ? { ok: true, hidden: 0, entries: [{ date: null, label: 'Debited from your bank today', amount_cents: base + processingFeeCents(base, 'ach'), note: 'includes the bank payment fee' }, { date: null, label: 'Later invoices', amount_cents: null, note: 'sent to you, payable by bank transfer' }] }
         : null,
@@ -155,7 +158,10 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       schedule_view: payOpts.schedule_view,
       schedule_groups: payOpts.show_schedule && svcPlans ? occurrenceGroups(svcPlans) : null,
       full_form_url: `/admin/billing/sign/${token}`,
-      allow_check: allowsCheckPayment(channel) && payOpts.check,
+      allow_check: payOpts.check && (prepay ? checkState === 'approved' : allowsCheckPayment(channel)),
+      prepay_required: prepay,
+      prepay_note: prepay ? PREPAY_NOTE : null,
+      check_request: prepay ? checkState : null,
       fields: Object.fromEntries(EDITABLE.map((k) => [k, (ag as unknown as Record<string, unknown>)[k] ?? ''])),
       terms: termsForChannel(channel, ag.publication),
     });
@@ -181,6 +187,21 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
 
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'invalid json' }, { status: 400 }); }
+
+  if (body.action === 'request_check') {
+    try {
+      const { sql, ag } = await load(id);
+      if (!ag) return NextResponse.json({ error: 'not found' }, { status: 404 });
+      if (ag.signed_at) return NextResponse.json({ error: 'This agreement is already signed.' }, { status: 409 });
+      if (checkRequestState(ag.audit_log) === null) {
+        const note = typeof body.note === 'string' ? body.note.trim().slice(0, 300) : '';
+        await recordNewPartnerEvent(sql, id, CHECK_REQUEST_EVENT, `Partner asked for approval to pay by check.${note ? ` Note: ${note}` : ''}`);
+      }
+      return NextResponse.json({ ok: true });
+    } catch (err) {
+      return NextResponse.json({ error: 'failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });
+    }
+  }
 
   if (body.action === 'choose') {
     try {
@@ -235,6 +256,11 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         return NextResponse.json({ error: 'We could not confirm your bank payment. Please try again.' }, { status: 402 });
       }
     }
+    const prepayLines = (await sql`SELECT channel FROM agreement_line_items WHERE agreement_id = ${id}`.catch(() => [])) as unknown as Array<{ channel: string | null }>;
+    const prepay = prepayRequired(channelOfRow(ag), prepayLines.map((l) => l.channel));
+    if (mode === 'bank_invoice' && prepay) {
+      return NextResponse.json({ error: 'Digital products are paid before signing. Please pay by bank account or credit card.' }, { status: 400 });
+    }
     if (mode === 'bank_invoice' && meta?.payment?.bank_invoice !== true) {
       return NextResponse.json({ error: 'Bank payment on invoices is not available for this agreement.' }, { status: 400 });
     }
@@ -263,8 +289,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     if (mode === 'check' && meta?.payment?.check === false) {
       return NextResponse.json({ error: 'Check payment is not available for this agreement.' }, { status: 400 });
     }
-    if (mode !== 'card' && !allowsCheckPayment(channelOfRow(ag))) {
-      return NextResponse.json({ error: 'Check payment is not available for this agreement.' }, { status: 400 });
+    if (mode === 'check' && (prepay ? checkRequestState(ag.audit_log) !== 'approved' : !allowsCheckPayment(channelOfRow(ag)))) {
+      return NextResponse.json({ error: prepay ? 'Paying by check needs approval first. Please ask for approval, or pay by bank account or credit card.' : 'Check payment is not available for this agreement.' }, { status: 400 });
     }
 
     const patches: Record<string, unknown> = { payment_mode: mode === 'bank_now' || mode === 'bank_invoice' ? 'invoice' : mode };

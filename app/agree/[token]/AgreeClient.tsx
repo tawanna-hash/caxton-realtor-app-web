@@ -20,6 +20,9 @@ type Summary = {
   needs_full_form: boolean;
   full_form_url: string;
   allow_check: boolean;
+  prepay_required?: boolean;
+  prepay_note?: string | null;
+  check_request?: 'requested' | 'approved' | null;
   annual_increase_pct?: number;
   bank_now_available?: boolean;
   bank_invoice_available?: boolean;
@@ -106,6 +109,22 @@ export default function AgreeClient({ token }: { token: string }) {
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setFields((f) => ({ ...f, [k]: e.target.value }));
 
   const needs: PlacementNeed[] = data ? [...data.placement.lines, ...(data.placement.single ? [data.placement.single] : [])] : [];
+
+  const [checkAsked, setCheckAsked] = useState(false);
+  async function requestCheck() {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const r = await fetch(`/api/agree-v2/${encodeURIComponent(token)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'request_check' }) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Could not send your request.');
+      setCheckAsked(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not send your request.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   async function submitChoice() {
     setError(null);
@@ -382,6 +401,7 @@ export default function AgreeClient({ token }: { token: string }) {
       {step === 1 && (
         <div className={card}>
           <h2 className="text-lg font-semibold text-[#261E5A]">How would you like to pay?</h2>
+          {data.prepay_note && <p className="mt-2 rounded-md bg-[#FEF8CC] p-3 text-sm text-[#645600]">{data.prepay_note}</p>}
           <div className="mt-3 space-y-2">
             {data.allow_check && (
               <>
@@ -424,6 +444,19 @@ export default function AgreeClient({ token }: { token: string }) {
                 )}
               </>
             )}
+            {data.prepay_required && !data.allow_check && (
+              <div className="rounded-md border border-[#ECEAF4] p-4 text-sm text-[#4A4767]">
+                {data.check_request === 'requested' || checkAsked ? (
+                  <p>Your request to pay by check was sent. We will let you know once it is approved. You can also pay now by bank account or credit card.</p>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span>Need to pay by check? Ask for approval first.</span>
+                    <button type="button" onClick={requestCheck} disabled={submitting} className="rounded-md border border-[#D8D5E6] bg-white px-4 py-2 text-sm font-medium text-[#261E5A] hover:bg-[#F3F0FF] disabled:opacity-60">Ask to pay by check</button>
+                  </div>
+                )}
+              </div>
+            )}
+            {data.prepay_required && data.allow_check && data.check_request === 'approved' && <p className="text-xs text-[#6E6A8A]">Check payment was approved. Services start when your check is received.</p>}
             {data.bank_invoice_available && (
               <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-4 text-sm ${pay === 'bank_invoice' ? 'border-[#5B3FE3] bg-[#F3F0FF]' : 'border-[#D8D5E6]'}`}>
                 <input type="radio" name="pay" checked={pay === 'bank_invoice'} disabled={cardPaid} onChange={() => setPay('bank_invoice')} className="accent-[#5B3FE3]" />
