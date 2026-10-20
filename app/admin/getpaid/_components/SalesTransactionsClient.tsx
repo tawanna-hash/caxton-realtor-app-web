@@ -45,7 +45,7 @@ export type SalesTransactionsClientProps = {
   onConsumeUrlSeed?: () => void;
 };
 
-type DateFilter = 'all' | '30-days' | '3-months' | '12-months';
+type DateFilter = 'all' | 'today' | '30-days' | '3-months' | '12-months';
 type TypeFilter = 'all' | 'invoice' | 'receipt';
 type StatusFilter = 'all' | 'scheduled' | 'draft' | 'open' | 'overdue' | 'paid' | 'void';
 type ErrorFilter = 'all' | 'missing-email' | 'past-due';
@@ -183,6 +183,14 @@ function sortValue(invoice: InvoiceWithAdvertiser, key: SortKey, referenceTime: 
 
 function inDateRange(invoice: InvoiceWithAdvertiser, filter: DateFilter, referenceDate: Date) {
   if (filter === 'all') return true;
+  if (filter === 'today') {
+    const start = new Date(referenceDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    const time = new Date(transactionDate(invoice)).getTime();
+    return time >= start.getTime() && time < end.getTime();
+  }
   const cutoff = new Date(referenceDate);
   if (filter === '30-days') cutoff.setDate(cutoff.getDate() - 30);
   else cutoff.setMonth(cutoff.getMonth() - (filter === '3-months' ? 3 : 12));
@@ -1102,6 +1110,7 @@ export function SalesTransactionsClient({
           <label className="min-w-0 space-y-1">
             <span className="block text-xs text-gray-500">Date</span>
             <select className={`${CONTROL} w-full min-w-0 sm:min-w-36`} value={dateFilter} onChange={(event) => updateFilter(() => setDateFilter(event.target.value as DateFilter))}>
+              <option value="today">Today</option>
               <option value="30-days">Last 30 days</option>
               <option value="3-months">Last 3 months</option>
               <option value="12-months">Last 12 months</option>
