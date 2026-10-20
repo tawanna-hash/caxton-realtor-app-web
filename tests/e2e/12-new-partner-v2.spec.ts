@@ -63,12 +63,11 @@ test('walks Review, Pay, Sign and blocks signing until name and terms', async ({
   await expect(page.getByRole('heading', { name: /how would you like to pay/i })).toBeVisible();
 });
 
-test('choosing card hands off to the full form', async ({ page }) => {
+test('card option is offered on the Pay step (not selected here, nothing is charged)', async ({ page }) => {
   test.skip(!PRINT, 'no print link');
   await page.goto(PRINT);
   await page.getByRole('button', { name: /continue to payment/i }).click();
-  await page.getByLabel(/credit card/i).check();
-  await expect(page.getByRole('button', { name: /continue to card form/i })).toBeVisible();
+  await expect(page.getByLabel(/credit card/i)).toBeVisible();
 });
 
 test('non-print agreement routes to the full form', async ({ page }) => {

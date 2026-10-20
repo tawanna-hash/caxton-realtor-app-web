@@ -9,8 +9,10 @@
 //        advertiser creation, CRM sync, reminders and notifications behave
 //        exactly like a normal signature.
 //
-// Card payments are not handled here yet: partners who choose a card (or whose
-// agreement is not a simple print ad) continue on the existing full form.
+// Card: the Pay step charges the first issue through the live PaymentIntent
+// endpoint (/api/sign/[token]/payment-intent). Here we only accept 'card' after
+// Stripe confirms that intent. Agreements that are not a simple print ad
+// continue on the existing full form.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
@@ -23,6 +25,7 @@ import { termsForChannel } from '@/lib/agreement-terms';
 import { brandForPublication } from '@/lib/email-templates';
 import { channelOfRow, needsFullForm, totalCents, recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
+import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
 import { POST as liveSign } from '@/app/api/ad-sign/[token]/route';
 
 export const runtime = 'nodejs';
@@ -77,6 +80,8 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       start_date: ag.start_date,
       end_date: ag.end_date,
       needs_full_form: needsFullForm(ag),
+      card_available: isStripeConfigured() && ag.ad_rate_cents != null && ag.ad_rate_cents > 0,
+      card_charge_cents: ag.ad_rate_cents ? withSurcharge(ag.ad_rate_cents) : null,
       full_form_url: `/admin/billing/sign/${token}`,
       allow_check: allowsCheckPayment(channel),
       fields: Object.fromEntries(EDITABLE.map((k) => [k, (ag as unknown as Record<string, unknown>)[k] ?? ''])),
@@ -119,12 +124,25 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
 
     const mode = typeof body.paymentMode === 'string' ? body.paymentMode : '';
     if (mode === 'card') {
-      return NextResponse.json({ error: 'Card payment continues on the full form.', code: 'needs_full_form' }, { status: 422 });
+      // The card was charged on the Pay step through the live PaymentIntent
+      // endpoint. Only accept it if Stripe confirms that intent went through.
+      const piId = ag.stripe_payment_intent_id;
+      if (!isStripeConfigured() || !piId) {
+        return NextResponse.json({ error: 'Please enter your card on the payment step.' }, { status: 402 });
+      }
+      try {
+        const pi = await getStripe().paymentIntents.retrieve(piId);
+        if (!['succeeded', 'processing', 'requires_capture'].includes(pi.status)) {
+          return NextResponse.json({ error: 'Your card payment was not completed. Please go back and try again.' }, { status: 402 });
+        }
+      } catch {
+        return NextResponse.json({ error: 'We could not confirm your card payment. Please try again.' }, { status: 402 });
+      }
     }
-    if (mode !== 'check' && mode !== 'invoice') {
+    if (mode !== 'check' && mode !== 'invoice' && mode !== 'card') {
       return NextResponse.json({ error: 'Please choose how you would like to pay.' }, { status: 400 });
     }
-    if (!allowsCheckPayment(channelOfRow(ag))) {
+    if (mode !== 'card' && !allowsCheckPayment(channelOfRow(ag))) {
       return NextResponse.json({ error: 'Check payment is not available for this agreement.' }, { status: 400 });
     }
 

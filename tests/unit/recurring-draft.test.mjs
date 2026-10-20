@@ -27,3 +27,16 @@ test('refuses when nothing to bill or no start date', () => {
   assert.equal(planDraftSchedule({ ...base, ad_rate_cents: null, amount_cents: null, frequency: null, start_date: '2026-12-01', end_date: null }).ok, false);
   assert.equal(planDraftSchedule({ ...base, ad_rate_cents: 100, amount_cents: null, frequency: '1', start_date: null, end_date: null }).ok, false);
 });
+
+test('fixed billing day and due days come from defaults', () => {
+  const r = planDraftSchedule({ ...base, ad_rate_cents: 50000, amount_cents: null, frequency: '3x', start_date: '2026-12-01', end_date: '2027-02-28' }, { billing_day: 18, due_days: 20 });
+  assert.ok(r.ok);
+  assert.equal(r.plan.day_of_month, 18);
+  assert.equal(r.plan.due_days, 20);
+});
+
+test('first invoice lands on the billing day on or after the start date', () => {
+  const mk = (start) => planDraftSchedule({ ...base, ad_rate_cents: 50000, amount_cents: null, frequency: '3x', start_date: start, end_date: null }, { billing_day: 18, due_days: 20 }).plan.first_run_date;
+  assert.equal(mk('2026-12-01'), '2026-12-18');
+  assert.equal(mk('2026-12-20'), '2027-01-18');
+});

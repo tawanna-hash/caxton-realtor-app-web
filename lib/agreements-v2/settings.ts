@@ -7,7 +7,8 @@ import { getSql } from '@/lib/db';
 
 type Sql = ReturnType<typeof getSql>;
 
-export type BillingDay = 'start' | 'first' | 'fifteenth';
+/** 'start' = same day as the agreement start date, or a fixed day 1-28. */
+export type BillingDay = 'start' | number;
 
 export type AgreementDefaults = {
   due_days: number;
@@ -54,6 +55,13 @@ async function ensure(sql: Sql) {
   ready = true;
 }
 
+function parseBillingDay(v: unknown): BillingDay {
+  if (v === 'first') return 1;
+  if (v === 'fifteenth') return 15;
+  const n = Number(v);
+  return Number.isInteger(n) && n >= 1 && n <= 28 ? n : 'start';
+}
+
 export function sanitizeDefaults(input: Record<string, unknown>): AgreementDefaults {
   const base = FALLBACK_DEFAULTS;
   const due = Number(input.due_days);
@@ -61,7 +69,7 @@ export function sanitizeDefaults(input: Record<string, unknown>): AgreementDefau
   const expN = exp === null || exp === '' || exp === undefined ? null : Number(exp);
   return {
     due_days: Number.isInteger(due) && due >= 0 && due <= 120 ? due : base.due_days,
-    billing_day: input.billing_day === 'first' || input.billing_day === 'fifteenth' ? input.billing_day : 'start',
+    billing_day: parseBillingDay(input.billing_day),
     proposal_expiry_days: expN !== null && Number.isInteger(expN) && expN > 0 && expN <= 365 ? expN : null,
     intro_new: typeof input.intro_new === 'string' && input.intro_new.trim() ? input.intro_new.trim().slice(0, 1200) : base.intro_new,
     intro_renewal: typeof input.intro_renewal === 'string' && input.intro_renewal.trim() ? input.intro_renewal.trim().slice(0, 1200) : base.intro_renewal,
