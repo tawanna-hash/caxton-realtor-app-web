@@ -7,14 +7,18 @@ import StatusBoard from './StatusBoard';
 import TemplatesPanel from './TemplatesPanel';
 import DefaultsPanel from './DefaultsPanel';
 import NotificationsPanel from './NotificationsPanel';
+import InvoicesPanel from './InvoicesPanel';
+import ServicesPanel from './ServicesPanel';
 import { A } from '@/components/anchor/ui';
 
-type Tab = 'board' | 'renewals' | 'new' | 'templates' | 'defaults' | 'notifications';
+type Tab = 'board' | 'renewals' | 'new' | 'templates' | 'invoices' | 'services' | 'defaults' | 'notifications';
 const TABS: Array<[Tab, string]> = [
   ['board', 'Agreements'],
   ['renewals', 'Renewals'],
   ['new', 'New partners'],
   ['templates', 'Templates'],
+  ['invoices', 'Invoices'],
+  ['services', 'Services'],
   ['defaults', 'Default settings'],
   ['notifications', 'Notifications'],
 ];
@@ -23,6 +27,8 @@ const SUB: Record<Tab, string> = {
   renewals: 'One-tap renewals, sent one at a time or as a monthly batch.',
   new: 'Send a new partner a short page to review, pay and sign.',
   templates: 'Saved ad sizes, frequencies and rates for new agreements.',
+  invoices: 'Every invoice from Get Paid, with its status and balance.',
+  services: 'The Products & Services catalog from Get Paid.',
   defaults: 'Set the default values of new agreements you create.',
   notifications: 'Set which notifications you and your partners will receive.',
 };
@@ -52,6 +58,8 @@ export default function AgreementsBeta() {
       {tab === 'renewals' && <RenewalsV2Client />}
       {tab === 'new' && <NewPartnersPanel />}
       {tab === 'templates' && <TemplatesPanel />}
+      {tab === 'invoices' && <InvoicesPanel />}
+      {tab === 'services' && <ServicesPanel />}
       {tab === 'defaults' && <DefaultsPanel />}
       {tab === 'notifications' && <NotificationsPanel />}
     </div>
