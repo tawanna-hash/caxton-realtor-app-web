@@ -38,9 +38,9 @@ const STATE_LABEL: Record<Candidate['state'], string> = {
 };
 
 const STATE_STYLE: Record<Candidate['state'], string> = {
-  not_started: 'bg-[#EEEDF3] text-[#4A4767]',
+  not_started: 'bg-[color:var(--ds-page)] text-[color:var(--ds-body)]',
   draft: 'bg-amber-50 text-amber-800',
-  sent: 'bg-[#EFEAFB] text-[#4B30CC]',
+  sent: 'bg-[color:var(--ds-selected)] text-[color:var(--ds-primary-press)]',
   opened: 'bg-blue-50 text-blue-800',
   signed: 'bg-green-50 text-green-800',
 };
@@ -199,15 +199,15 @@ export default function RenewalsV2Client() {
           aria-label="Monthly batch"
           value={month}
           onChange={(e) => (e.target.value ? selectMonth(e.target.value) : (setMonth(''), setSelected(new Set()), setBatch(null)))}
-          className="anchor-chip rounded-full border border-[#261E5A] bg-white px-4 py-2 text-sm text-[#261E5A]"
+          className="anchor-chip rounded-full border border-[color:var(--ds-ink)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]"
         >
           <option value="">Monthly batch</option>
           {months.map(([k, n]) => <option key={k} value={k}>{monthLabel(k)} ({n})</option>)}
         </select>
         <div className="ml-auto flex items-center gap-4">
         <EditColumns cols={COLS} visible={cols.visible} onApply={cols.apply} />
-        <label className="flex items-center gap-2 text-sm text-[#261E5A]">
-          <input type="checkbox" className="accent-[#5B3FE3]" checked={rateLock} onChange={(e) => setRateLock(e.target.checked)} />
+        <label className="flex items-center gap-2 text-sm text-[color:var(--ds-ink)]">
+          <input type="checkbox" className="accent-[color:var(--ds-primary)]" checked={rateLock} onChange={(e) => setRateLock(e.target.checked)} />
           Include 72-hour rate lock
         </label>
         </div>
@@ -218,23 +218,23 @@ export default function RenewalsV2Client() {
 
       {selected.size > 0 && (
         <div className={`${A.card} flex flex-wrap items-center gap-3 px-4 py-3`}>
-          <span className="text-sm text-[#261E5A]">{selected.size} selected</span>
+          <span className="text-sm text-[color:var(--ds-ink)]">{selected.size} selected</span>
           <button onClick={() => runBatch(false)} disabled={busy !== null} className={A.primary}>
             {busy === 'batch:dry' ? 'Checking…' : 'Review before sending'}
           </button>
-          <button onClick={() => { setSelected(new Set()); setBatch(null); setMonth(''); }} className="text-sm text-[#5B3FE3] underline">Clear</button>
+          <button onClick={() => { setSelected(new Set()); setBatch(null); setMonth(''); }} className="text-sm text-[color:var(--ds-primary)] underline">Clear</button>
         </div>
       )}
 
       {batch && (
-        <div className={`${A.card} space-y-3 border-[#5B3FE3] p-4`}>
-          <p className="text-sm font-semibold text-[#261E5A]">
+        <div className={`${A.card} space-y-3 border-[color:var(--ds-primary)] p-4`}>
+          <p className="text-sm font-semibold text-[color:var(--ds-ink)]">
             {wouldSend.length} renewal email{wouldSend.length === 1 ? '' : 's'} will be sent. Nothing has been sent yet.
           </p>
-          <ul className="space-y-1 text-sm text-[#6E6A8A]">
+          <ul className="space-y-1 text-sm text-[color:var(--ds-body)]">
             {batch.results.map((r) => (
               <li key={r.id}>
-                <span className="font-medium text-[#261E5A]">{r.company ?? r.id}</span>
+                <span className="font-medium text-[color:var(--ds-ink)]">{r.company ?? r.id}</span>
                 {r.status === 'would_send' ? ` → ${r.to}` : ` — skipped (${r.error})`}
               </li>
             ))}
@@ -254,38 +254,38 @@ export default function RenewalsV2Client() {
           <thead>
             <tr>
               <th>
-                <input type="checkbox" className="accent-[#5B3FE3]" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(sendable.map((r) => r.id)))} aria-label="Select all with an email" />
+                <input type="checkbox" className="accent-[color:var(--ds-primary)]" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(sendable.map((r) => r.id)))} aria-label="Select all with an email" />
               </th>
               <th>Partner</th><th>Ad</th><th>Rate</th><th>Expires</th><th>Status</th><th />
             </tr>
           </thead>
           <tbody>
-            {rows === null && !error && <tr><td colSpan={7} className="text-center text-[#6E6A8A]">Loading…</td></tr>}
+            {rows === null && !error && <tr><td colSpan={7} className="text-center text-[color:var(--ds-body)]">Loading…</td></tr>}
             {rows !== null && visible.length === 0 && (
               <tr><td colSpan={7}><EmptyState title="No renewals" body="No agreements due for renewal match your filters." action={{ label: 'Clear filters', onClick: () => setStates(['not_started', 'draft', 'sent', 'opened', 'signed']) }} /></td></tr>
             )}
             {visible.map((r) => (
               <tr key={r.id}>
-                <td><input type="checkbox" className="accent-[#5B3FE3]" disabled={!r.email} checked={selected.has(r.id)} onChange={() => toggle(r.id)} aria-label={`Select ${r.company_name ?? 'agreement'}`} /></td>
+                <td><input type="checkbox" className="accent-[color:var(--ds-primary)]" disabled={!r.email} checked={selected.has(r.id)} onChange={() => toggle(r.id)} aria-label={`Select ${r.company_name ?? 'agreement'}`} /></td>
                 <td>
-                  <div className="font-medium text-[#261E5A]">{r.company_name ?? '—'}</div>
-                  <div className="text-xs text-[#6E6A8A]">{r.email ?? 'No email on file'}</div>
+                  <div className="font-medium text-[color:var(--ds-ink)]">{r.company_name ?? '—'}</div>
+                  <div className="text-xs text-[color:var(--ds-body)]">{r.email ?? 'No email on file'}</div>
                 </td>
-                <td className="text-[#261E5A]">
+                <td className="text-[color:var(--ds-ink)]">
                   {[r.ad_size, r.frequency].filter(Boolean).join(' · ') || r.channel}
                   {r.needs_full_form && <div className="text-xs text-amber-700">Opens the full form</div>}
                 </td>
-                <td className="text-[#261E5A]">
+                <td className="text-[color:var(--ds-ink)]">
                   {money(r.rate_cents)}
-                  {r.new_rate_cents != null && r.new_rate_cents !== r.rate_cents && <div className="text-xs text-[#4B30CC]">renews at {money(r.new_rate_cents)}</div>}
+                  {r.new_rate_cents != null && r.new_rate_cents !== r.rate_cents && <div className="text-xs text-[color:var(--ds-primary-press)]">renews at {money(r.new_rate_cents)}</div>}
                 </td>
                 <td>
-                  <div className="text-[#261E5A]">{when(r.exp_date)}</div>
+                  <div className="text-[color:var(--ds-ink)]">{when(r.exp_date)}</div>
                   <DaysPill days={r.days_left} />
                 </td>
                 <td>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATE_STYLE[r.state]}`}>{STATE_LABEL[r.state]}</span>
-                  {r.last_sent_at && <div className="mt-1 text-xs text-[#6E6A8A]">Sent {new Date(r.last_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{r.reminders_sent ? ` · ${r.reminders_sent} reminder${r.reminders_sent === 1 ? '' : 's'}` : ''}</div>}
+                  {r.last_sent_at && <div className="mt-1 text-xs text-[color:var(--ds-body)]">Sent {new Date(r.last_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{r.reminders_sent ? ` · ${r.reminders_sent} reminder${r.reminders_sent === 1 ? '' : 's'}` : ''}</div>}
                 </td>
                 <td>
                   <div className="flex justify-end gap-2">

@@ -86,10 +86,10 @@ export default function TemplatesPanel() {
         </div>
       )}
       <div>
-        <h2 className="mb-1 text-base font-semibold text-[#261E5A]">Agreement templates</h2>
-        <p className="mb-2 text-xs text-[#6E6A8A]">Saved from the agreement builder with Save as template. They keep the services, message, note and reference fields.</p>
+        <h2 className="mb-1 text-base font-semibold text-[color:var(--ds-ink)]">Agreement templates</h2>
+        <p className="mb-2 text-xs text-[color:var(--ds-body)]">Saved from the agreement builder with Save as template. They keep the services, message, note and reference fields.</p>
         {builderTpls.filter((t) => t.name.toLowerCase().includes(q.trim().toLowerCase())).length === 0 ? (
-          <p className="text-sm text-[#6E6A8A]">None yet. Open the builder and choose Save as template.</p>
+          <p className="text-sm text-[color:var(--ds-body)]">None yet. Open the builder and choose Save as template.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className={A.table}>
@@ -97,8 +97,8 @@ export default function TemplatesPanel() {
               <tbody>
                 {builderTpls.filter((t) => t.name.toLowerCase().includes(q.trim().toLowerCase())).map((t) => (
                   <tr key={t.id}>
-                    <td className="font-medium text-[#261E5A]">{t.name}</td>
-                    <td className="whitespace-nowrap text-[#6E6A8A]">{new Date(t.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                    <td className="font-medium text-[color:var(--ds-ink)]">{t.name}</td>
+                    <td className="whitespace-nowrap text-[color:var(--ds-body)]">{new Date(t.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                     <td className="whitespace-nowrap text-right"><a href={`/admin/agreements/renewals-v2/new?template=${t.id}`} className={`${A.small} mr-2`}>Use template</a><button onClick={() => removeBuilder(t)} className={A.small}>Delete</button></td>
                   </tr>
                 ))}
@@ -106,20 +106,20 @@ export default function TemplatesPanel() {
             </table>
           </div>
         )}
-        <h2 className="mb-1 mt-6 text-base font-semibold text-[#261E5A]">Quick templates</h2>
+        <h2 className="mb-1 mt-6 text-base font-semibold text-[color:var(--ds-ink)]">Quick templates</h2>
       </div>
       <div className="overflow-x-auto">
         <table className={A.table}>
           <thead><tr><th>Template name</th><th>Ad size</th><th>Frequency</th><th>Monthly rate</th><th /></tr></thead>
           <tbody>
-            {rows === null && <tr><td colSpan={5} className="text-center text-[#6E6A8A]">Loading…</td></tr>}
+            {rows === null && <tr><td colSpan={5} className="text-center text-[color:var(--ds-body)]">Loading…</td></tr>}
             {rows !== null && list.length === 0 && <tr><td colSpan={5}><EmptyState title="No templates" body="Create a template to prefill new agreements." /></td></tr>}
             {list.map((t) => (
               <tr key={t.id}>
-                <td className="font-medium text-[#261E5A]">{t.name}</td>
-                <td className="text-[#261E5A]">{t.ad_size ?? '—'}</td>
-                <td className="text-[#261E5A]">{t.frequency ?? '—'}</td>
-                <td className="text-[#261E5A]">{t.ad_rate_cents == null ? '—' : `$${(t.ad_rate_cents / 100).toLocaleString('en-US')}`}</td>
+                <td className="font-medium text-[color:var(--ds-ink)]">{t.name}</td>
+                <td className="text-[color:var(--ds-ink)]">{t.ad_size ?? '—'}</td>
+                <td className="text-[color:var(--ds-ink)]">{t.frequency ?? '—'}</td>
+                <td className="text-[color:var(--ds-ink)]">{t.ad_rate_cents == null ? '—' : `$${(t.ad_rate_cents / 100).toLocaleString('en-US')}`}</td>
                 <td className="text-right"><button onClick={() => remove(t)} className={A.small}>Delete</button></td>
               </tr>
             ))}

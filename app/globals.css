@@ -2247,6 +2247,34 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 #agent-desk.ct-lite :is(p, .ds-subtitle) { max-width: none !important; text-wrap: wrap !important; }
 
 /* ==========================================================================
+   Design tokens (Planti task manager dashboard)
+   --------------------------------------------------------------------------
+   One shared set. Agreements (Beta), the agreement builder and the partner
+   pages (/agree, /renew) read every color, radius and font from here.
+   ========================================================================== */
+:root {
+  --ds-primary: #582BE7;
+  --ds-primary-press: #4B1FB8;
+  --ds-ink: #16132D;
+  --ds-body: #4E4B66;
+  --ds-line: #E2DFEC;
+  --ds-hover: #F7F4FE;
+  --ds-selected: #EEE8FD;
+  --ds-page: #F3F4F7;
+  --ds-placeholder: #8E8BA6;
+  --ds-r-control: 10px;
+  --ds-r-card: 14px;
+}
+[data-anchor-ui='true'] {
+  font-family: var(--font-lato), var(--font-sans-app), Inter, system-ui, sans-serif;
+  color: var(--ds-body);
+}
+[data-anchor-ui='true'] :is(h1, h2, h3) { letter-spacing: -0.01em; font-weight: 600; color: var(--ds-ink); }
+/* Buttons, tabs and table headings use Title Case, not all capitals. */
+[data-anchor-ui='true'] :is(button, [role='tab'], th) { text-transform: capitalize; }
+[data-anchor-ui='true'] :is(input, textarea, select, button) { font-family: inherit; }
+
+/* ==========================================================================
    Anchor-style controls (Agreements Beta workspace only)
    --------------------------------------------------------------------------
    Opt-in classes from components/anchor/ui.tsx. They override the global admin
@@ -2255,42 +2283,42 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
    underlined text tabs. Nothing outside elements carrying these classes changes.
    ========================================================================== */
 [data-admin-ui='true'] .anchor-primary {
-  background-color: #5b3fe3 !important;
-  border: 1px solid #5b3fe3 !important;
-  border-radius: 6px !important;
+  background-color: var(--ds-primary) !important;
+  border: 1px solid var(--ds-primary) !important;
+  border-radius: var(--ds-r-control) !important;
   color: #ffffff !important;
 }
 [data-admin-ui='true'] .anchor-primary:hover:not(:disabled) {
-  background-color: #4b30cc !important;
-  border-color: #4b30cc !important;
+  background-color: var(--ds-primary-press) !important;
+  border-color: var(--ds-primary-press) !important;
 }
 [data-admin-ui='true'] .anchor-outline {
   background-color: #ffffff !important;
-  border: 1px solid #5b3fe3 !important;
-  border-radius: 6px !important;
-  color: #5b3fe3 !important;
+  border: 1px solid var(--ds-primary) !important;
+  border-radius: var(--ds-r-control) !important;
+  color: var(--ds-primary) !important;
 }
 [data-admin-ui='true'] .anchor-outline:hover:not(:disabled) {
-  background-color: #f3f0ff !important;
+  background-color: var(--ds-hover) !important;
 }
 [data-admin-ui='true'] .anchor-chip {
   background-color: #ffffff !important;
-  border: 1px solid #261e5a !important;
+  border: 1px solid var(--ds-ink) !important;
   border-radius: 9999px !important;
-  color: #261e5a !important;
+  color: var(--ds-ink) !important;
 }
 [data-admin-ui='true'] .anchor-tab {
   background-color: transparent !important;
   border: 0 !important;
   border-bottom: 3px solid transparent !important;
   border-radius: 0 !important;
-  color: #6e6a8a !important;
+  color: var(--ds-body) !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
 [data-admin-ui='true'] .anchor-tab[aria-selected='true'] {
-  border-bottom-color: #5b3fe3 !important;
-  color: #261e5a !important;
+  border-bottom-color: var(--ds-primary) !important;
+  color: var(--ds-ink) !important;
   font-weight: 500;
 }
 
@@ -2302,16 +2330,16 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   height: 28px !important;
   width: 48px !important;
 }
-[data-admin-ui='true'] .anchor-toggle[aria-checked='true'] { background-color: #5b3fe3 !important; }
-[data-admin-ui='true'] .anchor-toggle[aria-checked='false'] { background-color: #c9c6d8 !important; }
+[data-admin-ui='true'] .anchor-toggle[aria-checked='true'] { background-color: var(--ds-primary) !important; }
+[data-admin-ui='true'] .anchor-toggle[aria-checked='false'] { background-color: var(--ds-line) !important; }
 
 [data-admin-ui='true'] .anchor-input {
   background-color: #ffffff !important;
-  border: 1px solid #d8d5e6 !important;
-  border-radius: 6px !important;
-  color: #261e5a !important;
+  border: 1px solid var(--ds-line) !important;
+  border-radius: var(--ds-r-control) !important;
+  color: var(--ds-ink) !important;
 }
 [data-admin-ui='true'] .anchor-input:focus {
-  border-color: #5b3fe3 !important;
+  border-color: var(--ds-primary) !important;
   box-shadow: none !important;
 }

@@ -30,7 +30,7 @@ export default function StatementsPanel() {
   }, [rows, q, overdueOnly]);
 
   if (error) return <div className={A.error}>{error}</div>;
-  if (!rows) return <p className="text-sm text-[#6E6A8A]">Loading statements…</p>;
+  if (!rows) return <p className="text-sm text-[color:var(--ds-body)]">Loading statements…</p>;
   const out = rows.reduce((n, r) => n + r.outstanding_cents, 0);
   const over = rows.reduce((n, r) => n + r.overdue_cents, 0);
 
@@ -38,13 +38,13 @@ export default function StatementsPanel() {
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {([['Partners with a balance', String(rows.length)], ['Outstanding', money(out)], ['Overdue', money(over)]] as const).map(([l, v]) => (
-          <div key={l} className={`${A.card} p-4`}><div className="text-xs text-[#6E6A8A]">{l}</div><div className="mt-1 text-xl font-semibold text-[#261E5A]">{v}</div></div>
+          <div key={l} className={`${A.card} p-4`}><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="mt-1 text-xl font-semibold text-[color:var(--ds-ink)]">{v}</div></div>
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} />
-        <label className="flex items-center gap-2 text-sm text-[#261E5A]"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} />Overdue only</label>
-        <span className="text-xs text-[#6E6A8A]">{shown.length} of {rows.length} partners</span>
+        <label className="flex items-center gap-2 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} />Overdue only</label>
+        <span className="text-xs text-[color:var(--ds-body)]">{shown.length} of {rows.length} partners</span>
         <Link href="/admin/getpaid/statements" className={`${A.outline} ml-auto`}>Send in Get Paid</Link>
       </div>
       {shown.length === 0 ? <EmptyState title="No statements found" body="Try a different search." /> : (
@@ -60,7 +60,7 @@ export default function StatementsPanel() {
                   <td className={`whitespace-nowrap text-right ${r.overdue_cents > 0 ? 'text-red-700' : ''}`}>{money(r.overdue_cents)}</td>
                   <td className="whitespace-nowrap text-right font-medium">{money(r.outstanding_cents)}</td>
                   <td className="whitespace-nowrap">{day(r.last_sent_at)}{r.send_count > 1 ? ` (${r.send_count}x)` : ''}</td>
-                  <td className="whitespace-nowrap"><Link className="text-[#5B3FE3]" href={`/admin/getpaid/statements/${r.advertiser_id}`}>View statement</Link></td>
+                  <td className="whitespace-nowrap"><Link className="text-[color:var(--ds-primary)]" href={`/admin/getpaid/statements/${r.advertiser_id}`}>View statement</Link></td>
                 </tr>
               ))}
             </tbody>

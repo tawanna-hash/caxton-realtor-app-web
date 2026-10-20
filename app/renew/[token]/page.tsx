@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: 'Renew your advertising agreement', r
 export default async function RenewPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#F7F7FA] px-4 py-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[color:var(--ds-page)] px-4 py-8">
       <div className="mx-auto w-full max-w-lg">
         <RenewClient token={token} />
       </div>

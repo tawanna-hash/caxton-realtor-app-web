@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Lato } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./posthog-provider";
 import PushBootstrap from "@/components/PushBootstrap";
@@ -32,6 +32,14 @@ const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-sans-app",
+  display: "swap",
+});
+
+// Lato is the display/body face for the Agreements (Beta) workspace and the partner pages (Planti task manager look).
+const lato = Lato({
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+  variable: "--font-lato",
   display: "swap",
 });
 
@@ -118,7 +126,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${lato.variable}`} suppressHydrationWarning>
       <body className="antialiased font-sans light-theme">
         <script dangerouslySetInnerHTML={{ __html: "try{var n=performance.getEntriesByType('navigation')[0];if(n&&n.type==='reload'&&'scrollRestoration' in history){history.scrollRestoration='manual';}}catch(e){}" }} />
         <PostHogProvider>

@@ -35,7 +35,7 @@ const addr = (a: Adv) => [a.address, a.address_2, [a.city, a.state].filter(Boole
 const contact = (a: Adv) => [a.first_name, a.last_name].filter(Boolean).join(' ') || '—';
 
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
-  return <div className="grid grid-cols-[150px_1fr] gap-3 py-1.5 text-sm"><div className="text-[#6E6A8A]">{k}</div><div className="break-words text-[#261E5A]">{v || '—'}</div></div>;
+  return <div className="grid grid-cols-[150px_1fr] gap-3 py-1.5 text-sm"><div className="text-[color:var(--ds-body)]">{k}</div><div className="break-words text-[color:var(--ds-ink)]">{v || '—'}</div></div>;
 }
 
 export default function AccountsPanel() {
@@ -75,25 +75,25 @@ export default function AccountsPanel() {
   }, [rows, q, status, pub]);
 
   if (error) return <div className={A.error}>{error}</div>;
-  if (!rows) return <p className="text-sm text-[#6E6A8A]">Loading accounts…</p>;
+  if (!rows) return <p className="text-sm text-[color:var(--ds-body)]">Loading accounts…</p>;
   const owing = [...balances.values()].reduce((n, b) => n + b.balance, 0);
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {([['Accounts', String(rows.length)], ['With a current agreement', String(rows.filter((r) => (r.current_ad_size || r.current_amount_cents)).length)], ['Total owed', money(owing)]] as const).map(([l, v]) => (
-          <div key={l} className={`${A.card} p-4`}><div className="text-xs text-[#6E6A8A]">{l}</div><div className="mt-1 text-xl font-semibold text-[#261E5A]">{v}</div></div>
+          <div key={l} className={`${A.card} p-4`}><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="mt-1 text-xl font-semibold text-[color:var(--ds-ink)]">{v}</div></div>
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} />
-        <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)} className="anchor-input rounded-full border border-[#D8D5E6] bg-white px-4 py-2 text-sm text-[#261E5A]">
+        <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)} className="anchor-input rounded-full border border-[color:var(--ds-line)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]">
           <option value="all">All statuses</option>{statuses.map((s) => <option key={s} value={s}>{cap(s)}</option>)}
         </select>
-        <select aria-label="Publication" value={pub} onChange={(e) => setPub(e.target.value)} className="anchor-input rounded-full border border-[#D8D5E6] bg-white px-4 py-2 text-sm text-[#261E5A]">
+        <select aria-label="Publication" value={pub} onChange={(e) => setPub(e.target.value)} className="anchor-input rounded-full border border-[color:var(--ds-line)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]">
           <option value="all">All publications</option>{Object.entries(PUB).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <span className="text-xs text-[#6E6A8A]">{shown.length} of {rows.length} accounts</span>
+        <span className="text-xs text-[color:var(--ds-body)]">{shown.length} of {rows.length} accounts</span>
         <Link href="/admin/crm" className={`${A.outline} ml-auto`}>Manage in Partners (CRM)</Link>
       </div>
       {shown.length === 0 ? <EmptyState title="No accounts found" body="Try a different search or filter." /> : (
@@ -103,12 +103,12 @@ export default function AccountsPanel() {
             <tbody>
               {shown.map((r) => (
                 <tr key={r.id} className="cursor-pointer" onClick={() => setOpen(r)}>
-                  <td className="max-w-[240px] truncate font-medium" title={r.name}><button type="button" className="text-left text-[#5B3FE3]" style={{ border: 0, background: 'transparent', padding: 0 }} onClick={() => setOpen(r)}>{r.name}</button></td>
+                  <td className="max-w-[240px] truncate font-medium" title={r.name}><button type="button" className="text-left text-[color:var(--ds-primary)]" style={{ border: 0, background: 'transparent', padding: 0 }} onClick={() => setOpen(r)}>{r.name}</button></td>
                   <td className="max-w-[160px] truncate">{contact(r)}</td>
                   <td className="max-w-[220px] truncate" title={r.contact_email ?? ''}>{r.contact_email ?? '—'}</td>
                   <td className="whitespace-nowrap">{r.phone ?? '—'}</td>
                   <td className="whitespace-nowrap">{PUB[r.publication ?? ''] ?? '—'}</td>
-                  <td><span className="rounded-full border border-[#D8D5E6] px-2.5 py-0.5 text-xs">{cap(r.status)}</span></td>
+                  <td><span className="rounded-full border border-[color:var(--ds-line)] px-2.5 py-0.5 text-xs">{cap(r.status)}</span></td>
                   <td className="whitespace-nowrap">{[r.current_ad_size, r.current_frequency].filter(Boolean).join(' · ') || '—'}</td>
                   <td className="whitespace-nowrap text-right">{money(balances.get(r.id)?.balance ?? 0)}</td>
                 </tr>
@@ -122,18 +122,18 @@ export default function AccountsPanel() {
         <div className="fixed inset-0 z-50 flex justify-end bg-black/30" onClick={() => setOpen(null)}>
           <aside className="h-full w-full max-w-[520px] overflow-y-auto bg-white p-6 shadow-xl" role="dialog" aria-label={`${open.name} account`} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-3">
-              <div><h2 className="text-lg font-semibold text-[#261E5A]">{open.name}</h2><p className="text-xs text-[#6E6A8A]">{cap(open.status)} · {PUB[open.publication ?? ''] ?? 'No publication'} · Added {day(open.created_at)}</p></div>
-              <button type="button" aria-label="Close" className="text-2xl leading-none text-[#261E5A]" style={{ border: 0, background: 'transparent' }} onClick={() => setOpen(null)}>×</button>
+              <div><h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">{open.name}</h2><p className="text-xs text-[color:var(--ds-body)]">{cap(open.status)} · {PUB[open.publication ?? ''] ?? 'No publication'} · Added {day(open.created_at)}</p></div>
+              <button type="button" aria-label="Close" className="text-2xl leading-none text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => setOpen(null)}>×</button>
             </div>
-            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Contact</h3>
+            <h3 className="mt-5 text-xs font-semibold text-[color:var(--ds-body)]">Contact</h3>
             <Row k="Name" v={contact(open)} /><Row k="Title" v={open.title} /><Row k="Company" v={open.company} /><Row k="Email" v={open.contact_email} />
             <Row k="Portal email" v={open.portal_email} /><Row k="Phone" v={open.phone} /><Row k="Office phone" v={open.office_phone} /><Row k="Website" v={open.website} />
             <Row k="Address" v={addr(open)} /><Row k="Industry" v={open.industry} /><Row k="License number" v={open.license_number} />
             {(open.additional_contacts ?? []).length > 0 && (<>
-              <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Other contacts</h3>
+              <h3 className="mt-5 text-xs font-semibold text-[color:var(--ds-body)]">Other contacts</h3>
               {(open.additional_contacts ?? []).map((c, i) => <Row key={i} k={c.name || `Contact ${i + 1}`} v={[c.title, c.email, c.phone].filter(Boolean).join(' · ')} />)}
             </>)}
-            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Billing</h3>
+            <h3 className="mt-5 text-xs font-semibold text-[color:var(--ds-body)]">Billing</h3>
             <Row k="Billing contact" v={open.billing_contact_name} /><Row k="Billing email" v={open.billing_email} /><Row k="Billing phone" v={open.billing_contact_phone} />
             <Row k="Pays by" v={cap(open.payment_mode)} /><Row k="Card on file" v={(() => {
               const c = agr.filter((a) => a.advertiser_id === open.id && (a.card_type || a.card_expiration || a.card_number_last4)).sort((x, y) => (y.created_at ?? '').localeCompare(x.created_at ?? ''))[0];
@@ -142,48 +142,48 @@ export default function AccountsPanel() {
               return `${c?.card_type || 'Card'} ending ${last4}${c?.card_expiration ? `, expires ${c.card_expiration}` : ', expiry not on file'}${c?.cardholder_name ? `, ${c.cardholder_name}` : ''}`;
             })()} />
             <Row k="Invoiced" v={money(balances.get(open.id)?.billed ?? 0)} /><Row k="Paid" v={money(balances.get(open.id)?.paid ?? 0)} /><Row k="Balance" v={money(balances.get(open.id)?.balance ?? 0)} />
-            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Current agreement</h3>
+            <h3 className="mt-5 text-xs font-semibold text-[color:var(--ds-body)]">Current agreement</h3>
             <Row k="Ad" v={[open.current_ad_size, open.current_frequency].filter(Boolean).join(' · ')} /><Row k="Rate" v={open.current_ad_rate_cents ? `${money(open.current_ad_rate_cents)} per issue` : null} />
             <Row k="Total" v={open.current_amount_cents ? money(open.current_amount_cents) : null} /><Row k="Expires" v={day(open.current_exp_date)} />
-            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Profile</h3>
+            <h3 className="mt-5 text-xs font-semibold text-[color:var(--ds-body)]">Profile</h3>
             <Row k="Tagline" v={open.tagline} /><Row k="Bio" v={open.bio} /><Row k="Page address" v={open.slug ? `/${open.slug}` : null} />
             <Row k="Facebook" v={open.facebook_url} /><Row k="Instagram" v={open.instagram_url} /><Row k="LinkedIn" v={open.linkedin_url} /><Row k="X / Twitter" v={open.twitter_url} /><Row k="YouTube" v={open.youtube_url} />
             <Row k="Rep address" v={[open.rep_address, [open.rep_city, open.rep_state].filter(Boolean).join(', '), open.rep_zip].filter(Boolean).join(' ')} />
-            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Email and engagement</h3>
+            <h3 className="mt-5 text-xs font-semibold text-[color:var(--ds-body)]">Email and engagement</h3>
             <Row k="Email status" v={open.email_status ? `${cap(open.email_status)}${open.email_verified_at ? ` (verified ${day(open.email_verified_at)})` : ''}` : null} />
             <Row k="Opens" v={`${open.open_count ?? 0}${open.last_opened_at ? `, last ${day(open.last_opened_at)}` : ''}`} />
             <Row k="Bounces" v={`${open.bounce_count ?? 0}${open.last_bounced_at ? `, last ${day(open.last_bounced_at)} (${open.last_bounce_type ?? 'unknown'})` : ''}`} />
             <Row k="Clicks (30 days)" v={String(open.clicks_30d ?? 0)} /><Row k="Hotspots" v={String(open.hotspot_count ?? 0)} /><Row k="Record locked" v={open.is_locked ? 'Yes' : 'No'} />
             <Row k="Updated" v={day(open.updated_at)} />
-            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Agreement history ({agr.filter((a) => a.advertiser_id === open.id).length})</h3>
-            {agr.filter((a) => a.advertiser_id === open.id).length === 0 ? <p className="py-1.5 text-sm text-[#6E6A8A]">No agreements yet.</p> : (
-              <ul className="divide-y divide-[#ECEAF4] text-sm">
+            <h3 className="mt-5 text-xs font-semibold text-[color:var(--ds-body)]">Agreement history ({agr.filter((a) => a.advertiser_id === open.id).length})</h3>
+            {agr.filter((a) => a.advertiser_id === open.id).length === 0 ? <p className="py-1.5 text-sm text-[color:var(--ds-body)]">No agreements yet.</p> : (
+              <ul className="divide-y divide-[color:var(--ds-line)] text-sm">
                 {agr.filter((a) => a.advertiser_id === open.id).sort((x, y) => (y.created_at ?? '').localeCompare(x.created_at ?? '')).map((a) => (
                   <li key={a.id} className="flex items-start justify-between gap-3 py-2">
                     <div>
-                      <div className="text-[#261E5A]">{[cap(a.type), a.ad_size, a.frequency].filter(Boolean).join(' · ')}{a.is_renewal ? ' (renewal)' : ''}</div>
-                      <div className="text-xs text-[#6E6A8A]">{day(a.start_date)} to {day(a.end_date ?? a.exp_date ?? null)} · {a.signed_at ? `Signed ${day(a.signed_at)}` : 'Not signed'}</div>
+                      <div className="text-[color:var(--ds-ink)]">{[cap(a.type), a.ad_size, a.frequency].filter(Boolean).join(' · ')}{a.is_renewal ? ' (renewal)' : ''}</div>
+                      <div className="text-xs text-[color:var(--ds-body)]">{day(a.start_date)} to {day(a.end_date ?? a.exp_date ?? null)} · {a.signed_at ? `Signed ${day(a.signed_at)}` : 'Not signed'}</div>
                     </div>
-                    <div className="text-right"><div className="whitespace-nowrap font-medium">{money(a.amount_cents)}</div><span className="rounded-full border border-[#D8D5E6] px-2 py-0.5 text-[10px]">{cap(a.status)}</span></div>
+                    <div className="text-right"><div className="whitespace-nowrap font-medium">{money(a.amount_cents)}</div><span className="rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[10px]">{cap(a.status)}</span></div>
                   </li>
                 ))}
               </ul>
             )}
-            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Invoice history ({inv.filter((i) => i.advertiser_id === open.id).length})</h3>
-            {inv.filter((i) => i.advertiser_id === open.id).length === 0 ? <p className="py-1.5 text-sm text-[#6E6A8A]">No invoices yet.</p> : (
-              <ul className="divide-y divide-[#ECEAF4] text-sm">
+            <h3 className="mt-5 text-xs font-semibold text-[color:var(--ds-body)]">Invoice history ({inv.filter((i) => i.advertiser_id === open.id).length})</h3>
+            {inv.filter((i) => i.advertiser_id === open.id).length === 0 ? <p className="py-1.5 text-sm text-[color:var(--ds-body)]">No invoices yet.</p> : (
+              <ul className="divide-y divide-[color:var(--ds-line)] text-sm">
                 {inv.filter((i) => i.advertiser_id === open.id).sort((x, y) => (y.created_at ?? '').localeCompare(x.created_at ?? '')).map((i) => (
                   <li key={i.id} className="flex items-start justify-between gap-3 py-2">
                     <div>
-                      <div className="text-[#261E5A]">{i.number ?? 'Draft invoice'}</div>
-                      <div className="text-xs text-[#6E6A8A]">Issued {day(i.issued_at)} · Due {day(i.due_date)}{i.paid_at ? ` · Paid ${day(i.paid_at)}` : ''}</div>
+                      <div className="text-[color:var(--ds-ink)]">{i.number ?? 'Draft invoice'}</div>
+                      <div className="text-xs text-[color:var(--ds-body)]">Issued {day(i.issued_at)} · Due {day(i.due_date)}{i.paid_at ? ` · Paid ${day(i.paid_at)}` : ''}</div>
                     </div>
-                    <div className="text-right"><div className="whitespace-nowrap font-medium">{money(i.total_cents)}</div><span className={`rounded-full border px-2 py-0.5 text-[10px] ${i.is_overdue ? 'border-red-300 text-red-700' : 'border-[#D8D5E6]'}`}>{i.is_overdue ? 'Overdue' : cap(i.status)}</span>{i.balance_cents > 0 && <div className="text-xs text-[#6E6A8A]">Owes {money(i.balance_cents)}</div>}</div>
+                    <div className="text-right"><div className="whitespace-nowrap font-medium">{money(i.total_cents)}</div><span className={`rounded-full border px-2 py-0.5 text-[10px] ${i.is_overdue ? 'border-red-300 text-red-700' : 'border-[color:var(--ds-line)]'}`}>{i.is_overdue ? 'Overdue' : cap(i.status)}</span>{i.balance_cents > 0 && <div className="text-xs text-[color:var(--ds-body)]">Owes {money(i.balance_cents)}</div>}</div>
                   </li>
                 ))}
               </ul>
             )}
-            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Account</h3>
+            <h3 className="mt-5 text-xs font-semibold text-[color:var(--ds-body)]">Account</h3>
             <Row k="Portal" v={open.portal_activated_at ? `Active since ${day(open.portal_activated_at)}` : 'Not activated'} /><Row k="Last contacted" v={day(open.last_contacted_at)} /><Row k="Outreach sent" v={String(open.outreach_count ?? 0)} />
             <Row k="Tags" v={(open.tags ?? []).join(', ')} /><Row k="Notes" v={open.notes} />
           </aside>

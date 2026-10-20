@@ -10,27 +10,27 @@
 import { useEffect, useRef, useState } from 'react';
 
 export const ANCHOR = {
-  primary: '#5B3FE3',
-  primaryHover: '#4B30CC',
-  navy: '#261E5A',
-  muted: '#6E6A8A',
-  line: '#D8D5E6',
-  tint: '#F3F0FF',
-  headBg: '#EEEDF3',
+  primary: '#582BE7',
+  primaryHover: '#4B1FB8',
+  navy: '#16132D',
+  muted: '#4E4B66',
+  line: '#E2DFEC',
+  tint: '#EEE8FD',
+  headBg: '#F3F4F7',
 } as const;
 
 export const A = {
-  title: 'text-2xl font-semibold text-[#261E5A]',
-  subtitle: 'text-sm text-[#6E6A8A]',
-  primary: 'anchor-primary inline-flex items-center justify-center rounded-md bg-[#5B3FE3] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#4B30CC] disabled:cursor-not-allowed disabled:opacity-50',
-  outline: 'anchor-outline inline-flex items-center justify-center rounded-md border border-[#5B3FE3] bg-white px-4 py-2 text-sm font-medium text-[#5B3FE3] hover:bg-[#F3F0FF] disabled:cursor-not-allowed disabled:opacity-50',
-  small: 'anchor-outline inline-flex items-center justify-center rounded-md border border-[#5B3FE3] bg-white px-3 py-1.5 text-xs font-medium text-[#5B3FE3] hover:bg-[#F3F0FF] disabled:cursor-not-allowed disabled:opacity-50',
-  input: 'anchor-input w-full rounded-md border border-[#D8D5E6] bg-white px-3 py-2.5 text-sm text-[#261E5A] placeholder:text-[#9A97B3] focus:border-[#5B3FE3] focus:outline-none',
-  card: 'rounded-lg border border-[#ECEAF4] bg-white',
+  title: 'text-2xl font-semibold text-[color:var(--ds-ink)]',
+  subtitle: 'text-sm text-[color:var(--ds-body)]',
+  primary: 'anchor-primary inline-flex items-center justify-center rounded-[10px] bg-[color:var(--ds-primary)] px-5 py-2.5 text-sm font-medium text-white hover:bg-[color:var(--ds-primary-press)] disabled:cursor-not-allowed disabled:opacity-50',
+  outline: 'anchor-outline inline-flex items-center justify-center rounded-[10px] border border-[color:var(--ds-primary)] bg-white px-4 py-2 text-sm font-medium text-[color:var(--ds-primary)] hover:bg-[color:var(--ds-hover)] disabled:cursor-not-allowed disabled:opacity-50',
+  small: 'anchor-outline inline-flex items-center justify-center rounded-[10px] border border-[color:var(--ds-primary)] bg-white px-3 py-1.5 text-xs font-medium text-[color:var(--ds-primary)] hover:bg-[color:var(--ds-hover)] disabled:cursor-not-allowed disabled:opacity-50',
+  input: 'anchor-input w-full rounded-[10px] border border-[color:var(--ds-line)] bg-white px-3 py-2.5 text-sm text-[color:var(--ds-ink)] placeholder:text-[color:var(--ds-placeholder)] focus:border-[color:var(--ds-primary)] focus:outline-none',
+  card: 'rounded-[14px] border border-[color:var(--ds-line)] bg-white',
   // White row cards on a tinted page, gray header row.
-  table: 'w-full border-separate text-left text-sm [border-spacing:0_6px] [&_thead_th]:bg-[#EEEDF3] [&_thead_th]:px-3 [&_thead_th]:py-2.5 [&_thead_th]:text-xs [&_thead_th]:font-medium [&_thead_th]:text-[#6E6A8A] [&_thead_th:first-child]:rounded-l-md [&_thead_th:last-child]:rounded-r-md [&_tbody_td]:bg-white [&_tbody_td]:px-3 [&_tbody_td]:py-3.5 [&_tbody_td:first-child]:rounded-l-md [&_tbody_td:last-child]:rounded-r-md',
-  notice: 'rounded-md border border-[#D8D5E6] bg-[#F3F0FF] px-4 py-2 text-sm text-[#261E5A]',
-  error: 'rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700',
+  table: 'w-full border-separate text-left text-sm [border-spacing:0_6px] [&_thead_th]:bg-[color:var(--ds-page)] [&_thead_th]:px-3 [&_thead_th]:py-2.5 [&_thead_th]:text-xs [&_thead_th]:font-medium [&_thead_th]:text-[color:var(--ds-body)] [&_thead_th:first-child]:rounded-l-[10px] [&_thead_th:last-child]:rounded-r-[10px] [&_tbody_td]:bg-white [&_tbody_td]:px-3 [&_tbody_td]:py-3.5 [&_tbody_td:first-child]:rounded-l-[10px] [&_tbody_td:last-child]:rounded-r-[10px]',
+  notice: 'rounded-[10px] border border-[color:var(--ds-line)] bg-[color:var(--ds-selected)] px-4 py-2 text-sm text-[color:var(--ds-ink)]',
+  error: 'rounded-[10px] border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700',
 } as const;
 
 function Chevron({ up }: { up?: boolean }) {
@@ -44,7 +44,7 @@ function Chevron({ up }: { up?: boolean }) {
 export function SearchBox({ value, onChange, label = 'Search' }: { value: string; onChange: (v: string) => void; label?: string }) {
   return (
     <div className="relative">
-      <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#261E5A]" width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--ds-ink)]" width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
         <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.8" />
         <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       </svg>
@@ -53,7 +53,7 @@ export function SearchBox({ value, onChange, label = 'Search' }: { value: string
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search..."
         aria-label={label}
-        className="w-60 rounded-full border border-[#D8D5E6] bg-white py-2 pl-9 pr-4 text-sm text-[#261E5A] placeholder:text-[#9A97B3] focus:border-[#5B3FE3] focus:outline-none"
+        className="w-60 rounded-full border border-[color:var(--ds-line)] bg-white py-2 pl-9 pr-4 text-sm text-[color:var(--ds-ink)] placeholder:text-[color:var(--ds-placeholder)] focus:border-[color:var(--ds-primary)] focus:outline-none"
       />
     </div>
   );
@@ -90,27 +90,27 @@ export function FilterChip<T extends string>({
         onClick={() => { setDraft(value); setOpen((o) => !o); }}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="anchor-chip inline-flex items-center gap-2 rounded-full border border-[#261E5A] bg-white px-4 py-2 text-sm text-[#261E5A]"
+        className="anchor-chip inline-flex items-center gap-2 rounded-full border border-[color:var(--ds-ink)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]"
       >
         {label}<Chevron up={open} />
       </button>
       {open && (
-        <div className="absolute left-0 z-30 mt-2 w-64 rounded-lg border border-[#ECEAF4] bg-white p-4 shadow-lg" role="dialog" aria-label={title}>
-          <div className="mb-3 flex items-center justify-between text-sm text-[#6E6A8A]">
+        <div className="absolute left-0 z-30 mt-2 w-64 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-4 shadow-lg" role="dialog" aria-label={title}>
+          <div className="mb-3 flex items-center justify-between text-sm text-[color:var(--ds-body)]">
             {title}
-            <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="text-lg leading-none text-[#261E5A]">×</button>
+            <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="text-lg leading-none text-[color:var(--ds-ink)]">×</button>
           </div>
-          <label className="flex items-center gap-3 py-2 text-sm text-[#261E5A]">
-            <input type="checkbox" checked={all} onChange={() => setDraft(all ? [] : options.map((o) => o.value))} className="h-4 w-4 accent-[#5B3FE3]" />
+          <label className="flex items-center gap-3 py-2 text-sm text-[color:var(--ds-ink)]">
+            <input type="checkbox" checked={all} onChange={() => setDraft(all ? [] : options.map((o) => o.value))} className="h-4 w-4 accent-[color:var(--ds-primary)]" />
             Select all
           </label>
           {options.map((o) => (
-            <label key={o.value} className="flex items-center gap-3 py-2 text-sm text-[#261E5A]">
+            <label key={o.value} className="flex items-center gap-3 py-2 text-sm text-[color:var(--ds-ink)]">
               <input
                 type="checkbox"
                 checked={draft.includes(o.value)}
                 onChange={() => setDraft((d) => (d.includes(o.value) ? d.filter((x) => x !== o.value) : [...d, o.value]))}
-                className="h-4 w-4 accent-[#5B3FE3]"
+                className="h-4 w-4 accent-[color:var(--ds-primary)]"
               />
               {o.label}
             </label>
@@ -126,8 +126,8 @@ export function FilterChip<T extends string>({
 export function EmptyState({ title, body, action }: { title: string; body: string; action?: { label: string; onClick: () => void } }) {
   return (
     <div className="py-14 text-center">
-      <div className="font-semibold text-[#261E5A]">{title}</div>
-      <div className="mt-1 text-sm text-[#6E6A8A]">{body}</div>
+      <div className="font-semibold text-[color:var(--ds-ink)]">{title}</div>
+      <div className="mt-1 text-sm text-[color:var(--ds-body)]">{body}</div>
       {action && <button type="button" onClick={action.onClick} className={`${A.primary} mt-4`}>{action.label}</button>}
     </div>
   );
@@ -138,8 +138,8 @@ export function SettingRow({ label, hint, children }: { label: string; hint?: st
   return (
     <div className="grid gap-2 py-4 sm:grid-cols-[1fr_1fr] sm:items-center">
       <div>
-        <div className="text-sm text-[#261E5A]">{label}</div>
-        {hint && <div className="text-xs text-[#6E6A8A]">{hint}</div>}
+        <div className="text-sm text-[color:var(--ds-ink)]">{label}</div>
+        {hint && <div className="text-xs text-[color:var(--ds-body)]">{hint}</div>}
       </div>
       {children}
     </div>
@@ -198,14 +198,14 @@ export function EditColumns({ cols, visible, onApply }: { cols: ColumnDef[]; vis
         Edit columns
       </button>
       {open && (
-        <div className="absolute right-0 z-30 mt-2 w-64 rounded-lg border border-[#ECEAF4] bg-white p-4 shadow-lg" role="dialog" aria-label="Edit columns">
-          <div className="mb-3 flex items-center justify-between text-sm text-[#6E6A8A]">
+        <div className="absolute right-0 z-30 mt-2 w-64 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-4 shadow-lg" role="dialog" aria-label="Edit columns">
+          <div className="mb-3 flex items-center justify-between text-sm text-[color:var(--ds-body)]">
             Edit columns
-            <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="text-lg leading-none text-[#261E5A]">×</button>
+            <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="text-lg leading-none text-[color:var(--ds-ink)]">×</button>
           </div>
           {cols.map((c) => (
-            <label key={c.key} className="flex items-center gap-3 py-2 text-sm text-[#261E5A]">
-              <input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={draft.includes(c.key)} onChange={() => setDraft((d) => (d.includes(c.key) ? d.filter((x) => x !== c.key) : [...d, c.key]))} />
+            <label key={c.key} className="flex items-center gap-3 py-2 text-sm text-[color:var(--ds-ink)]">
+              <input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={draft.includes(c.key)} onChange={() => setDraft((d) => (d.includes(c.key) ? d.filter((x) => x !== c.key) : [...d, c.key]))} />
               {c.label}
             </label>
           ))}
@@ -226,7 +226,7 @@ export function Toggle({ on, onChange, label, disabled }: { on: boolean; onChang
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!on)}
-      className={`anchor-toggle relative h-7 w-12 shrink-0 rounded-full transition ${on ? 'bg-[#5B3FE3]' : 'bg-[#C9C6D8]'} ${disabled ? 'opacity-60' : ''}`}
+      className={`anchor-toggle relative h-7 w-12 shrink-0 rounded-full transition ${on ? 'bg-[color:var(--ds-primary)]' : 'bg-[color:var(--ds-line)]'} ${disabled ? 'opacity-60' : ''}`}
     >
       <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
     </button>

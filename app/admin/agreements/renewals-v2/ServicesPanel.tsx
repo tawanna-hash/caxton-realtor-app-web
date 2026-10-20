@@ -29,18 +29,18 @@ export default function ServicesPanel() {
   }, [rows, q, category, inactive]);
 
   if (error) return <div className={A.error}>{error}</div>;
-  if (!rows) return <p className="text-sm text-[#6E6A8A]">Loading services…</p>;
+  if (!rows) return <p className="text-sm text-[color:var(--ds-body)]">Loading services…</p>;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} />
-        <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)} className="anchor-input rounded-full border border-[#D8D5E6] bg-white px-4 py-2 text-sm text-[#261E5A]">
+        <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)} className="anchor-input rounded-full border border-[color:var(--ds-line)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]">
           <option value="all">All categories</option>
           {categories.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <label className="flex items-center gap-2 text-sm text-[#261E5A]"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={inactive} onChange={(e) => setInactive(e.target.checked)} />Show inactive</label>
-        <span className="text-xs text-[#6E6A8A]">{shown.length} of {rows.length} items</span>
+        <label className="flex items-center gap-2 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={inactive} onChange={(e) => setInactive(e.target.checked)} />Show inactive</label>
+        <span className="text-xs text-[color:var(--ds-body)]">{shown.length} of {rows.length} items</span>
         <a href="/admin/getpaid/product&services" className={`${A.outline} ml-auto`}>Manage in Get Paid</a>
       </div>
       {shown.length === 0 ? <EmptyState title="No services found" body="Try a different search or category." /> : (
@@ -50,12 +50,12 @@ export default function ServicesPanel() {
             <tbody>
               {shown.map((r) => (
                 <tr key={r.id}>
-                  <td><div className="font-medium text-[#261E5A]">{r.name}</div>{r.sales_description && <div className="line-clamp-1 text-xs text-[#6E6A8A]">{r.sales_description}</div>}</td>
+                  <td><div className="font-medium text-[color:var(--ds-ink)]">{r.name}</div>{r.sales_description && <div className="line-clamp-1 text-xs text-[color:var(--ds-body)]">{r.sales_description}</div>}</td>
                   <td>{ITEM_TYPE_LABELS[r.item_type] ?? r.item_type}</td>
                   <td className="min-w-[140px]">{r.category ?? '—'}</td>
                   <td className="whitespace-nowrap">{r.market ? MARKET[r.market] ?? r.market : '—'}</td>
                   <td className="whitespace-nowrap text-right">{formatProductPrice(r.price_cents)}</td>
-                  <td><span className={`rounded-full border px-2.5 py-0.5 text-xs ${r.is_active ? 'border-green-600 text-green-700' : 'border-[#9A97B3] text-[#6E6A8A]'}`}>{r.is_active ? 'Active' : 'Inactive'}</span></td>
+                  <td><span className={`rounded-full border px-2.5 py-0.5 text-xs ${r.is_active ? 'border-green-600 text-green-700' : 'border-[color:var(--ds-placeholder)] text-[color:var(--ds-body)]'}`}>{r.is_active ? 'Active' : 'Inactive'}</span></td>
                 </tr>
               ))}
             </tbody>
