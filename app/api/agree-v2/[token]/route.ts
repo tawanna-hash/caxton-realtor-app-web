@@ -23,7 +23,9 @@ import { type Agreement } from '@/lib/agreements';
 import { allowsCheckPayment } from '@/lib/ad-channels';
 import { termsForChannel } from '@/lib/agreement-terms';
 import { brandForPublication } from '@/lib/email-templates';
-import { channelOfRow, needsFullForm, totalCents, recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
+import { channelOfRow, chargeBaseCents, needsFullForm, totalCents, recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
+import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
+import { getDefaults } from '@/lib/agreements-v2/settings';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
 import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
 import { POST as liveSign } from '@/app/api/ad-sign/[token]/route';
@@ -32,13 +34,16 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type RouteCtx = { params: Promise<{ token: string }> };
-type Row = Agreement & { channel?: string | null; line_count?: number };
+type Row = Agreement & { channel?: string | null; line_count?: number; lines_total?: number; pay_now_total?: number };
 
 async function load(id: string) {
   await ensureSchema();
   const sql = getSql();
   const rows = await sql`
-    SELECT ag.*, (SELECT COUNT(*)::int FROM agreement_line_items li WHERE li.agreement_id = ag.id) AS line_count
+    SELECT ag.*,
+      (SELECT COUNT(*)::int FROM agreement_line_items li WHERE li.agreement_id = ag.id) AS line_count,
+      (SELECT COALESCE(SUM(li.amount_cents), 0)::int FROM agreement_line_items li WHERE li.agreement_id = ag.id) AS lines_total,
+      (SELECT COALESCE(SUM(li.amount_cents), 0)::int FROM agreement_line_items li WHERE li.agreement_id = ag.id AND li.pay_now = true) AS pay_now_total
       FROM agreements ag WHERE ag.id = ${id}
   ` as unknown as Row[];
   const ag = rows[0];
@@ -67,6 +72,14 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     }
 
     const channel = channelOfRow(ag);
+    const lines = (await sql`
+      SELECT package_label, channel, ad_size, frequency, quantity, amount_cents, pay_now, start_date, end_date
+        FROM agreement_line_items WHERE agreement_id = ${ag.id} ORDER BY line_no
+    `.catch(() => [])) as unknown as Array<Record<string, unknown>>;
+    const base = chargeBaseCents(ag);
+    const surcharged = base ? withSurcharge(base) : null;
+    const defaults = await getDefaults(sql);
+    const tlAgreement = { ...ag, ad_rate_cents: ag.ad_rate_cents, amount_cents: (ag.lines_total ?? 0) > 0 ? ag.lines_total : ag.amount_cents } as Agreement;
     const brand = brandForPublication(ag.publication);
     return NextResponse.json({
       id: ag.id,
@@ -80,8 +93,12 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       start_date: ag.start_date,
       end_date: ag.end_date,
       needs_full_form: needsFullForm(ag),
-      card_available: isStripeConfigured() && ag.ad_rate_cents != null && ag.ad_rate_cents > 0,
-      card_charge_cents: ag.ad_rate_cents ? withSurcharge(ag.ad_rate_cents) : null,
+      lines,
+      card_available: isStripeConfigured() && base != null,
+      card_base_cents: base,
+      card_charge_cents: surcharged,
+      timeline_check: allowsCheckPayment(channel) ? checkTimeline(tlAgreement, defaults) : null,
+      timeline_card: cardTimeline(ag, base, surcharged),
       full_form_url: `/admin/billing/sign/${token}`,
       allow_check: allowsCheckPayment(channel),
       fields: Object.fromEntries(EDITABLE.map((k) => [k, (ag as unknown as Record<string, unknown>)[k] ?? ''])),

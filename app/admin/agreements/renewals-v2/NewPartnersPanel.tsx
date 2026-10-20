@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Template } from './TemplatesPanel';
+import BillingTimeline, { type TimelineView } from '@/components/anchor/TimelineView';
 import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
 
 type Candidate = {
@@ -99,6 +100,23 @@ export default function NewPartnersPanel() {
 
   const list = useMemo(() => (rows ?? []).filter((r) => (r.company_name ?? '').toLowerCase().includes(q.trim().toLowerCase())), [rows, q]);
 
+  const [tl, setTl] = useState<{ row: Candidate; check: TimelineView; card: TimelineView; mode: 'view' | 'send' } | null>(null);
+
+  async function openTimeline(row: Candidate, mode: 'view' | 'send') {
+    setBusy(`${row.id}:timeline`);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/admin/agreements-v2/${row.id}`, {
+        method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'timeline' }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || j.detail || `HTTP ${res.status}`);
+      setTl({ row, check: j.check, card: j.card, mode });
+    } catch (e) {
+      setNotice(`Could not load the billing timeline: ${e instanceof Error ? e.message : 'error'}`);
+    } finally { setBusy(null); }
+  }
+
   async function act(id: string, action: 'preview' | 'send') {
     setBusy(`${id}:${action}`);
     setNotice(null);
@@ -148,7 +166,8 @@ export default function NewPartnersPanel() {
                 <td>
                   <div className="flex justify-end gap-2">
                     <button onClick={() => act(r.id, 'preview')} disabled={busy !== null} className={A.small}>{busy === `${r.id}:preview` ? '…' : 'Preview'}</button>
-                    <button onClick={() => { if (window.confirm(`Email the agreement link to ${r.email}?`)) void act(r.id, 'send'); }} disabled={busy !== null || !r.email} className={A.small}>
+                    <button onClick={() => void openTimeline(r, 'view')} disabled={busy !== null} className={A.small}>{busy === `${r.id}:timeline` ? '…' : 'Timeline'}</button>
+                    <button onClick={() => void openTimeline(r, 'send')} disabled={busy !== null || !r.email} className={A.small}>
                       {busy === `${r.id}:send` ? '…' : r.state === 'sent' || r.state === 'opened' ? 'Resend' : 'Send'}
                     </button>
                   </div>
@@ -158,6 +177,37 @@ export default function NewPartnersPanel() {
           </tbody>
         </table>
       </div>
+
+      {tl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Billing timeline">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white shadow-xl">
+            <div className="relative bg-[#EEF0FB] px-6 py-5 text-center">
+              <h2 className="text-lg font-semibold text-[#261E5A]">Billing timeline</h2>
+              <p className="text-sm text-[#6E6A8A]">{tl.row.company_name ?? 'Partner'}</p>
+              <button type="button" aria-label="Close" onClick={() => setTl(null)} className="absolute right-4 top-4 text-xl leading-none text-[#261E5A]">×</button>
+            </div>
+            <div className="space-y-6 px-6 py-6">
+              {tl.check && (
+                <section>
+                  <h3 className="mb-3 text-sm font-semibold text-[#261E5A]">If the partner pays by check</h3>
+                  <BillingTimeline timeline={tl.check} />
+                </section>
+              )}
+              <section>
+                <h3 className="mb-3 text-sm font-semibold text-[#261E5A]">If the partner pays by card</h3>
+                <BillingTimeline timeline={tl.card} />
+              </section>
+              {tl.mode === 'send' && <p className="text-sm text-[#6E6A8A]">The partner sees this timeline on the agreement page. Nothing is sent until you confirm.</p>}
+              <div className="flex justify-end gap-3">
+                <button type="button" className={A.outline} onClick={() => setTl(null)}>{tl.mode === 'send' ? 'Cancel' : 'Close'}</button>
+                {tl.mode === 'send' && (
+                  <button type="button" className={A.primary} onClick={() => { const id = tl.row.id; setTl(null); void act(id, 'send'); }}>Send to {tl.row.email}</button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {creating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Create agreement">

@@ -39,22 +39,40 @@ export type NewPartnerCandidate = {
   created_at: string | null;
 };
 
-type Row = Agreement & { channel?: string | null; line_count?: number };
+type Row = Agreement & { channel?: string | null; line_count?: number; lines_total?: number; pay_now_total?: number };
 
 export function channelOfRow(r: { type: string | null; channel?: string | null }): AdChannel {
   return isAdChannel(r.channel) ? r.channel : deriveChannelFromAgreementType(r.type as never);
 }
 
-/** One-tap eligible: a single-line print agreement with a rate and ad size. */
+/**
+ * What the partner pays up front by card (before the 3% surcharge). Mirrors the
+ * live payment-intent endpoint: bundle agreements charge their pay-now lines,
+ * print agreements charge one issue, other agreements charge the quoted total.
+ */
+export function chargeBaseCents(r: Row): number | null {
+  if ((r.pay_now_total ?? 0) > 0) return r.pay_now_total ?? null;
+  const v = channelOfRow(r) === 'print' ? r.ad_rate_cents : r.amount_cents;
+  return v != null && v > 0 ? v : null;
+}
+
+/**
+ * One-tap eligible: anything we can price. Single print ads need a rate and ad
+ * size; bundles and other channels need a chargeable amount. Otherwise the
+ * partner continues on the existing full form.
+ */
 export function needsFullForm(r: Row): boolean {
-  return channelOfRow(r) !== 'print' || (r.line_count ?? 0) > 0 || r.ad_rate_cents == null || !r.ad_size;
+  if (chargeBaseCents(r) == null) return true;
+  if ((r.line_count ?? 0) === 0 && channelOfRow(r) === 'print' && (r.ad_rate_cents == null || !r.ad_size)) return true;
+  return false;
 }
 
 function events(log: AgreementAuditEntry[] | null | undefined, name: string): AgreementAuditEntry[] {
   return (Array.isArray(log) ? log : []).filter((e) => e.event === name);
 }
 
-export function totalCents(r: Pick<Agreement, 'ad_rate_cents' | 'amount_cents' | 'frequency'>): number | null {
+export function totalCents(r: Pick<Agreement, 'ad_rate_cents' | 'amount_cents' | 'frequency'> & { lines_total?: number }): number | null {
+  if ((r.lines_total ?? 0) > 0) return r.lines_total ?? null;
   if (r.ad_rate_cents == null) return r.amount_cents ?? null;
   return r.ad_rate_cents * freqMonths(r.frequency);
 }
@@ -62,7 +80,9 @@ export function totalCents(r: Pick<Agreement, 'ad_rate_cents' | 'amount_cents' |
 export async function listNewPartnerCandidates(sql: Sql): Promise<NewPartnerCandidate[]> {
   const rows = await sql`
     SELECT ag.*,
-      (SELECT COUNT(*)::int FROM agreement_line_items li WHERE li.agreement_id = ag.id) AS line_count
+      (SELECT COUNT(*)::int FROM agreement_line_items li WHERE li.agreement_id = ag.id) AS line_count,
+      (SELECT COALESCE(SUM(li.amount_cents), 0)::int FROM agreement_line_items li WHERE li.agreement_id = ag.id) AS lines_total,
+      (SELECT COALESCE(SUM(li.amount_cents), 0)::int FROM agreement_line_items li WHERE li.agreement_id = ag.id AND li.pay_now = true) AS pay_now_total
       FROM agreements ag
      WHERE COALESCE(ag.is_renewal, false) = false
        AND ag.signed_at IS NULL

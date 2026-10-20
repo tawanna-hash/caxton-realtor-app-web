@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import BillingTimeline, { type TimelineView } from '@/components/anchor/TimelineView';
 import StripePaymentBlock, { type StripePaymentHandle } from '@/app/admin/billing/sign/[token]/StripePaymentBlock';
 
 type Fields = Record<string, string>;
@@ -19,6 +20,10 @@ type Summary = {
   allow_check: boolean;
   card_available: boolean;
   card_charge_cents: number | null;
+  card_base_cents: number | null;
+  lines: Array<{ package_label: string; channel: string; quantity: number; amount_cents: number; pay_now: boolean }>;
+  timeline_check: TimelineView;
+  timeline_card: TimelineView;
   fields: Fields;
   terms: string;
 };
@@ -60,6 +65,7 @@ export default function AgreeClient({ token }: { token: string }) {
         if (!alive) return;
         const s = j as Summary;
         setData(s);
+        if (!s.allow_check) setPay('card');
         setFields(Object.fromEntries(Object.entries(s.fields).map(([k, v]) => [k, String(v ?? '')])));
       })
       .catch((e: unknown) => { if (alive) setLoadError(e instanceof Error ? e.message : 'This link is not valid.'); });
@@ -145,10 +151,13 @@ export default function AgreeClient({ token }: { token: string }) {
 
   const summary = (
     <dl className="space-y-3 rounded-md bg-[#F3F0FF] p-4 text-sm">
-      {data.ad_size && <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">Ad size</dt><dd className="text-right font-medium text-[#1B1726]">{data.ad_size}</dd></div>}
-      {data.frequency && <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">Frequency</dt><dd className="text-right font-medium text-[#1B1726]">{data.frequency}</dd></div>}
+      {data.lines.map((l, i) => (
+        <div key={i} className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">{l.package_label}{l.quantity > 1 ? ` × ${l.quantity}` : ''}</dt><dd className="text-right font-medium text-[#1B1726]">{money(l.amount_cents)}</dd></div>
+      ))}
+      {data.lines.length === 0 && data.ad_size && <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">Ad size</dt><dd className="text-right font-medium text-[#1B1726]">{data.ad_size}</dd></div>}
+      {data.lines.length === 0 && data.frequency && <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">Frequency</dt><dd className="text-right font-medium text-[#1B1726]">{data.frequency}</dd></div>}
       {data.start_date && <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">Term</dt><dd className="text-right font-medium text-[#1B1726]">{day(data.start_date)} to {day(data.end_date)}</dd></div>}
-      <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">Monthly rate</dt><dd className="text-right font-medium text-[#1B1726]">{money(data.rate_cents)}</dd></div>
+      {data.lines.length === 0 && <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">Monthly rate</dt><dd className="text-right font-medium text-[#1B1726]">{money(data.rate_cents)}</dd></div>}
       <div className="flex justify-between gap-4 border-t border-[#E4DFF1] pt-3"><dt className="font-semibold text-[#261E5A]">Agreement total</dt><dd className="text-right font-semibold text-[#261E5A]">{money(data.total_cents)}</dd></div>
     </dl>
   );
@@ -220,18 +229,22 @@ export default function AgreeClient({ token }: { token: string }) {
               <>
                 <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-4 text-sm ${pay === 'card' ? 'border-[#5B3FE3] bg-[#F3F0FF]' : 'border-[#D8D5E6]'}`}>
                   <input type="radio" name="pay" checked={pay === 'card'} onChange={() => setPay('card')} className="accent-[#5B3FE3]" />
-                  <span>Credit card <span className="text-[#6E6A8A]">(first issue charged now, card saved for monthly issues)</span></span>
+                  <span>Credit card <span className="text-[#6E6A8A]">(charged now, card saved for later issues)</span></span>
                 </label>
                 {pay === 'card' && (
                   <div className="rounded-md border border-[#D8D5E6] p-4">
                     <p className="mb-3 rounded-md bg-[#FEF8CC] p-3 text-xs text-[#645600]">
-                      A 3% credit card surcharge is added. Your card will be charged {money(data.card_charge_cents)} today for the first issue.
+                      A 3% credit card surcharge is added. Your card will be charged {money(data.card_charge_cents)} today{data.lines.length > 0 ? ' for the items due now' : ' for the first issue'}.
                     </p>
-                    <StripePaymentBlock ref={stripeRef} token={token} adRateCents={data.rate_cents ?? 0} onReadyChange={setCardReady} />
+                    <StripePaymentBlock ref={stripeRef} token={token} adRateCents={data.card_base_cents ?? 0} onReadyChange={setCardReady} />
                   </div>
                 )}
               </>
             )}
+          </div>
+          <div className="mt-6 rounded-md border border-[#ECEAF4] p-4">
+            <h3 className="mb-3 text-sm font-semibold text-[#261E5A]">Billing timeline</h3>
+            <BillingTimeline timeline={pay === 'card' ? data.timeline_card : data.timeline_check} empty="Your billing dates will be confirmed after you sign." />
           </div>
           {error && <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <div className="mt-5 flex gap-3">
