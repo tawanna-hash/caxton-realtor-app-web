@@ -211,6 +211,40 @@ export async function nextDocumentNumber(client: PoolClient, series: string): Pr
   return Number(result.rows[0].next_value);
 }
 
+
+/**
+ * Invoice numbers are INV #NNNNN from one shared counter (series 'invoice'),
+ * for manual, recurring, agreement and booking invoices alike. The counter
+ * never goes below INVOICE_NUMBER_START and never reuses a number already on an
+ * invoice. One statement, so concurrent callers cannot collide.
+ */
+export const INVOICE_NUMBER_START = 16301;
+
+const ALLOCATE_INVOICE_NUMBER_SQL = `
+  INSERT INTO document_number_counters (series, next_value)
+  SELECT 'invoice',
+         GREATEST(${INVOICE_NUMBER_START}, COALESCE(MAX(
+           CASE
+             WHEN number ~ '^INV #[0-9]{1,9}$' THEN substring(number from '[0-9]+')::bigint
+             WHEN number ~ '^[0-9]{1,9}$' THEN number::bigint
+             ELSE NULL
+           END
+         ), 0) + 1) + 1
+    FROM invoices
+  ON CONFLICT (series) DO UPDATE
+    SET next_value = GREATEST(document_number_counters.next_value, EXCLUDED.next_value - 1) + 1
+  RETURNING next_value - 1 AS n`;
+
+export async function allocateInvoiceNumberWithClient(client: PoolClient): Promise<string> {
+  const r = await client.query<{ n: string | number }>(ALLOCATE_INVOICE_NUMBER_SQL);
+  return `INV #${Number(r.rows[0].n)}`;
+}
+
+export async function allocateInvoiceNumber(sql: { query: (text: string) => Promise<unknown> }): Promise<string> {
+  const rows = (await sql.query(ALLOCATE_INVOICE_NUMBER_SQL)) as Array<{ n: string | number }>;
+  return `INV #${Number(rows[0].n)}`;
+}
+
 /**
  * Reject payment instruments (Checkout Sessions, manual payments) against
  * invoices that are not in a payable lifecycle state. Drafts are excluded

@@ -6,7 +6,7 @@
 
 import type { PoolClient } from '@neondatabase/serverless';
 import { getSql } from '@/lib/db';
-import { formatInvoiceNumber, type InvoiceLineItem } from '@/lib/invoices';
+import type { InvoiceLineItem } from '@/lib/invoices';
 import {
   computeNextRun,
   isScheduleExhausted,
@@ -14,7 +14,7 @@ import {
 } from '@/lib/recurring-invoices';
 import { ensurePublicationColumn } from '@/lib/publication-theme';
 import { withNeonTransaction } from '@/lib/server/db/neon';
-import { nextDocumentNumber } from '@/lib/server/invoice-lifecycle';
+import { allocateInvoiceNumberWithClient } from '@/lib/server/invoice-lifecycle';
 import { sendInvoiceEmail, type InvoiceEmailStatus } from '@/lib/server/invoice-email';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 
@@ -140,16 +140,6 @@ const SCHEDULE_COLUMNS = `
   occurrences_generated, next_run_at
 `;
 
-async function resolvePublicationForAdvertiser(
-  client: PoolClient,
-  advertiserId: number,
-): Promise<string> {
-  const result = await client.query<{ publication: string | null }>(
-    'SELECT publication FROM advertisers WHERE id = $1',
-    [advertiserId],
-  );
-  return result.rows[0]?.publication ?? 'both';
-}
 
 /**
  * Claim every currently due schedule for the surrounding transaction.
@@ -172,24 +162,6 @@ export async function findDueSchedules(
   return result.rows;
 }
 
-async function seedRecurringNumberSeries(
-  client: PoolClient,
-  series: string,
-  publication: string,
-  year: number,
-): Promise<void> {
-  const prefix = formatInvoiceNumber(publication, year, 0).replace(/0{4}$/, '');
-  await client.query(
-    `INSERT INTO document_number_counters (series, next_value)
-     SELECT $1,
-            COALESCE(MAX(substring(number from '([0-9]+)$')::integer), 0) + 1
-       FROM invoices
-      WHERE number LIKE $2
-     ON CONFLICT (series) DO NOTHING`,
-    [series, `${prefix}%`],
-  );
-}
-
 /** Generate one invoice and advance its schedule using an already locked row. */
 async function generateWithClient(
   client: PoolClient,
@@ -198,8 +170,6 @@ async function generateWithClient(
   if (schedule.status !== 'active') {
     return { schedule_id: schedule.id, invoice_id: null, invoice_number: null, skipped_reason: 'not active' };
   }
-
-  const publication = await resolvePublicationForAdvertiser(client, schedule.advertiser_id);
 
   // The schedule's bill-to email is an optional override. When it is blank,
   // fall back to the partner's current billing email, then contact email, so
@@ -214,11 +184,7 @@ async function generateWithClient(
     schedule.bill_to_email = row?.billing_email?.trim() || row?.contact_email?.trim() || null;
   }
 
-  const year = new Date(schedule.next_run_at).getUTCFullYear();
-  const series = `recurring_invoice:${publication}:${year}`;
-  await seedRecurringNumberSeries(client, series, publication, year);
-  const sequence = await nextDocumentNumber(client, series);
-  const number = formatInvoiceNumber(publication, year, sequence);
+  const number = await allocateInvoiceNumberWithClient(client);
 
   const issuedAt = new Date(schedule.next_run_at);
   const dueDate = new Date(issuedAt.getTime() + schedule.due_days * 24 * 60 * 60 * 1000);

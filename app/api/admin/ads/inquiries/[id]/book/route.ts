@@ -50,7 +50,8 @@ import {
   type AdInquiryRow,
 } from '@/lib/server/ad-inquiries-store';
 import { PACKAGES, EBLASTS, type Package, eblastPriceForPub } from '@/lib/media-kit';
-import { formatInvoiceNumber, type InvoiceLineItem } from '@/lib/invoices';
+import type { InvoiceLineItem } from '@/lib/invoices';
+import { allocateInvoiceNumber } from '@/lib/server/invoice-lifecycle';
 
 export const runtime = 'nodejs';
 
@@ -223,8 +224,6 @@ export const POST = withAdminTracking(async (
   );
   if (amountCents <= 0) throw new ApiError(400, 'amount_cents_must_be_positive');
 
-  const billPublication = body.publication ?? inquiryPubToDb(inquiry.publication);
-
   // Determine agreement status:
   //   - If admin pasted a Stripe payment link → 'sent' (awaiting payment)
   //   - If marked card/check/invoice w/ no link → 'signed' (confirmed verbally)
@@ -266,15 +265,7 @@ export const POST = withAdminTracking(async (
   // ── INSERT invoice (optional, default true) ────────────────────────
   let invoice: InvoiceRow | null = null;
   if (body.create_invoice !== false) {
-    const year = new Date().getFullYear();
-    const seqRows = (await sql`
-      SELECT count(*)::int AS n
-        FROM invoices i
-        JOIN advertisers a ON a.id = i.advertiser_id
-       WHERE a.publication = ${billPublication}
-         AND EXTRACT(YEAR FROM i.created_at) = ${year}
-    `) as unknown as Array<{ n: number }>;
-    const number = formatInvoiceNumber(billPublication, year, (seqRows[0]?.n ?? 0) + 1);
+    const number = await allocateInvoiceNumber(sql);
 
     const billToAddress =
       [advertiser.address, advertiser.address_2, advertiser.city, advertiser.state, advertiser.zip]
