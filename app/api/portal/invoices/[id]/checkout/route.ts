@@ -164,7 +164,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     };
 
     if (uiMode === 'embedded') {
-      sessionParams.ui_mode = 'embedded';
+      sessionParams.ui_mode = 'embedded_page';
       sessionParams.return_url = `${APP_BASE_URL}/portal/invoices/${inv.id}?paid=1&session_id={CHECKOUT_SESSION_ID}`;
     } else {
       sessionParams.success_url = successUrl;
