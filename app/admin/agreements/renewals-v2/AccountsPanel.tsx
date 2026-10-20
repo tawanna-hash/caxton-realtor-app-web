@@ -17,9 +17,15 @@ type Adv = {
   payment_mode: string | null; card_last4: string | null; portal_activated_at: string | null;
   current_ad_size: string | null; current_frequency: string | null; current_ad_rate_cents: number | null; current_amount_cents: number | null; current_exp_date: string | null;
   notes: string | null; tags: string[] | null; additional_contacts: Array<{ name?: string; email?: string; phone?: string; title?: string }> | null;
-  last_contacted_at: string | null; outreach_count: number | null; created_at: string;
+  last_contacted_at: string | null; outreach_count: number | null; created_at: string; updated_at: string | null;
+  slug: string | null; email_status: string | null; email_verified_at: string | null; portal_onboarded_at: string | null;
+  facebook_url: string | null; instagram_url: string | null; linkedin_url: string | null; twitter_url: string | null; youtube_url: string | null;
+  tagline: string | null; bio: string | null; rep_address: string | null; rep_city: string | null; rep_state: string | null; rep_zip: string | null;
+  last_opened_at: string | null; open_count: number | null; last_bounced_at: string | null; bounce_count: number | null; last_bounce_type: string | null;
+  clicks_30d: number | null; hotspot_count: number | null; is_locked: boolean | null; current_agreement_id: string | null;
 };
-type Inv = { advertiser_id?: number | null; status: string; total_cents: number; amount_paid_cents: number; balance_cents: number };
+type Agr = { id: string; advertiser_id: number | null; status: string; type: string | null; ad_size: string | null; frequency: string | null; start_date: string | null; end_date: string | null; exp_date?: string | null; amount_cents: number | null; signed_at: string | null; is_renewal?: boolean | null; created_at: string };
+type Inv = { id: string; number: string | null; advertiser_id?: number | null; agreement_id: string | null; status: string; total_cents: number; amount_paid_cents: number; balance_cents: number; issued_at: string | null; due_date: string | null; paid_at: string | null; is_overdue: boolean; created_at: string };
 
 const PUB: Record<string, string> = { austin: 'Austin', san_antonio: 'San Antonio', both: 'Both' };
 const money = (c: number | null | undefined) => (c == null ? '—' : `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
@@ -35,6 +41,7 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
 export default function AccountsPanel() {
   const [rows, setRows] = useState<Adv[] | null>(null);
   const [inv, setInv] = useState<Inv[]>([]);
+  const [agr, setAgr] = useState<Agr[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('all');
@@ -45,6 +52,7 @@ export default function AccountsPanel() {
     fetch('/api/admin/advertisers', { credentials: 'include' })
       .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.error || 'failed'); setRows(j.advertisers as Adv[]); })
       .catch((e) => setError(e instanceof Error ? e.message : 'Could not load accounts.'));
+    fetch('/api/admin/agreements', { credentials: 'include' }).then((r) => r.json()).then((j) => setAgr((j.agreements ?? []) as Agr[])).catch(() => setAgr([]));
     fetch('/api/admin/invoices', { credentials: 'include' }).then((r) => r.json()).then((j) => setInv((j.invoices ?? []) as Inv[])).catch(() => setInv([]));
   }, []);
 
@@ -127,11 +135,49 @@ export default function AccountsPanel() {
             </>)}
             <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Billing</h3>
             <Row k="Billing contact" v={open.billing_contact_name} /><Row k="Billing email" v={open.billing_email} /><Row k="Billing phone" v={open.billing_contact_phone} />
-            <Row k="Pays by" v={cap(open.payment_mode)} /><Row k="Card on file" v={open.card_last4 ? `Ending ${open.card_last4}` : null} />
+            <Row k="Pays by" v={cap(open.payment_mode)} /><Row k="Card on file" v={open.card_last4 ? `Card ending ${open.card_last4} (full numbers are never stored)` : null} />
             <Row k="Invoiced" v={money(balances.get(open.id)?.billed ?? 0)} /><Row k="Paid" v={money(balances.get(open.id)?.paid ?? 0)} /><Row k="Balance" v={money(balances.get(open.id)?.balance ?? 0)} />
             <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Current agreement</h3>
             <Row k="Ad" v={[open.current_ad_size, open.current_frequency].filter(Boolean).join(' · ')} /><Row k="Rate" v={open.current_ad_rate_cents ? `${money(open.current_ad_rate_cents)} per issue` : null} />
             <Row k="Total" v={open.current_amount_cents ? money(open.current_amount_cents) : null} /><Row k="Expires" v={day(open.current_exp_date)} />
+            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Profile</h3>
+            <Row k="Tagline" v={open.tagline} /><Row k="Bio" v={open.bio} /><Row k="Page address" v={open.slug ? `/${open.slug}` : null} />
+            <Row k="Facebook" v={open.facebook_url} /><Row k="Instagram" v={open.instagram_url} /><Row k="LinkedIn" v={open.linkedin_url} /><Row k="X / Twitter" v={open.twitter_url} /><Row k="YouTube" v={open.youtube_url} />
+            <Row k="Rep address" v={[open.rep_address, [open.rep_city, open.rep_state].filter(Boolean).join(', '), open.rep_zip].filter(Boolean).join(' ')} />
+            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Email and engagement</h3>
+            <Row k="Email status" v={open.email_status ? `${cap(open.email_status)}${open.email_verified_at ? ` (verified ${day(open.email_verified_at)})` : ''}` : null} />
+            <Row k="Opens" v={`${open.open_count ?? 0}${open.last_opened_at ? `, last ${day(open.last_opened_at)}` : ''}`} />
+            <Row k="Bounces" v={`${open.bounce_count ?? 0}${open.last_bounced_at ? `, last ${day(open.last_bounced_at)} (${open.last_bounce_type ?? 'unknown'})` : ''}`} />
+            <Row k="Clicks (30 days)" v={String(open.clicks_30d ?? 0)} /><Row k="Hotspots" v={String(open.hotspot_count ?? 0)} /><Row k="Record locked" v={open.is_locked ? 'Yes' : 'No'} />
+            <Row k="Updated" v={day(open.updated_at)} />
+            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Agreement history ({agr.filter((a) => a.advertiser_id === open.id).length})</h3>
+            {agr.filter((a) => a.advertiser_id === open.id).length === 0 ? <p className="py-1.5 text-sm text-[#6E6A8A]">No agreements yet.</p> : (
+              <ul className="divide-y divide-[#ECEAF4] text-sm">
+                {agr.filter((a) => a.advertiser_id === open.id).sort((x, y) => (y.created_at ?? '').localeCompare(x.created_at ?? '')).map((a) => (
+                  <li key={a.id} className="flex items-start justify-between gap-3 py-2">
+                    <div>
+                      <div className="text-[#261E5A]">{[cap(a.type), a.ad_size, a.frequency].filter(Boolean).join(' · ')}{a.is_renewal ? ' (renewal)' : ''}</div>
+                      <div className="text-xs text-[#6E6A8A]">{day(a.start_date)} to {day(a.end_date ?? a.exp_date ?? null)} · {a.signed_at ? `Signed ${day(a.signed_at)}` : 'Not signed'}</div>
+                    </div>
+                    <div className="text-right"><div className="whitespace-nowrap font-medium">{money(a.amount_cents)}</div><span className="rounded-full border border-[#D8D5E6] px-2 py-0.5 text-[10px]">{cap(a.status)}</span></div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Invoice history ({inv.filter((i) => i.advertiser_id === open.id).length})</h3>
+            {inv.filter((i) => i.advertiser_id === open.id).length === 0 ? <p className="py-1.5 text-sm text-[#6E6A8A]">No invoices yet.</p> : (
+              <ul className="divide-y divide-[#ECEAF4] text-sm">
+                {inv.filter((i) => i.advertiser_id === open.id).sort((x, y) => (y.created_at ?? '').localeCompare(x.created_at ?? '')).map((i) => (
+                  <li key={i.id} className="flex items-start justify-between gap-3 py-2">
+                    <div>
+                      <div className="text-[#261E5A]">{i.number ?? 'Draft invoice'}</div>
+                      <div className="text-xs text-[#6E6A8A]">Issued {day(i.issued_at)} · Due {day(i.due_date)}{i.paid_at ? ` · Paid ${day(i.paid_at)}` : ''}</div>
+                    </div>
+                    <div className="text-right"><div className="whitespace-nowrap font-medium">{money(i.total_cents)}</div><span className={`rounded-full border px-2 py-0.5 text-[10px] ${i.is_overdue ? 'border-red-300 text-red-700' : 'border-[#D8D5E6]'}`}>{i.is_overdue ? 'Overdue' : cap(i.status)}</span>{i.balance_cents > 0 && <div className="text-xs text-[#6E6A8A]">Owes {money(i.balance_cents)}</div>}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
             <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Account</h3>
             <Row k="Portal" v={open.portal_activated_at ? `Active since ${day(open.portal_activated_at)}` : 'Not activated'} /><Row k="Last contacted" v={day(open.last_contacted_at)} /><Row k="Outreach sent" v={String(open.outreach_count ?? 0)} />
             <Row k="Tags" v={(open.tags ?? []).join(', ')} /><Row k="Notes" v={open.notes} />
