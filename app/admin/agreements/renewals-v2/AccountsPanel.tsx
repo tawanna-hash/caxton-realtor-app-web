@@ -24,7 +24,7 @@ type Adv = {
   last_opened_at: string | null; open_count: number | null; last_bounced_at: string | null; bounce_count: number | null; last_bounce_type: string | null;
   clicks_30d: number | null; hotspot_count: number | null; is_locked: boolean | null; current_agreement_id: string | null;
 };
-type Agr = { id: string; advertiser_id: number | null; status: string; type: string | null; ad_size: string | null; frequency: string | null; start_date: string | null; end_date: string | null; exp_date?: string | null; amount_cents: number | null; signed_at: string | null; is_renewal?: boolean | null; created_at: string };
+type Agr = { id: string; advertiser_id: number | null; status: string; type: string | null; ad_size: string | null; frequency: string | null; start_date: string | null; end_date: string | null; exp_date?: string | null; amount_cents: number | null; signed_at: string | null; is_renewal?: boolean | null; created_at: string; card_type?: string | null; card_number_last4?: string | null; card_expiration?: string | null; cardholder_name?: string | null };
 type Inv = { id: string; number: string | null; advertiser_id?: number | null; agreement_id: string | null; status: string; total_cents: number; amount_paid_cents: number; balance_cents: number; issued_at: string | null; due_date: string | null; paid_at: string | null; is_overdue: boolean; created_at: string };
 
 const PUB: Record<string, string> = { austin: 'Austin', san_antonio: 'San Antonio', both: 'Both' };
@@ -135,7 +135,12 @@ export default function AccountsPanel() {
             </>)}
             <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Billing</h3>
             <Row k="Billing contact" v={open.billing_contact_name} /><Row k="Billing email" v={open.billing_email} /><Row k="Billing phone" v={open.billing_contact_phone} />
-            <Row k="Pays by" v={cap(open.payment_mode)} /><Row k="Card on file" v={open.card_last4 ? `Card ending ${open.card_last4} (full numbers are never stored)` : null} />
+            <Row k="Pays by" v={cap(open.payment_mode)} /><Row k="Card on file" v={(() => {
+              const c = agr.filter((a) => a.advertiser_id === open.id && (a.card_type || a.card_expiration || a.card_number_last4)).sort((x, y) => (y.created_at ?? '').localeCompare(x.created_at ?? ''))[0];
+              const last4 = c?.card_number_last4 || open.card_last4;
+              if (!last4) return null;
+              return `${c?.card_type || 'Card'} ending ${last4}${c?.card_expiration ? `, expires ${c.card_expiration}` : ', expiry not on file'}${c?.cardholder_name ? `, ${c.cardholder_name}` : ''}`;
+            })()} />
             <Row k="Invoiced" v={money(balances.get(open.id)?.billed ?? 0)} /><Row k="Paid" v={money(balances.get(open.id)?.paid ?? 0)} /><Row k="Balance" v={money(balances.get(open.id)?.balance ?? 0)} />
             <h3 className="mt-5 text-xs font-semibold uppercase tracking-wide text-[#6E6A8A]">Current agreement</h3>
             <Row k="Ad" v={[open.current_ad_size, open.current_frequency].filter(Boolean).join(' · ')} /><Row k="Rate" v={open.current_ad_rate_cents ? `${money(open.current_ad_rate_cents)} per issue` : null} />
