@@ -23,7 +23,9 @@ type Summary = {
   card_available: boolean;
   card_charge_cents: number | null;
   card_base_cents: number | null;
-  lines: Array<{ package_label: string; channel: string; quantity: number; amount_cents: number; pay_now: boolean }>;
+  lines: Array<{ package_label: string; description: string | null; channel: string; quantity: number; amount_cents: number; pay_now: boolean }>;
+  expired: boolean;
+  details: { name: string | null; note: string | null; ask_address: boolean; refs: Array<{ name: string; value: string }>; expires_at: string | null } | null;
   placement: { lines: PlacementNeed[]; single: PlacementNeed | null };
   timeline_check: TimelineView;
   timeline_card: TimelineView;
@@ -93,6 +95,11 @@ export default function AgreeClient({ token }: { token: string }) {
     if (!fields.company_name?.trim()) return setError('Please enter your company name.');
     if (!fields.rep_name?.trim()) return setError('Please enter your contact name.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.advertiser_email ?? '')) return setError('Please enter a valid email address.');
+    if (data?.details?.ask_address) {
+      for (const [k, label] of [['address', 'street address'], ['city', 'city'], ['state', 'state'], ['zip', 'ZIP code']] as const) {
+        if (!(fields[k] ?? '').trim()) return setError(`Please enter your ${label}.`);
+      }
+    }
     for (const n of needs) {
       if (!dates[n.line_no]?.[0]) return setError(n.channel === 'email' ? `Please choose a preferred send date for ${n.label}.` : `Please choose a start date for ${n.label}.`);
     }
@@ -180,15 +187,28 @@ export default function AgreeClient({ token }: { token: string }) {
   const summary = (
     <dl className="space-y-3 rounded-md bg-[#F3F0FF] p-4 text-sm">
       {data.lines.map((l, i) => (
-        <div key={i} className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">{l.package_label}{l.quantity > 1 ? ` × ${l.quantity}` : ''}</dt><dd className="text-right font-medium text-[#1B1726]">{money(l.amount_cents)}</dd></div>
+        <div key={i}>
+          <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">{l.package_label}{l.quantity > 1 ? ` × ${l.quantity}` : ''}</dt><dd className="text-right font-medium text-[#1B1726]">{money(l.amount_cents)}</dd></div>
+          {l.description && <p className="mt-1 whitespace-pre-line text-xs text-[#4A4767]">{l.description}</p>}
+        </div>
       ))}
       {data.lines.length === 0 && data.ad_size && <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">Ad size</dt><dd className="text-right font-medium text-[#1B1726]">{data.ad_size}</dd></div>}
       {data.lines.length === 0 && data.frequency && <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">Frequency</dt><dd className="text-right font-medium text-[#1B1726]">{data.frequency}</dd></div>}
       {data.start_date && <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">Term</dt><dd className="text-right font-medium text-[#1B1726]">{day(data.start_date)} to {day(data.end_date)}</dd></div>}
       {data.lines.length === 0 && <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">Monthly rate</dt><dd className="text-right font-medium text-[#1B1726]">{money(data.rate_cents)}</dd></div>}
+      {data.details?.refs.map((r, i) => <div key={`ref${i}`} className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">{r.name}</dt><dd className="text-right font-medium text-[#1B1726]">{r.value}</dd></div>)}
       <div className="flex justify-between gap-4 border-t border-[#E4DFF1] pt-3"><dt className="font-semibold text-[#261E5A]">Agreement total</dt><dd className="text-right font-semibold text-[#261E5A]">{money(data.total_cents)}</dd></div>
     </dl>
   );
+
+  if (data.expired) {
+    return (
+      <div className={card}>
+        <h1 className="text-2xl font-semibold text-[#261E5A]">This agreement has expired</h1>
+        <p className="mt-2 text-sm text-[#4A4767]">Please contact {data.brand} and we will send you a new one.</p>
+      </div>
+    );
+  }
 
   if (data.needs_full_form) {
     return (
@@ -261,6 +281,7 @@ export default function AgreeClient({ token }: { token: string }) {
           )}
           <h3 className="mb-2 mt-6 text-sm font-semibold text-[#261E5A]">Your order</h3>
           {summary}
+          {data.details?.note && <p className="mt-3 whitespace-pre-line rounded-md border border-[#ECEAF4] p-3 text-sm text-[#4A4767]">{data.details.note}</p>}
           {error && <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <button type="button" onClick={nextFromReview} className={`${pill} mt-5`}>Continue to payment</button>
         </div>

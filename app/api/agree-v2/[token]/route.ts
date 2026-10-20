@@ -26,6 +26,7 @@ import { brandForPublication } from '@/lib/email-templates';
 import { channelOfRow, chargeBaseCents, needsFullForm, totalCents, recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
 import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
 import { getDefaults } from '@/lib/agreements-v2/settings';
+import { getAgreementMeta } from '@/lib/agreements-v2/builder';
 import { buildPlacementPatches, placementNeeds } from '@/lib/agreements-v2/placement';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
 import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
@@ -80,6 +81,8 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     const base = chargeBaseCents(ag);
     const surcharged = base ? withSurcharge(base) : null;
     const defaults = await getDefaults(sql);
+    const meta = await getAgreementMeta(ag.id, sql);
+    const expired = Boolean(meta?.expires_at && meta.expires_at < new Date().toISOString().slice(0, 10) && !ag.signed_at);
     const tlAgreement = { ...ag, ad_rate_cents: ag.ad_rate_cents, amount_cents: (ag.lines_total ?? 0) > 0 ? ag.lines_total : ag.amount_cents } as Agreement;
     const brand = brandForPublication(ag.publication);
     return NextResponse.json({
@@ -94,7 +97,12 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       start_date: ag.start_date,
       end_date: ag.end_date,
       needs_full_form: needsFullForm(ag),
-      lines,
+      lines: lines.map((l) => {
+        const m = meta?.services.find((x) => x.line_no === l.line_no);
+        return { ...l, package_label: m?.name || l.package_label, description: m?.description || null };
+      }),
+      details: meta ? { name: meta.name, note: meta.note, ask_address: meta.ask_address, refs: meta.refs.filter((r) => r.client_facing), expires_at: meta.expires_at } : null,
+      expired,
       placement: placementNeeds({ ...ag, channel } as never, lines as never),
       card_available: isStripeConfigured() && base != null,
       card_base_cents: base,
@@ -137,6 +145,10 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const { sql, ag } = await load(id);
     if (!ag) return NextResponse.json({ error: 'not found' }, { status: 404 });
     if (ag.signed_at) return NextResponse.json({ error: 'This agreement is already signed.' }, { status: 409 });
+    const meta = await getAgreementMeta(ag.id, sql);
+    if (meta?.expires_at && meta.expires_at < new Date().toISOString().slice(0, 10)) {
+      return NextResponse.json({ error: 'This agreement has expired. Please contact us for a new one.' }, { status: 410 });
+    }
     if (needsFullForm(ag)) {
       return NextResponse.json({ error: 'This agreement needs the full form.', code: 'needs_full_form' }, { status: 422 });
     }
@@ -172,6 +184,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       if (typeof v === 'string') patches[k] = v.trim() || null;
     }
     const required: Array<[string, string]> = [
+      ...(meta?.ask_address ? ([['address', 'street address'], ['city', 'city'], ['state', 'state'], ['zip', 'ZIP code']] as Array<[string, string]>) : []),
       ['company_name', 'company name'],
       ['rep_name', 'contact name'],
       ['advertiser_email', 'email'],
