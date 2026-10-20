@@ -5,7 +5,7 @@
 // at a time or in a batch (always with a dry-run summary and a confirm step).
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { A, ColumnStyle, EditColumns, EmptyState, FilterChip, useColumns, type ColumnDef } from '@/components/anchor/ui';
+import { A, RowMenu, ColumnStyle, EditColumns, EmptyState, FilterChip, useColumns, type ColumnDef } from '@/components/anchor/ui';
 
 type Candidate = {
   id: string;
@@ -288,8 +288,7 @@ export default function RenewalsV2Client() {
                   {r.last_sent_at && <div className="mt-1 text-xs text-[color:var(--ds-body)]">Sent {new Date(r.last_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{r.reminders_sent ? ` · ${r.reminders_sent} reminder${r.reminders_sent === 1 ? '' : 's'}` : ''}</div>}
                 </td>
                 <td>
-                  <div className="flex justify-end gap-2">
-                    <button onClick={() => act(r.id, 'preview')} disabled={busy !== null} className={A.small}>{busy === `${r.id}:preview` ? '…' : 'Preview'}</button>
+                  <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => { if (window.confirm(`Email the renewal link to ${r.email}?`)) void act(r.id, 'send'); }}
                       disabled={busy !== null || !r.email}
@@ -297,6 +296,7 @@ export default function RenewalsV2Client() {
                     >
                       {busy === `${r.id}:send` ? '…' : r.state === 'not_started' || r.state === 'draft' ? 'Send' : 'Resend'}
                     </button>
+                    <RowMenu items={[{ label: 'Copy preview link', onClick: () => void act(r.id, 'preview'), disabled: busy !== null }]} />
                   </div>
                 </td>
               </tr>
