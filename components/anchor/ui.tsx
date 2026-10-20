@@ -22,9 +22,9 @@ export const ANCHOR = {
 export const A = {
   title: 'text-2xl font-semibold text-[#261E5A]',
   subtitle: 'text-sm text-[#6E6A8A]',
-  primary: 'inline-flex items-center justify-center rounded-md bg-[#5B3FE3] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#4B30CC] disabled:cursor-not-allowed disabled:opacity-50',
-  outline: 'inline-flex items-center justify-center rounded-md border border-[#5B3FE3] bg-white px-4 py-2 text-sm font-medium text-[#5B3FE3] hover:bg-[#F3F0FF] disabled:cursor-not-allowed disabled:opacity-50',
-  small: 'inline-flex items-center justify-center rounded-md border border-[#5B3FE3] bg-white px-3 py-1.5 text-xs font-medium text-[#5B3FE3] hover:bg-[#F3F0FF] disabled:cursor-not-allowed disabled:opacity-50',
+  primary: 'anchor-primary inline-flex items-center justify-center rounded-md bg-[#5B3FE3] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#4B30CC] disabled:cursor-not-allowed disabled:opacity-50',
+  outline: 'anchor-outline inline-flex items-center justify-center rounded-md border border-[#5B3FE3] bg-white px-4 py-2 text-sm font-medium text-[#5B3FE3] hover:bg-[#F3F0FF] disabled:cursor-not-allowed disabled:opacity-50',
+  small: 'anchor-outline inline-flex items-center justify-center rounded-md border border-[#5B3FE3] bg-white px-3 py-1.5 text-xs font-medium text-[#5B3FE3] hover:bg-[#F3F0FF] disabled:cursor-not-allowed disabled:opacity-50',
   input: 'w-full rounded-md border border-[#D8D5E6] bg-white px-3 py-2.5 text-sm text-[#261E5A] placeholder:text-[#9A97B3] focus:border-[#5B3FE3] focus:outline-none',
   card: 'rounded-lg border border-[#ECEAF4] bg-white',
   // White row cards on a tinted page, gray header row.
@@ -89,7 +89,7 @@ export function FilterChip<T extends string>({
         type="button"
         onClick={() => { setDraft(value); setOpen((o) => !o); }}
         aria-expanded={open}
-        className="inline-flex items-center gap-2 rounded-full border border-[#261E5A] bg-white px-4 py-2 text-sm text-[#261E5A]"
+        className="anchor-chip inline-flex items-center gap-2 rounded-full border border-[#261E5A] bg-white px-4 py-2 text-sm text-[#261E5A]"
       >
         {label}<Chevron up={open} />
       </button>

@@ -2245,3 +2245,51 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 
 /* Paragraphs run the full width of the window instead of a narrow column. */
 #agent-desk.ct-lite :is(p, .ds-subtitle) { max-width: none !important; text-wrap: wrap !important; }
+
+/* ==========================================================================
+   Anchor-style controls (Agreements Beta workspace only)
+   --------------------------------------------------------------------------
+   Opt-in classes from components/anchor/ui.tsx. They override the global admin
+   control language (pill radius, selected-state fill) so this workspace can
+   match the Anchor app: rounded-rectangle actions, outlined pill filters, and
+   underlined text tabs. Nothing outside elements carrying these classes changes.
+   ========================================================================== */
+[data-admin-ui='true'] .anchor-primary {
+  background-color: #5b3fe3 !important;
+  border: 1px solid #5b3fe3 !important;
+  border-radius: 6px !important;
+  color: #ffffff !important;
+}
+[data-admin-ui='true'] .anchor-primary:hover:not(:disabled) {
+  background-color: #4b30cc !important;
+  border-color: #4b30cc !important;
+}
+[data-admin-ui='true'] .anchor-outline {
+  background-color: #ffffff !important;
+  border: 1px solid #5b3fe3 !important;
+  border-radius: 6px !important;
+  color: #5b3fe3 !important;
+}
+[data-admin-ui='true'] .anchor-outline:hover:not(:disabled) {
+  background-color: #f3f0ff !important;
+}
+[data-admin-ui='true'] .anchor-chip {
+  background-color: #ffffff !important;
+  border: 1px solid #261e5a !important;
+  border-radius: 9999px !important;
+  color: #261e5a !important;
+}
+[data-admin-ui='true'] .anchor-tab {
+  background-color: transparent !important;
+  border: 0 !important;
+  border-bottom: 3px solid transparent !important;
+  border-radius: 0 !important;
+  color: #6e6a8a !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+[data-admin-ui='true'] .anchor-tab[aria-selected='true'] {
+  border-bottom-color: #5b3fe3 !important;
+  color: #261e5a !important;
+  font-weight: 500;
+}
