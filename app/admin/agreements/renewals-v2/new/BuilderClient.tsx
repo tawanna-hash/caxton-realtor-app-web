@@ -271,7 +271,7 @@ export default function BuilderClient() {
           <button type="button" className={A.outline} onClick={() => setPanel((p) => !p)} aria-pressed={panel}>Billing timeline</button>
           <button type="button" className={A.outline} onClick={() => { setTplName(doc.name); setTplOpen(true); }}>Save as template</button>
           <div className="relative">
-            <button type="button" aria-label="More actions" aria-haspopup="menu" aria-expanded={moreMenu} className={A.outline} onClick={() => { setMoreMenu((o) => !o); setSendMenu(false); }}>⋮</button>
+            <button type="button" aria-label="More actions" aria-haspopup="menu" aria-expanded={moreMenu} className={`${A.outline} px-3 text-lg leading-none`} onClick={() => { setMoreMenu((o) => !o); setSendMenu(false); }}>⋮</button>
             {moreMenu && (
               <div role="menu" className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-[#ECEAF4] bg-white p-1 shadow-lg">
                 <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-red-700" style={{ border: 0, background: 'transparent' }} onClick={() => { setMoreMenu(false); setDiscardOpen(true); }}>Discard draft</button>
@@ -281,7 +281,7 @@ export default function BuilderClient() {
           <button type="button" className={A.outline} onClick={() => setPreviewOpen(true)}>View client preview</button>
           <div className="relative flex">
             <button type="button" className={A.primary} disabled={problems.length > 0 || busy} onClick={() => setSendOpen(true)} title={problems[0]}>Send</button>
-            <button type="button" aria-label="More send options" aria-haspopup="menu" aria-expanded={sendMenu} className={`${A.primary} ml-px px-2`} disabled={problems.length > 0 || busy} onClick={() => { setSendMenu((o) => !o); setMoreMenu(false); }}>▾</button>
+            <button type="button" aria-label="More send options" aria-haspopup="menu" aria-expanded={sendMenu} className={`${A.primary} ml-px px-3 text-base leading-none`} disabled={problems.length > 0 || busy} onClick={() => { setSendMenu((o) => !o); setMoreMenu(false); }}>▾</button>
             {sendMenu && (
               <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border border-[#ECEAF4] bg-white p-1 shadow-lg">
                 <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-[#261E5A]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setSendOpen(true); }}>Send now by email</button>
@@ -483,7 +483,7 @@ export default function BuilderClient() {
           {/* Payment settings */}
           <section className={A.card}>
             <h2 className="border-b border-[#ECEAF4] px-6 py-4 text-lg font-semibold text-[#261E5A]">Payment settings</h2>
-            <div className="space-y-4 p-6 text-sm text-[#261E5A]">
+            <div className="space-y-6 p-6 text-sm text-[#261E5A]">
               <div>
                 <div className="mb-2 font-medium">Payment methods the client can choose</div>
                 <label className="flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.card} onChange={(e) => update({ payment: { ...doc.payment, card: e.target.checked } })} />Credit card <span className="text-[#6E6A8A]">(3% surcharge added, charged when they sign)</span></label>
