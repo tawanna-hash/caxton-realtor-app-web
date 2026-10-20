@@ -180,7 +180,7 @@ export async function ensureRenewalDraft(
       discount_cents, ad_premium_cents, total_monthly_rate_cents,
       bill_to, billing_email, billing_contact_name, billing_contact_phone,
       card_type, cardholder_name, card_number_last4, card_expiration, cardholder_address,
-      stripe_customer_id, stripe_payment_method_id, publication,
+      stripe_customer_id, stripe_payment_method_id, publication, channel,
       ad_timing_months, is_renewal, renewed_from_id, notes, created_by, audit_log
     ) VALUES (
       ${prior.advertiser_id}, ${prior.company_name}, ${prior.rep_name}, ${prior.advertiser_email}, ${prior.advertiser_phone}, ${prior.advertiser_address},
@@ -189,7 +189,7 @@ export async function ensureRenewalDraft(
       ${prior.discount_cents}, ${prior.ad_premium_cents}, ${rate},
       ${prior.bill_to}, ${prior.billing_email}, ${prior.billing_contact_name}, ${prior.billing_contact_phone},
       ${prior.card_type}, ${prior.cardholder_name}, ${prior.card_number_last4}, ${prior.card_expiration}, ${prior.cardholder_address},
-      ${prior.stripe_customer_id}, ${prior.stripe_payment_method_id}, ${prior.publication},
+      ${prior.stripe_customer_id}, ${prior.stripe_payment_method_id}, ${prior.publication}, ${channelOf(prior)},
       ${JSON.stringify(term.months)}::jsonb, true, ${priorId}, ${`Renewals (Beta): renewal of ${priorId}.${repricedNote}`}, ${adminEmail},
       ${JSON.stringify(audit)}::jsonb
     )
