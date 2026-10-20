@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import RenewalsV2Client from './RenewalsV2Client';
 import NewPartnersPanel from './NewPartnersPanel';
+import StatusBoard from './StatusBoard';
 
 export default function AgreementsBeta() {
-  const [tab, setTab] = useState<'renewals' | 'new'>('renewals');
+  const [tab, setTab] = useState<'renewals' | 'new' | 'board'>('board');
   return (
     <div>
       <div className="flex gap-2 px-4 pt-4 sm:px-6" role="tablist" aria-label="Agreements beta">
-        {([['renewals', 'Renewals'], ['new', 'New partners']] as const).map(([key, label]) => (
+        {([['board', 'Status board'], ['renewals', 'Renewals'], ['new', 'New partners']] as const).map(([key, label]) => (
           <button
             key={key}
             role="tab"
@@ -28,10 +29,10 @@ export default function AgreementsBeta() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6B6878]">Admin · Agreements</p>
             <h1 className="mt-1 text-2xl font-semibold text-[#301D5D]">
-              New partners <span className="ml-1 rounded-full bg-[#EFEAFB] px-2 py-0.5 align-middle text-xs font-semibold text-[#42277C]">Beta</span>
+              {tab === 'board' ? 'Status board' : 'New partners'} <span className="ml-1 rounded-full bg-[#EFEAFB] px-2 py-0.5 align-middle text-xs font-semibold text-[#42277C]">Beta</span>
             </h1>
           </div>
-          <NewPartnersPanel />
+          {tab === 'board' ? <StatusBoard /> : <NewPartnersPanel />}
         </div>
       )}
     </div>

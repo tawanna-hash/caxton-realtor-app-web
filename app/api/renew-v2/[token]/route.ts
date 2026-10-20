@@ -21,6 +21,7 @@ import { termsForChannel } from '@/lib/agreement-terms';
 import { brandForPublication } from '@/lib/email-templates';
 import { freqMonths } from '@/lib/renewals-v2/pricing';
 import { recordEvent } from '@/lib/renewals-v2/service';
+import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
 import { POST as liveSign } from '@/app/api/ad-sign/[token]/route';
 
 export const runtime = 'nodejs';
@@ -168,6 +169,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     if (!res.ok) return NextResponse.json(data, { status: res.status });
 
     await recordEvent(sql, id, 'renewal_v2_accepted', `Accepted via one-tap renewal by "${signerName}" (${mode})`);
+    // Phase 3: draft recurring schedule for review. Never blocks the signing.
+    await createDraftScheduleForAgreement(sql, id, null);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ error: 'accept failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });
