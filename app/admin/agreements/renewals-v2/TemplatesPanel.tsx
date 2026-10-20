@@ -10,7 +10,10 @@ export type Template = { id: string; name: string; ad_size: string | null; frequ
 
 const field = A.input;
 
+type BuilderTemplate = { id: string; name: string; updated_at: string };
+
 export default function TemplatesPanel() {
+  const [builderTpls, setBuilderTpls] = useState<BuilderTemplate[]>([]);
   const [rows, setRows] = useState<Template[] | null>(null);
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
@@ -27,6 +30,21 @@ export default function TemplatesPanel() {
       .catch(() => { if (alive) setMsg('Could not load templates.'); });
     return () => { alive = false; };
   }, [tick]);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/admin/agreements-v2/builder', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => { if (alive) setBuilderTpls((j.templates ?? []) as BuilderTemplate[]); })
+      .catch(() => undefined);
+    return () => { alive = false; };
+  }, [tick]);
+
+  async function removeBuilder(t: BuilderTemplate) {
+    if (!window.confirm(`Delete the template "${t.name}"?`)) return;
+    await fetch('/api/admin/agreements-v2/builder', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'delete', id: t.id }) });
+    reload();
+  }
 
   const list = useMemo(() => (rows ?? []).filter((t) => t.name.toLowerCase().includes(q.trim().toLowerCase())), [rows, q]);
 
@@ -67,6 +85,29 @@ export default function TemplatesPanel() {
           </div>
         </div>
       )}
+      <div>
+        <h2 className="mb-1 text-base font-semibold text-[#261E5A]">Agreement templates</h2>
+        <p className="mb-2 text-xs text-[#6E6A8A]">Saved from the agreement builder with Save as template. They keep the services, message, note and reference fields.</p>
+        {builderTpls.filter((t) => t.name.toLowerCase().includes(q.trim().toLowerCase())).length === 0 ? (
+          <p className="text-sm text-[#6E6A8A]">None yet. Open the builder and choose Save as template.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className={A.table}>
+              <thead><tr><th>Template name</th><th>Updated</th><th /></tr></thead>
+              <tbody>
+                {builderTpls.filter((t) => t.name.toLowerCase().includes(q.trim().toLowerCase())).map((t) => (
+                  <tr key={t.id}>
+                    <td className="font-medium text-[#261E5A]">{t.name}</td>
+                    <td className="whitespace-nowrap text-[#6E6A8A]">{new Date(t.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                    <td className="whitespace-nowrap text-right"><a href={`/admin/agreements/renewals-v2/new?template=${t.id}`} className={`${A.small} mr-2`}>Use template</a><button onClick={() => removeBuilder(t)} className={A.small}>Delete</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <h2 className="mb-1 mt-6 text-base font-semibold text-[#261E5A]">Quick templates</h2>
+      </div>
       <div className="overflow-x-auto">
         <table className={A.table}>
           <thead><tr><th>Template name</th><th>Ad size</th><th>Frequency</th><th>Monthly rate</th><th /></tr></thead>
