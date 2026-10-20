@@ -128,6 +128,7 @@ export const NOTIFICATION_EVENTS = [
   { key: 'client_new_partner_invite', audience: 'client', label: 'Agreement sent to a new partner', recipients: 'Partner contact' },
   { key: 'client_renewal_invite', audience: 'client', label: 'Renewal link sent', recipients: 'Partner contact' },
   { key: 'client_renewal_reminder', audience: 'client', label: 'Renewal reminder (7, 3 and 1 day before expiry)', recipients: 'Partner contact' },
+  { key: 'team_check_request', audience: 'team', label: 'A partner asks to pay by check (needs your approval)', recipients: 'You' },
 ] as const;
 export type NotificationKey = (typeof NOTIFICATION_EVENTS)[number]['key'];
 export type NotificationSettings = Record<NotificationKey, boolean>;
