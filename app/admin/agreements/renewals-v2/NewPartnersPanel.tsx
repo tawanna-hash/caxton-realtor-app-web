@@ -39,7 +39,7 @@ const money = (c: number | null) => (c == null ? '—' : `$${(c / 100).toLocaleS
 function Floating({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="relative">
-      <span className="absolute -top-2 left-3 bg-white px-1 text-[11px] text-[#6E6A8A]">{label}</span>
+      <span className="pointer-events-none absolute -top-2 left-3 z-10 bg-white px-1 text-[11px] text-[#6E6A8A]">{label}</span>
       {children}
     </div>
   );
@@ -138,7 +138,10 @@ export default function NewPartnersPanel() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SearchBox value={q} onChange={setQ} label="Search new partners" />
-        <button onClick={() => { setFormError(null); setCreating(true); }} className={A.primary}>Create agreement</button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => { setFormError(null); setCreating(true); }} className={A.outline}>Quick create</button>
+          <a href="/admin/agreements/renewals-v2/new" className={A.primary}>Create agreement</a>
+        </div>
       </div>
       {notice && <div className={A.notice}>{notice}</div>}
       {error && <div className={A.error}>{error}</div>}

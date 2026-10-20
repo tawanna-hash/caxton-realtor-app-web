@@ -13,6 +13,7 @@ import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agr
 import { isAdChannel, deriveChannelFromAgreementType, type AdChannel } from '@/lib/ad-channels';
 import type { getSql } from '@/lib/db';
 import { freqMonths } from '@/lib/renewals-v2/pricing';
+import { getAgreementMeta } from '@/lib/agreements-v2/builder';
 import { getNotifications, getDefaults, renderIntro } from '@/lib/agreements-v2/settings';
 
 type Sql = ReturnType<typeof getSql>;
@@ -142,7 +143,7 @@ function money(cents: number | null | undefined): string {
   return `$${((cents ?? 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export function newPartnerEmailHtml(ag: Agreement, link: string, intro?: string | null): string {
+export function newPartnerEmailHtml(ag: Agreement, link: string, intro?: string | null, lines?: Array<{ label: string; cents: number }>): string {
   const brand = brandForPublication(ag.publication);
   return `<!doctype html><html><body style="margin:0;background:#F6F5FB;font-family:Arial,Helvetica,sans-serif;color:#1B1726">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
@@ -153,7 +154,7 @@ export function newPartnerEmailHtml(ag: Agreement, link: string, intro?: string 
 <p style="margin:0 0 16px 0;font-size:15px;line-height:1.55">${escapeHtml(renderIntro(intro || 'Your advertising agreement is ready. Review the details, choose how to pay, and sign. It takes about two minutes.', ag))}</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F5FB;border-radius:8px"><tr><td style="padding:16px 18px;font-size:14px;line-height:1.7">
 <strong>${escapeHtml(ag.company_name ?? '')}</strong><br>
-${ag.ad_size ? `Ad size: ${escapeHtml(ag.ad_size)}<br>` : ''}${ag.frequency ? `Frequency: ${escapeHtml(ag.frequency)}<br>` : ''}Monthly rate: ${money(ag.ad_rate_cents)}
+${lines && lines.length ? `${lines.map((l) => `${escapeHtml(l.label)}: ${money(l.cents)}<br>`).join('')}Total: ${money(lines.reduce((n, l) => n + l.cents, 0))}` : `${ag.ad_size ? `Ad size: ${escapeHtml(ag.ad_size)}<br>` : ''}${ag.frequency ? `Frequency: ${escapeHtml(ag.frequency)}<br>` : ''}Monthly rate: ${money(ag.ad_rate_cents)}`}
 </td></tr></table>
 <p style="margin:24px 0;text-align:center"><a href="${link}" style="display:inline-block;background:${brand.brandColor};color:#fff;text-decoration:none;font-weight:bold;font-size:16px;padding:14px 32px;border-radius:999px">Review &amp; Sign</a></p>
 <p style="margin:0;font-size:12px;color:#6B6878">Questions? Just reply to this email.</p>
@@ -172,11 +173,14 @@ export async function sendNewPartnerEmail(
   const to = opts.to || ag.advertiser_email || ag.billing_email;
   if (!to) return { ok: false, error: 'no email address on file' };
   if (!(await getNotifications(sql)).client_new_partner_invite) return { ok: false, error: 'This email is turned off in Notification settings' };
+  const meta = await getAgreementMeta(agreementId, sql);
+  const li = await sql`SELECT line_no, package_label, amount_cents FROM agreement_line_items WHERE agreement_id = ${agreementId} ORDER BY line_no`.catch(() => []) as unknown as Array<{ line_no: number; package_label: string; amount_cents: number }>;
+  const emailLines = li.map((l) => ({ label: meta?.services.find((x) => x.line_no === l.line_no)?.name || l.package_label, cents: l.amount_cents }));
   const link = agreementLink(agreementId);
   const result = await sendEmail({
     to,
-    subject: `Your advertising agreement, ${ag.company_name ?? ''}`.trim(),
-    html: newPartnerEmailHtml(ag, link, (await getDefaults(sql)).intro_new),
+    subject: (meta?.name || `Your advertising agreement, ${ag.company_name ?? ''}`).trim(),
+    html: newPartnerEmailHtml(ag, link, meta?.intro || (await getDefaults(sql)).intro_new, emailLines),
   });
   if (!result.ok) return { ok: false, to, error: result.error };
   if (ag.status === 'draft') {

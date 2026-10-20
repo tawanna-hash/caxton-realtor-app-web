@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { saveAgreementMeta } from '@/lib/agreements-v2/builder';
 import { timelinesForAgreement } from '@/lib/agreements-v2/timeline';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
 
@@ -25,6 +26,21 @@ export const POST = withAdminTracking(async function POST(
   if (!UUID_RE.test(id)) return NextResponse.json({ error: 'invalid id' }, { status: 400 });
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* optional */ }
+  if (body.action === 'save_meta') {
+    try {
+      await ensureSchema();
+      const m = (body.meta ?? {}) as Record<string, unknown>;
+      const str = (v: unknown, n: number) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, n) : null);
+      const days = typeof m.expires_days === 'number' && m.expires_days > 0 && m.expires_days <= 365 ? Math.round(m.expires_days) : null;
+      const expires = days ? new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10) : null;
+      const refs = Array.isArray(m.refs) ? (m.refs as Array<Record<string, unknown>>).filter((r) => typeof r.name === 'string' && r.name.trim()).slice(0, 20).map((r) => ({ name: String(r.name).slice(0, 80), value: String(r.value ?? '').slice(0, 300), client_facing: r.client_facing === true })) : [];
+      const services = Array.isArray(m.services) ? (m.services as Array<Record<string, unknown>>).slice(0, 30).map((x) => ({ line_no: Number(x.line_no) || 0, name: String(x.name ?? '').slice(0, 160), description: String(x.description ?? '').slice(0, 4000) })).filter((x) => x.line_no > 0) : [];
+      await saveAgreementMeta(id, { name: str(m.name, 160), intro: str(m.intro, 4000), note: str(m.note, 4000), expires_at: expires, ask_address: m.ask_address === true, refs, services }, getSql());
+      return NextResponse.json({ ok: true });
+    } catch (err) {
+      return NextResponse.json({ error: 'failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });
+    }
+  }
   if (body.action === 'timeline') {
     try {
       await ensureSchema();
