@@ -191,7 +191,7 @@ export default function RenewalsV2Client() {
           aria-label="Monthly batch"
           value={month}
           onChange={(e) => (e.target.value ? selectMonth(e.target.value) : (setMonth(''), setSelected(new Set()), setBatch(null)))}
-          className="rounded-full border border-[#261E5A] bg-white px-4 py-2 text-sm text-[#261E5A]"
+          className="anchor-chip rounded-full border border-[#261E5A] bg-white px-4 py-2 text-sm text-[#261E5A]"
         >
           <option value="">Monthly batch</option>
           {months.map(([k, n]) => <option key={k} value={k}>{monthLabel(k)} ({n})</option>)}

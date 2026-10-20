@@ -27,7 +27,7 @@ const SUB: Record<Tab, string> = {
 export default function AgreementsBeta() {
   const [tab, setTab] = useState<Tab>('board');
   return (
-    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
+    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6" data-anchor-ui="true">
       <div>
         <h1 className={A.title}>Agreements <span className="ml-1 rounded-full border border-[#5B3FE3] px-2 py-0.5 align-middle text-xs font-medium text-[#5B3FE3]">Beta</span></h1>
         <p className={A.subtitle}>{SUB[tab]}</p>
@@ -39,7 +39,7 @@ export default function AgreementsBeta() {
             role="tab"
             aria-selected={tab === key}
             onClick={() => setTab(key)}
-            className={`-mb-px border-b-[3px] pb-3 text-[15px] ${tab === key ? 'border-[#5B3FE3] font-medium text-[#261E5A]' : 'border-transparent text-[#6E6A8A] hover:text-[#261E5A]'}`}
+            className={`anchor-tab -mb-px border-b-[3px] pb-3 text-[15px] ${tab === key ? 'border-[#5B3FE3] font-medium text-[#261E5A]' : 'border-transparent text-[#6E6A8A] hover:text-[#261E5A]'}`}
           >
             {label}
           </button>
