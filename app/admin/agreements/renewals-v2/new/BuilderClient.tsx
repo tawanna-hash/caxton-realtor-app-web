@@ -234,7 +234,7 @@ export default function BuilderClient() {
       router.push('/admin/agreements/renewals-v2');
     } catch (e) {
       setSendOpen(false);
-      setError(`${e instanceof Error ? e.message : 'Send failed.'}${agreementId ? ' The agreement is saved in New partners; you can send it from there.' : ''}`);
+      setError(`${e instanceof Error ? e.message : 'Send failed.'}${agreementId ? ' The agreement is saved in Partners; you can send it from there.' : ''}`);
     } finally { setBusy(false); }
   }
 
