@@ -139,7 +139,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         return NextResponse.json({ error: 'We could not confirm your card payment. Please try again.' }, { status: 402 });
       }
     }
-    if (mode !== 'check' && mode !== 'invoice' && mode !== 'card') {
+    if (mode !== 'check' && mode !== 'card') {
       return NextResponse.json({ error: 'Please choose how you would like to pay.' }, { status: 400 });
     }
     if (mode !== 'card' && !allowsCheckPayment(channelOfRow(ag))) {

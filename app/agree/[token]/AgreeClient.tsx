@@ -39,7 +39,7 @@ export default function AgreeClient({ token }: { token: string }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [fields, setFields] = useState<Fields>({});
-  const [pay, setPay] = useState<'invoice' | 'check' | 'card'>('invoice');
+  const [pay, setPay] = useState<'check' | 'card'>('check');
   const [name, setName] = useState('');
   const [agree, setAgree] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -210,10 +210,6 @@ export default function AgreeClient({ token }: { token: string }) {
           <div className="mt-3 space-y-2">
             {data.allow_check && (
               <>
-                <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-4 text-sm ${pay === 'invoice' ? 'border-[#261E5A] bg-[#F3F0FF]' : 'border-[#E4DFF1]'}`}>
-                  <input type="radio" name="pay" checked={pay === 'invoice'} disabled={cardPaid} onChange={() => setPay('invoice')} />
-                  <span>Monthly invoice</span>
-                </label>
                 <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-4 text-sm ${pay === 'check' ? 'border-[#261E5A] bg-[#F3F0FF]' : 'border-[#E4DFF1]'}`}>
                   <input type="radio" name="pay" checked={pay === 'check'} disabled={cardPaid} onChange={() => setPay('check')} />
                   <span>Pay by check</span>

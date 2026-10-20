@@ -19,7 +19,7 @@ test('tampered token is rejected by the API', async ({ request }) => {
   test.skip(!token, 'no print link');
   const bad = token.slice(0, -4) + 'aaaa';
   expect((await request.get(`/api/agree-v2/${bad}`)).status()).toBe(401);
-  expect((await request.post(`/api/agree-v2/${bad}`, { data: { signerName: 'x', termsAccepted: true, paymentMode: 'invoice' } })).status()).toBe(401);
+  expect((await request.post(`/api/agree-v2/${bad}`, { data: { signerName: 'x', termsAccepted: true, paymentMode: 'check' } })).status()).toBe(401);
 });
 
 test('review screen is pre-filled, branded, with no market picker or overflow', async ({ page }) => {
@@ -51,7 +51,7 @@ test('walks Review, Pay, Sign and blocks signing until name and terms', async ({
   await page.goto(PRINT);
   await page.getByRole('button', { name: /continue to payment/i }).click();
   await expect(page.getByRole('heading', { name: /how would you like to pay/i })).toBeVisible();
-  await expect(page.getByLabel(/monthly invoice/i)).toBeChecked();
+  await expect(page.getByLabel(/pay by check/i)).toBeChecked();
   await page.getByRole('button', { name: /continue to sign/i }).click();
   await expect(page.getByRole('heading', { name: /review and sign/i })).toBeVisible();
   await page.getByRole('button', { name: /sign agreement/i }).click();

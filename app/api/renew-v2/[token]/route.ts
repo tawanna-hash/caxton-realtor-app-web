@@ -135,7 +135,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         return NextResponse.json({ error: 'No card on file. Please use the full form to add a card.', code: 'needs_full_form' }, { status: 422 });
       }
       patches.payment_mode = 'card';
-    } else if (mode === 'check' || mode === 'invoice') {
+    } else if (mode === 'check') {
       if (!allowsCheckPayment(channel)) {
         return NextResponse.json({ error: 'Check payment is not available for this agreement.' }, { status: 400 });
       }
