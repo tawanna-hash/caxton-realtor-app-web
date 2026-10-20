@@ -39,11 +39,12 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, isSelect }: { label: string; children: React.ReactNode; isSelect?: boolean }) {
   return (
     <label className="relative block">
       <span className="pointer-events-none absolute -top-2 left-3 z-10 bg-white px-1 text-xs text-[#5B3FE3]">{label}</span>
       {children}
+      {isSelect && <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#261E5A]" width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
     </label>
   );
 }
@@ -308,7 +309,7 @@ export default function BuilderClient() {
               <Field label="Agreement name">
                 <input className={A.input} value={doc.name} placeholder="Agreement" onChange={(e) => update({ name: e.target.value })} />
               </Field>
-              <Field label="Client">
+              <Field label="Client" isSelect>
                 <select className={sel} value={doc.new_client ? 'new' : doc.advertiser_id ?? ''} onChange={(e) => {
                   const v = e.target.value;
                   if (v === 'new') update({ advertiser_id: null, new_client: { name: '', email: '', contact: '' } });
@@ -328,7 +329,7 @@ export default function BuilderClient() {
                 </div>
               )}
               <hr className="border-[#ECEAF4]" />
-              <Field label="Agreement effective date">
+              <Field label="Agreement effective date" isSelect>
                 <select className={sel} value={doc.effective} onChange={(e) => update({ effective: e.target.value as BuilderDoc['effective'] })}>
                   <option value="acceptance">On acceptance</option>
                   <option value="date">On a specific date</option>
@@ -337,7 +338,7 @@ export default function BuilderClient() {
               {doc.effective === 'date' && (
                 <input type="date" aria-label="Effective date" min={today()} value={doc.effective_date} onChange={(e) => update({ effective_date: e.target.value })} className="w-full border border-[#D8D5E6] text-sm text-[#261E5A]" />
               )}
-              <Field label="Introductory message">
+              <Field label="Introductory message" isSelect>
                 <select className={sel} value="" onChange={(e) => {
                   if (e.target.value === 'new') update({ intro: intros.new_partner });
                   if (e.target.value === 'renewal') update({ intro: intros.renewal });
@@ -518,8 +519,8 @@ function ServiceModal({ catalog, onClose, onSave }: { catalog: Catalog; onClose:
 
   return (
     <Modal title="Create service" onClose={onClose}>
-      <Field label="Type"><select className={sel} value={channel} onChange={(e) => pickChannel(e.target.value as ServiceLine['channel'])}><option value="print">Print ad</option><option value="email">e-Blast</option><option value="app">App placement</option></select></Field>
-      <Field label="Product">
+      <Field label="Type" isSelect><select className={sel} value={channel} onChange={(e) => pickChannel(e.target.value as ServiceLine['channel'])}><option value="print">Print ad</option><option value="email">e-Blast</option><option value="app">App placement</option></select></Field>
+      <Field label="Product" isSelect>
         <select className={sel} value={pkg} onChange={(e) => { setPkg(e.target.value); setPrice(null); if (channel === 'print') setSize(catalog.print.find((p) => p.id === e.target.value)?.sizes[0]?.size ?? ''); }}>
           {channel === 'print' && catalog.print.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           {channel === 'email' && catalog.email.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -528,7 +529,7 @@ function ServiceModal({ catalog, onClose, onSave }: { catalog: Catalog; onClose:
       </Field>
       {channel === 'print' && (
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Ad size"><select className={sel} value={size} onChange={(e) => { setSize(e.target.value); setPrice(null); }}>{catalog.print.find((p) => p.id === pkg)?.sizes.map((s) => <option key={s.size} value={s.size}>{s.size}</option>)}</select></Field>
+          <Field label="Ad size" isSelect><select className={sel} value={size} onChange={(e) => { setSize(e.target.value); setPrice(null); }}>{catalog.print.find((p) => p.id === pkg)?.sizes.map((s) => <option key={s.size} value={s.size}>{s.size}</option>)}</select></Field>
           <Field label="Months"><input type="number" min={1} max={24} className={A.input} value={months} onChange={(e) => { setMonths(Math.max(1, Math.min(24, Number(e.target.value) || 1))); setPrice(null); }} /></Field>
         </div>
       )}
@@ -536,10 +537,10 @@ function ServiceModal({ catalog, onClose, onSave }: { catalog: Catalog; onClose:
       {channel === 'app' && (
         <div className="grid grid-cols-2 gap-4">
           <Field label="Weeks"><input type="number" min={1} max={52} className={A.input} value={weeks} onChange={(e) => { setWeeks(Math.max(1, Math.min(52, Number(e.target.value) || 1))); setPrice(null); }} /></Field>
-          <Field label="Markets"><select className={sel} value={markets} onChange={(e) => { setMarkets(Number(e.target.value) as 1 | 2 | 3 | 4); setPrice(null); }}>{[1, 2, 3, 4].map((m) => <option key={m} value={m}>{m}</option>)}</select></Field>
+          <Field label="Markets" isSelect><select className={sel} value={markets} onChange={(e) => { setMarkets(Number(e.target.value) as 1 | 2 | 3 | 4); setPrice(null); }}>{[1, 2, 3, 4].map((m) => <option key={m} value={m}>{m}</option>)}</select></Field>
         </div>
       )}
-      <Field label="Publication"><select className={sel} value={pub} onChange={(e) => { setPub(e.target.value as Pub); setPrice(null); }}>{(Object.keys(PUB_LABEL) as Pub[]).map((p) => <option key={p} value={p}>{PUB_LABEL[p]}</option>)}</select></Field>
+      <Field label="Publication" isSelect><select className={sel} value={pub} onChange={(e) => { setPub(e.target.value as Pub); setPrice(null); }}>{(Object.keys(PUB_LABEL) as Pub[]).map((p) => <option key={p} value={p}>{PUB_LABEL[p]}</option>)}</select></Field>
       <Field label="Price (USD)"><input type="number" min={0} step="0.01" className={A.input} value={price ?? (suggested / 100).toString()} onChange={(e) => setPrice(e.target.value)} /></Field>
       <p className="text-xs text-[#6E6A8A]">The price starts at the media kit rate. Change it to give a custom price.</p>
       <div className="flex justify-end gap-3">

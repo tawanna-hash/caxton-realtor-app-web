@@ -2304,3 +2304,14 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 }
 [data-admin-ui='true'] .anchor-toggle[aria-checked='true'] { background-color: #5b3fe3 !important; }
 [data-admin-ui='true'] .anchor-toggle[aria-checked='false'] { background-color: #c9c6d8 !important; }
+
+[data-admin-ui='true'] .anchor-input {
+  background-color: #ffffff !important;
+  border: 1px solid #d8d5e6 !important;
+  border-radius: 6px !important;
+  color: #261e5a !important;
+}
+[data-admin-ui='true'] .anchor-input:focus {
+  border-color: #5b3fe3 !important;
+  box-shadow: none !important;
+}
