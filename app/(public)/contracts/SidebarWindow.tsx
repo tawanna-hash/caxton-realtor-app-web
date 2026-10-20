@@ -16,9 +16,9 @@ export default function SidebarWindow({
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
       <nav aria-label={label}>
-        <ul className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:flex-col lg:overflow-visible">
+        <ul className="flex flex-wrap gap-2 lg:flex-col lg:flex-nowrap">
           {items.map((item, i) => (
-            <li key={item.id} className="shrink-0 snap-start lg:shrink">
+            <li key={item.id} className="shrink-0 lg:shrink">
               {item.heading && (i === 0 || items[i - 1]?.heading !== item.heading) && (
                 <p className="mb-2 mt-3 hidden text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5B5470] lg:block">{item.heading}</p>
               )}
