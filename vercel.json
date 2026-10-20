@@ -9,6 +9,10 @@
       "schedule": "0 8 * * *"
     },
     {
+      "path": "/api/cron/renewals-v2-reminders",
+      "schedule": "0 14 * * *"
+    },
+    {
       "path": "/api/cron/sync-advertisers",
       "schedule": "0 * * * *"
     },
