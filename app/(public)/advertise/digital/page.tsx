@@ -86,7 +86,7 @@ export default async function AdvertiseDigitalPage() {
         <PageTitle size="md">
           App Ad Slots
         </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+        <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
           {availableCount} of {totalCount} placements are open right now across
           our publications. Pick any open slot, choose your publication and
           dates at checkout, upload your creative, and pay by card in under

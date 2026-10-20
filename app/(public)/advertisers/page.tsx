@@ -94,7 +94,7 @@ export default async function AdvertisersDirectoryPage() {
             Partners
           </p>
           <PageTitle size="md">Partners</PageTitle>
-          <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+          <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
             The local businesses, builders, and brands who make each
             publication possible. Switch publications to see local partners.
           </p>

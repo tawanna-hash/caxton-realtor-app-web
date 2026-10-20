@@ -50,7 +50,7 @@ export default function SubscribePage() {
         <PageTitle size="md">
           Subscribe. It&apos;s free!
         </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+        <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
           Pick your market. Austin and San Antonio offer the print magazine and
           the weekly email. Houston and Dallas / Ft. Worth are coming soon.
         </p>

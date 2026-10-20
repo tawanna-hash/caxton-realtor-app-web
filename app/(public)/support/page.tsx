@@ -17,7 +17,7 @@ export default function SupportPage() {
           Support
         </p>
         <PageTitle size="md">How can we help?</PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+        <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
           We&apos;re a small team and we read every message. Reach out and
           you&apos;ll hear back within one business day.
         </p>

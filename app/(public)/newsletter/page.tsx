@@ -22,7 +22,7 @@ export default function NewsletterLandingPage() {
         Weekly Email
       </p>
       <PageTitle size="md">The Weekly Email</PageTitle>
-      <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mb-8">
+      <p className="text-base text-gray-700 font-light leading-relaxed mb-8">
         Every Friday. One Email. Everything we published that week &mdash;
         local news, market reports, new magazine issues, events, builder and
         community updates, move-in ready homes, promotions, and giveaways

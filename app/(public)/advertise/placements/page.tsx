@@ -242,7 +242,7 @@ export default function PublicAdvertisePlacementsPage() {
         <PageTitle size="md">
           See exactly where your ad appears.
         </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+        <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
           Every digital placement in Realty News Now, shown in context. Each
           card includes a wireframe of the host screen with the ad position
           highlighted in green — so you know precisely what you&apos;re booking

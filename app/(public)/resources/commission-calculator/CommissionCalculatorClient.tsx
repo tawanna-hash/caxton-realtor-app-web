@@ -80,7 +80,7 @@ export default function CommissionCalculatorClient() {
       <header className="mb-10">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle size="md">Commission Calculator</PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+        <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
           From sale price to take-home. Models total commission, side split,
           optional referral fee, broker split, and broker flat fee — so you
           know your number before you write the offer.
