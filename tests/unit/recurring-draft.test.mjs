@@ -40,3 +40,10 @@ test('first invoice lands on the billing day on or after the start date', () => 
   assert.equal(mk('2026-12-01'), '2026-12-18');
   assert.equal(mk('2026-12-20'), '2027-01-18');
 });
+
+test('bundle agreements bill the line total, not the header rack rate', async () => {
+  const mod = await jiti.import('../../lib/agreements-v2/recurring-draft.ts');
+  const r = mod.planDraftSchedule({ company_name: 'B', ad_rate_cents: 109900, amount_cents: 300000, lines_total: 300000, frequency: null, ad_size: null, start_date: '2026-12-01', end_date: '2027-02-28', billing_email: 'a@b.c', advertiser_email: null, billing_name: null, rep_name: null }, { billing_day: 18, due_days: 20 });
+  assert.ok(r.ok);
+  assert.equal(r.plan.amount_cents, 100000);
+});

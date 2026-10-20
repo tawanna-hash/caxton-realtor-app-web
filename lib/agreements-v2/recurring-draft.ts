@@ -46,7 +46,7 @@ function monthsBetween(start: string, end: string): number {
 
 /** Pure: what monthly schedule a signed agreement implies, or why not. */
 export function planDraftSchedule(
-  ag: Pick<Agreement, 'company_name' | 'ad_rate_cents' | 'amount_cents' | 'frequency' | 'ad_size' | 'start_date' | 'end_date' | 'billing_email' | 'advertiser_email' | 'billing_name' | 'rep_name'>,
+  ag: Pick<Agreement, 'company_name' | 'ad_rate_cents' | 'amount_cents' | 'frequency' | 'ad_size' | 'start_date' | 'end_date' | 'billing_email' | 'advertiser_email' | 'billing_name' | 'rep_name'> & { lines_total?: number },
   defaults?: Pick<AgreementDefaults, 'billing_day' | 'due_days'>,
 ): { ok: true; plan: DraftSchedulePlan } | { ok: false; reason: string } {
   const start = iso(ag.start_date);
@@ -54,7 +54,12 @@ export function planDraftSchedule(
   const end = iso(ag.end_date);
   let monthly: number | null = null;
   let occurrences: number;
-  if (ag.ad_rate_cents != null && ag.ad_rate_cents > 0) {
+  const bundleTotal = (ag.lines_total ?? 0) > 0 ? ag.lines_total ?? null : null;
+  if (bundleTotal && end) {
+    // Bundles bill their line-item total spread over the run, never the header's rack rate.
+    occurrences = monthsBetween(start, end);
+    monthly = Math.round(bundleTotal / occurrences);
+  } else if (ag.ad_rate_cents != null && ag.ad_rate_cents > 0) {
     monthly = ag.ad_rate_cents;
     occurrences = freqMonths(ag.frequency);
   } else if (ag.amount_cents != null && ag.amount_cents > 0 && end) {
@@ -102,7 +107,7 @@ export async function createDraftScheduleForAgreement(
   createdBy: string | null,
 ): Promise<DraftScheduleResult> {
   try {
-    const rows = await sql`SELECT * FROM agreements WHERE id = ${agreementId}` as unknown as Agreement[];
+    const rows = await sql`SELECT ag.*, (SELECT COALESCE(SUM(li.amount_cents), 0)::int FROM agreement_line_items li WHERE li.agreement_id = ag.id) AS lines_total FROM agreements ag WHERE ag.id = ${agreementId}` as unknown as Array<Agreement & { lines_total?: number }>;
     const ag = rows[0];
     if (!ag) return { ok: false, reason: 'agreement not found' };
     if (!ag.signed_at) return { ok: false, reason: 'agreement is not signed yet' };
