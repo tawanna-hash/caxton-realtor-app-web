@@ -24,7 +24,7 @@ test('new-partner agreement signs end to end, then locks', async ({ page, reques
 
   const token = SIGN.split('/agree/')[1].split('?')[0];
   const again = await request.post(`/api/agree-v2/${token}`, {
-    data: { signerName: 'Again', termsAccepted: true, paymentMode: 'invoice' },
+    data: { signerName: 'Again', termsAccepted: true, paymentMode: 'check' },
   });
   expect(again.status()).toBe(409);
 });

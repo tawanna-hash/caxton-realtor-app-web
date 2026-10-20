@@ -22,7 +22,7 @@ test('one-tap renewal signs end to end, then locks', async ({ page, request }, i
 
   const token = SIGN.split('/renew/')[1].split('?')[0];
   const again = await request.post(`/api/renew-v2/${token}`, {
-    data: { signerName: 'Again', termsAccepted: true, paymentMode: 'invoice' },
+    data: { signerName: 'Again', termsAccepted: true, paymentMode: 'check' },
   });
   expect(again.status()).toBe(409);
 });

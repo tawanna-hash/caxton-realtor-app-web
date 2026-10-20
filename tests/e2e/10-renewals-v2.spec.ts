@@ -19,7 +19,7 @@ test('tampered token is rejected by the API', async ({ request }) => {
   test.skip(!token, 'no print link');
   const bad = token.slice(0, -4) + 'aaaa';
   expect((await request.get(`/api/renew-v2/${bad}`)).status()).toBe(401);
-  expect((await request.post(`/api/renew-v2/${bad}`, { data: { signerName: 'x', termsAccepted: true, paymentMode: 'invoice' } })).status()).toBe(401);
+  expect((await request.post(`/api/renew-v2/${bad}`, { data: { signerName: 'x', termsAccepted: true, paymentMode: 'check' } })).status()).toBe(401);
 });
 
 test('one-tap page renders pre-filled, branded, with no market picker or overflow', async ({ page }) => {
@@ -29,7 +29,7 @@ test('one-tap page renders pre-filled, branded, with no market picker or overflo
   await expect(page.getByText('Advertiser', { exact: true })).toBeVisible();
   await expect(page.getByText('Agreement total')).toBeVisible();
   await expect(page.getByText(/choose the market you cover/i)).toHaveCount(0);
-  await expect(page.getByLabel(/monthly invoice/i)).toBeChecked();
+  await expect(page.getByLabel(/pay by check/i)).toBeChecked();
   await expect(page.getByRole('button', { name: /sign & renew/i })).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);

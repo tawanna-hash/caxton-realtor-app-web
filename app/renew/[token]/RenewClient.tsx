@@ -38,7 +38,7 @@ export default function RenewClient({ token }: { token: string }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [agree, setAgree] = useState(false);
-  const [pay, setPay] = useState<'card' | 'invoice' | 'check' | ''>('');
+  const [pay, setPay] = useState<'card' | 'check' | ''>('');
   const [billingEmail, setBillingEmail] = useState('');
   const [billingContact, setBillingContact] = useState('');
   const [editBilling, setEditBilling] = useState(false);
@@ -59,7 +59,7 @@ export default function RenewClient({ token }: { token: string }) {
         setData(s);
         setBillingEmail(s.billing.email ?? '');
         setBillingContact(s.billing.contact_name ?? '');
-        setPay(s.card_on_file ? 'card' : s.allow_check ? 'invoice' : '');
+        setPay(s.card_on_file ? 'card' : s.allow_check ? 'check' : '');
       })
       .catch((e: unknown) => { if (alive) setLoadError(e instanceof Error ? e.message : 'This link is not valid.'); });
     return () => { alive = false; };
@@ -169,10 +169,6 @@ export default function RenewClient({ token }: { token: string }) {
             )}
             {data.allow_check && (
               <>
-                <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-4 text-sm ${pay === 'invoice' ? 'border-[#261E5A] bg-[#F3F0FF]' : 'border-[#E4DFF1]'}`}>
-                  <input type="radio" name="pay" checked={pay === 'invoice'} onChange={() => setPay('invoice')} />
-                  <span>Monthly invoice</span>
-                </label>
                 <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-4 text-sm ${pay === 'check' ? 'border-[#261E5A] bg-[#F3F0FF]' : 'border-[#E4DFF1]'}`}>
                   <input type="radio" name="pay" checked={pay === 'check'} onChange={() => setPay('check')} />
                   <span>Pay by check</span>
