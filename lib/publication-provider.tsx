@@ -11,11 +11,16 @@
  */
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   readClientPub,
   writeClientPub,
   type Pub,
 } from './publication';
+
+function hasPubCookie(): boolean {
+  return /(?:^|;\s*)caxton_pub=[^;]+/.test(document.cookie);
+}
 
 export function PublicationProvider({
   initialPub,
@@ -24,18 +29,24 @@ export function PublicationProvider({
   initialPub: Pub;
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   useEffect(() => {
-    // One-time reconciliation. If the cookie is missing but localStorage
-    // has a value (legacy user from before the cookie migration), promote
-    // the localStorage value into the cookie. Otherwise, if the cookie
-    // and the in-memory state diverge, the server's initialPub already
-    // matches the cookie — usePublication will pick it up.
     const current = readClientPub();
-    if (current !== initialPub) {
-      // Cookie is authoritative on the server. Mirror it to localStorage.
+    if (current === initialPub) return;
+    if (hasPubCookie()) {
+      // The cookie is authoritative and the server rendered from it, so a
+      // difference can only be a stale localStorage mirror: refresh the mirror.
       writeClientPub(initialPub);
+    } else {
+      // No cookie (expired, or dropped by the native WebView) but the user's
+      // saved market is in localStorage. The server rendered the default
+      // market, so restore the cookie from the saved choice and re-render the
+      // server content. Never overwrite the saved choice with the default:
+      // that left the header and pages on different markets.
+      writeClientPub(current);
+      router.refresh();
     }
-  }, [initialPub]);
+  }, [initialPub, router]);
 
   return <>{children}</>;
 }
