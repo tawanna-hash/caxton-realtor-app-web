@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Template } from './TemplatesPanel';
 import BillingTimeline, { type TimelineView } from '@/components/anchor/TimelineView';
-import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
+import { A, RowMenu, EmptyState, SearchBox } from '@/components/anchor/ui';
 
 type Candidate = {
   id: string;
@@ -140,8 +140,8 @@ export default function NewPartnersPanel() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SearchBox value={q} onChange={setQ} label="Search new partners" />
-        <div className="flex items-center gap-2">
-          <button onClick={() => { setFormError(null); setCreating(true); }} className={A.outline}>Quick create</button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => { setFormError(null); setCreating(true); }} className="text-sm font-medium text-[color:var(--ds-primary)]" style={{ border: 0, background: 'transparent' }}>Quick create</button>
           <a href="/admin/agreements/renewals-v2/new" className={A.primary}>Create agreement</a>
         </div>
       </div>
@@ -171,13 +171,19 @@ export default function NewPartnersPanel() {
                   {r.last_sent_at && <div className="mt-1 text-xs text-[color:var(--ds-body)]">{new Date(r.last_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>}
                 </td>
                 <td>
-                  <div className="flex justify-end gap-2">
-                    {r.check_request === 'requested' && <button onClick={() => act(r.id, 'approve_check')} disabled={busy !== null} className={A.small}>{busy === `${r.id}:approve_check` ? '…' : 'Approve check'}</button>}
-                    <button onClick={() => act(r.id, 'preview')} disabled={busy !== null} className={A.small}>{busy === `${r.id}:preview` ? '…' : 'Preview'}</button>
-                    <button onClick={() => void openTimeline(r, 'view')} disabled={busy !== null} className={A.small}>{busy === `${r.id}:timeline` ? '…' : 'Timeline'}</button>
-                    <button onClick={() => void openTimeline(r, 'send')} disabled={busy !== null || !r.email} className={A.small}>
-                      {busy === `${r.id}:send` ? '…' : r.state === 'sent' || r.state === 'opened' ? 'Resend' : 'Send'}
-                    </button>
+                  <div className="flex items-center justify-end gap-2">
+                    {r.check_request === 'requested' ? (
+                      <button onClick={() => act(r.id, 'approve_check')} disabled={busy !== null} className={A.small}>{busy === `${r.id}:approve_check` ? '…' : 'Approve check'}</button>
+                    ) : (
+                      <button onClick={() => void openTimeline(r, 'send')} disabled={busy !== null || !r.email} className={A.small}>
+                        {busy === `${r.id}:send` ? '…' : r.state === 'sent' || r.state === 'opened' ? 'Resend' : 'Send'}
+                      </button>
+                    )}
+                    <RowMenu items={[
+                      ...(r.check_request === 'requested' ? [{ label: r.state === 'sent' || r.state === 'opened' ? 'Resend' : 'Send', onClick: () => void openTimeline(r, 'send'), disabled: busy !== null || !r.email }] : []),
+                      { label: 'Copy preview link', onClick: () => void act(r.id, 'preview'), disabled: busy !== null },
+                      { label: 'View billing timeline', onClick: () => void openTimeline(r, 'view'), disabled: busy !== null },
+                    ]} />
                   </div>
                 </td>
               </tr>

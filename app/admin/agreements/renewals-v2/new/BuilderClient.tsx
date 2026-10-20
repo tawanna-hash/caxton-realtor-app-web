@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { A } from '@/components/anchor/ui';
+import { A, RowMenu } from '@/components/anchor/ui';
 import { DEFAULT_BILLING, DEFAULT_PAYMENT, billingBadge, cleanBilling, termMonths, type ServiceBilling } from '@/lib/agreements-v2/service-billing';
 import {
   EMPTY_DOC, defaultPriceCents, discountedCents, docProblems, docTotalCents, optionDefs, optionOf, orderedServices, quotePayload,
@@ -32,11 +32,11 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label={title}>
       <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[14px] bg-white shadow-xl">
-        <div className="relative bg-[color:var(--ds-selected)] px-6 py-5 text-center">
+        <div className="relative bg-[color:var(--ds-selected)] px-4 py-5 text-center sm:px-6">
           <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">{title}</h2>
           <button type="button" aria-label="Close" onClick={onClose} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
         </div>
-        <div className="space-y-4 px-6 py-6">{children}</div>
+        <div className="space-y-4 px-4 py-5 sm:px-6 sm:py-6">{children}</div>
       </div>
     </div>
   );
@@ -89,7 +89,6 @@ export default function BuilderClient() {
   const [refsOpen, setRefsOpen] = useState(true);
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [sendMenu, setSendMenu] = useState(false);
-  const [moreMenu, setMoreMenu] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
@@ -274,21 +273,16 @@ export default function BuilderClient() {
         {saveState !== 'idle' && (
           <span className="rounded-full border border-green-600 px-2.5 py-0.5 text-xs text-green-700">{saveState === 'saving' ? 'Saving…' : 'Draft saved'}</span>
         )}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <button type="button" className={A.outline} onClick={() => setPanel((p) => !p)} aria-pressed={panel}>Billing timeline</button>
-          <button type="button" className={A.outline} onClick={() => { setTplName(doc.name); setTplOpen(true); }}>Save as template</button>
-          <div className="relative">
-            <button type="button" aria-label="More actions" aria-haspopup="menu" aria-expanded={moreMenu} className={`${A.outline} px-3 text-lg leading-none`} onClick={() => { setMoreMenu((o) => !o); setSendMenu(false); }}>⋮</button>
-            {moreMenu && (
-              <div role="menu" className="absolute right-0 z-50 mt-2 w-48 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
-                <button type="button" role="menuitem" className="w-full rounded-[10px] px-3 py-2 text-left text-sm text-red-700" style={{ border: 0, background: 'transparent' }} onClick={() => { setMoreMenu(false); setDiscardOpen(true); }}>Discard draft</button>
-              </div>
-            )}
-          </div>
-          <button type="button" className={A.outline} onClick={() => setPreviewOpen(true)}>View client preview</button>
+        <div className="ml-auto flex items-center gap-2">
+          <RowMenu label="More actions" items={[
+            { label: panel ? 'Hide billing timeline' : 'Show billing timeline', onClick: () => setPanel((p) => !p) },
+            { label: 'Save as template', onClick: () => { setTplName(doc.name); setTplOpen(true); } },
+            { label: 'Discard draft', onClick: () => setDiscardOpen(true), danger: true },
+          ]} />
+          <button type="button" className={A.outline} onClick={() => setPreviewOpen(true)}>Preview</button>
           <div className="relative flex">
             <button type="button" className={A.primary} disabled={problems.length > 0 || busy} onClick={() => setSendOpen(true)} title={problems[0]}>Send</button>
-            <button type="button" aria-label="More send options" aria-haspopup="menu" aria-expanded={sendMenu} className={`${A.primary} ml-px px-3 text-base leading-none`} disabled={problems.length > 0 || busy} onClick={() => { setSendMenu((o) => !o); setMoreMenu(false); }}>▾</button>
+            <button type="button" aria-label="More send options" aria-haspopup="menu" aria-expanded={sendMenu} className={`${A.primary} ml-px px-3 text-base leading-none`} disabled={problems.length > 0 || busy} onClick={() => { setSendMenu((o) => !o); }}>▾</button>
             {sendMenu && (
               <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
                 <button type="button" role="menuitem" className="w-full rounded-[10px] px-3 py-2 text-left text-sm text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setSendOpen(true); }}>Send now by email</button>
@@ -299,9 +293,9 @@ export default function BuilderClient() {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-6xl gap-6 px-4 py-6">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 lg:flex-row">
         {panel && (
-          <aside className="w-[380px] shrink-0 self-start rounded-[14px] border border-[color:var(--ds-line)] bg-white" aria-label="Billing timeline">
+          <aside className="w-full shrink-0 self-start lg:w-[380px] rounded-[14px] border border-[color:var(--ds-line)] bg-white" aria-label="Billing timeline">
             <div className="flex items-start justify-between p-4">
               <div><h2 className="font-semibold text-[color:var(--ds-ink)]">Billing timeline</h2><p className="text-xs text-[color:var(--ds-body)]">For automatically billed services</p></div>
               <button type="button" aria-label="Close" onClick={() => setPanel(false)} className="text-xl leading-none text-[color:var(--ds-ink)]">×</button>
@@ -458,9 +452,11 @@ export default function BuilderClient() {
                   </>
                 ) : (
                   <>
-                    <button type="button" className={A.small} onClick={() => setRenaming(true)}>Rename package</button>
-                    <button type="button" className={A.small} onClick={() => { if (opts.length >= 4) return; const idx = opts.length; update({ options: [...opts, `${opts[activeOpt]} copy`], services: [...doc.services, ...activeServices.map((x) => ({ ...x, id: uid(), option: idx }))] }); setActiveOpt(idx); }} disabled={opts.length >= 4}>Duplicate package</button>
-                    {opts.length > 1 && <button type="button" className={A.small} onClick={() => { update({ options: opts.filter((_, o) => o !== activeOpt), services: doc.services.filter((x) => optionOf(x, opts.length) !== activeOpt).map((x) => ({ ...x, option: optionOf(x, opts.length) > activeOpt ? optionOf(x, opts.length) - 1 : optionOf(x, opts.length) })) }); setActiveOpt(0); }}>Remove package</button>}
+                    <RowMenu label="Package options" items={[
+                      { label: 'Rename package', onClick: () => setRenaming(true) },
+                      { label: 'Duplicate package', disabled: opts.length >= 4, onClick: () => { if (opts.length >= 4) return; const idx = opts.length; update({ options: [...opts, `${opts[activeOpt]} copy`], services: [...doc.services, ...activeServices.map((x) => ({ ...x, id: uid(), option: idx }))] }); setActiveOpt(idx); } },
+                      ...(opts.length > 1 ? [{ label: 'Remove package', danger: true, onClick: () => { update({ options: opts.filter((_, o) => o !== activeOpt), services: doc.services.filter((x) => optionOf(x, opts.length) !== activeOpt).map((x) => ({ ...x, option: optionOf(x, opts.length) > activeOpt ? optionOf(x, opts.length) - 1 : optionOf(x, opts.length) })) }); setActiveOpt(0); } }] : []),
+                    ]} />
                   </>
                 )}
               </div>
@@ -476,9 +472,9 @@ export default function BuilderClient() {
                     <div className="text-right font-semibold text-[color:var(--ds-ink)]">{s.discount && s.list_cents ? <div className="text-xs font-normal text-[color:var(--ds-body)] line-through">{money(s.list_cents)}</div> : null}{money(s.price_cents)}</div>
                   </div>
                   <BillingControls billing={s.billing ?? DEFAULT_BILLING} onChange={(b) => update({ services: doc.services.map((x) => (x.id === s.id ? { ...x, billing: b } : x)) })} />
-                  <div className="mt-3 flex gap-2">
-                    <button type="button" className={A.small} onClick={() => setEditIdx(i)}>Edit service, discount and options</button>
-                    <button type="button" className={A.small} onClick={() => update({ services: doc.services.filter((x) => x.id !== s.id) })}>Remove</button>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button type="button" className={A.small} onClick={() => setEditIdx(i)}>Edit service</button>
+                    <RowMenu items={[{ label: 'Remove service', onClick: () => update({ services: doc.services.filter((x) => x.id !== s.id) }), danger: true }]} />
                   </div>
                 </div>
               ))}
@@ -587,7 +583,7 @@ export default function BuilderClient() {
         <Modal title="Save as template" onClose={() => setTplOpen(false)}>
           <input className={A.input} placeholder="Template name" value={tplName} onChange={(e) => setTplName(e.target.value)} />
           <p className="text-xs text-[color:var(--ds-body)]">Saves the services, message, note and reference fields. The client is not saved.</p>
-          <div className="flex justify-end gap-3"><button type="button" className={A.outline} onClick={() => setTplOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={!tplName.trim() || busy} onClick={saveTemplate}>Save</button></div>
+          <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row"><button type="button" className={A.outline} onClick={() => setTplOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={!tplName.trim() || busy} onClick={saveTemplate}>Save</button></div>
         </Modal>
       )}
 
@@ -608,13 +604,13 @@ export default function BuilderClient() {
           {!shareLink ? (
             <>
               <p className="text-sm text-[color:var(--ds-ink)]">This creates the agreement for {client?.name ?? doc.new_client?.name} and gives you a link to share yourself. No email is sent. Total {money(total)}.</p>
-              <div className="flex justify-end gap-3"><button type="button" className={A.outline} disabled={busy} onClick={() => setShareOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={busy} onClick={share}>{busy ? 'Creating…' : 'Create link'}</button></div>
+              <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row"><button type="button" className={A.outline} disabled={busy} onClick={() => setShareOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={busy} onClick={share}>{busy ? 'Creating…' : 'Create link'}</button></div>
             </>
           ) : (
             <>
               <p className="text-sm text-[color:var(--ds-ink)]">Your link is ready. The agreement is also listed under New partners.</p>
               <input className={A.input} readOnly value={shareLink} aria-label="Agreement link" onFocus={(e) => e.currentTarget.select()} />
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
                 <button type="button" className={A.outline} onClick={async () => { await navigator.clipboard.writeText(shareLink); setCopied(true); }}>{copied ? 'Copied' : 'Copy link'}</button>
                 <button type="button" className={A.primary} onClick={() => router.push('/admin/agreements/renewals-v2')}>Done</button>
               </div>
@@ -627,7 +623,7 @@ export default function BuilderClient() {
       {discardOpen && (
         <Modal title="Discard draft" onClose={() => !busy && setDiscardOpen(false)}>
           <p className="text-sm text-[color:var(--ds-ink)]">This permanently deletes this draft. Agreements already created are not affected.</p>
-          <div className="flex justify-end gap-3"><button type="button" className={A.outline} disabled={busy} onClick={() => setDiscardOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={busy} onClick={discard}>Discard</button></div>
+          <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row"><button type="button" className={A.outline} disabled={busy} onClick={() => setDiscardOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={busy} onClick={discard}>Discard</button></div>
         </Modal>
       )}
 
@@ -637,7 +633,7 @@ export default function BuilderClient() {
           <p className="text-sm text-[color:var(--ds-ink)]">
             This creates the agreement for {client?.name ?? doc.new_client?.name} and emails the review link to {client?.contact_email ?? doc.new_client?.email}. Total {money(total)}.
           </p>
-          <div className="flex justify-end gap-3"><button type="button" className={A.outline} disabled={busy} onClick={() => setSendOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={busy} onClick={send}>{busy ? 'Sending…' : 'Send'}</button></div>
+          <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row"><button type="button" className={A.outline} disabled={busy} onClick={() => setSendOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={busy} onClick={send}>{busy ? 'Sending…' : 'Send'}</button></div>
         </Modal>
       )}
     </div>
@@ -679,14 +675,14 @@ function ServiceModal({ catalog, onClose, onSave }: { catalog: Catalog; onClose:
         </select>
       </Field>
       {channel === 'print' && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Ad size" isSelect><select className={sel} value={size} onChange={(e) => { setSize(e.target.value); setPrice(null); }}>{catalog.print.find((p) => p.id === pkg)?.sizes.map((s) => <option key={s.size} value={s.size}>{s.size}</option>)}</select></Field>
           <Field label="Months"><input type="number" min={1} max={24} className={A.input} value={months} onChange={(e) => { setMonths(Math.max(1, Math.min(24, Number(e.target.value) || 1))); setPrice(null); }} /></Field>
         </div>
       )}
       {channel === 'email' && <Field label="Sends"><input type="number" min={1} max={52} className={A.input} value={sends} onChange={(e) => { setSends(Math.max(1, Math.min(52, Number(e.target.value) || 1))); setPrice(null); }} /></Field>}
       {channel === 'app' && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Weeks"><input type="number" min={1} max={52} className={A.input} value={weeks} onChange={(e) => { setWeeks(Math.max(1, Math.min(52, Number(e.target.value) || 1))); setPrice(null); }} /></Field>
           <Field label="Markets" isSelect><select className={sel} value={markets} onChange={(e) => { setMarkets(Number(e.target.value) as 1 | 2 | 3 | 4); setPrice(null); }}>{[1, 2, 3, 4].map((m) => <option key={m} value={m}>{m}</option>)}</select></Field>
         </div>
@@ -694,7 +690,7 @@ function ServiceModal({ catalog, onClose, onSave }: { catalog: Catalog; onClose:
       <Field label="Publication" isSelect><select className={sel} value={pub} onChange={(e) => { setPub(e.target.value as Pub); setPrice(null); }}>{(Object.keys(PUB_LABEL) as Pub[]).map((p) => <option key={p} value={p}>{PUB_LABEL[p]}</option>)}</select></Field>
       <Field label="Price (USD)"><input type="number" min={0} step="0.01" className={A.input} value={price ?? (suggested / 100).toString()} onChange={(e) => setPrice(e.target.value)} /></Field>
       <p className="text-xs text-[color:var(--ds-body)]">The price starts at the media kit rate. Change it to give a custom price.</p>
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
         <button type="button" className={A.outline} onClick={onClose}>Cancel</button>
         <button type="button" className={A.primary} disabled={!pkg || cents <= 0} onClick={() => onSave({ id: uid(), channel, package_id: pkg, size: channel === 'print' ? size : undefined, months: channel === 'print' ? months : undefined, sends: channel === 'email' ? sends : undefined, app_weeks: channel === 'app' ? weeks : undefined, app_markets: channel === 'app' ? markets : undefined, publication: pub, price_cents: cents, name: label, description: '' })}>Save</button>
       </div>
@@ -720,13 +716,13 @@ function EditServiceModal({ service, onClose, onSave }: { service: ServiceLine; 
         <textarea className={`${A.input} min-h-[140px]`} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What the client gets. Start lines with a dash for a list." />
       </div>
       <Field label="Price (USD)"><input type="number" min={0} step="0.01" className={A.input} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Discount type" isSelect><select className={sel} value={dType} onChange={(e) => setDType(e.target.value as 'pct' | 'amount')}><option value="pct">Percent off</option><option value="amount">Dollars off</option></select></Field>
         <Field label={dType === 'pct' ? 'Percent' : 'Dollars'}><input type="number" min={0} step="0.01" className={A.input} value={dValue} onChange={(e) => setDValue(e.target.value)} placeholder="No discount" /></Field>
       </div>
       <p className="text-sm text-[color:var(--ds-ink)]">The client pays <strong>{money(final)}</strong>{disc ? <span className="text-[color:var(--ds-body)]"> ({money(list)} before the discount)</span> : null}</p>
       <label className="flex items-center gap-3 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={optional} onChange={(e) => setOptional(e.target.checked)} />Optional service <span className="text-[color:var(--ds-body)]">(the client can decline it when approving)</span></label>
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
         <button type="button" className={A.outline} onClick={onClose}>Cancel</button>
         <button type="button" className={A.primary} disabled={!name.trim() || final <= 0} onClick={() => onSave({ name: name.trim(), description, price_cents: final, list_cents: disc ? list : undefined, discount: disc, optional: optional || undefined })}>Save</button>
       </div>

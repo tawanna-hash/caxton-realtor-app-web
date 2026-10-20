@@ -43,7 +43,7 @@ function Chevron({ up }: { up?: boolean }) {
 
 export function SearchBox({ value, onChange, label = 'Search' }: { value: string; onChange: (v: string) => void; label?: string }) {
   return (
-    <div className="relative">
+    <div className="relative w-full sm:w-auto">
       <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--ds-ink)]" width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
         <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.8" />
         <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -53,7 +53,7 @@ export function SearchBox({ value, onChange, label = 'Search' }: { value: string
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search..."
         aria-label={label}
-        className="w-60 rounded-[10px] border border-[color:var(--ds-line)] bg-white py-2 pl-9 pr-4 text-sm text-[color:var(--ds-ink)] placeholder:text-[color:var(--ds-placeholder)] focus:border-[color:var(--ds-primary)] focus:outline-none"
+        className="w-full sm:w-60 rounded-[10px] border border-[color:var(--ds-line)] bg-white py-2 pl-9 pr-4 text-sm text-[color:var(--ds-ink)] placeholder:text-[color:var(--ds-placeholder)] focus:border-[color:var(--ds-primary)] focus:outline-none"
       />
     </div>
   );
@@ -230,5 +230,57 @@ export function Toggle({ on, onChange, label, disabled }: { on: boolean; onChang
     >
       <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
     </button>
+  );
+}
+
+export type MenuItem = { label: string; onClick?: () => void; href?: string; disabled?: boolean; danger?: boolean };
+
+/** One "more" button per row or card. Keeps a single main action visible and tucks the rest into a menu. */
+export function RowMenu({ items, label = 'More actions' }: { items: MenuItem[]; label?: string }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) close(); };
+    document.addEventListener('mousedown', onDoc);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => { document.removeEventListener('mousedown', onDoc); window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); };
+  }, [open]);
+
+  const shown = items.filter((i) => i.label);
+  if (shown.length === 0) return null;
+  return (
+    <div ref={ref} className="inline-block">
+      <button
+        type="button"
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="anchor-outline inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[color:var(--ds-line)] bg-white text-lg leading-none text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]"
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          setPos({ top: r.bottom + 6, right: Math.max(8, window.innerWidth - r.right) });
+          setOpen((o) => !o);
+        }}
+      >
+        <span aria-hidden="true">⋯</span>
+      </button>
+      {open && pos && (
+        <div role="menu" style={{ position: 'fixed', top: pos.top, right: pos.right }} className="z-[70] w-56 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
+          {shown.map((i) => {
+            const cls = `block w-full rounded-[10px] px-3 py-2 text-left text-sm ${i.danger ? 'text-red-700' : 'text-[color:var(--ds-ink)]'} hover:bg-[color:var(--ds-hover)] disabled:opacity-50`;
+            return i.href ? (
+              <a key={i.label} role="menuitem" href={i.href} className={cls} onClick={() => setOpen(false)}>{i.label}</a>
+            ) : (
+              <button key={i.label} type="button" role="menuitem" disabled={i.disabled} className={cls} style={{ border: 0, background: 'transparent' }} onClick={() => { setOpen(false); i.onClick?.(); }}>{i.label}</button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

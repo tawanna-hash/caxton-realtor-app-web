@@ -4,7 +4,7 @@
 // frequency and monthly rate when you create a new agreement.
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
+import { A, RowMenu, EmptyState, SearchBox } from '@/components/anchor/ui';
 
 export type Template = { id: string; name: string; ad_size: string | null; frequency: string | null; ad_rate_cents: number | null; updated_at: string };
 
@@ -99,7 +99,7 @@ export default function TemplatesPanel() {
                   <tr key={t.id}>
                     <td className="font-medium text-[color:var(--ds-ink)]">{t.name}</td>
                     <td className="whitespace-nowrap text-[color:var(--ds-body)]">{new Date(t.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                    <td className="whitespace-nowrap text-right"><a href={`/admin/agreements/renewals-v2/new?template=${t.id}`} className={`${A.small} mr-2`}>Use template</a><button onClick={() => removeBuilder(t)} className={A.small}>Delete</button></td>
+                    <td className="whitespace-nowrap text-right"><span className="inline-flex items-center gap-2"><a href={`/admin/agreements/renewals-v2/new?template=${t.id}`} className={A.small}>Use template</a><RowMenu items={[{ label: 'Delete template', onClick: () => removeBuilder(t), danger: true }]} /></span></td>
                   </tr>
                 ))}
               </tbody>
@@ -120,7 +120,7 @@ export default function TemplatesPanel() {
                 <td className="text-[color:var(--ds-ink)]">{t.ad_size ?? '—'}</td>
                 <td className="text-[color:var(--ds-ink)]">{t.frequency ?? '—'}</td>
                 <td className="text-[color:var(--ds-ink)]">{t.ad_rate_cents == null ? '—' : `$${(t.ad_rate_cents / 100).toLocaleString('en-US')}`}</td>
-                <td className="text-right"><button onClick={() => remove(t)} className={A.small}>Delete</button></td>
+                <td className="text-right"><RowMenu items={[{ label: 'Delete template', onClick: () => remove(t), danger: true }]} /></td>
               </tr>
             ))}
           </tbody>
