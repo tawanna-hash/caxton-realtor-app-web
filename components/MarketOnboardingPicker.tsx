@@ -39,6 +39,8 @@ export default function MarketOnboardingPicker() {
     if (
       window.location.pathname.startsWith('/deal-portal/') ||
       window.location.pathname.startsWith('/sign/') ||
+      // Renewals (Beta) partner page is a private link and never picks a market.
+      window.location.pathname.startsWith('/renew/') ||
       // Partner portal (login, reset, dashboard) is private to a partner and never picks a market.
       window.location.pathname === '/portal' ||
       window.location.pathname.startsWith('/portal/')
