@@ -25,7 +25,7 @@ export const A = {
   primary: 'anchor-primary inline-flex items-center justify-center rounded-md bg-[#5B3FE3] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#4B30CC] disabled:cursor-not-allowed disabled:opacity-50',
   outline: 'anchor-outline inline-flex items-center justify-center rounded-md border border-[#5B3FE3] bg-white px-4 py-2 text-sm font-medium text-[#5B3FE3] hover:bg-[#F3F0FF] disabled:cursor-not-allowed disabled:opacity-50',
   small: 'anchor-outline inline-flex items-center justify-center rounded-md border border-[#5B3FE3] bg-white px-3 py-1.5 text-xs font-medium text-[#5B3FE3] hover:bg-[#F3F0FF] disabled:cursor-not-allowed disabled:opacity-50',
-  input: 'w-full rounded-md border border-[#D8D5E6] bg-white px-3 py-2.5 text-sm text-[#261E5A] placeholder:text-[#9A97B3] focus:border-[#5B3FE3] focus:outline-none',
+  input: 'anchor-input w-full rounded-md border border-[#D8D5E6] bg-white px-3 py-2.5 text-sm text-[#261E5A] placeholder:text-[#9A97B3] focus:border-[#5B3FE3] focus:outline-none',
   card: 'rounded-lg border border-[#ECEAF4] bg-white',
   // White row cards on a tinted page, gray header row.
   table: 'w-full border-separate text-left text-sm [border-spacing:0_6px] [&_thead_th]:bg-[#EEEDF3] [&_thead_th]:px-3 [&_thead_th]:py-2.5 [&_thead_th]:text-xs [&_thead_th]:font-medium [&_thead_th]:text-[#6E6A8A] [&_thead_th:first-child]:rounded-l-md [&_thead_th:last-child]:rounded-r-md [&_tbody_td]:bg-white [&_tbody_td]:px-3 [&_tbody_td]:py-3.5 [&_tbody_td:first-child]:rounded-l-md [&_tbody_td:last-child]:rounded-r-md',
