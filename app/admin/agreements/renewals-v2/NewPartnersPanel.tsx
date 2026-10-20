@@ -29,9 +29,9 @@ type Candidate = {
 
 const STATE_LABEL: Record<Candidate['state'], string> = { not_started: 'Not sent', live_sent: 'Sent (current flow)', sent: 'Sent', opened: 'Opened' };
 const STATE_STYLE: Record<Candidate['state'], string> = {
-  not_started: 'bg-[#EEEDF3] text-[#4A4767]',
+  not_started: 'bg-[color:var(--ds-page)] text-[color:var(--ds-body)]',
   live_sent: 'bg-amber-50 text-amber-800',
-  sent: 'bg-[#EFEAFB] text-[#4B30CC]',
+  sent: 'bg-[color:var(--ds-selected)] text-[color:var(--ds-primary-press)]',
   opened: 'bg-blue-50 text-blue-800',
 };
 
@@ -40,7 +40,7 @@ const money = (c: number | null) => (c == null ? '—' : `$${(c / 100).toLocaleS
 function Floating({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute -top-2 left-3 z-10 bg-white px-1 text-[11px] text-[#6E6A8A]">{label}</span>
+      <span className="pointer-events-none absolute -top-2 left-3 z-10 bg-white px-1 text-[11px] text-[color:var(--ds-body)]">{label}</span>
       {children}
     </div>
   );
@@ -151,24 +151,24 @@ export default function NewPartnersPanel() {
         <table className={`${A.table} min-w-[820px]`}>
           <thead><tr><th>Partner</th><th>Order</th><th>Total</th><th>Status</th><th /></tr></thead>
           <tbody>
-            {rows === null && !error && <tr><td colSpan={5} className="text-center text-[#6E6A8A]">Loading…</td></tr>}
+            {rows === null && !error && <tr><td colSpan={5} className="text-center text-[color:var(--ds-body)]">Loading…</td></tr>}
             {rows !== null && list.length === 0 && <tr><td colSpan={5}><EmptyState title="No agreements" body="No unsigned agreements are waiting." /></td></tr>}
             {list.map((r) => (
               <tr key={r.id}>
                 <td>
-                  <div className="font-medium text-[#261E5A]">{r.company_name ?? '—'}</div>
-                  <div className="text-xs text-[#6E6A8A]">{r.email ?? 'No email on file'}</div>
+                  <div className="font-medium text-[color:var(--ds-ink)]">{r.company_name ?? '—'}</div>
+                  <div className="text-xs text-[color:var(--ds-body)]">{r.email ?? 'No email on file'}</div>
                 </td>
-                <td className="text-[#261E5A]">
+                <td className="text-[color:var(--ds-ink)]">
                   {[r.ad_size, r.frequency].filter(Boolean).join(' · ') || r.channel}
                   {r.needs_full_form && <div className="text-xs text-amber-700">Opens the full form</div>}
                 </td>
-                <td className="text-[#261E5A]">{money(r.total_cents)}</td>
+                <td className="text-[color:var(--ds-ink)]">{money(r.total_cents)}</td>
                 <td>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATE_STYLE[r.state]}`}>{STATE_LABEL[r.state]}</span>
                   {r.check_request === 'requested' && <div className="mt-1 text-xs text-amber-700">Asked to pay by check</div>}
                   {r.check_request === 'approved' && <div className="mt-1 text-xs text-green-700">Check approved</div>}
-                  {r.last_sent_at && <div className="mt-1 text-xs text-[#6E6A8A]">{new Date(r.last_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>}
+                  {r.last_sent_at && <div className="mt-1 text-xs text-[color:var(--ds-body)]">{new Date(r.last_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>}
                 </td>
                 <td>
                   <div className="flex justify-end gap-2">
@@ -188,24 +188,24 @@ export default function NewPartnersPanel() {
 
       {tl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Billing timeline">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white shadow-xl">
-            <div className="relative bg-[#EEF0FB] px-6 py-5 text-center">
-              <h2 className="text-lg font-semibold text-[#261E5A]">Billing timeline</h2>
-              <p className="text-sm text-[#6E6A8A]">{tl.row.company_name ?? 'Partner'}</p>
-              <button type="button" aria-label="Close" onClick={() => setTl(null)} className="absolute right-4 top-4 text-xl leading-none text-[#261E5A]">×</button>
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[14px] bg-white shadow-xl">
+            <div className="relative bg-[color:var(--ds-selected)] px-6 py-5 text-center">
+              <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Billing timeline</h2>
+              <p className="text-sm text-[color:var(--ds-body)]">{tl.row.company_name ?? 'Partner'}</p>
+              <button type="button" aria-label="Close" onClick={() => setTl(null)} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
             </div>
             <div className="space-y-6 px-6 py-6">
               {tl.check && (
                 <section>
-                  <h3 className="mb-3 text-sm font-semibold text-[#261E5A]">If the partner pays by check</h3>
+                  <h3 className="mb-3 text-sm font-semibold text-[color:var(--ds-ink)]">If the partner pays by check</h3>
                   <BillingTimeline timeline={tl.check} />
                 </section>
               )}
               <section>
-                <h3 className="mb-3 text-sm font-semibold text-[#261E5A]">If the partner pays by card</h3>
+                <h3 className="mb-3 text-sm font-semibold text-[color:var(--ds-ink)]">If the partner pays by card</h3>
                 <BillingTimeline timeline={tl.card} />
               </section>
-              {tl.mode === 'send' && <p className="text-sm text-[#6E6A8A]">The partner sees this timeline on the agreement page. Nothing is sent until you confirm.</p>}
+              {tl.mode === 'send' && <p className="text-sm text-[color:var(--ds-body)]">The partner sees this timeline on the agreement page. Nothing is sent until you confirm.</p>}
               <div className="flex justify-end gap-3">
                 <button type="button" className={A.outline} onClick={() => setTl(null)}>{tl.mode === 'send' ? 'Cancel' : 'Close'}</button>
                 {tl.mode === 'send' && (
@@ -219,10 +219,10 @@ export default function NewPartnersPanel() {
 
       {creating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Create agreement">
-          <div className="w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
-            <div className="relative bg-[#EEF0FB] px-6 py-5 text-center">
-              <h2 className="text-lg font-semibold text-[#261E5A]">Create agreement</h2>
-              <button type="button" aria-label="Close" onClick={() => setCreating(false)} className="absolute right-4 top-4 text-xl leading-none text-[#261E5A]">×</button>
+          <div className="w-full max-w-md overflow-hidden rounded-[14px] bg-white shadow-xl">
+            <div className="relative bg-[color:var(--ds-selected)] px-6 py-5 text-center">
+              <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Create agreement</h2>
+              <button type="button" aria-label="Close" onClick={() => setCreating(false)} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
             </div>
             <div className="space-y-5 px-6 py-6">
               <Floating label="Template">

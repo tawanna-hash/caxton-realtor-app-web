@@ -15,21 +15,21 @@ const fmt = (iso: string | null) => (iso ? new Date(`${iso}T00:00:00Z`).toLocale
 export default function BillingTimeline({ timeline, empty }: { timeline: TimelineView; empty?: string }) {
   if (!timeline) return null;
   if (!timeline.ok) {
-    return <p className="text-sm text-[#6E6A8A]">{empty ?? 'The timeline appears once a start date and amount are set.'}</p>;
+    return <p className="text-sm text-[color:var(--ds-body)]">{empty ?? 'The timeline appears once a start date and amount are set.'}</p>;
   }
   return (
-    <ol className="relative ml-2 border-l-2 border-[#D8D5E6]">
+    <ol className="relative ml-2 border-l-2 border-[color:var(--ds-line)]">
       {timeline.entries.map((e, i) => (
         <li key={i} className="relative pb-5 pl-6 last:pb-0">
-          <span className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full border-2 border-[#5B3FE3] bg-white" aria-hidden="true" />
+          <span className="absolute -left-[7px] top-1.5 h-3 w-3 rounded-full border-2 border-[color:var(--ds-primary)] bg-white" aria-hidden="true" />
           <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-            <span className="text-sm font-medium text-[#261E5A]">{e.label}</span>
-            {e.amount_cents != null && <span className="text-sm font-semibold text-[#261E5A]">{money(e.amount_cents)}</span>}
+            <span className="text-sm font-medium text-[color:var(--ds-ink)]">{e.label}</span>
+            {e.amount_cents != null && <span className="text-sm font-semibold text-[color:var(--ds-ink)]">{money(e.amount_cents)}</span>}
           </div>
-          <div className="text-xs text-[#6E6A8A]">{fmt(e.date)}{e.note ? ` · ${e.note}` : ''}</div>
+          <div className="text-xs text-[color:var(--ds-body)]">{fmt(e.date)}{e.note ? ` · ${e.note}` : ''}</div>
         </li>
       ))}
-      {timeline.hidden > 0 && <li className="pl-6 text-xs text-[#6E6A8A]">and {timeline.hidden} more</li>}
+      {timeline.hidden > 0 && <li className="pl-6 text-xs text-[color:var(--ds-body)]">and {timeline.hidden} more</li>}
     </ol>
   );
 }

@@ -40,29 +40,29 @@ export default function NotificationsPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-x-8 border-b border-[#D8D5E6]" role="tablist" aria-label="Notification audience">
+      <div className="flex gap-x-8 border-b border-[color:var(--ds-line)]" role="tablist" aria-label="Notification audience">
         {([['team', 'Notifications sent to your team'], ['client', 'Notifications sent to your clients']] as const).map(([k, label]) => (
           <button key={k} role="tab" aria-selected={who === k} onClick={() => setWho(k)} className="anchor-tab -mb-px pb-3 text-[15px]">{label}</button>
         ))}
       </div>
       {error && <div className={A.error}>{error}</div>}
       {saved && <div className={A.notice}>Saved.</div>}
-      <p className="text-sm text-[#6E6A8A]">{who === 'client' ? 'Emails the Agreements (Beta) flow sends to partners. Turning one off stops it from sending.' : 'Alerts your team receives.'}</p>
+      <p className="text-sm text-[color:var(--ds-body)]">{who === 'client' ? 'Emails the Agreements (Beta) flow sends to partners. Turning one off stops it from sending.' : 'Alerts your team receives.'}</p>
       <div className="overflow-x-auto">
         <table className={`${A.table} min-w-[640px]`}>
           <thead><tr><th>Event name</th><th>Recipients</th><th className="text-right">Status</th></tr></thead>
           <tbody>
             {who === 'team' && (
               <tr>
-                <td className="font-semibold text-[#261E5A]">Agreement signed</td>
-                <td className="text-[#261E5A]">Admin email</td>
-                <td className="text-right"><div className="flex justify-end"><Toggle on label="Agreement signed" disabled onChange={() => undefined} /></div><div className="mt-1 text-xs text-[#6E6A8A]">Always on</div></td>
+                <td className="font-semibold text-[color:var(--ds-ink)]">Agreement signed</td>
+                <td className="text-[color:var(--ds-ink)]">Admin email</td>
+                <td className="text-right"><div className="flex justify-end"><Toggle on label="Agreement signed" disabled onChange={() => undefined} /></div><div className="mt-1 text-xs text-[color:var(--ds-body)]">Always on</div></td>
               </tr>
             )}
             {rows.map((e) => (
               <tr key={e.key}>
-                <td className="font-semibold text-[#261E5A]">{e.label}</td>
-                <td className="text-[#261E5A]">{e.recipients}</td>
+                <td className="font-semibold text-[color:var(--ds-ink)]">{e.label}</td>
+                <td className="text-[color:var(--ds-ink)]">{e.recipients}</td>
                 <td><div className="flex justify-end"><Toggle on={settings[e.key] !== false} label={e.label} onChange={(v) => change(e.key, v)} /></div></td>
               </tr>
             ))}

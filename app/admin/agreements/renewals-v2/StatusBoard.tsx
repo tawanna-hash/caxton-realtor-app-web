@@ -31,8 +31,8 @@ const COLS: ColumnDef[] = [
 
 const STAGE_LABEL: Record<Item['stage'], string> = { draft: 'Draft', sent: 'Sent', opened: 'Opened', signed: 'Signed' };
 const STAGE_STYLE: Record<Item['stage'], string> = {
-  draft: 'bg-[#EEEDF3] text-[#4A4767]',
-  sent: 'bg-[#EFEAFB] text-[#4B30CC]',
+  draft: 'bg-[color:var(--ds-page)] text-[color:var(--ds-body)]',
+  sent: 'bg-[color:var(--ds-selected)] text-[color:var(--ds-primary-press)]',
   opened: 'bg-blue-50 text-blue-800',
   signed: 'bg-green-50 text-green-800',
 };
@@ -125,27 +125,27 @@ export default function StatusBoard() {
             <tr><th>Client</th><th>Type</th><th>Status</th><th>Monthly</th><th>Billing</th><th /></tr>
           </thead>
           <tbody>
-            {items === null && !error && <tr><td colSpan={6} className="text-center text-[#6E6A8A]">Loading…</td></tr>}
+            {items === null && !error && <tr><td colSpan={6} className="text-center text-[color:var(--ds-body)]">Loading…</td></tr>}
             {items !== null && rows.length === 0 && (
               <tr><td colSpan={6}><EmptyState title="No agreements" body="No agreements match your current filters." action={{ label: 'Clear filters', onClick: () => { setQ(''); setStages(['draft', 'sent', 'opened', 'signed']); setKinds(['new', 'renewal']); } }} /></td></tr>
             )}
             {rows.map((i) => (
               <tr key={i.id}>
                 <td>
-                  <div className="font-medium text-[#261E5A]">{i.company_name ?? '—'}</div>
-                  <div className="text-xs text-[#6E6A8A]">{i.email ?? 'No email on file'}</div>
+                  <div className="font-medium text-[color:var(--ds-ink)]">{i.company_name ?? '—'}</div>
+                  <div className="text-xs text-[color:var(--ds-body)]">{i.email ?? 'No email on file'}</div>
                 </td>
-                <td className="text-[#261E5A]">{i.kind === 'renewal' ? 'Renewal' : 'New partner'}</td>
+                <td className="text-[color:var(--ds-ink)]">{i.kind === 'renewal' ? 'Renewal' : 'New partner'}</td>
                 <td>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STAGE_STYLE[i.stage]}`}>{STAGE_LABEL[i.stage]}</span>
-                  <div className="mt-1 text-xs text-[#6E6A8A]">{i.stage === 'signed' ? day(i.signed_at) : day(i.last_activity_at)}</div>
+                  <div className="mt-1 text-xs text-[color:var(--ds-body)]">{i.stage === 'signed' ? day(i.signed_at) : day(i.last_activity_at)}</div>
                 </td>
-                <td className="text-[#261E5A]">{money(i.rate_cents)}</td>
-                <td className="text-xs text-[#261E5A]">
+                <td className="text-[color:var(--ds-ink)]">{money(i.rate_cents)}</td>
+                <td className="text-xs text-[color:var(--ds-ink)]">
                   {i.stage === 'signed' && i.schedule_state ? (
                     <>
                       <div className="font-medium">{SCHED_LABEL[i.schedule_state]}</div>
-                      {i.timeline && <div className="text-[#6E6A8A]">{i.timeline.count} × {money(i.timeline.amount_cents)}{i.timeline.start ? ` from ${day(`${i.timeline.start}T00:00:00`)}` : ''}</div>}
+                      {i.timeline && <div className="text-[color:var(--ds-body)]">{i.timeline.count} × {money(i.timeline.amount_cents)}{i.timeline.start ? ` from ${day(`${i.timeline.start}T00:00:00`)}` : ''}</div>}
                     </>
                   ) : '—'}
                 </td>

@@ -31,10 +31,10 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white shadow-xl">
-        <div className="relative bg-[#EEF0FB] px-6 py-5 text-center">
-          <h2 className="text-lg font-semibold text-[#261E5A]">{title}</h2>
-          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-4 top-4 text-xl leading-none text-[#261E5A]">×</button>
+      <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[14px] bg-white shadow-xl">
+        <div className="relative bg-[color:var(--ds-selected)] px-6 py-5 text-center">
+          <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">{title}</h2>
+          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
         </div>
         <div className="space-y-4 px-6 py-6">{children}</div>
       </div>
@@ -45,9 +45,9 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 function Field({ label, children, isSelect }: { label: string; children: React.ReactNode; isSelect?: boolean }) {
   return (
     <label className="relative block">
-      <span className="pointer-events-none absolute -top-2 left-3 z-10 bg-white px-1 text-xs text-[#5B3FE3]">{label}</span>
+      <span className="pointer-events-none absolute -top-2 left-3 z-10 bg-white px-1 text-xs text-[color:var(--ds-primary)]">{label}</span>
       {children}
-      {isSelect && <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#261E5A]" width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+      {isSelect && <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--ds-ink)]" width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
     </label>
   );
 }
@@ -266,11 +266,11 @@ export default function BuilderClient() {
   const svcLabel = (s: ServiceLine) => s.name || 'Service';
 
   return (
-    <div className="min-h-screen bg-[#F7F7FA]" data-anchor-ui="true" data-no-auto-open>
+    <div className="min-h-screen bg-[color:var(--ds-page)]" data-anchor-ui="true" data-no-auto-open>
       {/* Top bar */}
-      <div className="sticky top-0 z-40 flex flex-wrap items-center gap-3 border-b border-[#ECEAF4] bg-white px-4 py-3">
-        <Link href="/admin/agreements/renewals-v2" aria-label="Close builder" className="text-2xl leading-none text-[#261E5A]">×</Link>
-        <h1 className="text-lg font-semibold text-[#261E5A]">Create agreement</h1>
+      <div className="sticky top-0 z-40 flex flex-wrap items-center gap-3 border-b border-[color:var(--ds-line)] bg-white px-4 py-3">
+        <Link href="/admin/agreements/renewals-v2" aria-label="Close builder" className="text-2xl leading-none text-[color:var(--ds-ink)]">×</Link>
+        <h1 className="text-lg font-semibold text-[color:var(--ds-ink)]">Create agreement</h1>
         {saveState !== 'idle' && (
           <span className="rounded-full border border-green-600 px-2.5 py-0.5 text-xs text-green-700">{saveState === 'saving' ? 'Saving…' : 'Draft saved'}</span>
         )}
@@ -280,7 +280,7 @@ export default function BuilderClient() {
           <div className="relative">
             <button type="button" aria-label="More actions" aria-haspopup="menu" aria-expanded={moreMenu} className={`${A.outline} px-3 text-lg leading-none`} onClick={() => { setMoreMenu((o) => !o); setSendMenu(false); }}>⋮</button>
             {moreMenu && (
-              <div role="menu" className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-[#ECEAF4] bg-white p-1 shadow-lg">
+              <div role="menu" className="absolute right-0 z-50 mt-2 w-48 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
                 <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-red-700" style={{ border: 0, background: 'transparent' }} onClick={() => { setMoreMenu(false); setDiscardOpen(true); }}>Discard draft</button>
               </div>
             )}
@@ -290,9 +290,9 @@ export default function BuilderClient() {
             <button type="button" className={A.primary} disabled={problems.length > 0 || busy} onClick={() => setSendOpen(true)} title={problems[0]}>Send</button>
             <button type="button" aria-label="More send options" aria-haspopup="menu" aria-expanded={sendMenu} className={`${A.primary} ml-px px-3 text-base leading-none`} disabled={problems.length > 0 || busy} onClick={() => { setSendMenu((o) => !o); setMoreMenu(false); }}>▾</button>
             {sendMenu && (
-              <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border border-[#ECEAF4] bg-white p-1 shadow-lg">
-                <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-[#261E5A]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setSendOpen(true); }}>Send now by email</button>
-                <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-[#261E5A]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setShareOpen(true); }}>Share by link</button>
+              <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
+                <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setSendOpen(true); }}>Send now by email</button>
+                <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setShareOpen(true); }}>Share by link</button>
               </div>
             )}
           </div>
@@ -301,49 +301,49 @@ export default function BuilderClient() {
 
       <div className="mx-auto flex max-w-6xl gap-6 px-4 py-6">
         {panel && (
-          <aside className="w-[380px] shrink-0 self-start rounded-lg border border-[#ECEAF4] bg-white" aria-label="Billing timeline">
+          <aside className="w-[380px] shrink-0 self-start rounded-[14px] border border-[color:var(--ds-line)] bg-white" aria-label="Billing timeline">
             <div className="flex items-start justify-between p-4">
-              <div><h2 className="font-semibold text-[#261E5A]">Billing timeline</h2><p className="text-xs text-[#6E6A8A]">For automatically billed services</p></div>
-              <button type="button" aria-label="Close" onClick={() => setPanel(false)} className="text-xl leading-none text-[#261E5A]">×</button>
+              <div><h2 className="font-semibold text-[color:var(--ds-ink)]">Billing timeline</h2><p className="text-xs text-[color:var(--ds-body)]">For automatically billed services</p></div>
+              <button type="button" aria-label="Close" onClick={() => setPanel(false)} className="text-xl leading-none text-[color:var(--ds-ink)]">×</button>
             </div>
             <div className="px-4">
               <Field label="Simulate sign date">
-                <input type="date" value={signDate} onChange={(e) => setSignDate(e.target.value || today())} className="mt-0 w-full border border-[#5B3FE3] text-sm text-[#261E5A]" />
+                <input type="date" value={signDate} onChange={(e) => setSignDate(e.target.value || today())} className="mt-0 w-full border border-[color:var(--ds-primary)] text-sm text-[color:var(--ds-ink)]" />
               </Field>
             </div>
-            {timeline && !timeline.ok && <p className="p-4 text-sm text-[#6E6A8A]">{timeline.reason}</p>}
+            {timeline && !timeline.ok && <p className="p-4 text-sm text-[color:var(--ds-body)]">{timeline.reason}</p>}
             {timeline && timeline.ok && (
               <div className="p-4">
-                <div className="grid grid-cols-3 gap-2 text-xs text-[#6E6A8A]">
-                  <div><div>First invoice</div><div className="text-lg font-semibold text-[#261E5A]">{money(timeline.first_invoice.cents)}</div><div>{fmtDay(timeline.first_invoice.date)}</div></div>
-                  <div><div>Annual recurring</div><div className="text-lg font-semibold text-[#261E5A]">{money(timeline.recurring_annual_cents)}</div><div>per year</div></div>
-                  <div><div>Contract value</div><div className="text-lg font-semibold text-[#261E5A]">{money(timeline.total_cents)}</div><div>{timeline.invoices.length} invoices</div></div>
+                <div className="grid grid-cols-3 gap-2 text-xs text-[color:var(--ds-body)]">
+                  <div><div>First invoice</div><div className="text-lg font-semibold text-[color:var(--ds-ink)]">{money(timeline.first_invoice.cents)}</div><div>{fmtDay(timeline.first_invoice.date)}</div></div>
+                  <div><div>Annual recurring</div><div className="text-lg font-semibold text-[color:var(--ds-ink)]">{money(timeline.recurring_annual_cents)}</div><div>per year</div></div>
+                  <div><div>Contract value</div><div className="text-lg font-semibold text-[color:var(--ds-ink)]">{money(timeline.total_cents)}</div><div>{timeline.invoices.length} invoices</div></div>
                 </div>
-                <div className="mt-4 flex rounded-full bg-[#EEEDF3] p-1 text-sm" role="tablist">
+                <div className="mt-4 flex rounded-full bg-[color:var(--ds-page)] p-1 text-sm" role="tablist">
                   {([['overview', 'Overview'], ['service', 'By service'], ['invoice', 'By invoice']] as const).map(([k, l]) => (
-                    <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`flex-1 rounded-full px-2 py-1.5 ${tab === k ? 'bg-white font-medium text-[#261E5A] shadow' : 'text-[#6E6A8A]'}`} style={{ border: 0 }}>{l}</button>
+                    <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`flex-1 rounded-full px-2 py-1.5 ${tab === k ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>
                   ))}
                 </div>
                 {tab === 'overview' && (() => {
                   const max = Math.max(...timeline.invoices.map((i) => i.total), 1);
                   return (
-                    <div className="mt-4 flex h-40 items-end gap-1.5 border-b border-[#ECEAF4]">
+                    <div className="mt-4 flex h-40 items-end gap-1.5 border-b border-[color:var(--ds-line)]">
                       {timeline.invoices.slice(0, 12).map((i) => (
                         <div key={i.date} className="flex flex-1 flex-col items-center justify-end" title={`${fmtDay(i.date)} ${money(i.total)}`}>
-                          <div className="w-full rounded-t bg-[#A99CF0]" style={{ height: `${Math.max(6, (i.total / max) * 100)}%` }} />
+                          <div className="w-full rounded-t bg-[color:var(--ds-primary)]" style={{ height: `${Math.max(6, (i.total / max) * 100)}%` }} />
                         </div>
                       ))}
                     </div>
                   );
                 })()}
-                {tab === 'overview' && <div className="mt-1 flex gap-1.5 text-[10px] text-[#6E6A8A]">{timeline.invoices.slice(0, 12).map((i) => <span key={i.date} className="flex-1 text-center">{new Date(`${i.date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })}</span>)}</div>}
+                {tab === 'overview' && <div className="mt-1 flex gap-1.5 text-[10px] text-[color:var(--ds-body)]">{timeline.invoices.slice(0, 12).map((i) => <span key={i.date} className="flex-1 text-center">{new Date(`${i.date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })}</span>)}</div>}
                 {tab === 'service' && (
                   <ul className="mt-4 space-y-3 text-sm">
                     {timeline.services.map((sv, i) => (
                       <li key={i}>
-                        <div className="font-medium text-[#261E5A]">{sv.label}</div>
-                        {sv.manual ? <p className="mt-1 text-xs text-[#6E6A8A]">Billed manually. Nothing is scheduled.</p> : (
-                          <div className="mt-1 flex flex-wrap gap-1">{sv.dates.slice(0, 12).map((d) => <span key={d} className="rounded-full bg-[#EEF0FB] px-2 py-0.5 text-xs text-[#261E5A]">{new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>)}</div>
+                        <div className="font-medium text-[color:var(--ds-ink)]">{sv.label}</div>
+                        {sv.manual ? <p className="mt-1 text-xs text-[color:var(--ds-body)]">Billed manually. Nothing is scheduled.</p> : (
+                          <div className="mt-1 flex flex-wrap gap-1">{sv.dates.slice(0, 12).map((d) => <span key={d} className="rounded-full bg-[color:var(--ds-selected)] px-2 py-0.5 text-xs text-[color:var(--ds-ink)]">{new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>)}</div>
                         )}
                       </li>
                     ))}
@@ -355,19 +355,19 @@ export default function BuilderClient() {
                     <div className="mt-4">
                       <div className="flex items-center justify-between">
                         <button type="button" aria-label="Previous invoice" disabled={month === 0} onClick={() => setMonth((m) => m - 1)} className={`${A.small} disabled:opacity-40`}>‹</button>
-                        <span className="text-sm font-semibold text-[#261E5A]">{new Date(`${inv.date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })}</span>
+                        <span className="text-sm font-semibold text-[color:var(--ds-ink)]">{new Date(`${inv.date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })}</span>
                         <button type="button" aria-label="Next invoice" disabled={month >= timeline.invoices.length - 1} onClick={() => setMonth((m) => m + 1)} className={`${A.small} disabled:opacity-40`}>›</button>
                       </div>
-                      <div className="mt-3 rounded-lg border border-[#ECEAF4] p-4 text-sm">
-                        <div className="text-xs text-[#6E6A8A]">{fmtDay(inv.date)} · due {fmtDay(inv.due)}</div>
-                        {inv.items.map((it, i) => <div key={i} className="mt-2 flex justify-between gap-3 text-[#261E5A]"><span>{it.label}</span><span>{money(it.cents)}</span></div>)}
-                        <div className="mt-3 flex justify-between border-t border-[#ECEAF4] pt-2 font-semibold text-[#261E5A]"><span>Total</span><span>{money(inv.total)}</span></div>
+                      <div className="mt-3 rounded-[14px] border border-[color:var(--ds-line)] p-4 text-sm">
+                        <div className="text-xs text-[color:var(--ds-body)]">{fmtDay(inv.date)} · due {fmtDay(inv.due)}</div>
+                        {inv.items.map((it, i) => <div key={i} className="mt-2 flex justify-between gap-3 text-[color:var(--ds-ink)]"><span>{it.label}</span><span>{money(it.cents)}</span></div>)}
+                        <div className="mt-3 flex justify-between border-t border-[color:var(--ds-line)] pt-2 font-semibold text-[color:var(--ds-ink)]"><span>Total</span><span>{money(inv.total)}</span></div>
                       </div>
                     </div>
                   );
                 })()}
-                {timeline.manual_labels.length > 0 && <p className="mt-3 text-xs text-[#6E6A8A]">Billed manually, not in this schedule: {timeline.manual_labels.join(', ')}.</p>}
-                <p className="mt-4 text-xs text-[#6E6A8A]">Partners who pay by card are charged {money(timeline.card_today_cents)} (3% surcharge included) when they sign. Invoices apply to partners who pay by check.</p>
+                {timeline.manual_labels.length > 0 && <p className="mt-3 text-xs text-[color:var(--ds-body)]">Billed manually, not in this schedule: {timeline.manual_labels.join(', ')}.</p>}
+                <p className="mt-4 text-xs text-[color:var(--ds-body)]">Partners who pay by card are charged {money(timeline.card_today_cents)} (3% surcharge included) when they sign. Invoices apply to partners who pay by check.</p>
               </div>
             )}
           </aside>
@@ -378,7 +378,7 @@ export default function BuilderClient() {
 
           {/* Agreement details */}
           <section className={`${A.card} overflow-visible`}>
-            <h2 className="border-b border-[#ECEAF4] px-6 py-4 text-lg font-semibold text-[#261E5A]">Agreement details</h2>
+            <h2 className="border-b border-[color:var(--ds-line)] px-6 py-4 text-lg font-semibold text-[color:var(--ds-ink)]">Agreement details</h2>
             <div className="space-y-5 p-6">
               <Field label="Agreement name">
                 <input className={A.input} value={doc.name} placeholder="Agreement" onChange={(e) => update({ name: e.target.value })} />
@@ -402,7 +402,7 @@ export default function BuilderClient() {
                   <input className={`${A.input} sm:col-span-2`} type="email" placeholder="Contact email" value={doc.new_client.email} onChange={(e) => update({ new_client: { ...doc.new_client!, email: e.target.value } })} />
                 </div>
               )}
-              <hr className="border-[#ECEAF4]" />
+              <hr className="border-[color:var(--ds-line)]" />
               <Field label="Agreement effective date" isSelect>
                 <select className={sel} value={doc.effective} onChange={(e) => update({ effective: e.target.value as BuilderDoc['effective'] })}>
                   <option value="acceptance">On acceptance</option>
@@ -410,7 +410,7 @@ export default function BuilderClient() {
                 </select>
               </Field>
               {doc.effective === 'date' && (
-                <input type="date" aria-label="Effective date" min={today()} value={doc.effective_date} onChange={(e) => update({ effective_date: e.target.value })} className="w-full border border-[#D8D5E6] text-sm text-[#261E5A]" />
+                <input type="date" aria-label="Effective date" min={today()} value={doc.effective_date} onChange={(e) => update({ effective_date: e.target.value })} className="w-full border border-[color:var(--ds-line)] text-sm text-[color:var(--ds-ink)]" />
               )}
               <Field label="Introductory message" isSelect>
                 <select className={sel} value="" onChange={(e) => {
@@ -423,13 +423,13 @@ export default function BuilderClient() {
                 </select>
               </Field>
               <textarea className={`${A.input} min-h-[140px]`} value={doc.intro} aria-label="Introductory message text" onChange={(e) => update({ intro: e.target.value })} />
-              <p className="-mt-3 text-xs text-[#6E6A8A]">Use {'{first_name}'} and {'{company}'} to personalize.</p>
-              <label className="flex items-center gap-3 text-sm text-[#261E5A]">
-                <input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.expires} onChange={(e) => update({ expires: e.target.checked })} />
+              <p className="-mt-3 text-xs text-[color:var(--ds-body)]">Use {'{first_name}'} and {'{company}'} to personalize.</p>
+              <label className="flex items-center gap-3 text-sm text-[color:var(--ds-ink)]">
+                <input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={doc.expires} onChange={(e) => update({ expires: e.target.checked })} />
                 Set an expiration for this proposal
                 {doc.expires && (
                   <span className="ml-2 inline-flex items-center gap-2">
-                    <input type="number" min={1} max={365} aria-label="Days until expiry" value={doc.expires_days} onChange={(e) => update({ expires_days: Math.max(1, Math.min(365, Number(e.target.value) || 1)) })} className="w-20 rounded-md border border-[#D8D5E6] px-2 py-1 text-sm" />
+                    <input type="number" min={1} max={365} aria-label="Days until expiry" value={doc.expires_days} onChange={(e) => update({ expires_days: Math.max(1, Math.min(365, Number(e.target.value) || 1)) })} className="w-20 rounded-[10px] border border-[color:var(--ds-line)] px-2 py-1 text-sm" />
                     days after sending
                   </span>
                 )}
@@ -439,17 +439,17 @@ export default function BuilderClient() {
 
           {/* Services */}
           <section className={A.card}>
-            <h2 className="border-b border-[#ECEAF4] px-6 py-4 text-lg font-semibold text-[#261E5A]">Services provided</h2>
+            <h2 className="border-b border-[color:var(--ds-line)] px-6 py-4 text-lg font-semibold text-[color:var(--ds-ink)]">Services provided</h2>
             <div className="space-y-3 p-6">
               <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Packages">
                 {opts.map((name, o) => (
-                  <button key={o} type="button" role="tab" aria-selected={o === activeOpt} onClick={() => { setActiveOpt(o); setRenaming(false); }} className={`rounded-md border px-4 py-2 text-sm ${o === activeOpt ? 'border-[#5B3FE3] bg-[#F3F0FF] font-medium text-[#261E5A]' : 'border-[#D8D5E6] text-[#6E6A8A]'}`}>
+                  <button key={o} type="button" role="tab" aria-selected={o === activeOpt} onClick={() => { setActiveOpt(o); setRenaming(false); }} className={`rounded-[10px] border px-4 py-2 text-sm ${o === activeOpt ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)] font-medium text-[color:var(--ds-ink)]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>
                     {name || `Option ${o + 1}`} <span className="ml-1 text-xs">{money(docTotalCents({ services: doc.services, options: opts }, o))}</span>
                   </button>
                 ))}
                 {opts.length < 4 && <button type="button" className={A.small} onClick={() => { update({ options: [...opts, `Option ${opts.length + 1}`] }); setActiveOpt(opts.length); }}>+ Add package</button>}
               </div>
-              {opts.length > 1 && <p className="text-xs text-[#6E6A8A]">The client picks one package, then approves it. Each package has its own services and total.</p>}
+              {opts.length > 1 && <p className="text-xs text-[color:var(--ds-body)]">The client picks one package, then approves it. Each package has its own services and total.</p>}
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 {renaming ? (
                   <>
@@ -464,16 +464,16 @@ export default function BuilderClient() {
                   </>
                 )}
               </div>
-              {activeServices.length === 0 && <p className="text-sm text-[#6E6A8A]">No services yet. Add the products this agreement covers.</p>}
+              {activeServices.length === 0 && <p className="text-sm text-[color:var(--ds-body)]">No services yet. Add the products this agreement covers.</p>}
               {doc.services.map((s, i) => optionOf(s, opts.length) !== activeOpt ? null : (
-                <div key={s.id} className="rounded-lg border border-[#ECEAF4] p-4">
+                <div key={s.id} className="rounded-[14px] border border-[color:var(--ds-line)] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="font-medium text-[#261E5A]">{svcLabel(s)}{s.optional && <span className="ml-2 rounded-full border border-[#D8D5E6] px-2 py-0.5 text-[10px] font-normal text-[#6E6A8A]">Optional</span>}</div>
+                      <div className="font-medium text-[color:var(--ds-ink)]">{svcLabel(s)}{s.optional && <span className="ml-2 rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[10px] font-normal text-[color:var(--ds-body)]">Optional</span>}</div>
                       {s.discount && s.list_cents ? <div className="text-xs text-green-700">{discountNote(s)}</div> : null}
-                      {s.description && <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs text-[#6E6A8A]">{s.description}</p>}
+                      {s.description && <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs text-[color:var(--ds-body)]">{s.description}</p>}
                     </div>
-                    <div className="text-right font-semibold text-[#261E5A]">{s.discount && s.list_cents ? <div className="text-xs font-normal text-[#6E6A8A] line-through">{money(s.list_cents)}</div> : null}{money(s.price_cents)}</div>
+                    <div className="text-right font-semibold text-[color:var(--ds-ink)]">{s.discount && s.list_cents ? <div className="text-xs font-normal text-[color:var(--ds-body)] line-through">{money(s.list_cents)}</div> : null}{money(s.price_cents)}</div>
                   </div>
                   <BillingControls billing={s.billing ?? DEFAULT_BILLING} onChange={(b) => update({ services: doc.services.map((x) => (x.id === s.id ? { ...x, billing: b } : x)) })} />
                   <div className="mt-3 flex gap-2">
@@ -482,30 +482,30 @@ export default function BuilderClient() {
                   </div>
                 </div>
               ))}
-              <button type="button" className="text-sm font-medium text-[#5B3FE3]" style={{ border: 0, background: 'transparent' }} onClick={() => setAddOpen(true)} disabled={!catalog}>+ Create service</button>
+              <button type="button" className="text-sm font-medium text-[color:var(--ds-primary)]" style={{ border: 0, background: 'transparent' }} onClick={() => setAddOpen(true)} disabled={!catalog}>+ Create service</button>
               {doc.services.length > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#ECEAF4] pt-3 text-sm text-[#261E5A]">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--ds-line)] pt-3 text-sm text-[color:var(--ds-ink)]">
                   <span>Billing schedule display for automatic services</span>
-                  <div className="inline-flex rounded-full bg-[#EEEDF3] p-1" role="group" aria-label="Billing schedule display">
+                  <div className="inline-flex rounded-full bg-[color:var(--ds-page)] p-1" role="group" aria-label="Billing schedule display">
                     {([['timeline', 'Timeline'], ['occurrence', 'By billing occurrence']] as const).map(([k, l]) => (
-                      <button key={k} type="button" aria-pressed={doc.payment.schedule_view === k} onClick={() => update({ payment: { ...doc.payment, schedule_view: k } })} className={`rounded-full px-4 py-1.5 text-xs ${doc.payment.schedule_view === k ? 'bg-white font-medium text-[#261E5A] shadow' : 'text-[#6E6A8A]'}`} style={{ border: 0 }}>{l}</button>
+                      <button key={k} type="button" aria-pressed={doc.payment.schedule_view === k} onClick={() => update({ payment: { ...doc.payment, schedule_view: k } })} className={`rounded-full px-4 py-1.5 text-xs ${doc.payment.schedule_view === k ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>
                     ))}
                   </div>
                 </div>
               )}
-              {doc.services.length > 0 && <div className="flex justify-between border-t border-[#ECEAF4] pt-3 text-sm font-semibold text-[#261E5A]"><span>{opts.length > 1 ? `${opts[activeOpt] || 'Package'} total` : 'Agreement total'}</span><span>{money(total)}</span></div>}
+              {doc.services.length > 0 && <div className="flex justify-between border-t border-[color:var(--ds-line)] pt-3 text-sm font-semibold text-[color:var(--ds-ink)]"><span>{opts.length > 1 ? `${opts[activeOpt] || 'Package'} total` : 'Agreement total'}</span><span>{money(total)}</span></div>}
             </div>
           </section>
 
           {/* Note */}
           <section className={A.card}>
             <div className="space-y-4 p-6">
-              <label className="flex items-center gap-3 text-sm text-[#261E5A]">
-                <input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.ask_address} onChange={(e) => update({ ask_address: e.target.checked })} />
+              <label className="flex items-center gap-3 text-sm text-[color:var(--ds-ink)]">
+                <input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={doc.ask_address} onChange={(e) => update({ ask_address: e.target.checked })} />
                 Ask my client to provide their address
               </label>
               <div>
-                <div className="mb-1 text-sm text-[#261E5A]">Add a note to your agreement (optional)</div>
+                <div className="mb-1 text-sm text-[color:var(--ds-ink)]">Add a note to your agreement (optional)</div>
                 <textarea className={`${A.input} min-h-[160px]`} value={doc.note} placeholder="Add here anything you need that's not specified elsewhere" onChange={(e) => update({ note: e.target.value })} />
               </div>
             </div>
@@ -513,18 +513,18 @@ export default function BuilderClient() {
 
           {/* Payment settings */}
           <section className={A.card}>
-            <h2 className="border-b border-[#ECEAF4] px-6 py-4 text-lg font-semibold text-[#261E5A]">Payment settings</h2>
-            <div className="space-y-6 p-6 text-sm text-[#261E5A]">
+            <h2 className="border-b border-[color:var(--ds-line)] px-6 py-4 text-lg font-semibold text-[color:var(--ds-ink)]">Payment settings</h2>
+            <div className="space-y-6 p-6 text-sm text-[color:var(--ds-ink)]">
               <div>
                 <div className="mb-2 font-medium">Payment methods the client can choose</div>
-                <label className="flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.card} onChange={(e) => update({ payment: { ...doc.payment, card: e.target.checked } })} />Credit card <span className="text-[#6E6A8A]">(3% surcharge added, charged when they sign)</span></label>
-                <label className="mt-2 flex flex-wrap items-center gap-3 text-sm text-[#261E5A]">Annual price increase
+                <label className="flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={doc.payment.card} onChange={(e) => update({ payment: { ...doc.payment, card: e.target.checked } })} />Credit card <span className="text-[color:var(--ds-body)]">(3% surcharge added, charged when they sign)</span></label>
+                <label className="mt-2 flex flex-wrap items-center gap-3 text-sm text-[color:var(--ds-ink)]">Annual price increase
                   <input type="number" min={0} max={2} step="0.25" className={`${A.input} w-24`} value={doc.payment.annual_increase_pct || ''} placeholder="0" onChange={(e) => update({ payment: { ...doc.payment, annual_increase_pct: Math.min(2, Math.max(0, Number(e.target.value) || 0)) } })} aria-label="Annual price increase percent" />
-                  <span className="text-[#6E6A8A]">% each year after the first (limit 2%). Applies to services that run longer than 12 months.</span>
+                  <span className="text-[color:var(--ds-body)]">% each year after the first (limit 2%). Applies to services that run longer than 12 months.</span>
                 </label>
-                <label className="mt-2 flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.bank_now} onChange={(e) => update({ payment: { ...doc.payment, bank_now: e.target.checked } })} />Bank account (ACH), pay now <span className="text-[#6E6A8A]">(debited at signing, partner pays the bank fee: 0.8%, max $5)</span></label>
-                <label className="mt-2 flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.bank_invoice} onChange={(e) => update({ payment: { ...doc.payment, bank_invoice: e.target.checked } })} />Invoiced, pay each invoice by bank <span className="text-[#6E6A8A]">(any product; nothing charged at signing)</span></label>
-                <label className="mt-2 flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.check} onChange={(e) => update({ payment: { ...doc.payment, check: e.target.checked } })} />Check <span className="text-[#6E6A8A]">(invoiced on the schedule; print agreements only)</span></label>
+                <label className="mt-2 flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={doc.payment.bank_now} onChange={(e) => update({ payment: { ...doc.payment, bank_now: e.target.checked } })} />Bank account (ACH), pay now <span className="text-[color:var(--ds-body)]">(debited at signing, partner pays the bank fee: 0.8%, max $5)</span></label>
+                <label className="mt-2 flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={doc.payment.bank_invoice} onChange={(e) => update({ payment: { ...doc.payment, bank_invoice: e.target.checked } })} />Invoiced, pay each invoice by bank <span className="text-[color:var(--ds-body)]">(any product; nothing charged at signing)</span></label>
+                <label className="mt-2 flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={doc.payment.check} onChange={(e) => update({ payment: { ...doc.payment, check: e.target.checked } })} />Check <span className="text-[color:var(--ds-body)]">(invoiced on the schedule; print agreements only)</span></label>
               </div>
               <Field label="Number of days until the payment is due" isSelect>
                 <select className={sel} value={doc.payment.due_days ?? ''} onChange={(e) => update({ payment: { ...doc.payment, due_days: e.target.value === '' ? null : Number(e.target.value) } })}>
@@ -533,39 +533,39 @@ export default function BuilderClient() {
                   {[1, 2, 3, 5, 7, 10, 14, 15, 20, 30, 45, 60].map((d) => <option key={d} value={d}>{d} {d === 1 ? 'day' : 'days'}</option>)}
                 </select>
               </Field>
-              <label className="flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.show_schedule} onChange={(e) => update({ payment: { ...doc.payment, show_schedule: e.target.checked } })} />Show the billing schedule to the client</label>
+              <label className="flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={doc.payment.show_schedule} onChange={(e) => update({ payment: { ...doc.payment, show_schedule: e.target.checked } })} />Show the billing schedule to the client</label>
             </div>
           </section>
 
           {/* Reference fields */}
           <section className={A.card}>
             <button type="button" className="flex w-full items-center justify-between px-6 py-4 text-left" style={{ border: 0, background: 'transparent' }} aria-expanded={refsOpen} aria-haspopup="true" onClick={() => setRefsOpen((o) => !o)}>
-              <span className="text-lg font-semibold text-[#261E5A]">Reference fields</span>
-              <span className={`text-[#261E5A] ${refsOpen ? 'rotate-180' : ''}`} aria-hidden="true">⌃</span>
+              <span className="text-lg font-semibold text-[color:var(--ds-ink)]">Reference fields</span>
+              <span className={`text-[color:var(--ds-ink)] ${refsOpen ? 'rotate-180' : ''}`} aria-hidden="true">⌃</span>
             </button>
             {refsOpen && (
-              <div className="space-y-4 border-t border-[#ECEAF4] p-6">
+              <div className="space-y-4 border-t border-[color:var(--ds-line)] p-6">
                 {doc.refs.map((r, i) => (
                   <div key={i} className="space-y-3">
                     <div className="flex items-center gap-3">
                       <input className={A.input} placeholder="Reference field name" value={r.name} onChange={(e) => update({ refs: doc.refs.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)) })} />
                       <input className={A.input} placeholder="Value" value={r.value} onChange={(e) => update({ refs: doc.refs.map((x, k) => (k === i ? { ...x, value: e.target.value } : x)) })} />
-                      <button type="button" aria-label="Remove reference field" className="text-xl text-[#261E5A]" style={{ border: 0, background: 'transparent' }} onClick={() => update({ refs: doc.refs.filter((_, k) => k !== i) })}>×</button>
+                      <button type="button" aria-label="Remove reference field" className="text-xl text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => update({ refs: doc.refs.filter((_, k) => k !== i) })}>×</button>
                     </div>
-                    <div className="inline-flex rounded-full bg-[#EEEDF3] p-1 text-sm" role="group" aria-label="Visibility">
+                    <div className="inline-flex rounded-full bg-[color:var(--ds-page)] p-1 text-sm" role="group" aria-label="Visibility">
                       {([true, false] as const).map((cf) => (
-                        <button key={String(cf)} type="button" aria-pressed={r.client_facing === cf} onClick={() => update({ refs: doc.refs.map((x, k) => (k === i ? { ...x, client_facing: cf } : x)) })} className={`rounded-full px-4 py-1.5 ${r.client_facing === cf ? 'bg-white font-medium text-[#261E5A] shadow' : 'text-[#6E6A8A]'}`} style={{ border: 0 }}>{cf ? 'Client-facing' : 'Internal'}</button>
+                        <button key={String(cf)} type="button" aria-pressed={r.client_facing === cf} onClick={() => update({ refs: doc.refs.map((x, k) => (k === i ? { ...x, client_facing: cf } : x)) })} className={`rounded-full px-4 py-1.5 ${r.client_facing === cf ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{cf ? 'Client-facing' : 'Internal'}</button>
                       ))}
                     </div>
                   </div>
                 ))}
-                <button type="button" className="text-sm font-medium text-[#5B3FE3]" style={{ border: 0, background: 'transparent' }} onClick={() => update({ refs: [...doc.refs, { name: '', value: '', client_facing: false }] })}>⊕ Add reference field</button>
+                <button type="button" className="text-sm font-medium text-[color:var(--ds-primary)]" style={{ border: 0, background: 'transparent' }} onClick={() => update({ refs: [...doc.refs, { name: '', value: '', client_facing: false }] })}>⊕ Add reference field</button>
               </div>
             )}
           </section>
 
           {templates.length > 0 && (
-            <p className="text-sm text-[#6E6A8A]">Start from a saved template: {templates.map((t) => <a key={t.id} href={`/admin/agreements/renewals-v2/new?template=${t.id}`} className="mr-3 text-[#5B3FE3] underline">{t.name}</a>)}</p>
+            <p className="text-sm text-[color:var(--ds-body)]">Start from a saved template: {templates.map((t) => <a key={t.id} href={`/admin/agreements/renewals-v2/new?template=${t.id}`} className="mr-3 text-[color:var(--ds-primary)] underline">{t.name}</a>)}</p>
           )}
         </main>
       </div>
@@ -586,7 +586,7 @@ export default function BuilderClient() {
       {tplOpen && (
         <Modal title="Save as template" onClose={() => setTplOpen(false)}>
           <input className={A.input} placeholder="Template name" value={tplName} onChange={(e) => setTplName(e.target.value)} />
-          <p className="text-xs text-[#6E6A8A]">Saves the services, message, note and reference fields. The client is not saved.</p>
+          <p className="text-xs text-[color:var(--ds-body)]">Saves the services, message, note and reference fields. The client is not saved.</p>
           <div className="flex justify-end gap-3"><button type="button" className={A.outline} onClick={() => setTplOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={!tplName.trim() || busy} onClick={saveTemplate}>Save</button></div>
         </Modal>
       )}
@@ -607,12 +607,12 @@ export default function BuilderClient() {
         <Modal title="Share by link" onClose={() => { if (busy) return; setShareOpen(false); if (shareLink) router.push('/admin/agreements/renewals-v2'); }}>
           {!shareLink ? (
             <>
-              <p className="text-sm text-[#261E5A]">This creates the agreement for {client?.name ?? doc.new_client?.name} and gives you a link to share yourself. No email is sent. Total {money(total)}.</p>
+              <p className="text-sm text-[color:var(--ds-ink)]">This creates the agreement for {client?.name ?? doc.new_client?.name} and gives you a link to share yourself. No email is sent. Total {money(total)}.</p>
               <div className="flex justify-end gap-3"><button type="button" className={A.outline} disabled={busy} onClick={() => setShareOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={busy} onClick={share}>{busy ? 'Creating…' : 'Create link'}</button></div>
             </>
           ) : (
             <>
-              <p className="text-sm text-[#261E5A]">Your link is ready. The agreement is also listed under New partners.</p>
+              <p className="text-sm text-[color:var(--ds-ink)]">Your link is ready. The agreement is also listed under New partners.</p>
               <input className={A.input} readOnly value={shareLink} aria-label="Agreement link" onFocus={(e) => e.currentTarget.select()} />
               <div className="flex justify-end gap-3">
                 <button type="button" className={A.outline} onClick={async () => { await navigator.clipboard.writeText(shareLink); setCopied(true); }}>{copied ? 'Copied' : 'Copy link'}</button>
@@ -626,7 +626,7 @@ export default function BuilderClient() {
       {/* Discard draft */}
       {discardOpen && (
         <Modal title="Discard draft" onClose={() => !busy && setDiscardOpen(false)}>
-          <p className="text-sm text-[#261E5A]">This permanently deletes this draft. Agreements already created are not affected.</p>
+          <p className="text-sm text-[color:var(--ds-ink)]">This permanently deletes this draft. Agreements already created are not affected.</p>
           <div className="flex justify-end gap-3"><button type="button" className={A.outline} disabled={busy} onClick={() => setDiscardOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={busy} onClick={discard}>Discard</button></div>
         </Modal>
       )}
@@ -634,7 +634,7 @@ export default function BuilderClient() {
       {/* Send */}
       {sendOpen && (
         <Modal title="Send agreement" onClose={() => !busy && setSendOpen(false)}>
-          <p className="text-sm text-[#261E5A]">
+          <p className="text-sm text-[color:var(--ds-ink)]">
             This creates the agreement for {client?.name ?? doc.new_client?.name} and emails the review link to {client?.contact_email ?? doc.new_client?.email}. Total {money(total)}.
           </p>
           <div className="flex justify-end gap-3"><button type="button" className={A.outline} disabled={busy} onClick={() => setSendOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={busy} onClick={send}>{busy ? 'Sending…' : 'Send'}</button></div>
@@ -693,7 +693,7 @@ function ServiceModal({ catalog, onClose, onSave }: { catalog: Catalog; onClose:
       )}
       <Field label="Publication" isSelect><select className={sel} value={pub} onChange={(e) => { setPub(e.target.value as Pub); setPrice(null); }}>{(Object.keys(PUB_LABEL) as Pub[]).map((p) => <option key={p} value={p}>{PUB_LABEL[p]}</option>)}</select></Field>
       <Field label="Price (USD)"><input type="number" min={0} step="0.01" className={A.input} value={price ?? (suggested / 100).toString()} onChange={(e) => setPrice(e.target.value)} /></Field>
-      <p className="text-xs text-[#6E6A8A]">The price starts at the media kit rate. Change it to give a custom price.</p>
+      <p className="text-xs text-[color:var(--ds-body)]">The price starts at the media kit rate. Change it to give a custom price.</p>
       <div className="flex justify-end gap-3">
         <button type="button" className={A.outline} onClick={onClose}>Cancel</button>
         <button type="button" className={A.primary} disabled={!pkg || cents <= 0} onClick={() => onSave({ id: uid(), channel, package_id: pkg, size: channel === 'print' ? size : undefined, months: channel === 'print' ? months : undefined, sends: channel === 'email' ? sends : undefined, app_weeks: channel === 'app' ? weeks : undefined, app_markets: channel === 'app' ? markets : undefined, publication: pub, price_cents: cents, name: label, description: '' })}>Save</button>
@@ -716,7 +716,7 @@ function EditServiceModal({ service, onClose, onSave }: { service: ServiceLine; 
     <Modal title="Edit service" onClose={onClose}>
       <Field label="Service name"><input className={A.input} value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <div>
-        <div className="mb-1 text-sm text-[#6E6A8A]">Service description</div>
+        <div className="mb-1 text-sm text-[color:var(--ds-body)]">Service description</div>
         <textarea className={`${A.input} min-h-[140px]`} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What the client gets. Start lines with a dash for a list." />
       </div>
       <Field label="Price (USD)"><input type="number" min={0} step="0.01" className={A.input} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
@@ -724,8 +724,8 @@ function EditServiceModal({ service, onClose, onSave }: { service: ServiceLine; 
         <Field label="Discount type" isSelect><select className={sel} value={dType} onChange={(e) => setDType(e.target.value as 'pct' | 'amount')}><option value="pct">Percent off</option><option value="amount">Dollars off</option></select></Field>
         <Field label={dType === 'pct' ? 'Percent' : 'Dollars'}><input type="number" min={0} step="0.01" className={A.input} value={dValue} onChange={(e) => setDValue(e.target.value)} placeholder="No discount" /></Field>
       </div>
-      <p className="text-sm text-[#261E5A]">The client pays <strong>{money(final)}</strong>{disc ? <span className="text-[#6E6A8A]"> ({money(list)} before the discount)</span> : null}</p>
-      <label className="flex items-center gap-3 text-sm text-[#261E5A]"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={optional} onChange={(e) => setOptional(e.target.checked)} />Optional service <span className="text-[#6E6A8A]">(the client can decline it when approving)</span></label>
+      <p className="text-sm text-[color:var(--ds-ink)]">The client pays <strong>{money(final)}</strong>{disc ? <span className="text-[color:var(--ds-body)]"> ({money(list)} before the discount)</span> : null}</p>
+      <label className="flex items-center gap-3 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={optional} onChange={(e) => setOptional(e.target.checked)} />Optional service <span className="text-[color:var(--ds-body)]">(the client can decline it when approving)</span></label>
       <div className="flex justify-end gap-3">
         <button type="button" className={A.outline} onClick={onClose}>Cancel</button>
         <button type="button" className={A.primary} disabled={!name.trim() || final <= 0} onClick={() => onSave({ name: name.trim(), description, price_cents: final, list_cents: disc ? list : undefined, discount: disc, optional: optional || undefined })}>Save</button>
@@ -739,8 +739,8 @@ function BillingControls({ billing, onChange }: { billing: ServiceBilling; onCha
   const set = (p: Partial<ServiceBilling>) => onChange({ ...b, ...p });
   const manual = b.start === 'manual';
   return (
-    <div className="mt-4 space-y-3 border-t border-[#ECEAF4] pt-4">
-      <span className="inline-block rounded-full border border-[#D8D5E6] px-3 py-1 text-xs text-[#261E5A]">{billingBadge(b)}</span>
+    <div className="mt-4 space-y-3 border-t border-[color:var(--ds-line)] pt-4">
+      <span className="inline-block rounded-full border border-[color:var(--ds-line)] px-3 py-1 text-xs text-[color:var(--ds-ink)]">{billingBadge(b)}</span>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Billed" isSelect>
           <select className={sel} value={b.cadence} onChange={(e) => set({ cadence: e.target.value as ServiceBilling['cadence'] })} disabled={manual}>
@@ -769,9 +769,9 @@ function BillingControls({ billing, onChange }: { billing: ServiceBilling; onCha
         </Field>
       </div>
       {b.start === 'date' && (
-        <input type="date" aria-label="First invoice date" value={b.start_date} onChange={(e) => set({ start_date: e.target.value })} className="w-full border border-[#D8D5E6] text-sm text-[#261E5A]" />
+        <input type="date" aria-label="First invoice date" value={b.start_date} onChange={(e) => set({ start_date: e.target.value })} className="w-full border border-[color:var(--ds-line)] text-sm text-[color:var(--ds-ink)]" />
       )}
-      <p className="text-xs text-[#6E6A8A]">
+      <p className="text-xs text-[color:var(--ds-body)]">
         {b.start === 'next' && 'The first invoice goes out on the next billing day after the agreement takes effect.'}
         {b.start === 'date' && 'The first invoice goes out on this exact date. Later invoices follow monthly. Past dates are invoiced right away.'}
         {manual && 'Nothing is invoiced for this service until someone starts billing in Get Paid.'}
@@ -789,73 +789,73 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
   const methods = [pay.card ? 'credit card' : null, pay.check ? 'check' : null, pay.bank_now ? 'bank (ACH) now' : null, pay.bank_invoice ? 'bank (ACH) on invoices' : null].filter(Boolean).join(' or ');
   const due = pay.due_days === 0 ? 'Payment is due upon receipt of invoice.' : pay.due_days != null ? `Payment is due ${pay.due_days} ${pay.due_days === 1 ? 'day' : 'days'} after each invoice is issued.` : 'Payment is due on the account default schedule after each invoice is issued.';
   const body = (
-    <div className="space-y-4 text-sm text-[#261E5A]">
-      {step === 0 && <p className="whitespace-pre-line rounded-lg bg-white p-5">{intro}</p>}
+    <div className="space-y-4 text-sm text-[color:var(--ds-ink)]">
+      {step === 0 && <p className="whitespace-pre-line rounded-[14px] bg-white p-5">{intro}</p>}
       {step === 1 && (
         <>
           {doc.services.map((sv) => (
-            <div key={sv.id} className="rounded-lg bg-white p-5">
+            <div key={sv.id} className="rounded-[14px] bg-white p-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">{sv.name || 'Service'}</span>
-                <span className="flex items-center gap-3"><span className="rounded-full border border-[#5B3FE3] px-2.5 py-0.5 text-xs">{billingBadge(sv.billing ?? DEFAULT_BILLING).replace(', automatically', '')}</span><span className="font-semibold">{money(sv.price_cents)}</span></span>
+                <span className="flex items-center gap-3"><span className="rounded-full border border-[color:var(--ds-primary)] px-2.5 py-0.5 text-xs">{billingBadge(sv.billing ?? DEFAULT_BILLING).replace(', automatically', '')}</span><span className="font-semibold">{money(sv.price_cents)}</span></span>
               </div>
-              {sv.description && <p className="mt-3 whitespace-pre-line text-[#4A4767]">{sv.description}</p>}
+              {sv.description && <p className="mt-3 whitespace-pre-line text-[color:var(--ds-body)]">{sv.description}</p>}
             </div>
           ))}
-          {doc.refs.filter((r) => r.client_facing && r.name).map((r, i) => <div key={i} className="flex justify-between rounded-lg bg-white px-5 py-3 text-xs"><span className="text-[#6E6A8A]">{r.name}</span><span>{r.value}</span></div>)}
-          <div className="flex justify-between rounded-lg bg-white px-5 py-3 font-semibold"><span>Agreement total</span><span>{money(total)}</span></div>
-          {doc.note && <p className="whitespace-pre-line rounded-lg bg-white p-5 text-[#4A4767]">{doc.note}</p>}
+          {doc.refs.filter((r) => r.client_facing && r.name).map((r, i) => <div key={i} className="flex justify-between rounded-[14px] bg-white px-5 py-3 text-xs"><span className="text-[color:var(--ds-body)]">{r.name}</span><span>{r.value}</span></div>)}
+          <div className="flex justify-between rounded-[14px] bg-white px-5 py-3 font-semibold"><span>Agreement total</span><span>{money(total)}</span></div>
+          {doc.note && <p className="whitespace-pre-line rounded-[14px] bg-white p-5 text-[color:var(--ds-body)]">{doc.note}</p>}
         </>
       )}
-      {step === 2 && <p className="rounded-lg bg-white p-5 text-[#4A4767]">The advertising terms for the selected products appear here for the client to read before paying. They are the same terms shown on the live signing page.</p>}
+      {step === 2 && <p className="rounded-[14px] bg-white p-5 text-[color:var(--ds-body)]">The advertising terms for the selected products appear here for the client to read before paying. They are the same terms shown on the live signing page.</p>}
       {step === 3 && (
-        <div className="space-y-4 rounded-lg bg-white p-5">
-          <div><div className="font-semibold">Effective date of agreement</div><div className="text-[#4A4767]">{doc.effective === 'date' && doc.effective_date ? fmtDay(doc.effective_date) : 'On acceptance'}</div></div>
-          <div><div className="font-semibold">Payment terms</div><div className="text-[#4A4767]">{due} Accepted: {methods || 'none'}.</div></div>
-          {doc.ask_address && <div><div className="font-semibold">Address</div><div className="text-[#4A4767]">You will be asked for your address before signing.</div></div>}
-          {doc.expires && <div><div className="font-semibold">Expiration</div><div className="text-[#4A4767]">This proposal expires {doc.expires_days} days after it is sent.</div></div>}
+        <div className="space-y-4 rounded-[14px] bg-white p-5">
+          <div><div className="font-semibold">Effective date of agreement</div><div className="text-[color:var(--ds-body)]">{doc.effective === 'date' && doc.effective_date ? fmtDay(doc.effective_date) : 'On acceptance'}</div></div>
+          <div><div className="font-semibold">Payment terms</div><div className="text-[color:var(--ds-body)]">{due} Accepted: {methods || 'none'}.</div></div>
+          {doc.ask_address && <div><div className="font-semibold">Address</div><div className="text-[color:var(--ds-body)]">You will be asked for your address before signing.</div></div>}
+          {doc.expires && <div><div className="font-semibold">Expiration</div><div className="text-[color:var(--ds-body)]">This proposal expires {doc.expires_days} days after it is sent.</div></div>}
         </div>
       )}
       {step === 4 && (
-        <div className="rounded-lg bg-white p-5">
-          <div className="mb-3 inline-flex rounded-full bg-[#EEEDF3] p-1 text-xs"><span className="rounded-full bg-white px-4 py-1.5 font-medium shadow">Type</span><span className="px-4 py-1.5 text-[#6E6A8A]">Draw</span></div>
-          <div className="border-b border-[#D8D5E6] py-6 text-2xl italic text-[#9A96B3]">Type your name…</div>
-          <p className="mt-3 text-xs text-[#6E6A8A]">On the live page the client picks how to pay, then signs. Preview only; nothing is saved.</p>
+        <div className="rounded-[14px] bg-white p-5">
+          <div className="mb-3 inline-flex rounded-full bg-[color:var(--ds-page)] p-1 text-xs"><span className="rounded-full bg-white px-4 py-1.5 font-medium shadow">Type</span><span className="px-4 py-1.5 text-[color:var(--ds-body)]">Draw</span></div>
+          <div className="border-b border-[color:var(--ds-line)] py-6 text-2xl italic text-[color:var(--ds-placeholder)]">Type your name…</div>
+          <p className="mt-3 text-xs text-[color:var(--ds-body)]">On the live page the client picks how to pay, then signs. Preview only; nothing is saved.</p>
         </div>
       )}
     </div>
   );
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Client preview">
-      <div className="flex h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-[#ECEAF4] px-5 py-3 text-sm text-[#261E5A]">
+      <div className="flex h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-[14px] bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-[color:var(--ds-line)] px-5 py-3 text-sm text-[color:var(--ds-ink)]">
           <span>You are in preview mode. No activity will be saved.</span>
           <div className="flex items-center gap-3">
-            <div className="inline-flex rounded-full bg-[#EEEDF3] p-1 text-xs" role="group" aria-label="Device">
-              {([[false, 'Desktop'], [true, 'Mobile']] as const).map(([m, l]) => <button key={l} type="button" aria-pressed={mobile === m} onClick={() => setMobile(m)} className={`rounded-full px-3 py-1 ${mobile === m ? 'bg-white font-medium shadow' : 'text-[#6E6A8A]'}`} style={{ border: 0 }}>{l}</button>)}
+            <div className="inline-flex rounded-full bg-[color:var(--ds-page)] p-1 text-xs" role="group" aria-label="Device">
+              {([[false, 'Desktop'], [true, 'Mobile']] as const).map(([m, l]) => <button key={l} type="button" aria-pressed={mobile === m} onClick={() => setMobile(m)} className={`rounded-full px-3 py-1 ${mobile === m ? 'bg-white font-medium shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>)}
             </div>
             <button type="button" aria-label="Close preview" onClick={onClose} className="text-xl leading-none" style={{ border: 0, background: 'transparent' }}>×</button>
           </div>
         </div>
-        <div className="flex flex-1 items-start justify-center overflow-y-auto bg-[#E7E8F5] p-6">
-          <div className={`flex min-h-[70%] w-full flex-col rounded-xl bg-[#F3F4FD] ${mobile ? 'max-w-sm' : 'max-w-4xl'}`}>
+        <div className="flex flex-1 items-start justify-center overflow-y-auto bg-[color:var(--ds-page)] p-6">
+          <div className={`flex min-h-[70%] w-full flex-col rounded-xl bg-[color:var(--ds-selected)] ${mobile ? 'max-w-sm' : 'max-w-4xl'}`}>
             {step === -1 ? (
               <div className="p-10">
-                <h2 className="text-3xl font-bold text-[#1B1726]">{doc.name || 'Proposal for review'}</h2>
-                <h3 className="mt-6 text-xl font-semibold text-[#1B1726]">Prepared for {preparedFor}</h3>
-                <p className="mt-2 text-sm text-[#4A4767]">Realty News Now has sent you this proposal for your review and approval.</p>
+                <h2 className="text-3xl font-bold text-[color:var(--ds-ink)]">{doc.name || 'Proposal for review'}</h2>
+                <h3 className="mt-6 text-xl font-semibold text-[color:var(--ds-ink)]">Prepared for {preparedFor}</h3>
+                <p className="mt-2 text-sm text-[color:var(--ds-body)]">Realty News Now has sent you this proposal for your review and approval.</p>
                 <button type="button" className={`${A.primary} mt-8`} onClick={() => setStep(0)}>Get started →</button>
               </div>
             ) : (
               <div className={`flex flex-1 ${mobile ? 'flex-col' : ''}`}>
-                <nav className={`${mobile ? 'border-b' : 'w-60 shrink-0 border-r'} border-[#E4DFF1] bg-white p-5 text-sm`} aria-label="Proposal steps">
-                  <div className="mb-4 font-semibold text-[#1B1726]">Realty News Now</div>
+                <nav className={`${mobile ? 'border-b' : 'w-60 shrink-0 border-r'} border-[color:var(--ds-line)] bg-white p-5 text-sm`} aria-label="Proposal steps">
+                  <div className="mb-4 font-semibold text-[color:var(--ds-ink)]">Realty News Now</div>
                   <ul className={mobile ? 'flex flex-wrap gap-2' : 'space-y-3'}>
-                    {PREVIEW_STEPS.map((l, i) => <li key={l}><button type="button" onClick={() => setStep(i)} className={`text-left ${i === step ? 'font-semibold text-[#5B3FE3]' : 'text-[#4A4767]'}`} style={{ border: 0, background: 'transparent' }}>{l}</button></li>)}
+                    {PREVIEW_STEPS.map((l, i) => <li key={l}><button type="button" onClick={() => setStep(i)} className={`text-left ${i === step ? 'font-semibold text-[color:var(--ds-primary)]' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0, background: 'transparent' }}>{l}</button></li>)}
                   </ul>
                 </nav>
                 <div className="flex flex-1 flex-col p-6">
-                  <h3 className="mb-4 text-2xl font-semibold text-[#1B1726]">{PREVIEW_STEPS[step]}</h3>
+                  <h3 className="mb-4 text-2xl font-semibold text-[color:var(--ds-ink)]">{PREVIEW_STEPS[step]}</h3>
                   <div className="flex-1">{body}</div>
                   <div className="mt-6 flex justify-end">
                     {step < PREVIEW_STEPS.length - 1 ? <button type="button" className={A.primary} onClick={() => setStep(step + 1)}>Next</button> : <button type="button" className={A.primary} disabled>Approve agreement</button>}

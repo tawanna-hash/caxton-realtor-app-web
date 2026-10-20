@@ -46,18 +46,18 @@ export default function DefaultsPanel() {
     } finally { setSaving(false); }
   }
 
-  if (!d) return <p className="text-sm text-[#6E6A8A]">{msg ?? 'Loading…'}</p>;
+  if (!d) return <p className="text-sm text-[color:var(--ds-body)]">{msg ?? 'Loading…'}</p>;
 
   return (
     <div className="max-w-4xl space-y-4">
       <div className="flex items-start justify-between gap-4">
-        <h2 className="text-lg font-semibold text-[#261E5A]">Agreements default configuration</h2>
+        <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Agreements default configuration</h2>
         <button onClick={save} disabled={saving} className={A.primary}>{saving ? 'Saving…' : 'Save changes'}</button>
       </div>
       {msg && <div className={A.notice}>{msg}</div>}
       <div className={`${A.card} p-6`}>
-        <h3 className="mb-1 text-sm font-semibold text-[#261E5A]">General settings</h3>
-        <div className="divide-y divide-[#F0EEF6]">
+        <h3 className="mb-1 text-sm font-semibold text-[color:var(--ds-ink)]">General settings</h3>
+        <div className="divide-y divide-[color:var(--ds-line)]">
           <SettingRow label="Number of days until payment is due">
             <select className={A.input} value={d.due_days} onChange={(e) => setD({ ...d, due_days: Number(e.target.value) })}>
               {[0, 7, 15, 20, 30, 45, 60].map((n) => <option key={n} value={n}>{n === 0 ? 'On receipt of invoice' : `${n} days`}</option>)}
@@ -70,8 +70,8 @@ export default function DefaultsPanel() {
             </select>
           </SettingRow>
         </div>
-        <h3 className="mb-1 mt-6 text-sm font-semibold text-[#261E5A]">Automatic billing settings</h3>
-        <div className="divide-y divide-[#F0EEF6]">
+        <h3 className="mb-1 mt-6 text-sm font-semibold text-[color:var(--ds-ink)]">Automatic billing settings</h3>
+        <div className="divide-y divide-[color:var(--ds-line)]">
           <SettingRow label="Billing day for monthly services">
             <select className={A.input} value={String(d.billing_day)} onChange={(e) => setD({ ...d, billing_day: e.target.value === 'start' ? 'start' : Number(e.target.value) })}>
               <option value="start">Same day as the start date</option>
@@ -79,14 +79,14 @@ export default function DefaultsPanel() {
             </select>
           </SettingRow>
         </div>
-        <h3 className="mb-3 mt-6 text-sm font-semibold text-[#261E5A]">Introductory message templates</h3>
+        <h3 className="mb-3 mt-6 text-sm font-semibold text-[color:var(--ds-ink)]">Introductory message templates</h3>
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs text-[#6E6A8A]" htmlFor="intro-new">New partner message. Use {'{first_name}'} and {'{company}'}.</label>
+            <label className="mb-1 block text-xs text-[color:var(--ds-body)]" htmlFor="intro-new">New partner message. Use {'{first_name}'} and {'{company}'}.</label>
             <textarea id="intro-new" className={`${A.input} min-h-28`} value={d.intro_new} onChange={(e) => setD({ ...d, intro_new: e.target.value })} />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-[#6E6A8A]" htmlFor="intro-renewal">Renewal message. Use {'{first_name}'} and {'{company}'}.</label>
+            <label className="mb-1 block text-xs text-[color:var(--ds-body)]" htmlFor="intro-renewal">Renewal message. Use {'{first_name}'} and {'{company}'}.</label>
             <textarea id="intro-renewal" className={`${A.input} min-h-28`} value={d.intro_renewal} onChange={(e) => setD({ ...d, intro_renewal: e.target.value })} />
           </div>
         </div>

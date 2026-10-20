@@ -48,19 +48,19 @@ const SUB: Record<Tab, string> = {
 export default function AgreementsBeta() {
   const [tab, setTab] = useState<Tab>('board');
   return (
-    <div className="mx-auto max-w-6xl space-y-5 rounded-lg bg-[#F7F7FA] p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
+    <div className="mx-auto max-w-6xl space-y-5 rounded-[14px] bg-[color:var(--ds-page)] p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
       <div>
-        <h1 className={A.title}>Agreements <span className="ml-1 rounded-full border border-[#5B3FE3] px-2 py-0.5 align-middle text-xs font-medium text-[#5B3FE3]">Beta</span></h1>
+        <h1 className={A.title}>Agreements <span className="ml-1 rounded-full border border-[color:var(--ds-primary)] px-2 py-0.5 align-middle text-xs font-medium text-[color:var(--ds-primary)]">Beta</span></h1>
         <p className={A.subtitle}>{SUB[tab]}</p>
       </div>
-      <div className="flex gap-x-8 overflow-x-auto whitespace-nowrap border-b border-[#D8D5E6]" role="tablist" aria-label="Agreements beta">
+      <div className="flex gap-x-8 overflow-x-auto whitespace-nowrap border-b border-[color:var(--ds-line)]" role="tablist" aria-label="Agreements beta">
         {TABS.map(([key, label]) => (
           <button
             key={key}
             role="tab"
             aria-selected={tab === key}
             onClick={() => setTab(key)}
-            className={`anchor-tab -mb-px border-b-[3px] pb-3 text-[15px] ${tab === key ? 'border-[#5B3FE3] font-medium text-[#261E5A]' : 'border-transparent text-[#6E6A8A] hover:text-[#261E5A]'}`}
+            className={`anchor-tab -mb-px border-b-[3px] pb-3 text-[15px] ${tab === key ? 'border-[color:var(--ds-primary)] font-medium text-[color:var(--ds-ink)]' : 'border-transparent text-[color:var(--ds-body)] hover:text-[color:var(--ds-ink)]'}`}
           >
             {label}
           </button>

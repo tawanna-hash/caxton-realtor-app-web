@@ -18,7 +18,7 @@ const PAGE = 50;
 
 function Status({ i }: { i: Inv }) {
   const s = i.is_overdue ? 'overdue' : i.status;
-  const tone = s === 'paid' ? 'border-green-600 text-green-700' : s === 'overdue' ? 'border-red-500 text-red-700' : s === 'void' ? 'border-[#9A97B3] text-[#6E6A8A]' : s === 'draft' ? 'border-[#9A97B3] text-[#6E6A8A]' : 'border-[#5B3FE3] text-[#5B3FE3]';
+  const tone = s === 'paid' ? 'border-green-600 text-green-700' : s === 'overdue' ? 'border-red-500 text-red-700' : s === 'void' ? 'border-[color:var(--ds-placeholder)] text-[color:var(--ds-body)]' : s === 'draft' ? 'border-[color:var(--ds-placeholder)] text-[color:var(--ds-body)]' : 'border-[color:var(--ds-primary)] text-[color:var(--ds-primary)]';
   return <span className={`rounded-full border px-2.5 py-0.5 text-xs capitalize ${tone}`}>{s}</span>;
 }
 
@@ -54,22 +54,22 @@ export default function InvoicesPanel() {
   }, [rows]);
 
   if (error) return <div className={A.error}>{error}</div>;
-  if (!rows) return <p className="text-sm text-[#6E6A8A]">Loading invoices…</p>;
+  if (!rows) return <p className="text-sm text-[color:var(--ds-body)]">Loading invoices…</p>;
   const pageRows = shown.slice(page * PAGE, page * PAGE + PAGE);
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {([['Outstanding', totals.outstanding], ['Overdue', totals.overdue], ['Collected', totals.paid]] as const).map(([l, v]) => (
-          <div key={l} className={`${A.card} p-4`}><div className="text-xs text-[#6E6A8A]">{l}</div><div className="mt-1 text-xl font-semibold text-[#261E5A]">{money(v)}</div></div>
+          <div key={l} className={`${A.card} p-4`}><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="mt-1 text-xl font-semibold text-[color:var(--ds-ink)]">{money(v)}</div></div>
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={(v) => { setQ(v); setPage(0); }} />
-        <select aria-label="Status" value={status} onChange={(e) => { setStatus(e.target.value); setPage(0); }} className="anchor-input rounded-full border border-[#D8D5E6] bg-white px-4 py-2 text-sm text-[#261E5A]">
+        <select aria-label="Status" value={status} onChange={(e) => { setStatus(e.target.value); setPage(0); }} className="anchor-input rounded-full border border-[color:var(--ds-line)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]">
           {['all', 'draft', 'sent', 'overdue', 'paid', 'void'].map((s) => <option key={s} value={s}>{s === 'all' ? 'All statuses' : s[0].toUpperCase() + s.slice(1)}</option>)}
         </select>
-        <span className="text-xs text-[#6E6A8A]">{shown.length} of {rows.length} invoices</span>
+        <span className="text-xs text-[color:var(--ds-body)]">{shown.length} of {rows.length} invoices</span>
         <a href="/admin/getpaid/invoices" className={`${A.outline} ml-auto`}>Manage in Get Paid</a>
       </div>
       {shown.length === 0 ? <EmptyState title="No invoices found" body="Try a different search or status." /> : (
@@ -79,7 +79,7 @@ export default function InvoicesPanel() {
             <tbody>
               {pageRows.map((i) => (
                 <tr key={i.id}>
-                  <td className="max-w-[180px] truncate whitespace-nowrap font-medium text-[#261E5A]" title={i.number ?? undefined}>{i.number ?? 'Draft'}</td>
+                  <td className="max-w-[180px] truncate whitespace-nowrap font-medium text-[color:var(--ds-ink)]" title={i.number ?? undefined}>{i.number ?? 'Draft'}</td>
                   <td className="min-w-[180px]">{i.advertiser_name ?? '—'}</td>
                   <td><Status i={i} /></td>
                   <td className="whitespace-nowrap">{day(i.issued_at ?? i.created_at)}</td>
@@ -87,7 +87,7 @@ export default function InvoicesPanel() {
                   <td className="whitespace-nowrap text-right">{money(i.total_cents)}</td>
                   <td className="whitespace-nowrap text-right">{money(i.amount_paid_cents)}</td>
                   <td className="whitespace-nowrap text-right font-medium">{money(i.balance_cents)}</td>
-                  <td>{i.agreement_id ? <span className="text-xs text-[#5B3FE3]">Linked</span> : <span className="text-xs text-[#9A97B3]">None</span>}</td>
+                  <td>{i.agreement_id ? <span className="text-xs text-[color:var(--ds-primary)]">Linked</span> : <span className="text-xs text-[color:var(--ds-placeholder)]">None</span>}</td>
                 </tr>
               ))}
             </tbody>
@@ -95,7 +95,7 @@ export default function InvoicesPanel() {
         </div>
       )}
       {shown.length > PAGE && (
-        <div className="flex items-center justify-end gap-3 text-sm text-[#6E6A8A]">
+        <div className="flex items-center justify-end gap-3 text-sm text-[color:var(--ds-body)]">
           <button type="button" className={A.small} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</button>
           <span>Page {page + 1} of {Math.ceil(shown.length / PAGE)}</span>
           <button type="button" className={A.small} disabled={(page + 1) * PAGE >= shown.length} onClick={() => setPage((p) => p + 1)}>Next</button>

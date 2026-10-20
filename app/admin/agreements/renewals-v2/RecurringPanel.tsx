@@ -36,22 +36,22 @@ export default function RecurringPanel() {
   const monthly = useMemo(() => (rows ?? []).filter((r) => r.status === 'active' && r.frequency === 'monthly').reduce((n, r) => n + r.amount_cents + (r.tax_cents ?? 0), 0), [rows]);
 
   if (error) return <div className={A.error}>{error}</div>;
-  if (!rows) return <p className="text-sm text-[#6E6A8A]">Loading recurring invoices…</p>;
+  if (!rows) return <p className="text-sm text-[color:var(--ds-body)]">Loading recurring invoices…</p>;
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {([['Active schedules', String(rows.filter((r) => r.status === 'active').length)], ['Drafts (paused)', String(rows.filter((r) => r.status === 'paused').length)], ['Active monthly billing', money(monthly)]] as const).map(([l, v]) => (
-          <div key={l} className={`${A.card} p-4`}><div className="text-xs text-[#6E6A8A]">{l}</div><div className="mt-1 text-xl font-semibold text-[#261E5A]">{v}</div></div>
+          <div key={l} className={`${A.card} p-4`}><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="mt-1 text-xl font-semibold text-[color:var(--ds-ink)]">{v}</div></div>
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} />
-        <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)} className="anchor-input rounded-full border border-[#D8D5E6] bg-white px-4 py-2 text-sm text-[#261E5A]">
+        <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)} className="anchor-input rounded-full border border-[color:var(--ds-line)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]">
           <option value="all">All statuses</option>
           {statuses.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
         </select>
-        <span className="text-xs text-[#6E6A8A]">{shown.length} of {rows.length} schedules</span>
+        <span className="text-xs text-[color:var(--ds-body)]">{shown.length} of {rows.length} schedules</span>
         <a href="/admin/getpaid/reoccuringpayments" className={`${A.outline} ml-auto`}>Manage in Get Paid</a>
       </div>
       {shown.length === 0 ? <EmptyState title="No recurring invoices found" body="Try a different search or status." /> : (
@@ -61,9 +61,9 @@ export default function RecurringPanel() {
             <tbody>
               {shown.map((s) => (
                 <tr key={s.id}>
-                  <td className="max-w-[260px] truncate" title={s.name}>{s.name}{s.source === 'agreement' && <span className="ml-2 rounded-full border border-[#D8D5E6] px-2 py-0.5 text-[10px] text-[#6E6A8A]">From agreement</span>}</td>
+                  <td className="max-w-[260px] truncate" title={s.name}>{s.name}{s.source === 'agreement' && <span className="ml-2 rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[10px] text-[color:var(--ds-body)]">From agreement</span>}</td>
                   <td>{s.advertiser_name ?? '—'}</td>
-                  <td><span className="rounded-full border border-[#D8D5E6] px-2.5 py-0.5 text-xs capitalize">{s.status === 'paused' ? 'draft' : s.status}</span></td>
+                  <td><span className="rounded-full border border-[color:var(--ds-line)] px-2.5 py-0.5 text-xs capitalize">{s.status === 'paused' ? 'draft' : s.status}</span></td>
                   <td className="whitespace-nowrap">{every(s)}</td>
                   <td className="whitespace-nowrap text-right">{money(s.amount_cents + (s.tax_cents ?? 0))}</td>
                   <td className="whitespace-nowrap">{day(s.next_run_at)}</td>
