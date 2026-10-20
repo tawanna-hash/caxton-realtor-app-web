@@ -9,15 +9,21 @@ import DefaultsPanel from './DefaultsPanel';
 import NotificationsPanel from './NotificationsPanel';
 import InvoicesPanel from './InvoicesPanel';
 import ServicesPanel from './ServicesPanel';
+import RecurringPanel from './RecurringPanel';
+import StatementsPanel from './StatementsPanel';
+import PayoutsPanel from './PayoutsPanel';
 import { A } from '@/components/anchor/ui';
 
-type Tab = 'board' | 'renewals' | 'new' | 'templates' | 'invoices' | 'services' | 'defaults' | 'notifications';
+type Tab = 'board' | 'renewals' | 'new' | 'templates' | 'invoices' | 'recurring' | 'statements' | 'payouts' | 'services' | 'defaults' | 'notifications';
 const TABS: Array<[Tab, string]> = [
   ['board', 'Agreements'],
   ['renewals', 'Renewals'],
-  ['new', 'New partners'],
+  ['new', 'Partners'],
   ['templates', 'Templates'],
   ['invoices', 'Invoices'],
+  ['recurring', 'Recurring invoices'],
+  ['statements', 'Statements'],
+  ['payouts', 'Payout'],
   ['services', 'Services'],
   ['defaults', 'Default settings'],
   ['notifications', 'Notifications'],
@@ -28,6 +34,9 @@ const SUB: Record<Tab, string> = {
   new: 'Send a new partner a short page to review, pay and sign.',
   templates: 'Saved ad sizes, frequencies and rates for new agreements.',
   invoices: 'Every invoice from Get Paid, with its status and balance.',
+  recurring: 'Every recurring invoice schedule from Get Paid, including drafts made when agreements are signed.',
+  statements: 'Partners with an open balance and their statement of account.',
+  payouts: 'Payouts from Stripe to your bank, with fees and transaction counts.',
   services: 'The Products & Services catalog from Get Paid.',
   defaults: 'Set the default values of new agreements you create.',
   notifications: 'Set which notifications you and your partners will receive.',
@@ -59,6 +68,9 @@ export default function AgreementsBeta() {
       {tab === 'new' && <NewPartnersPanel />}
       {tab === 'templates' && <TemplatesPanel />}
       {tab === 'invoices' && <InvoicesPanel />}
+      {tab === 'recurring' && <RecurringPanel />}
+      {tab === 'statements' && <StatementsPanel />}
+      {tab === 'payouts' && <PayoutsPanel />}
       {tab === 'services' && <ServicesPanel />}
       {tab === 'defaults' && <DefaultsPanel />}
       {tab === 'notifications' && <NotificationsPanel />}
