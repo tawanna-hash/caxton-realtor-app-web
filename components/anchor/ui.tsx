@@ -53,7 +53,7 @@ export function SearchBox({ value, onChange, label = 'Search' }: { value: string
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search..."
         aria-label={label}
-        className="w-60 rounded-full border border-[color:var(--ds-line)] bg-white py-2 pl-9 pr-4 text-sm text-[color:var(--ds-ink)] placeholder:text-[color:var(--ds-placeholder)] focus:border-[color:var(--ds-primary)] focus:outline-none"
+        className="w-60 rounded-[10px] border border-[color:var(--ds-line)] bg-white py-2 pl-9 pr-4 text-sm text-[color:var(--ds-ink)] placeholder:text-[color:var(--ds-placeholder)] focus:border-[color:var(--ds-primary)] focus:outline-none"
       />
     </div>
   );
@@ -90,7 +90,7 @@ export function FilterChip<T extends string>({
         onClick={() => { setDraft(value); setOpen((o) => !o); }}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="anchor-chip inline-flex items-center gap-2 rounded-full border border-[color:var(--ds-ink)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]"
+        className="anchor-chip inline-flex items-center gap-2 rounded-[10px] border border-[color:var(--ds-ink)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]"
       >
         {label}<Chevron up={open} />
       </button>
