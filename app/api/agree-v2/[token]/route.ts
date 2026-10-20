@@ -27,6 +27,7 @@ import { channelOfRow, chargeBaseCents, needsFullForm, totalCents, recordNewPart
 import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
 import { getDefaults } from '@/lib/agreements-v2/settings';
 import { getAgreementMeta } from '@/lib/agreements-v2/builder';
+import { notifyCheckRequest } from '@/lib/new-partner-v2/check-request-notify';
 import { CHECK_REQUEST_EVENT, PREPAY_NOTE, checkRequestState, prepayRequired } from '@/lib/agreements-v2/prepay';
 import { cleanPayment, invoiceRows, occurrenceGroups, plansForLines, type PaymentSettings } from '@/lib/agreements-v2/service-billing';
 import { applyChoice } from '@/lib/agreements-v2/options';
@@ -196,6 +197,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       if (checkRequestState(ag.audit_log) === null) {
         const note = typeof body.note === 'string' ? body.note.trim().slice(0, 300) : '';
         await recordNewPartnerEvent(sql, id, CHECK_REQUEST_EVENT, `Partner asked for approval to pay by check.${note ? ` Note: ${note}` : ''}`);
+        await notifyCheckRequest(ag, note);
       }
       return NextResponse.json({ ok: true });
     } catch (err) {
