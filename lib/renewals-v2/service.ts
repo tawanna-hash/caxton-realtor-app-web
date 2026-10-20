@@ -294,3 +294,44 @@ export async function sendRenewalEmail(
   }
   return { ok: true, to, messageId: result.messageId };
 }
+
+export type ReminderResult = { id: string; company: string | null; stage?: number; status: string; error?: string };
+
+/**
+ * Reminds partners who were sent a one-tap renewal link but have not signed,
+ * at T-7, T-3 and T-1 days before the expiring agreement ends. Each stage is
+ * sent at most once per renewal.
+ */
+export async function runReminderSweep(
+  sql: Sql,
+  opts: { dry?: boolean } = {},
+): Promise<{ results: ReminderResult[]; sent: number }> {
+  const rows = await sql`
+    SELECT r.id, r.audit_log, p.company_name,
+           (COALESCE(p.exp_date, p.end_date)::date - CURRENT_DATE)::int AS days_left
+      FROM agreements r
+      JOIN agreements p ON p.id = r.renewed_from_id
+     WHERE r.is_renewal = true
+       AND r.status = 'sent'
+       AND r.signed_at IS NULL
+       AND COALESCE(p.exp_date, p.end_date) IS NOT NULL
+       AND (COALESCE(p.exp_date, p.end_date)::date - CURRENT_DATE) BETWEEN 0 AND ${REMINDER_STAGES[0]}
+  ` as unknown as Array<{ id: string; audit_log: AgreementAuditEntry[] | null; company_name: string | null; days_left: number }>;
+
+  const results: ReminderResult[] = [];
+  for (const r of rows) {
+    const log = Array.isArray(r.audit_log) ? r.audit_log : [];
+    if (!log.some((e) => e.event === 'renewal_v2_sent')) continue;
+    const done = new Set(
+      log.filter((e) => e.event === 'renewal_v2_reminder')
+        .map((e) => Number(/T-(\d+)/.exec(e.details ?? '')?.[1])),
+    );
+    const reached = REMINDER_STAGES.filter((s) => r.days_left <= s);
+    const stage = reached.length ? Math.min(...reached) : undefined;
+    if (stage == null || done.has(stage)) continue;
+    if (opts.dry) { results.push({ id: r.id, company: r.company_name, stage, status: 'would_send' }); continue; }
+    const out = await sendRenewalEmail(sql, r.id, { reminderStage: stage });
+    results.push({ id: r.id, company: r.company_name, stage, status: out.ok ? 'sent' : 'failed', error: out.error });
+  }
+  return { results, sent: results.filter((x) => x.status === 'sent').length };
+}

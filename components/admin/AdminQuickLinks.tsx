@@ -53,7 +53,7 @@ export default function AdminQuickLinks() {
           <div className="text-sm font-semibold text-brand-700">Quick Links</div>
           <nav className="flex flex-wrap items-center gap-2" aria-label={`${group.label} child pages`}>
             {links.map((link) => {
-              const isActive = isLinkMatch(pathname, link.href);
+              const isActive = link.href === activeLink.href;
               return (
                 <Link
                   key={link.href}

@@ -9,8 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
-import { sendRenewalEmail, REMINDER_STAGES } from '@/lib/renewals-v2/service';
-import type { AgreementAuditEntry } from '@/lib/agreements';
+import { runReminderSweep } from '@/lib/renewals-v2/service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,36 +29,8 @@ export async function GET(req: Request) {
 
   try {
     await ensureSchema();
-    const sql = getSql();
-    const rows = await sql`
-      SELECT r.id, r.audit_log, p.company_name,
-             (COALESCE(p.exp_date, p.end_date) - CURRENT_DATE)::int AS days_left
-        FROM agreements r
-        JOIN agreements p ON p.id = r.renewed_from_id
-       WHERE r.is_renewal = true
-         AND r.status = 'sent'
-         AND r.signed_at IS NULL
-         AND COALESCE(p.exp_date, p.end_date) IS NOT NULL
-         AND (COALESCE(p.exp_date, p.end_date) - CURRENT_DATE) BETWEEN 0 AND ${REMINDER_STAGES[0]}
-    ` as unknown as Array<{ id: string; audit_log: AgreementAuditEntry[] | null; company_name: string | null; days_left: number }>;
-
-    const results: Array<{ id: string; company: string | null; stage?: number; status: string; error?: string }> = [];
-    for (const r of rows) {
-      const log = Array.isArray(r.audit_log) ? r.audit_log : [];
-      if (!log.some((e) => e.event === 'renewal_v2_sent')) continue;
-      // Pick the smallest stage that has been reached and not yet reminded.
-      const done = new Set(
-        log.filter((e) => e.event === 'renewal_v2_reminder')
-          .map((e) => Number(/T-(\d+)/.exec(e.details ?? '')?.[1])),
-      );
-      const reached = REMINDER_STAGES.filter((s) => r.days_left <= s);
-      const stage = reached.length ? Math.min(...reached) : undefined;
-      if (stage == null || done.has(stage)) continue;
-      if (dry) { results.push({ id: r.id, company: r.company_name, stage, status: 'would_send' }); continue; }
-      const out = await sendRenewalEmail(sql, r.id, { reminderStage: stage });
-      results.push({ id: r.id, company: r.company_name, stage, status: out.ok ? 'sent' : 'failed', error: out.error });
-    }
-    return NextResponse.json({ ok: true, enabled, dry, results, sent: results.filter((x) => x.status === 'sent').length });
+    const out = await runReminderSweep(getSql(), { dry });
+    return NextResponse.json({ ok: true, enabled, dry, ...out });
   } catch (err) {
     return NextResponse.json({ error: 'reminders failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });
   }
