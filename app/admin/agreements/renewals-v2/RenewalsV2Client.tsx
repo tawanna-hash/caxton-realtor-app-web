@@ -5,7 +5,7 @@
 // at a time or in a batch (always with a dry-run summary and a confirm step).
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { A, EmptyState, FilterChip } from '@/components/anchor/ui';
+import { A, ColumnStyle, EditColumns, EmptyState, FilterChip, useColumns, type ColumnDef } from '@/components/anchor/ui';
 
 type Candidate = {
   id: string;
@@ -45,6 +45,13 @@ const STATE_STYLE: Record<Candidate['state'], string> = {
   signed: 'bg-green-50 text-green-800',
 };
 
+const COLS: ColumnDef[] = [
+  { key: 'ad', label: 'Ad', index: 3 },
+  { key: 'rate', label: 'Rate', index: 4 },
+  { key: 'expires', label: 'Expires', index: 5 },
+  { key: 'status', label: 'Status', index: 6 },
+];
+
 function money(c: number | null) {
   return c == null ? '—' : `$${(c / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 }
@@ -65,6 +72,7 @@ export default function RenewalsV2Client() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const cols = useColumns('renewals', COLS);
   const [rateLock, setRateLock] = useState(true);
   const [states, setStates] = useState<Candidate['state'][]>(['not_started', 'draft', 'sent', 'opened', 'signed']);
   const [month, setMonth] = useState('');
@@ -196,10 +204,13 @@ export default function RenewalsV2Client() {
           <option value="">Monthly batch</option>
           {months.map(([k, n]) => <option key={k} value={k}>{monthLabel(k)} ({n})</option>)}
         </select>
-        <label className="ml-auto flex items-center gap-2 text-sm text-[#261E5A]">
+        <div className="ml-auto flex items-center gap-4">
+        <EditColumns cols={COLS} visible={cols.visible} onApply={cols.apply} />
+        <label className="flex items-center gap-2 text-sm text-[#261E5A]">
           <input type="checkbox" className="accent-[#5B3FE3]" checked={rateLock} onChange={(e) => setRateLock(e.target.checked)} />
           Include 72-hour rate lock
         </label>
+        </div>
       </div>
 
       {notice && <div className={A.notice}>{notice}</div>}
@@ -238,7 +249,8 @@ export default function RenewalsV2Client() {
       )}
 
       <div className="overflow-x-auto">
-        <table className={`${A.table} min-w-[900px]`}>
+        <ColumnStyle tableClass="cols-renewals" cols={COLS} visible={cols.visible} />
+        <table className={`${A.table} cols-renewals min-w-[900px]`}>
           <thead>
             <tr>
               <th>

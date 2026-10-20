@@ -13,7 +13,7 @@ import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agr
 import { isAdChannel, deriveChannelFromAgreementType, type AdChannel } from '@/lib/ad-channels';
 import type { getSql } from '@/lib/db';
 import { freqMonths } from '@/lib/renewals-v2/pricing';
-import { getDefaults, renderIntro } from '@/lib/agreements-v2/settings';
+import { getNotifications, getDefaults, renderIntro } from '@/lib/agreements-v2/settings';
 
 type Sql = ReturnType<typeof getSql>;
 
@@ -151,6 +151,7 @@ export async function sendNewPartnerEmail(
   if (ag.signed_at) return { ok: false, error: 'already signed' };
   const to = opts.to || ag.advertiser_email || ag.billing_email;
   if (!to) return { ok: false, error: 'no email address on file' };
+  if (!(await getNotifications(sql)).client_new_partner_invite) return { ok: false, error: 'This email is turned off in Notification settings' };
   const link = agreementLink(agreementId);
   const result = await sendEmail({
     to,

@@ -5,7 +5,7 @@
 // draft linked by `renewed_from_id`, and reuses the live signing pipeline
 // (/api/ad-sign/[token]) to finalize. No live route or table is modified.
 
-import { getDefaults, renderIntro } from '@/lib/agreements-v2/settings';
+import { getDefaults, getNotifications, renderIntro } from '@/lib/agreements-v2/settings';
 import { signToken } from '@/lib/sign-token';
 import { sendEmail } from '@/lib/email';
 import { brandForPublication } from '@/lib/email-templates';
@@ -290,6 +290,8 @@ export async function sendRenewalEmail(
   const subject = opts.reminderStage
     ? `Reminder: renew your advertising agreement, ${ag.company_name ?? ''}`.trim()
     : `Renew your advertising agreement, ${ag.company_name ?? ''}`.trim();
+  const notif = await getNotifications(sql);
+  if (opts.reminderStage ? !notif.client_renewal_reminder : !notif.client_renewal_invite) return { ok: false, to, error: 'This email is turned off in Notification settings' };
   const result = await sendEmail({ to, subject, html });
   if (!result.ok) return { ok: false, to, error: result.error };
 

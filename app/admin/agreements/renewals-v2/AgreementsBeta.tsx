@@ -6,15 +6,17 @@ import NewPartnersPanel from './NewPartnersPanel';
 import StatusBoard from './StatusBoard';
 import TemplatesPanel from './TemplatesPanel';
 import DefaultsPanel from './DefaultsPanel';
+import NotificationsPanel from './NotificationsPanel';
 import { A } from '@/components/anchor/ui';
 
-type Tab = 'board' | 'renewals' | 'new' | 'templates' | 'defaults';
+type Tab = 'board' | 'renewals' | 'new' | 'templates' | 'defaults' | 'notifications';
 const TABS: Array<[Tab, string]> = [
   ['board', 'Agreements'],
   ['renewals', 'Renewals'],
   ['new', 'New partners'],
   ['templates', 'Templates'],
   ['defaults', 'Default settings'],
+  ['notifications', 'Notifications'],
 ];
 const SUB: Record<Tab, string> = {
   board: 'Every agreement in flight, from draft to signed.',
@@ -22,6 +24,7 @@ const SUB: Record<Tab, string> = {
   new: 'Send a new partner a short page to review, pay and sign.',
   templates: 'Saved ad sizes, frequencies and rates for new agreements.',
   defaults: 'Set the default values of new agreements you create.',
+  notifications: 'Set which notifications you and your partners will receive.',
 };
 
 export default function AgreementsBeta() {
@@ -50,6 +53,7 @@ export default function AgreementsBeta() {
       {tab === 'new' && <NewPartnersPanel />}
       {tab === 'templates' && <TemplatesPanel />}
       {tab === 'defaults' && <DefaultsPanel />}
+      {tab === 'notifications' && <NotificationsPanel />}
     </div>
   );
 }
