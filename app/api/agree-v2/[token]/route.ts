@@ -27,7 +27,7 @@ import { channelOfRow, chargeBaseCents, needsFullForm, totalCents, recordNewPart
 import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
 import { getDefaults } from '@/lib/agreements-v2/settings';
 import { getAgreementMeta } from '@/lib/agreements-v2/builder';
-import { invoiceRows, plansForLines, type PaymentSettings } from '@/lib/agreements-v2/service-billing';
+import { invoiceRows, occurrenceGroups, plansForLines, type PaymentSettings } from '@/lib/agreements-v2/service-billing';
 import { buildPlacementPatches, placementNeeds } from '@/lib/agreements-v2/placement';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
 import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
@@ -85,7 +85,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     const meta = await getAgreementMeta(ag.id, sql);
     const expired = Boolean(meta?.expires_at && meta.expires_at < new Date().toISOString().slice(0, 10) && !ag.signed_at);
     const tlAgreement = { ...ag, ad_rate_cents: ag.ad_rate_cents, amount_cents: (ag.lines_total ?? 0) > 0 ? ag.lines_total : ag.amount_cents } as Agreement;
-    const payOpts: PaymentSettings = { card: meta?.payment?.card !== false, check: meta?.payment?.check !== false, due_days: meta?.payment?.due_days ?? null, show_schedule: meta?.payment?.show_schedule !== false };
+    const payOpts: PaymentSettings = { card: meta?.payment?.card !== false, check: meta?.payment?.check !== false, due_days: meta?.payment?.due_days ?? null, show_schedule: meta?.payment?.show_schedule !== false, schedule_view: meta?.payment?.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
     // Per-service billing options saved with the agreement drive the schedule the partner sees.
     let perService: ReturnType<typeof checkTimeline> | null = null;
     const startIso = ag.start_date ? new Date(ag.start_date as unknown as string).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
@@ -132,6 +132,8 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       timeline_check: !payOpts.show_schedule || !allowsCheckPayment(channel) ? null : perService ?? checkTimeline(tlAgreement, defaults),
       timeline_card: payOpts.show_schedule ? cardTimeline(ag, base, surcharged) : null,
       schedule_hidden: !payOpts.show_schedule,
+      schedule_view: payOpts.schedule_view,
+      schedule_groups: payOpts.show_schedule && svcPlans ? occurrenceGroups(svcPlans) : null,
       full_form_url: `/admin/billing/sign/${token}`,
       allow_check: allowsCheckPayment(channel) && payOpts.check,
       fields: Object.fromEntries(EDITABLE.map((k) => [k, (ag as unknown as Record<string, unknown>)[k] ?? ''])),

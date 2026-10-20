@@ -81,9 +81,17 @@ export default function BuilderClient() {
   const [tplName, setTplName] = useState('');
   const [busy, setBusy] = useState(false);
   const [refsOpen, setRefsOpen] = useState(true);
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  const [sendMenu, setSendMenu] = useState(false);
+  const [moreMenu, setMoreMenu] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [discardOpen, setDiscardOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const update = useCallback((patch: Partial<BuilderDoc>) => {
     dirty.current = true;
+    setCreatedId(null);
     setDoc((d) => ({ ...d, ...patch }));
   }, []);
 
@@ -173,43 +181,79 @@ export default function BuilderClient() {
     } catch { setError('Could not save the template.'); } finally { setBusy(false); }
   }
 
+  /** Creates the agreement and saves its details. Nothing is emailed. */
+  async function createAgreement(): Promise<string> {
+    const q = await fetch('/api/admin/quotes', {
+      method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(quotePayload(doc, firstPub)),
+    });
+    const qj = await q.json();
+    if (!q.ok) throw new Error(qj.error || qj.message || `Could not create the agreement (HTTP ${q.status})`);
+    const agreementId = (qj.agreement ?? qj).id as string;
+    const m = await fetch(`/api/admin/agreements-v2/${agreementId}`, {
+      method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        action: 'save_meta',
+        meta: {
+          name: doc.name, intro: doc.intro, note: doc.note, ask_address: doc.ask_address,
+          expires_days: doc.expires ? doc.expires_days : null,
+          refs: doc.refs,
+          services: doc.services.map((sv, i) => ({ line_no: i + 1, name: sv.name, description: sv.description, billing: { ...cleanBilling(sv.billing), term_months: termMonths(sv) } })),
+          payment: doc.payment,
+        },
+      }),
+    });
+    if (!m.ok) throw new Error('The agreement was created but its details could not be saved.');
+    setCreatedId(agreementId);
+    return agreementId;
+  }
+
+  async function finishDraft() {
+    if (draftId) await fetch('/api/admin/agreements-v2/builder', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'delete', id: draftId }) });
+  }
+
   async function send() {
     setBusy(true); setError(null);
-    let agreementId: string | null = null;
+    let agreementId: string | null = createdId;
     try {
-      const q = await fetch('/api/admin/quotes', {
-        method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(quotePayload(doc, firstPub)),
-      });
-      const qj = await q.json();
-      if (!q.ok) throw new Error(qj.error || qj.message || `Could not create the agreement (HTTP ${q.status})`);
-      agreementId = (qj.agreement ?? qj).id as string;
-      const m = await fetch(`/api/admin/agreements-v2/${agreementId}`, {
-        method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          action: 'save_meta',
-          meta: {
-            name: doc.name, intro: doc.intro, note: doc.note, ask_address: doc.ask_address,
-            expires_days: doc.expires ? doc.expires_days : null,
-            refs: doc.refs,
-            services: doc.services.map((s, i) => ({ line_no: i + 1, name: s.name, description: s.description, billing: { ...cleanBilling(s.billing), term_months: termMonths(s) } })),
-            payment: doc.payment,
-          },
-        }),
-      });
-      if (!m.ok) throw new Error('The agreement was created but its details could not be saved.');
+      agreementId = agreementId ?? (await createAgreement());
       const s = await fetch(`/api/admin/new-partner-v2/${agreementId}`, {
         method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ action: 'send' }),
       });
       const sj = await s.json();
       if (!s.ok || sj.ok === false) throw new Error(sj.error || 'The agreement was created but the email did not send.');
-      if (draftId) await fetch('/api/admin/agreements-v2/builder', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'delete', id: draftId }) });
+      await finishDraft();
       router.push('/admin/agreements/renewals-v2');
     } catch (e) {
       setSendOpen(false);
-      setError(`${e instanceof Error ? e.message : 'Send failed.'}${agreementId ? ' The draft agreement is saved in New partners; you can send it from there.' : ''}`);
+      setError(`${e instanceof Error ? e.message : 'Send failed.'}${agreementId ? ' The agreement is saved in New partners; you can send it from there.' : ''}`);
     } finally { setBusy(false); }
+  }
+
+  /** Share by link: creates the agreement and shows the partner link. No email is sent. */
+  async function share() {
+    setBusy(true); setError(null);
+    try {
+      const id = createdId ?? (await createAgreement());
+      const r = await fetch(`/api/admin/new-partner-v2/${id}`, {
+        method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'preview' }),
+      });
+      const j = await r.json();
+      if (!r.ok || !j.link) throw new Error(j.error || 'Could not create the link.');
+      setShareLink(j.link as string);
+      await finishDraft();
+      setDraftId(null);
+    } catch (e) {
+      setShareOpen(false);
+      setError(e instanceof Error ? e.message : 'Could not create the link.');
+    } finally { setBusy(false); }
+  }
+
+  async function discard() {
+    setBusy(true);
+    try { await finishDraft(); } finally { router.push('/admin/agreements/renewals-v2'); }
   }
 
   const svcLabel = (s: ServiceLine) => s.name || 'Service';
@@ -226,8 +270,25 @@ export default function BuilderClient() {
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <button type="button" className={A.outline} onClick={() => setPanel((p) => !p)} aria-pressed={panel}>Billing timeline</button>
           <button type="button" className={A.outline} onClick={() => { setTplName(doc.name); setTplOpen(true); }}>Save as template</button>
+          <div className="relative">
+            <button type="button" aria-label="More actions" aria-haspopup="menu" aria-expanded={moreMenu} className={A.outline} onClick={() => { setMoreMenu((o) => !o); setSendMenu(false); }}>⋮</button>
+            {moreMenu && (
+              <div role="menu" className="absolute right-0 z-50 mt-2 w-48 rounded-lg border border-[#ECEAF4] bg-white p-1 shadow-lg">
+                <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-red-700" style={{ border: 0, background: 'transparent' }} onClick={() => { setMoreMenu(false); setDiscardOpen(true); }}>Discard draft</button>
+              </div>
+            )}
+          </div>
           <button type="button" className={A.outline} onClick={() => setPreviewOpen(true)}>View client preview</button>
-          <button type="button" className={A.primary} disabled={problems.length > 0 || busy} onClick={() => setSendOpen(true)} title={problems[0]}>Send</button>
+          <div className="relative flex">
+            <button type="button" className={A.primary} disabled={problems.length > 0 || busy} onClick={() => setSendOpen(true)} title={problems[0]}>Send</button>
+            <button type="button" aria-label="More send options" aria-haspopup="menu" aria-expanded={sendMenu} className={`${A.primary} ml-px px-2`} disabled={problems.length > 0 || busy} onClick={() => { setSendMenu((o) => !o); setMoreMenu(false); }}>▾</button>
+            {sendMenu && (
+              <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border border-[#ECEAF4] bg-white p-1 shadow-lg">
+                <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-[#261E5A]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setSendOpen(true); }}>Send now by email</button>
+                <button type="button" role="menuitem" className="w-full rounded px-3 py-2 text-left text-sm text-[#261E5A]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setShareOpen(true); }}>Share by link</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -391,6 +452,16 @@ export default function BuilderClient() {
                 </div>
               ))}
               <button type="button" className="text-sm font-medium text-[#5B3FE3]" style={{ border: 0, background: 'transparent' }} onClick={() => setAddOpen(true)} disabled={!catalog}>+ Create service</button>
+              {doc.services.length > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#ECEAF4] pt-3 text-sm text-[#261E5A]">
+                  <span>Billing schedule display for automatic services</span>
+                  <div className="inline-flex rounded-full bg-[#EEEDF3] p-1" role="group" aria-label="Billing schedule display">
+                    {([['timeline', 'Timeline'], ['occurrence', 'By billing occurrence']] as const).map(([k, l]) => (
+                      <button key={k} type="button" aria-pressed={doc.payment.schedule_view === k} onClick={() => update({ payment: { ...doc.payment, schedule_view: k } })} className={`rounded-full px-4 py-1.5 text-xs ${doc.payment.schedule_view === k ? 'bg-white font-medium text-[#261E5A] shadow' : 'text-[#6E6A8A]'}`} style={{ border: 0 }}>{l}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {doc.services.length > 0 && <div className="flex justify-between border-t border-[#ECEAF4] pt-3 text-sm font-semibold text-[#261E5A]"><span>Agreement total</span><span>{money(total)}</span></div>}
             </div>
           </section>
@@ -418,10 +489,13 @@ export default function BuilderClient() {
                 <label className="flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.card} onChange={(e) => update({ payment: { ...doc.payment, card: e.target.checked } })} />Credit card <span className="text-[#6E6A8A]">(3% surcharge added, charged when they sign)</span></label>
                 <label className="mt-2 flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.check} onChange={(e) => update({ payment: { ...doc.payment, check: e.target.checked } })} />Check <span className="text-[#6E6A8A]">(invoiced on the schedule; print agreements only)</span></label>
               </div>
-              <Field label="Invoice due">
-                <input type="number" min={0} max={120} className={A.input} placeholder="Account default" value={doc.payment.due_days ?? ''} onChange={(e) => update({ payment: { ...doc.payment, due_days: e.target.value === '' ? null : Math.max(0, Math.min(120, Number(e.target.value) || 0)) } })} />
+              <Field label="Number of days until the payment is due" isSelect>
+                <select className={sel} value={doc.payment.due_days ?? ''} onChange={(e) => update({ payment: { ...doc.payment, due_days: e.target.value === '' ? null : Number(e.target.value) } })}>
+                  <option value="">Account default</option>
+                  <option value={0}>Upon receipt of invoice</option>
+                  {[1, 2, 3, 5, 7, 10, 14, 15, 20, 30, 45, 60].map((d) => <option key={d} value={d}>{d} {d === 1 ? 'day' : 'days'}</option>)}
+                </select>
               </Field>
-              <p className="-mt-2 text-xs text-[#6E6A8A]">Days after each invoice is issued. Leave blank for the account default.</p>
               <label className="flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.show_schedule} onChange={(e) => update({ payment: { ...doc.payment, show_schedule: e.target.checked } })} />Show the billing schedule to the client</label>
             </div>
           </section>
@@ -482,27 +556,41 @@ export default function BuilderClient() {
 
       {/* Client preview */}
       {previewOpen && (
-        <Modal title="Client preview" onClose={() => setPreviewOpen(false)}>
-          <div className="space-y-3 text-sm text-[#261E5A]">
-            <p className="text-xs uppercase tracking-wide text-[#6E6A8A]">{doc.name || 'Your advertising agreement'}</p>
-            <p className="whitespace-pre-line">{doc.intro.replace('{first_name}', doc.new_client?.contact?.split(' ')[0] || 'there').replace('{company}', doc.new_client?.name || client?.name || 'your company')}</p>
-            <div className="space-y-3 rounded-md bg-[#F3F0FF] p-4">
-              {doc.services.map((s) => (
-                <div key={s.id}>
-                  <div className="flex justify-between gap-4"><span>{svcLabel(s)}</span><span className="font-medium">{money(s.price_cents)}</span></div>
-                  {s.description && <p className="mt-1 whitespace-pre-line text-xs text-[#4A4767]">{s.description}</p>}
-                </div>
-              ))}
-              {doc.refs.filter((r) => r.client_facing && r.name).map((r, i) => <div key={i} className="flex justify-between gap-4 text-xs"><span className="text-[#6E6A8A]">{r.name}</span><span>{r.value}</span></div>)}
-              <div className="flex justify-between border-t border-[#E4DFF1] pt-3 font-semibold"><span>Agreement total</span><span>{money(total)}</span></div>
-            </div>
-            {doc.note && <p className="whitespace-pre-line rounded-md border border-[#ECEAF4] p-3 text-xs text-[#4A4767]">{doc.note}</p>}
-            {doc.ask_address && <p className="text-xs text-[#6E6A8A]">The client will be asked for their address.</p>}
-            {doc.expires && <p className="text-xs text-[#6E6A8A]">Expires {doc.expires_days} days after sending.</p>}
-            {doc.services.map((sv) => <p key={sv.id} className="text-xs text-[#6E6A8A]">{svcLabel(sv)}: {billingBadge(sv.billing ?? DEFAULT_BILLING).toLowerCase()}.</p>)}
-            <p className="text-xs text-[#6E6A8A]">Payment: {[doc.payment.card ? 'credit card' : null, doc.payment.check ? 'check' : null].filter(Boolean).join(' or ')}.</p>
-            <p className="text-xs text-[#6E6A8A]">Effective {doc.effective === 'date' && doc.effective_date ? fmtDay(doc.effective_date) : 'on acceptance'}. The client then enters send or start dates for e-Blast and app services, chooses card or check, and signs.</p>
-          </div>
+        <PreviewModal
+          doc={doc}
+          intro={doc.intro.replace('{first_name}', doc.new_client?.contact?.split(' ')[0] || 'there').replace('{company}', doc.new_client?.name || client?.name || 'your company')}
+          preparedFor={doc.new_client?.name || client?.name || ''}
+          total={total}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
+
+      {/* Share by link */}
+      {shareOpen && (
+        <Modal title="Share by link" onClose={() => { if (busy) return; setShareOpen(false); if (shareLink) router.push('/admin/agreements/renewals-v2'); }}>
+          {!shareLink ? (
+            <>
+              <p className="text-sm text-[#261E5A]">This creates the agreement for {client?.name ?? doc.new_client?.name} and gives you a link to share yourself. No email is sent. Total {money(total)}.</p>
+              <div className="flex justify-end gap-3"><button type="button" className={A.outline} disabled={busy} onClick={() => setShareOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={busy} onClick={share}>{busy ? 'Creating…' : 'Create link'}</button></div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-[#261E5A]">Your link is ready. The agreement is also listed under New partners.</p>
+              <input className={A.input} readOnly value={shareLink} aria-label="Agreement link" onFocus={(e) => e.currentTarget.select()} />
+              <div className="flex justify-end gap-3">
+                <button type="button" className={A.outline} onClick={async () => { await navigator.clipboard.writeText(shareLink); setCopied(true); }}>{copied ? 'Copied' : 'Copy link'}</button>
+                <button type="button" className={A.primary} onClick={() => router.push('/admin/agreements/renewals-v2')}>Done</button>
+              </div>
+            </>
+          )}
+        </Modal>
+      )}
+
+      {/* Discard draft */}
+      {discardOpen && (
+        <Modal title="Discard draft" onClose={() => !busy && setDiscardOpen(false)}>
+          <p className="text-sm text-[#261E5A]">This permanently deletes this draft. Agreements already created are not affected.</p>
+          <div className="flex justify-end gap-3"><button type="button" className={A.outline} disabled={busy} onClick={() => setDiscardOpen(false)}>Cancel</button><button type="button" className={A.primary} disabled={busy} onClick={discard}>Discard</button></div>
         </Modal>
       )}
 
@@ -639,6 +727,96 @@ function BillingControls({ billing, onChange }: { billing: ServiceBilling; onCha
         {b.start === 'date' && 'The first invoice goes out on this exact date. Later invoices follow monthly. Past dates are invoiced right away.'}
         {manual && 'Nothing is invoiced for this service until someone starts billing in Get Paid.'}
       </p>
+    </div>
+  );
+}
+
+const PREVIEW_STEPS = ['Introduction', 'Review services', 'Review terms of service', 'Review additional terms', 'Sign & approve'] as const;
+
+function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: BuilderDoc; intro: string; preparedFor: string; total: number; onClose: () => void }) {
+  const [step, setStep] = useState(-1);
+  const [mobile, setMobile] = useState(false);
+  const pay = doc.payment ?? DEFAULT_PAYMENT;
+  const methods = [pay.card ? 'credit card' : null, pay.check ? 'check' : null].filter(Boolean).join(' or ');
+  const due = pay.due_days === 0 ? 'Payment is due upon receipt of invoice.' : pay.due_days != null ? `Payment is due ${pay.due_days} ${pay.due_days === 1 ? 'day' : 'days'} after each invoice is issued.` : 'Payment is due on the account default schedule after each invoice is issued.';
+  const body = (
+    <div className="space-y-4 text-sm text-[#261E5A]">
+      {step === 0 && <p className="whitespace-pre-line rounded-lg bg-white p-5">{intro}</p>}
+      {step === 1 && (
+        <>
+          {doc.services.map((sv) => (
+            <div key={sv.id} className="rounded-lg bg-white p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold">{sv.name || 'Service'}</span>
+                <span className="flex items-center gap-3"><span className="rounded-full border border-[#5B3FE3] px-2.5 py-0.5 text-xs">{billingBadge(sv.billing ?? DEFAULT_BILLING).replace(', automatically', '')}</span><span className="font-semibold">{money(sv.price_cents)}</span></span>
+              </div>
+              {sv.description && <p className="mt-3 whitespace-pre-line text-[#4A4767]">{sv.description}</p>}
+            </div>
+          ))}
+          {doc.refs.filter((r) => r.client_facing && r.name).map((r, i) => <div key={i} className="flex justify-between rounded-lg bg-white px-5 py-3 text-xs"><span className="text-[#6E6A8A]">{r.name}</span><span>{r.value}</span></div>)}
+          <div className="flex justify-between rounded-lg bg-white px-5 py-3 font-semibold"><span>Agreement total</span><span>{money(total)}</span></div>
+          {doc.note && <p className="whitespace-pre-line rounded-lg bg-white p-5 text-[#4A4767]">{doc.note}</p>}
+        </>
+      )}
+      {step === 2 && <p className="rounded-lg bg-white p-5 text-[#4A4767]">The advertising terms for the selected products appear here for the client to read before paying. They are the same terms shown on the live signing page.</p>}
+      {step === 3 && (
+        <div className="space-y-4 rounded-lg bg-white p-5">
+          <div><div className="font-semibold">Effective date of agreement</div><div className="text-[#4A4767]">{doc.effective === 'date' && doc.effective_date ? fmtDay(doc.effective_date) : 'On acceptance'}</div></div>
+          <div><div className="font-semibold">Payment terms</div><div className="text-[#4A4767]">{due} Accepted: {methods || 'none'}.</div></div>
+          {doc.ask_address && <div><div className="font-semibold">Address</div><div className="text-[#4A4767]">You will be asked for your address before signing.</div></div>}
+          {doc.expires && <div><div className="font-semibold">Expiration</div><div className="text-[#4A4767]">This proposal expires {doc.expires_days} days after it is sent.</div></div>}
+        </div>
+      )}
+      {step === 4 && (
+        <div className="rounded-lg bg-white p-5">
+          <div className="mb-3 inline-flex rounded-full bg-[#EEEDF3] p-1 text-xs"><span className="rounded-full bg-white px-4 py-1.5 font-medium shadow">Type</span><span className="px-4 py-1.5 text-[#6E6A8A]">Draw</span></div>
+          <div className="border-b border-[#D8D5E6] py-6 text-2xl italic text-[#9A96B3]">Type your name…</div>
+          <p className="mt-3 text-xs text-[#6E6A8A]">On the live page the client picks how to pay, then signs. Preview only; nothing is saved.</p>
+        </div>
+      )}
+    </div>
+  );
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Client preview">
+      <div className="flex h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-[#ECEAF4] px-5 py-3 text-sm text-[#261E5A]">
+          <span>You are in preview mode. No activity will be saved.</span>
+          <div className="flex items-center gap-3">
+            <div className="inline-flex rounded-full bg-[#EEEDF3] p-1 text-xs" role="group" aria-label="Device">
+              {([[false, 'Desktop'], [true, 'Mobile']] as const).map(([m, l]) => <button key={l} type="button" aria-pressed={mobile === m} onClick={() => setMobile(m)} className={`rounded-full px-3 py-1 ${mobile === m ? 'bg-white font-medium shadow' : 'text-[#6E6A8A]'}`} style={{ border: 0 }}>{l}</button>)}
+            </div>
+            <button type="button" aria-label="Close preview" onClick={onClose} className="text-xl leading-none" style={{ border: 0, background: 'transparent' }}>×</button>
+          </div>
+        </div>
+        <div className="flex flex-1 items-start justify-center overflow-y-auto bg-[#E7E8F5] p-6">
+          <div className={`flex min-h-[70%] w-full flex-col rounded-xl bg-[#F3F4FD] ${mobile ? 'max-w-sm' : 'max-w-4xl'}`}>
+            {step === -1 ? (
+              <div className="p-10">
+                <h2 className="text-3xl font-bold text-[#1B1726]">{doc.name || 'Proposal for review'}</h2>
+                <h3 className="mt-6 text-xl font-semibold text-[#1B1726]">Prepared for {preparedFor}</h3>
+                <p className="mt-2 text-sm text-[#4A4767]">Realty News Now has sent you this proposal for your review and approval.</p>
+                <button type="button" className={`${A.primary} mt-8`} onClick={() => setStep(0)}>Get started →</button>
+              </div>
+            ) : (
+              <div className={`flex flex-1 ${mobile ? 'flex-col' : ''}`}>
+                <nav className={`${mobile ? 'border-b' : 'w-60 shrink-0 border-r'} border-[#E4DFF1] bg-white p-5 text-sm`} aria-label="Proposal steps">
+                  <div className="mb-4 font-semibold text-[#1B1726]">Realty News Now</div>
+                  <ul className={mobile ? 'flex flex-wrap gap-2' : 'space-y-3'}>
+                    {PREVIEW_STEPS.map((l, i) => <li key={l}><button type="button" onClick={() => setStep(i)} className={`text-left ${i === step ? 'font-semibold text-[#5B3FE3]' : 'text-[#4A4767]'}`} style={{ border: 0, background: 'transparent' }}>{l}</button></li>)}
+                  </ul>
+                </nav>
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="mb-4 text-2xl font-semibold text-[#1B1726]">{PREVIEW_STEPS[step]}</h3>
+                  <div className="flex-1">{body}</div>
+                  <div className="mt-6 flex justify-end">
+                    {step < PREVIEW_STEPS.length - 1 ? <button type="button" className={A.primary} onClick={() => setStep(step + 1)}>Next</button> : <button type="button" className={A.primary} disabled>Approve agreement</button>}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
