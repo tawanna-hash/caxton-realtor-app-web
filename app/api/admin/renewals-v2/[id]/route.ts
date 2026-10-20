@@ -1,6 +1,6 @@
 // app/api/admin/renewals-v2/[id]/route.ts
 //
-// Renewals (Beta). POST { action: 'preview' | 'send', rate_lock?: boolean, to?: string }
+// Renewals (Beta). POST { action: 'preview' | 'send', rate_lock?: boolean, rate_lock_hours?: number (0-720, default 72), to?: string }
 //   id = the EXPIRING agreement being renewed.
 //   preview — create/reuse the renewal draft and return the partner link.
 //             Sends nothing.
@@ -42,6 +42,7 @@ export const POST = withAdminTracking(async function POST(
       adminEmail: admin.email ?? null,
       to: typeof body.to === 'string' && body.to.trim() ? body.to.trim() : null,
       rateLock: body.rate_lock !== false,
+      rateLockHours: typeof body.rate_lock_hours === 'number' ? body.rate_lock_hours : undefined,
     });
     if (!result.ok) {
       return NextResponse.json({ ok: false, renewal_id: renewalId, error: result.error }, { status: 422 });
