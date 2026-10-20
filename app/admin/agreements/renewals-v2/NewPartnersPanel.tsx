@@ -130,7 +130,7 @@ export default function NewPartnersPanel() {
             <option value="austin">RealtyLine (Austin)</option>
             <option value="san_antonio">Newsline (San Antonio)</option>
           </select>
-          <input aria-label="Start date" type="date" className="rounded-lg border border-[#D9D5E8] px-3 py-2 text-sm" value={nf.start} onChange={(e) => setNf({ ...nf, start: e.target.value })} />
+          <input aria-label="Start date" type="date" value={nf.start} onChange={(e) => setNf({ ...nf, start: e.target.value })} />
           <input aria-label="Company" placeholder="Company" className="rounded-lg border border-[#D9D5E8] px-3 py-2 text-sm" value={nf.company} onChange={(e) => setNf({ ...nf, company: e.target.value })} />
           <input aria-label="Contact name" placeholder="Contact name" className="rounded-lg border border-[#D9D5E8] px-3 py-2 text-sm" value={nf.contact} onChange={(e) => setNf({ ...nf, contact: e.target.value })} />
           <input aria-label="Email" placeholder="Email" type="email" className="rounded-lg border border-[#D9D5E8] px-3 py-2 text-sm" value={nf.email} onChange={(e) => setNf({ ...nf, email: e.target.value })} />
