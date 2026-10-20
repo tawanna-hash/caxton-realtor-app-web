@@ -16,9 +16,20 @@ export default function SidebarWindow({
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
       <nav aria-label={label}>
-        <ul className="flex flex-wrap gap-2 lg:flex-col lg:flex-nowrap">
+        {/* Phones and tablets: one dropdown instead of a long stack of buttons. */}
+        <select
+          aria-label={label}
+          value={selected}
+          onChange={(e) => onSelect(e.target.value)}
+          className="w-full rounded-lg border border-[#D9D2E9] bg-white px-4 py-3 text-base font-semibold text-[#301D5D] lg:hidden"
+        >
+          {items.map((item) => (
+            <option key={item.id} value={item.id}>{item.heading ? `${item.heading}: ${item.label}` : item.label}</option>
+          ))}
+        </select>
+        <ul className="hidden gap-2 lg:flex lg:flex-col">
           {items.map((item, i) => (
-            <li key={item.id} className="shrink-0 lg:shrink">
+            <li key={item.id} className="shrink">
               {item.heading && (i === 0 || items[i - 1]?.heading !== item.heading) && (
                 <p className="mb-2 mt-3 hidden text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5B5470] lg:block">{item.heading}</p>
               )}
@@ -26,7 +37,7 @@ export default function SidebarWindow({
                 type="button"
                 aria-current={item.id === selected ? 'true' : undefined}
                 onClick={() => onSelect(item.id)}
-                className={`${item.id === selected ? BTN_PRIMARY : BTN_SECONDARY} lg:!w-full !justify-start !text-left max-w-[16rem] lg:max-w-none`}
+                className={`${item.id === selected ? BTN_PRIMARY : BTN_SECONDARY} !w-full !justify-start !text-left`}
               >
                 <span className="truncate">{item.label}</span>
               </button>
