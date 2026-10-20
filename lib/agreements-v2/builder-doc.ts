@@ -4,6 +4,8 @@
 // pure helpers for prices, dates and the payload sent to the existing quote
 // endpoint. No server imports so the page and the tests can both use it.
 
+import { DEFAULT_PAYMENT, type PaymentSettings, type ServiceBilling } from '@/lib/agreements-v2/service-billing';
+
 export type Pub = 'austin' | 'san_antonio' | 'both';
 
 export type ServiceLine = {
@@ -20,6 +22,8 @@ export type ServiceLine = {
   price_cents: number;
   name: string;
   description: string;
+  /** How this service is invoiced. Missing means the account default (monthly, automatic). */
+  billing?: ServiceBilling;
 };
 
 export type BuilderDoc = {
@@ -35,6 +39,7 @@ export type BuilderDoc = {
   ask_address: boolean;
   note: string;
   refs: Array<{ name: string; value: string; client_facing: boolean }>;
+  payment: PaymentSettings;
 };
 
 export type Catalog = {
@@ -56,6 +61,7 @@ export const EMPTY_DOC: BuilderDoc = {
   ask_address: false,
   note: '',
   refs: [],
+  payment: DEFAULT_PAYMENT,
 };
 
 /** Catalog price for a service as configured, in cents. */
@@ -104,6 +110,10 @@ export function docProblems(doc: BuilderDoc): string[] {
   if (doc.services.length === 0) out.push('Add at least one service.');
   if (doc.services.some((s) => !(s.price_cents > 0))) out.push('Every service needs a price above $0.');
   if (doc.effective === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(doc.effective_date)) out.push('Choose the effective date.');
+  const pay = doc.payment ?? DEFAULT_PAYMENT;
+  if (!pay.card && !pay.check) out.push('Allow at least one payment method.');
+  if (!pay.card && doc.services.some((s) => s.channel !== 'print')) out.push('Check payments are only available for print agreements. Allow credit card.');
+  if (doc.services.some((s) => s.billing?.start === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(s.billing.start_date))) out.push('Choose the billing start date for each service that bills on a specific date.');
   return out;
 }
 

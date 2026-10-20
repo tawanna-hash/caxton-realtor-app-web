@@ -27,6 +27,7 @@ import { channelOfRow, chargeBaseCents, needsFullForm, totalCents, recordNewPart
 import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
 import { getDefaults } from '@/lib/agreements-v2/settings';
 import { getAgreementMeta } from '@/lib/agreements-v2/builder';
+import { invoiceRows, plansForLines, type PaymentSettings } from '@/lib/agreements-v2/service-billing';
 import { buildPlacementPatches, placementNeeds } from '@/lib/agreements-v2/placement';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
 import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
@@ -84,6 +85,27 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     const meta = await getAgreementMeta(ag.id, sql);
     const expired = Boolean(meta?.expires_at && meta.expires_at < new Date().toISOString().slice(0, 10) && !ag.signed_at);
     const tlAgreement = { ...ag, ad_rate_cents: ag.ad_rate_cents, amount_cents: (ag.lines_total ?? 0) > 0 ? ag.lines_total : ag.amount_cents } as Agreement;
+    const payOpts: PaymentSettings = { card: meta?.payment?.card !== false, check: meta?.payment?.check !== false, due_days: meta?.payment?.due_days ?? null, show_schedule: meta?.payment?.show_schedule !== false };
+    // Per-service billing options saved with the agreement drive the schedule the partner sees.
+    let perService: ReturnType<typeof checkTimeline> | null = null;
+    const startIso = ag.start_date ? new Date(ag.start_date as unknown as string).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const svcPlans = meta ? plansForLines(lines as unknown as Array<{ line_no: number; package_label: string; amount_cents: number }>, meta.services, { start: startIso, billing_day: typeof defaults.billing_day === 'number' ? defaults.billing_day : 1 }) : null;
+    if (svcPlans) {
+      const rows = invoiceRows(svcPlans, payOpts.due_days ?? defaults.due_days ?? 15);
+      const manual = svcPlans.filter((p) => p.manual).map((p) => p.label);
+      perService = {
+        ok: true,
+        hidden: Math.max(0, rows.length - 12),
+        entries: [
+          { date: null, label: 'Agreement signed', amount_cents: null },
+          ...rows.slice(0, 12).flatMap((r, i) => [
+            { date: r.date, label: `Invoice ${i + 1} issued`, amount_cents: r.total, note: r.items.map((x) => x.label).join(', ') },
+            { date: r.due, label: `Invoice ${i + 1} due`, amount_cents: r.total },
+          ]),
+          ...(manual.length ? [{ date: null, label: `Billed manually: ${manual.join(', ')}`, amount_cents: null, note: 'You will be invoiced when billing starts' }] : []),
+        ],
+      };
+    }
     const brand = brandForPublication(ag.publication);
     return NextResponse.json({
       id: ag.id,
@@ -104,13 +126,14 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       details: meta ? { name: meta.name, note: meta.note, ask_address: meta.ask_address, refs: meta.refs.filter((r) => r.client_facing), expires_at: meta.expires_at } : null,
       expired,
       placement: placementNeeds({ ...ag, channel } as never, lines as never),
-      card_available: isStripeConfigured() && base != null,
+      card_available: isStripeConfigured() && base != null && payOpts.card,
       card_base_cents: base,
       card_charge_cents: surcharged,
-      timeline_check: allowsCheckPayment(channel) ? checkTimeline(tlAgreement, defaults) : null,
-      timeline_card: cardTimeline(ag, base, surcharged),
+      timeline_check: !payOpts.show_schedule || !allowsCheckPayment(channel) ? null : perService ?? checkTimeline(tlAgreement, defaults),
+      timeline_card: payOpts.show_schedule ? cardTimeline(ag, base, surcharged) : null,
+      schedule_hidden: !payOpts.show_schedule,
       full_form_url: `/admin/billing/sign/${token}`,
-      allow_check: allowsCheckPayment(channel),
+      allow_check: allowsCheckPayment(channel) && payOpts.check,
       fields: Object.fromEntries(EDITABLE.map((k) => [k, (ag as unknown as Record<string, unknown>)[k] ?? ''])),
       terms: termsForChannel(channel, ag.publication),
     });
@@ -172,6 +195,12 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     }
     if (mode !== 'check' && mode !== 'card') {
       return NextResponse.json({ error: 'Please choose how you would like to pay.' }, { status: 400 });
+    }
+    if (mode === 'card' && meta?.payment?.card === false) {
+      return NextResponse.json({ error: 'Credit card payment is not available for this agreement.' }, { status: 400 });
+    }
+    if (mode === 'check' && meta?.payment?.check === false) {
+      return NextResponse.json({ error: 'Check payment is not available for this agreement.' }, { status: 400 });
     }
     if (mode !== 'card' && !allowsCheckPayment(channelOfRow(ag))) {
       return NextResponse.json({ error: 'Check payment is not available for this agreement.' }, { status: 400 });
