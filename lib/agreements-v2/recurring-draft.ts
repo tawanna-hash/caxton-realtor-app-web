@@ -13,6 +13,7 @@ import type { getSql } from '@/lib/db';
 import type { Agreement } from '@/lib/agreements';
 import { freqMonths } from '@/lib/renewals-v2/pricing';
 import { recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
+import { getDefaults, type AgreementDefaults } from '@/lib/agreements-v2/settings';
 
 type Sql = ReturnType<typeof getSql>;
 
@@ -23,6 +24,7 @@ export type DraftSchedulePlan = {
   start_date: string;
   end_date: string | null;
   day_of_month: number;
+  due_days: number;
   bill_to_name: string | null;
   bill_to_email: string | null;
   description: string;
@@ -44,6 +46,7 @@ function monthsBetween(start: string, end: string): number {
 /** Pure: what monthly schedule a signed agreement implies, or why not. */
 export function planDraftSchedule(
   ag: Pick<Agreement, 'company_name' | 'ad_rate_cents' | 'amount_cents' | 'frequency' | 'ad_size' | 'start_date' | 'end_date' | 'billing_email' | 'advertiser_email' | 'billing_name' | 'rep_name'>,
+  defaults?: Pick<AgreementDefaults, 'billing_day' | 'due_days'>,
 ): { ok: true; plan: DraftSchedulePlan } | { ok: false; reason: string } {
   const start = iso(ag.start_date);
   if (!start) return { ok: false, reason: 'no start date' };
@@ -60,7 +63,7 @@ export function planDraftSchedule(
     return { ok: false, reason: 'no monthly rate or total to bill' };
   }
   const company = ag.company_name ?? 'Partner';
-  const startDay = Math.min(28, Math.max(1, parseInt(start.slice(8, 10), 10) || 1));
+  const startDay = defaults?.billing_day === 'first' ? 1 : defaults?.billing_day === 'fifteenth' ? 15 : Math.min(28, Math.max(1, parseInt(start.slice(8, 10), 10) || 1));
   return {
     ok: true,
     plan: {
@@ -70,6 +73,7 @@ export function planDraftSchedule(
       start_date: start,
       end_date: end,
       day_of_month: startDay,
+      due_days: defaults?.due_days ?? 15,
       bill_to_name: ag.billing_name ?? company,
       bill_to_email: ag.billing_email || ag.advertiser_email || null,
       description: ag.ad_size ? `Advertising: ${ag.ad_size}` : 'Advertising',
@@ -98,7 +102,7 @@ export async function createDraftScheduleForAgreement(
     const existing = await sql`SELECT id FROM recurring_invoice_schedules WHERE agreement_id = ${agreementId} LIMIT 1` as unknown as Array<{ id: string }>;
     if (existing[0]) return { ok: true, created: false, schedule_id: existing[0].id };
 
-    const planned = planDraftSchedule(ag);
+    const planned = planDraftSchedule(ag, await getDefaults(sql));
     if (!planned.ok) return { ok: false, reason: planned.reason };
     const p = planned.plan;
     const lineItems = [{ description: p.description, qty: 1, unit_cents: p.amount_cents }];
@@ -115,7 +119,7 @@ export async function createDraftScheduleForAgreement(
         ${p.amount_cents}, 0, ${JSON.stringify(lineItems)}::jsonb,
         ${'Draft created automatically when the agreement was signed. Review, then activate.'},
         ${p.bill_to_name}, ${p.bill_to_email},
-        false, 15, 0, 'scheduled',
+        false, ${p.due_days}, 0, 'scheduled',
         ${p.start_date}, ${p.end_date}, ${p.occurrences}, ${`${p.start_date}T08:00:00.000Z`}, 'agreement', ${createdBy ?? 'agreements-beta'}
       )
       RETURNING id

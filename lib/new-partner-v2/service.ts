@@ -13,6 +13,7 @@ import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agr
 import { isAdChannel, deriveChannelFromAgreementType, type AdChannel } from '@/lib/ad-channels';
 import type { getSql } from '@/lib/db';
 import { freqMonths } from '@/lib/renewals-v2/pricing';
+import { getDefaults, renderIntro } from '@/lib/agreements-v2/settings';
 
 type Sql = ReturnType<typeof getSql>;
 
@@ -121,7 +122,7 @@ function money(cents: number | null | undefined): string {
   return `$${((cents ?? 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export function newPartnerEmailHtml(ag: Agreement, link: string): string {
+export function newPartnerEmailHtml(ag: Agreement, link: string, intro?: string | null): string {
   const brand = brandForPublication(ag.publication);
   return `<!doctype html><html><body style="margin:0;background:#F6F5FB;font-family:Arial,Helvetica,sans-serif;color:#1B1726">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
@@ -129,7 +130,7 @@ export function newPartnerEmailHtml(ag: Agreement, link: string): string {
 <tr><td style="background:${brand.brandColor};color:#fff;padding:18px 28px;border-radius:12px 12px 0 0;font-size:18px;font-weight:bold">${escapeHtml(brand.brandName)}</td></tr>
 <tr><td style="padding:28px">
 <p style="margin:0 0 12px 0;font-size:16px">Hi ${escapeHtml(ag.rep_name ?? 'there')},</p>
-<p style="margin:0 0 16px 0;font-size:15px;line-height:1.55">Your advertising agreement is ready. Review the details, choose how to pay, and sign. It takes about two minutes.</p>
+<p style="margin:0 0 16px 0;font-size:15px;line-height:1.55">${escapeHtml(renderIntro(intro || 'Your advertising agreement is ready. Review the details, choose how to pay, and sign. It takes about two minutes.', ag))}</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F5FB;border-radius:8px"><tr><td style="padding:16px 18px;font-size:14px;line-height:1.7">
 <strong>${escapeHtml(ag.company_name ?? '')}</strong><br>
 ${ag.ad_size ? `Ad size: ${escapeHtml(ag.ad_size)}<br>` : ''}${ag.frequency ? `Frequency: ${escapeHtml(ag.frequency)}<br>` : ''}Monthly rate: ${money(ag.ad_rate_cents)}
@@ -154,7 +155,7 @@ export async function sendNewPartnerEmail(
   const result = await sendEmail({
     to,
     subject: `Your advertising agreement, ${ag.company_name ?? ''}`.trim(),
-    html: newPartnerEmailHtml(ag, link),
+    html: newPartnerEmailHtml(ag, link, (await getDefaults(sql)).intro_new),
   });
   if (!result.ok) return { ok: false, to, error: result.error };
   if (ag.status === 'draft') {
