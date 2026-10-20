@@ -163,7 +163,7 @@ export async function ensureRenewalDraft(
   const months = freqMonths(prior.frequency);
   const amount = rate != null ? rate * months : prior.amount_cents;
   const repricedNote = price.repriced
-    ? ` Rate updated from $${((price.priorRateCents ?? 0) / 100).toFixed(2)} to $${((rate ?? 0) / 100).toFixed(2)}${price.capped ? ' (15% cap applied)' : ''}.`
+    ? ` Rate updated from $${((price.priorRateCents ?? 0) / 100).toFixed(2)} to $${((rate ?? 0) / 100).toFixed(2)}${price.capped ? ' (2% cap applied)' : ''}.`
     : '';
   const now = new Date().toISOString();
   const audit = appendAudit([], {

@@ -20,6 +20,7 @@ type Summary = {
   needs_full_form: boolean;
   full_form_url: string;
   allow_check: boolean;
+  annual_increase_pct?: number;
   bank_now_available?: boolean;
   bank_invoice_available?: boolean;
   bank_fee_cents?: number | null;
@@ -406,6 +407,7 @@ export default function AgreeClient({ token }: { token: string }) {
                 )}
               </>
             )}
+            {(data.annual_increase_pct ?? 0) > 0 && <p className="text-xs text-[#6E6A8A]">Pricing increases by {data.annual_increase_pct}% each contract year after the first. Renewals are capped at a 2% increase.</p>}
             {data.bank_now_available && (
               <>
                 <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-4 text-sm ${pay === 'bank_now' ? 'border-[#5B3FE3] bg-[#F3F0FF]' : 'border-[#D8D5E6]'}`}>

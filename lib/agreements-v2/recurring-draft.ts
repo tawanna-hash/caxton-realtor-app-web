@@ -15,7 +15,7 @@ import { freqMonths } from '@/lib/renewals-v2/pricing';
 import { recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
 import { getDefaults, type AgreementDefaults } from '@/lib/agreements-v2/settings';
 import { getAgreementMeta } from '@/lib/agreements-v2/builder';
-import { plansForLines } from '@/lib/agreements-v2/service-billing';
+import { cleanPayment, plansForLines } from '@/lib/agreements-v2/service-billing';
 
 type Sql = ReturnType<typeof getSql>;
 
@@ -129,9 +129,17 @@ export async function createDraftScheduleForAgreement(
     const startIso = iso(ag.start_date);
     if (meta && startIso) {
       const lines = await sql`SELECT line_no, package_label, amount_cents FROM agreement_line_items WHERE agreement_id = ${agreementId} ORDER BY line_no` as unknown as Array<{ line_no: number; package_label: string; amount_cents: number }>;
-      const plans = plansForLines(lines, meta.services, { start: startIso, billing_day: typeof defaults.billing_day === 'number' ? defaults.billing_day : Math.min(28, Math.max(1, parseInt(startIso.slice(8, 10), 10) || 1)) });
+      const plans = plansForLines(lines, meta.services, { start: startIso, billing_day: typeof defaults.billing_day === 'number' ? defaults.billing_day : Math.min(28, Math.max(1, parseInt(startIso.slice(8, 10), 10) || 1)), increase_pct: cleanPayment(meta.payment).annual_increase_pct });
       if (plans) {
-        const auto = plans.filter((p) => !p.manual);
+        // A service with an annual increase becomes one schedule per contract year, since a schedule bills a fixed amount.
+        const auto = plans.filter((p) => !p.manual).flatMap((p) => {
+          if (!p.amounts) return [p];
+          const years = Math.ceil(p.dates.length / 12);
+          return Array.from({ length: years }, (_, k) => {
+            const dates = p.dates.slice(k * 12, k * 12 + 12);
+            return { ...p, label: `${p.label} (year ${k + 1})`, amount_cents: p.amounts![k * 12], occurrences: dates.length, first_run_date: dates[0], dates, amounts: undefined };
+          });
+        });
         let firstId: string | null = null;
         const company = ag.company_name ?? 'Partner';
         for (const p of auto) {

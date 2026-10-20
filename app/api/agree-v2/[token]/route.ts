@@ -27,7 +27,7 @@ import { channelOfRow, chargeBaseCents, needsFullForm, totalCents, recordNewPart
 import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
 import { getDefaults } from '@/lib/agreements-v2/settings';
 import { getAgreementMeta } from '@/lib/agreements-v2/builder';
-import { invoiceRows, occurrenceGroups, plansForLines, type PaymentSettings } from '@/lib/agreements-v2/service-billing';
+import { cleanPayment, invoiceRows, occurrenceGroups, plansForLines, type PaymentSettings } from '@/lib/agreements-v2/service-billing';
 import { applyChoice } from '@/lib/agreements-v2/options';
 import { buildPlacementPatches, placementNeeds } from '@/lib/agreements-v2/placement';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
@@ -87,11 +87,11 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     const meta = await getAgreementMeta(ag.id, sql);
     const expired = Boolean(meta?.expires_at && meta.expires_at < new Date().toISOString().slice(0, 10) && !ag.signed_at);
     const tlAgreement = { ...ag, ad_rate_cents: ag.ad_rate_cents, amount_cents: (ag.lines_total ?? 0) > 0 ? ag.lines_total : ag.amount_cents } as Agreement;
-    const payOpts: PaymentSettings = { card: meta?.payment?.card !== false, check: meta?.payment?.check !== false, bank_now: meta?.payment?.bank_now === true, bank_invoice: meta?.payment?.bank_invoice === true, due_days: meta?.payment?.due_days ?? null, show_schedule: meta?.payment?.show_schedule !== false, schedule_view: meta?.payment?.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
+    const payOpts: PaymentSettings = { annual_increase_pct: cleanPayment(meta?.payment).annual_increase_pct, card: meta?.payment?.card !== false, check: meta?.payment?.check !== false, bank_now: meta?.payment?.bank_now === true, bank_invoice: meta?.payment?.bank_invoice === true, due_days: meta?.payment?.due_days ?? null, show_schedule: meta?.payment?.show_schedule !== false, schedule_view: meta?.payment?.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
     // Per-service billing options saved with the agreement drive the schedule the partner sees.
     let perService: ReturnType<typeof checkTimeline> | null = null;
     const startIso = ag.start_date ? new Date(ag.start_date as unknown as string).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
-    const svcPlans = meta ? plansForLines(lines as unknown as Array<{ line_no: number; package_label: string; amount_cents: number }>, meta.services, { start: startIso, billing_day: typeof defaults.billing_day === 'number' ? defaults.billing_day : 1 }) : null;
+    const svcPlans = meta ? plansForLines(lines as unknown as Array<{ line_no: number; package_label: string; amount_cents: number }>, meta.services, { start: startIso, billing_day: typeof defaults.billing_day === 'number' ? defaults.billing_day : 1, increase_pct: payOpts.annual_increase_pct }) : null;
     if (svcPlans) {
       const rows = invoiceRows(svcPlans, payOpts.due_days ?? defaults.due_days ?? 15);
       const manual = svcPlans.filter((p) => p.manual).map((p) => p.label);
@@ -141,6 +141,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       card_base_cents: base,
       card_charge_cents: surcharged,
       timeline_check: !payOpts.show_schedule || !allowsCheckPayment(channel) ? null : perService ?? checkTimeline(tlAgreement, defaults),
+      annual_increase_pct: payOpts.annual_increase_pct,
       timeline_bank_invoice: !payOpts.show_schedule ? null : perService ?? checkTimeline(tlAgreement, defaults),
       bank_now_available: isStripeConfigured() && base != null && payOpts.bank_now,
       bank_fee_cents: base != null ? processingFeeCents(base, 'ach') : null,

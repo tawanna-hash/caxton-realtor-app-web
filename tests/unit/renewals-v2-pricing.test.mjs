@@ -48,3 +48,12 @@ test('term end handles year rollover and 12 month terms', () => {
   assert.equal(t.end, '2027-11-30');
   assert.equal(Object.keys(t.months).length, 12);
 });
+
+test('expired term: renewal increase is capped at 2% over the prior rate', () => {
+  const p = computeRenewalPrice(
+    { ad_rate_cents: 100000, frequency: '3x', ad_size: 'Full-page', exp_date: '2025-01-01', end_date: null },
+    new Date('2026-10-20T12:00:00'),
+  );
+  assert.ok(p.rateCents <= 102000);
+  assert.ok(p.rateCents >= 100000);
+});

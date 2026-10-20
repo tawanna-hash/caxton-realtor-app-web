@@ -38,7 +38,7 @@ test('invoices group by date and summary', () => {
 });
 test('plansForLines needs saved billing; payment defaults', () => {
   assert.equal(m.plansForLines([{ line_no: 1, package_label: 'x', amount_cents: 1 }], [{ line_no: 1 }], ctx), null);
-  assert.deepEqual(m.cleanPayment({ card: false }), { card: false, check: true, bank_now: false, bank_invoice: false, due_days: null, show_schedule: true, schedule_view: 'timeline' });
+  assert.deepEqual(m.cleanPayment({ card: false }), { annual_increase_pct: 0, card: false, check: true, bank_now: false, bank_invoice: false, due_days: null, show_schedule: true, schedule_view: 'timeline' });
   assert.equal(m.termMonths({ channel: 'app', app_weeks: 5 }), 2);
 });
 
@@ -53,4 +53,22 @@ test('occurrence groups mirror Anchor: same day billed together', () => {
   assert.equal(g[0].title, 'Billed once on November 18, 2026');
   assert.equal(g[1].title, 'Billed monthly on the 18th');
   assert.equal(g[1].total_cents, 10000);
+});
+
+test('annual increase: compounds each contract year, capped at 2%, only past 12 months', async () => {
+  const { planServiceBilling, invoiceRows, cleanPayment, summarize } = await jiti.import('../../lib/agreements-v2/service-billing.ts');
+  const svc = { label: 'Print', total_cents: 240000, billing: { cadence: 'monthly', timing: 'start', day: null, start: 'next', start_date: '', term_months: 24 } };
+  const plan = planServiceBilling(svc, { start: '2026-11-01', billing_day: 18, increase_pct: 2 });
+  assert.equal(plan.amount_cents, 10000);
+  assert.equal(plan.amounts.length, 24);
+  assert.equal(plan.amounts[0], 10000);
+  assert.equal(plan.amounts[11], 10000);
+  assert.equal(plan.amounts[12], 10200);
+  assert.equal(summarize([plan], invoiceRows([plan], 20)).total_cents, 12 * 10000 + 12 * 10200);
+  const capped = planServiceBilling(svc, { start: '2026-11-01', billing_day: 18, increase_pct: 9 });
+  assert.equal(capped.amounts[12], 10200);
+  const short = planServiceBilling({ ...svc, billing: { ...svc.billing, term_months: 12 } }, { start: '2026-11-01', billing_day: 18, increase_pct: 2 });
+  assert.equal(short.amounts, undefined);
+  assert.equal(cleanPayment({ annual_increase_pct: 7 }).annual_increase_pct, 2);
+  assert.equal(cleanPayment({ annual_increase_pct: -1 }).annual_increase_pct, 0);
 });
