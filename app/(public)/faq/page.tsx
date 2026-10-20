@@ -16,7 +16,7 @@ export default function FaqPage() {
         <PageTitle size="md">
           Common questions, quick answers.
         </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+        <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
           Don&apos;t see your question?{' '}
           <a
             href="mailto:hello@myrealtyline.com?subject=App%20Question"

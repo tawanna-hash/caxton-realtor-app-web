@@ -46,7 +46,7 @@ export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesVi
       <header className="mb-8 sm:mb-10">
         <p className={EYEBROW}>{copy.eyebrow}</p>
         <PageTitle size="md">{copy.title}</PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+        <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
           {copy.description}
           {view !== 'tools' && (
             <>

@@ -39,7 +39,7 @@ export default function AdvertiseEmailPage() {
         <PageTitle size="md">
           Drop straight into 64,000+ real-estate inboxes.
         </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+        <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
           Your message, your design, sent as a dedicated email to RealtyLine
           and Newsline San Antonio subscribers — agents, brokers, builders, and lenders
           across Central and South Texas. Pick a package below, reserve your

@@ -52,7 +52,7 @@ export default async function Page() {
             {giveaways.length > 0 ? 'Enter to win' : 'Coming soon'}
           </p>
           <PageTitle size="md">Giveaways</PageTitle>
-          <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+          <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
             Monthly giveaways for licensed Texas REALTORS&reg;. Enter for a
             chance to win event tickets, gear, and more.
           </p>

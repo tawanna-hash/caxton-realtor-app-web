@@ -118,7 +118,7 @@ export default async function Page({ searchParams }: PageProps) {
         <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
           <header className="mb-8">
             <PageTitle size="md">New Home Communities</PageTitle>
-            <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+            <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
               Browse builders and developers, then tap through to their active
               communities and master-planned developments.
             </p>

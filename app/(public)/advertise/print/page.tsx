@@ -34,7 +34,7 @@ export default function AdvertisePrintPage() {
         <PageTitle size="md">
           Print + digital editions, sold by the issue or by agreement.
         </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
+        <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
           Every Brand package runs your creative in both the printed magazine
           and the matching digital edition. Longer agreements unlock event
           coverage, social shares, e-Blasts, and front-page logo placement.
