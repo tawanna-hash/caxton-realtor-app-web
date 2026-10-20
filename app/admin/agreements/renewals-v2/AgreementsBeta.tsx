@@ -6,50 +6,50 @@ import NewPartnersPanel from './NewPartnersPanel';
 import StatusBoard from './StatusBoard';
 import TemplatesPanel from './TemplatesPanel';
 import DefaultsPanel from './DefaultsPanel';
+import { A } from '@/components/anchor/ui';
 
 type Tab = 'board' | 'renewals' | 'new' | 'templates' | 'defaults';
 const TABS: Array<[Tab, string]> = [
-  ['board', 'Status'],
+  ['board', 'Agreements'],
   ['renewals', 'Renewals'],
   ['new', 'New partners'],
   ['templates', 'Templates'],
   ['defaults', 'Default settings'],
 ];
-const TITLE: Record<Tab, string> = { board: 'Agreements', renewals: 'Renewals', new: 'New partners', templates: 'Templates', defaults: 'Default settings' };
+const SUB: Record<Tab, string> = {
+  board: 'Every agreement in flight, from draft to signed.',
+  renewals: 'One-tap renewals, sent one at a time or as a monthly batch.',
+  new: 'Send a new partner a short page to review, pay and sign.',
+  templates: 'Saved ad sizes, frequencies and rates for new agreements.',
+  defaults: 'Set the default values of new agreements you create.',
+};
 
 export default function AgreementsBeta() {
   const [tab, setTab] = useState<Tab>('board');
   return (
-    <div>
-      <div className="flex flex-wrap gap-2 px-4 pt-4 sm:px-6" role="tablist" aria-label="Agreements beta">
+    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
+      <div>
+        <h1 className={A.title}>Agreements <span className="ml-1 rounded-full border border-[#5B3FE3] px-2 py-0.5 align-middle text-xs font-medium text-[#5B3FE3]">Beta</span></h1>
+        <p className={A.subtitle}>{SUB[tab]}</p>
+      </div>
+      <div className="flex flex-wrap gap-x-8 border-b border-[#D8D5E6]" role="tablist" aria-label="Agreements beta">
         {TABS.map(([key, label]) => (
           <button
             key={key}
             role="tab"
             aria-selected={tab === key}
             onClick={() => setTab(key)}
-            className={`rounded-full border px-4 py-2 text-sm font-medium ${tab === key ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#D9D5E8] text-[#301D5D] hover:bg-[#F6F5FB]'}`}
+            className={`-mb-px border-b-[3px] pb-3 text-[15px] ${tab === key ? 'border-[#5B3FE3] font-medium text-[#261E5A]' : 'border-transparent text-[#6E6A8A] hover:text-[#261E5A]'}`}
           >
             {label}
           </button>
         ))}
       </div>
-      {tab === 'renewals' ? (
-        <RenewalsV2Client />
-      ) : (
-        <div className="space-y-4 p-4 sm:p-6">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6B6878]">Admin · Agreements</p>
-            <h1 className="mt-1 text-2xl font-semibold text-[#301D5D]">
-              {TITLE[tab]} <span className="ml-1 rounded-full bg-[#EFEAFB] px-2 py-0.5 align-middle text-xs font-semibold text-[#42277C]">Beta</span>
-            </h1>
-          </div>
-          {tab === 'board' && <StatusBoard />}
-          {tab === 'new' && <NewPartnersPanel />}
-          {tab === 'templates' && <TemplatesPanel />}
-          {tab === 'defaults' && <DefaultsPanel />}
-        </div>
-      )}
+      {tab === 'board' && <StatusBoard />}
+      {tab === 'renewals' && <RenewalsV2Client />}
+      {tab === 'new' && <NewPartnersPanel />}
+      {tab === 'templates' && <TemplatesPanel />}
+      {tab === 'defaults' && <DefaultsPanel />}
     </div>
   );
 }

@@ -22,6 +22,7 @@ export type DraftSchedulePlan = {
   amount_cents: number;
   occurrences: number;
   start_date: string;
+  first_run_date: string;
   end_date: string | null;
   day_of_month: number;
   due_days: number;
@@ -63,7 +64,15 @@ export function planDraftSchedule(
     return { ok: false, reason: 'no monthly rate or total to bill' };
   }
   const company = ag.company_name ?? 'Partner';
-  const startDay = defaults?.billing_day === 'first' ? 1 : defaults?.billing_day === 'fifteenth' ? 15 : Math.min(28, Math.max(1, parseInt(start.slice(8, 10), 10) || 1));
+  const startDayForRun = typeof defaults?.billing_day === 'number' ? defaults.billing_day : null;
+  let firstRun = start;
+  if (startDayForRun) {
+    const d = new Date(`${start}T00:00:00Z`);
+    const cand = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), startDayForRun));
+    if (cand < d) cand.setUTCMonth(cand.getUTCMonth() + 1);
+    firstRun = cand.toISOString().slice(0, 10);
+  }
+  const startDay = typeof defaults?.billing_day === 'number' ? defaults.billing_day : Math.min(28, Math.max(1, parseInt(start.slice(8, 10), 10) || 1));
   return {
     ok: true,
     plan: {
@@ -71,6 +80,7 @@ export function planDraftSchedule(
       amount_cents: monthly,
       occurrences,
       start_date: start,
+      first_run_date: firstRun,
       end_date: end,
       day_of_month: startDay,
       due_days: defaults?.due_days ?? 15,
@@ -99,6 +109,8 @@ export async function createDraftScheduleForAgreement(
     const advertiserId = typeof ag.advertiser_id === 'number' && ag.advertiser_id > 0 ? ag.advertiser_id : null;
     if (!advertiserId) return { ok: false, reason: 'agreement is not linked to a partner yet' };
 
+    if (ag.payment_mode === 'card') return { ok: false, reason: 'card on file is charged per issue, no invoice schedule needed' };
+
     const existing = await sql`SELECT id FROM recurring_invoice_schedules WHERE agreement_id = ${agreementId} LIMIT 1` as unknown as Array<{ id: string }>;
     if (existing[0]) return { ok: true, created: false, schedule_id: existing[0].id };
 
@@ -120,13 +132,13 @@ export async function createDraftScheduleForAgreement(
         ${'Draft created automatically when the agreement was signed. Review, then activate.'},
         ${p.bill_to_name}, ${p.bill_to_email},
         false, ${p.due_days}, 0, 'scheduled',
-        ${p.start_date}, ${p.end_date}, ${p.occurrences}, ${`${p.start_date}T08:00:00.000Z`}, 'agreement', ${createdBy ?? 'agreements-beta'}
+        ${p.start_date}, ${p.end_date}, ${p.occurrences}, ${`${p.first_run_date}T08:00:00.000Z`}, 'agreement', ${createdBy ?? 'agreements-beta'}
       )
       RETURNING id
     ` as unknown as Array<{ id: string }>;
     await recordNewPartnerEvent(
       sql, agreementId, 'recurring_draft_created',
-      `Draft recurring schedule created: ${p.occurrences} monthly invoices of $${(p.amount_cents / 100).toFixed(2)} starting ${p.start_date}. Status: paused until reviewed.`,
+      `Draft recurring schedule created: ${p.occurrences} monthly invoices of $${(p.amount_cents / 100).toFixed(2)} starting ${p.first_run_date}. Status: paused until reviewed.`,
       createdBy,
     );
     return { ok: true, created: true, schedule_id: ins[0].id };

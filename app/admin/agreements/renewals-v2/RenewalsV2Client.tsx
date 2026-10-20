@@ -5,7 +5,7 @@
 // at a time or in a batch (always with a dry-run summary and a confirm step).
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import { A, EmptyState, FilterChip } from '@/components/anchor/ui';
 
 type Candidate = {
   id: string;
@@ -38,9 +38,9 @@ const STATE_LABEL: Record<Candidate['state'], string> = {
 };
 
 const STATE_STYLE: Record<Candidate['state'], string> = {
-  not_started: 'bg-gray-100 text-gray-700',
+  not_started: 'bg-[#EEEDF3] text-[#4A4767]',
   draft: 'bg-amber-50 text-amber-800',
-  sent: 'bg-[#EFEAFB] text-[#42277C]',
+  sent: 'bg-[#EFEAFB] text-[#4B30CC]',
   opened: 'bg-blue-50 text-blue-800',
   signed: 'bg-green-50 text-green-800',
 };
@@ -66,7 +66,8 @@ export default function RenewalsV2Client() {
   const [busy, setBusy] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [rateLock, setRateLock] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'not_started' | 'waiting'>('all');
+  const [states, setStates] = useState<Candidate['state'][]>(['not_started', 'draft', 'sent', 'opened', 'signed']);
+  const [month, setMonth] = useState('');
   const [batch, setBatch] = useState<{ results: BatchResult[] } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -87,21 +88,30 @@ export default function RenewalsV2Client() {
     return () => { alive = false; };
   }, [tick]);
 
-  const visible = useMemo(() => {
-    const list = rows ?? [];
-    if (filter === 'not_started') return list.filter((r) => r.state === 'not_started');
-    if (filter === 'waiting') return list.filter((r) => r.state === 'sent' || r.state === 'opened');
-    return list;
-  }, [rows, filter]);
+  const visible = useMemo(() => (rows ?? []).filter((r) => states.includes(r.state)), [rows, states]);
 
-  const counts = useMemo(() => {
-    const list = rows ?? [];
-    return {
-      all: list.length,
-      not_started: list.filter((r) => r.state === 'not_started').length,
-      waiting: list.filter((r) => r.state === 'sent' || r.state === 'opened').length,
-    };
+  // Months that have renewals due, for the monthly batch picker.
+  const months = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of rows ?? []) {
+      if (!r.exp_date) continue;
+      const k = r.exp_date.slice(0, 7);
+      m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return [...m.entries()].sort(([x], [y]) => x.localeCompare(y));
   }, [rows]);
+
+  const monthLabel = (k: string) => new Date(`${k}-01T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  function selectMonth(k: string) {
+    setMonth(k);
+    setBatch(null);
+    const ids = (rows ?? [])
+      .filter((r) => r.exp_date?.startsWith(k) && r.email && !r.needs_full_form && (r.state === 'not_started' || r.state === 'draft'))
+      .map((r) => r.id);
+    setSelected(new Set(ids));
+    setNotice(ids.length ? `${ids.length} renewal${ids.length === 1 ? '' : 's'} expiring in ${monthLabel(k)} selected. Review before sending.` : `Nothing left to send for ${monthLabel(k)}.`);
+  }
 
   async function act(id: string, action: 'preview' | 'send') {
     setBusy(`${id}:${action}`);
@@ -171,150 +181,107 @@ export default function RenewalsV2Client() {
   const wouldSend = batch?.results.filter((r) => r.status === 'would_send') ?? [];
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6B6878]">Admin · Agreements</p>
-          <h1 className="mt-1 text-2xl font-semibold text-[#301D5D]">
-            Renewals <span className="ml-1 rounded-full bg-[#EFEAFB] px-2 py-0.5 align-middle text-xs font-semibold text-[#42277C]">Beta</span>
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-[#4A4757]">
-            One-tap renewals: the partner confirms a pre-filled page and signs. This runs alongside the current renewal flow, which is unchanged.
-          </p>
-        </div>
-        <Link href="/admin/agreements" className="rounded-full border border-[#D9D5E8] px-4 py-2 text-sm font-medium text-[#301D5D] hover:bg-[#F6F5FB]">
-          Current agreements
-        </Link>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        {([['all', 'All'], ['not_started', 'Not started'], ['waiting', 'Waiting on partner']] as const).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setFilter(key)}
-            className={`rounded-full border px-3 py-1.5 text-sm ${filter === key ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-[#D9D5E8] text-[#301D5D] hover:bg-[#F6F5FB]'}`}
-          >
-            {label} <span className="opacity-70">({counts[key]})</span>
-          </button>
-        ))}
-        <label className="ml-auto flex items-center gap-2 text-sm text-[#4A4757]">
-          <input type="checkbox" checked={rateLock} onChange={(e) => setRateLock(e.target.checked)} />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <FilterChip title="Status" value={states} onApply={setStates} options={[
+          { value: 'not_started', label: 'Not started' }, { value: 'draft', label: 'Draft' }, { value: 'sent', label: 'Sent' },
+          { value: 'opened', label: 'Opened' }, { value: 'signed', label: 'Signed' },
+        ]} />
+        <select
+          aria-label="Monthly batch"
+          value={month}
+          onChange={(e) => (e.target.value ? selectMonth(e.target.value) : (setMonth(''), setSelected(new Set()), setBatch(null)))}
+          className="rounded-full border border-[#261E5A] bg-white px-4 py-2 text-sm text-[#261E5A]"
+        >
+          <option value="">Monthly batch</option>
+          {months.map(([k, n]) => <option key={k} value={k}>{monthLabel(k)} ({n})</option>)}
+        </select>
+        <label className="ml-auto flex items-center gap-2 text-sm text-[#261E5A]">
+          <input type="checkbox" className="accent-[#5B3FE3]" checked={rateLock} onChange={(e) => setRateLock(e.target.checked)} />
           Include 72-hour rate lock
         </label>
       </div>
 
-      {notice && <div className="rounded-lg border border-[#D9D5E8] bg-[#F6F5FB] px-4 py-2 text-sm text-[#301D5D]">{notice}</div>}
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>}
+      {notice && <div className={A.notice}>{notice}</div>}
+      {error && <div className={A.error}>{error}</div>}
 
       {selected.size > 0 && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[#D9D5E8] bg-white px-4 py-3">
-          <span className="text-sm text-[#301D5D]">{selected.size} selected</span>
-          <button
-            onClick={() => runBatch(false)}
-            disabled={busy !== null}
-            className="rounded-full bg-[#301D5D] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#42277C] disabled:opacity-50"
-          >
+        <div className={`${A.card} flex flex-wrap items-center gap-3 px-4 py-3`}>
+          <span className="text-sm text-[#261E5A]">{selected.size} selected</span>
+          <button onClick={() => runBatch(false)} disabled={busy !== null} className={A.primary}>
             {busy === 'batch:dry' ? 'Checking…' : 'Review before sending'}
           </button>
-          <button onClick={() => { setSelected(new Set()); setBatch(null); }} className="text-sm text-[#6B6878] underline">Clear</button>
+          <button onClick={() => { setSelected(new Set()); setBatch(null); setMonth(''); }} className="text-sm text-[#5B3FE3] underline">Clear</button>
         </div>
       )}
 
       {batch && (
-        <div className="space-y-3 rounded-lg border border-[#301D5D] bg-white p-4">
-          <p className="text-sm font-semibold text-[#301D5D]">
+        <div className={`${A.card} space-y-3 border-[#5B3FE3] p-4`}>
+          <p className="text-sm font-semibold text-[#261E5A]">
             {wouldSend.length} renewal email{wouldSend.length === 1 ? '' : 's'} will be sent. Nothing has been sent yet.
           </p>
-          <ul className="space-y-1 text-sm text-[#4A4757]">
+          <ul className="space-y-1 text-sm text-[#6E6A8A]">
             {batch.results.map((r) => (
               <li key={r.id}>
-                <span className="font-medium text-[#1B1726]">{r.company ?? r.id}</span>
+                <span className="font-medium text-[#261E5A]">{r.company ?? r.id}</span>
                 {r.status === 'would_send' ? ` → ${r.to}` : ` — skipped (${r.error})`}
               </li>
             ))}
           </ul>
           <div className="flex gap-2">
-            <button
-              onClick={() => runBatch(true)}
-              disabled={busy !== null || wouldSend.length === 0}
-              className="rounded-full bg-[#301D5D] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#42277C] disabled:opacity-50"
-            >
+            <button onClick={() => setBatch(null)} className={A.outline}>Cancel</button>
+            <button onClick={() => runBatch(true)} disabled={busy !== null || wouldSend.length === 0} className={A.primary}>
               {busy === 'batch:send' ? 'Sending…' : `Send ${wouldSend.length} now`}
             </button>
-            <button onClick={() => setBatch(null)} className="rounded-full border border-[#D9D5E8] px-4 py-1.5 text-sm text-[#301D5D]">Cancel</button>
           </div>
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-[#E6E5EC] bg-white">
-        <table className="min-w-[900px] w-full text-left text-sm">
-          <thead className="bg-[#F6F5FB] text-xs uppercase tracking-wider text-[#6B6878]">
+      <div className="overflow-x-auto">
+        <table className={`${A.table} min-w-[900px]`}>
+          <thead>
             <tr>
-              <th className="px-3 py-2">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={() => setSelected(allSelected ? new Set() : new Set(sendable.map((r) => r.id)))}
-                  aria-label="Select all with an email"
-                />
+              <th>
+                <input type="checkbox" className="accent-[#5B3FE3]" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(sendable.map((r) => r.id)))} aria-label="Select all with an email" />
               </th>
-              <th className="px-3 py-2">Partner</th>
-              <th className="px-3 py-2">Ad</th>
-              <th className="px-3 py-2">Rate</th>
-              <th className="px-3 py-2">Expires</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2 text-right">Actions</th>
+              <th>Partner</th><th>Ad</th><th>Rate</th><th>Expires</th><th>Status</th><th />
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F0EEF6]">
-            {rows === null && !error && (
-              <tr><td colSpan={7} className="px-3 py-8 text-center text-[#6B6878]">Loading…</td></tr>
-            )}
+          <tbody>
+            {rows === null && !error && <tr><td colSpan={7} className="text-center text-[#6E6A8A]">Loading…</td></tr>}
             {rows !== null && visible.length === 0 && (
-              <tr><td colSpan={7} className="px-3 py-8 text-center text-[#6B6878]">No agreements due for renewal in this view.</td></tr>
+              <tr><td colSpan={7}><EmptyState title="No renewals" body="No agreements due for renewal match your filters." action={{ label: 'Clear filters', onClick: () => setStates(['not_started', 'draft', 'sent', 'opened', 'signed']) }} /></td></tr>
             )}
             {visible.map((r) => (
               <tr key={r.id}>
-                <td className="px-3 py-3">
-                  <input type="checkbox" disabled={!r.email} checked={selected.has(r.id)} onChange={() => toggle(r.id)} aria-label={`Select ${r.company_name ?? 'agreement'}`} />
+                <td><input type="checkbox" className="accent-[#5B3FE3]" disabled={!r.email} checked={selected.has(r.id)} onChange={() => toggle(r.id)} aria-label={`Select ${r.company_name ?? 'agreement'}`} /></td>
+                <td>
+                  <div className="font-medium text-[#261E5A]">{r.company_name ?? '—'}</div>
+                  <div className="text-xs text-[#6E6A8A]">{r.email ?? 'No email on file'}</div>
                 </td>
-                <td className="px-3 py-3">
-                  <div className="font-medium text-[#1B1726]">{r.company_name ?? '—'}</div>
-                  <div className="text-xs text-[#6B6878]">{r.email ?? 'No email on file'}</div>
-                </td>
-                <td className="px-3 py-3 text-[#4A4757]">
+                <td className="text-[#261E5A]">
                   {[r.ad_size, r.frequency].filter(Boolean).join(' · ') || r.channel}
-                  {r.needs_full_form && <div className="text-xs text-amber-700">Full form (not one-tap yet)</div>}
+                  {r.needs_full_form && <div className="text-xs text-amber-700">Opens the full form</div>}
                 </td>
-                <td className="px-3 py-3 text-[#4A4757]">
+                <td className="text-[#261E5A]">
                   {money(r.rate_cents)}
-                  {r.new_rate_cents != null && r.new_rate_cents !== r.rate_cents && (
-                    <div className="text-xs text-[#42277C]">renews at {money(r.new_rate_cents)}</div>
-                  )}
+                  {r.new_rate_cents != null && r.new_rate_cents !== r.rate_cents && <div className="text-xs text-[#4B30CC]">renews at {money(r.new_rate_cents)}</div>}
                 </td>
-                <td className="px-3 py-3">
-                  <div className="text-[#4A4757]">{when(r.exp_date)}</div>
+                <td>
+                  <div className="text-[#261E5A]">{when(r.exp_date)}</div>
                   <DaysPill days={r.days_left} />
                 </td>
-                <td className="px-3 py-3">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATE_STYLE[r.state]}`}>{STATE_LABEL[r.state]}</span>
-                  {r.last_sent_at && <div className="mt-1 text-xs text-[#6B6878]">Sent {new Date(r.last_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{r.reminders_sent ? ` · ${r.reminders_sent} reminder${r.reminders_sent === 1 ? '' : 's'}` : ''}</div>}
+                <td>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATE_STYLE[r.state]}`}>{STATE_LABEL[r.state]}</span>
+                  {r.last_sent_at && <div className="mt-1 text-xs text-[#6E6A8A]">Sent {new Date(r.last_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{r.reminders_sent ? ` · ${r.reminders_sent} reminder${r.reminders_sent === 1 ? '' : 's'}` : ''}</div>}
                 </td>
-                <td className="px-3 py-3">
+                <td>
                   <div className="flex justify-end gap-2">
+                    <button onClick={() => act(r.id, 'preview')} disabled={busy !== null} className={A.small}>{busy === `${r.id}:preview` ? '…' : 'Preview'}</button>
                     <button
-                      onClick={() => act(r.id, 'preview')}
-                      disabled={busy !== null}
-                      className="rounded-full border border-[#D9D5E8] px-3 py-1 text-xs font-medium text-[#301D5D] hover:bg-[#F6F5FB] disabled:opacity-50"
-                    >
-                      {busy === `${r.id}:preview` ? '…' : 'Preview'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (window.confirm(`Email the renewal link to ${r.email}?`)) void act(r.id, 'send');
-                      }}
+                      onClick={() => { if (window.confirm(`Email the renewal link to ${r.email}?`)) void act(r.id, 'send'); }}
                       disabled={busy !== null || !r.email}
-                      className="rounded-full bg-[#301D5D] px-3 py-1 text-xs font-medium text-white hover:bg-[#42277C] disabled:opacity-50"
+                      className={A.small}
                     >
                       {busy === `${r.id}:send` ? '…' : r.state === 'not_started' || r.state === 'draft' ? 'Send' : 'Resend'}
                     </button>

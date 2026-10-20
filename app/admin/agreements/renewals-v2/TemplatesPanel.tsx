@@ -4,10 +4,11 @@
 // frequency and monthly rate when you create a new agreement.
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
 
 export type Template = { id: string; name: string; ad_size: string | null; frequency: string | null; ad_rate_cents: number | null; updated_at: string };
 
-const field = 'rounded-lg border border-[#D9D5E8] bg-white px-3 py-2 text-sm text-[#301D5D]';
+const field = A.input;
 
 export default function TemplatesPanel() {
   const [rows, setRows] = useState<Template[] | null>(null);
@@ -48,34 +49,37 @@ export default function TemplatesPanel() {
   }
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" aria-label="Search templates" className={`${field} w-56 rounded-full`} />
-        <button onClick={() => setOpen((o) => !o)} className="rounded-full bg-[#301D5D] px-5 py-2 text-sm font-semibold text-white hover:bg-[#42277C]">Create template</button>
+        <SearchBox value={q} onChange={setQ} label="Search templates" />
+        <button onClick={() => setOpen((o) => !o)} className={A.primary}>Create template</button>
       </div>
-      {msg && <div className="rounded-lg border border-[#D9D5E8] bg-[#F6F5FB] px-4 py-2 text-sm text-[#301D5D]">{msg}</div>}
+      {msg && <div className={A.notice}>{msg}</div>}
       {open && (
-        <div className="grid gap-3 rounded-2xl border border-[#E6E5EC] bg-white p-4 sm:grid-cols-4">
+        <div className={`${A.card} grid gap-3 p-4 sm:grid-cols-4`}>
           <input className={field} placeholder="Template name" aria-label="Template name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <input className={field} placeholder="Ad size (1/4 page)" aria-label="Ad size" value={form.ad_size} onChange={(e) => setForm({ ...form, ad_size: e.target.value })} />
           <input className={field} placeholder="Frequency (3x)" aria-label="Frequency" value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })} />
           <input className={field} placeholder="Monthly rate ($)" aria-label="Monthly rate" inputMode="decimal" value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value })} />
-          <div className="sm:col-span-4"><button onClick={create} className="rounded-full bg-[#301D5D] px-5 py-2 text-sm font-semibold text-white hover:bg-[#42277C]">Save template</button></div>
+          <div className="sm:col-span-4 flex gap-3">
+            <button onClick={() => setOpen(false)} className={A.outline}>Cancel</button>
+            <button onClick={create} className={A.primary}>Save template</button>
+          </div>
         </div>
       )}
-      <div className="overflow-hidden rounded-lg border border-[#E6E5EC] bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-[#F6F5FB] text-xs text-[#6B6878]"><tr><th className="px-3 py-2 font-medium">Template name</th><th className="px-3 py-2 font-medium">Ad size</th><th className="px-3 py-2 font-medium">Frequency</th><th className="px-3 py-2 font-medium">Monthly rate</th><th className="px-3 py-2" /></tr></thead>
-          <tbody className="divide-y divide-[#F0EEF6]">
-            {rows === null && <tr><td colSpan={5} className="px-3 py-8 text-center text-[#6B6878]">Loading…</td></tr>}
-            {rows !== null && list.length === 0 && <tr><td colSpan={5} className="px-3 py-8 text-center text-[#6B6878]">No templates yet.</td></tr>}
+      <div className="overflow-x-auto">
+        <table className={A.table}>
+          <thead><tr><th>Template name</th><th>Ad size</th><th>Frequency</th><th>Monthly rate</th><th /></tr></thead>
+          <tbody>
+            {rows === null && <tr><td colSpan={5} className="text-center text-[#6E6A8A]">Loading…</td></tr>}
+            {rows !== null && list.length === 0 && <tr><td colSpan={5}><EmptyState title="No templates" body="Create a template to prefill new agreements." /></td></tr>}
             {list.map((t) => (
               <tr key={t.id}>
-                <td className="px-3 py-3 font-medium text-[#1B1726]">{t.name}</td>
-                <td className="px-3 py-3 text-[#4A4757]">{t.ad_size ?? '—'}</td>
-                <td className="px-3 py-3 text-[#4A4757]">{t.frequency ?? '—'}</td>
-                <td className="px-3 py-3 text-[#4A4757]">{t.ad_rate_cents == null ? '—' : `$${(t.ad_rate_cents / 100).toLocaleString('en-US')}`}</td>
-                <td className="px-3 py-3 text-right"><button onClick={() => remove(t)} className="rounded-full border border-[#D9D5E8] px-3 py-1 text-xs font-medium text-[#301D5D] hover:bg-[#F6F5FB]">Delete</button></td>
+                <td className="font-medium text-[#261E5A]">{t.name}</td>
+                <td className="text-[#261E5A]">{t.ad_size ?? '—'}</td>
+                <td className="text-[#261E5A]">{t.frequency ?? '—'}</td>
+                <td className="text-[#261E5A]">{t.ad_rate_cents == null ? '—' : `$${(t.ad_rate_cents / 100).toLocaleString('en-US')}`}</td>
+                <td className="text-right"><button onClick={() => remove(t)} className={A.small}>Delete</button></td>
               </tr>
             ))}
           </tbody>
