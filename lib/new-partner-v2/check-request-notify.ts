@@ -10,7 +10,7 @@ import { getNotifications } from '@/lib/agreements-v2/settings';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
 
-export async function notifyCheckRequest(ag: { id: string; company_name: string | null; rep_name: string | null }, note: string): Promise<{ sent: boolean; reason?: string }> {
+export async function notifyCheckRequest(ag: { id: string; company_name: string | null; rep_name: string | null }, note: string): Promise<{ sent: boolean; reason?: string; messageId?: string }> {
   try {
     const settings = await getNotifications();
     if (!settings.team_check_request) return { sent: false, reason: 'turned off in Notifications' };
@@ -27,7 +27,7 @@ export async function notifyCheckRequest(ag: { id: string; company_name: string 
         <p style="color: #999; font-size: 12px; margin: 16px 0 0;">Agreement ID: ${escapeHtml(ag.id)}</p>
       </div>`;
     const res = await sendEmail({ to: ADMIN_INBOX, subject: `[Realty News Now] Check payment request - ${company.slice(0, 80)}`, html });
-    return res.ok ? { sent: true } : { sent: false, reason: res.error };
+    return res.ok ? { sent: true, messageId: res.messageId } : { sent: false, reason: res.error };
   } catch (err) {
     return { sent: false, reason: err instanceof Error ? err.message : 'failed' };
   }
