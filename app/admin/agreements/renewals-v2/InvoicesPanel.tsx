@@ -79,14 +79,14 @@ export default function InvoicesPanel() {
             <tbody>
               {pageRows.map((i) => (
                 <tr key={i.id}>
-                  <td className="font-medium text-[#261E5A]">{i.number ?? 'Draft'}</td>
-                  <td>{i.advertiser_name ?? '—'}</td>
+                  <td className="max-w-[180px] truncate whitespace-nowrap font-medium text-[#261E5A]" title={i.number ?? undefined}>{i.number ?? 'Draft'}</td>
+                  <td className="min-w-[180px]">{i.advertiser_name ?? '—'}</td>
                   <td><Status i={i} /></td>
-                  <td>{day(i.issued_at ?? i.created_at)}</td>
-                  <td>{day(i.due_date)}</td>
-                  <td className="text-right">{money(i.total_cents)}</td>
-                  <td className="text-right">{money(i.amount_paid_cents)}</td>
-                  <td className="text-right font-medium">{money(i.balance_cents)}</td>
+                  <td className="whitespace-nowrap">{day(i.issued_at ?? i.created_at)}</td>
+                  <td className="whitespace-nowrap">{day(i.due_date)}</td>
+                  <td className="whitespace-nowrap text-right">{money(i.total_cents)}</td>
+                  <td className="whitespace-nowrap text-right">{money(i.amount_paid_cents)}</td>
+                  <td className="whitespace-nowrap text-right font-medium">{money(i.balance_cents)}</td>
                   <td>{i.agreement_id ? <span className="text-xs text-[#5B3FE3]">Linked</span> : <span className="text-xs text-[#9A97B3]">None</span>}</td>
                 </tr>
               ))}

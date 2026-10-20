@@ -41,7 +41,7 @@ export default function AgreementsBeta() {
         <h1 className={A.title}>Agreements <span className="ml-1 rounded-full border border-[#5B3FE3] px-2 py-0.5 align-middle text-xs font-medium text-[#5B3FE3]">Beta</span></h1>
         <p className={A.subtitle}>{SUB[tab]}</p>
       </div>
-      <div className="flex flex-wrap gap-x-8 border-b border-[#D8D5E6]" role="tablist" aria-label="Agreements beta">
+      <div className="flex gap-x-8 overflow-x-auto whitespace-nowrap border-b border-[#D8D5E6]" role="tablist" aria-label="Agreements beta">
         {TABS.map(([key, label]) => (
           <button
             key={key}

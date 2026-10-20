@@ -52,9 +52,9 @@ export default function ServicesPanel() {
                 <tr key={r.id}>
                   <td><div className="font-medium text-[#261E5A]">{r.name}</div>{r.sales_description && <div className="line-clamp-1 text-xs text-[#6E6A8A]">{r.sales_description}</div>}</td>
                   <td>{ITEM_TYPE_LABELS[r.item_type] ?? r.item_type}</td>
-                  <td>{r.category ?? '—'}</td>
-                  <td>{r.market ? MARKET[r.market] ?? r.market : '—'}</td>
-                  <td className="text-right">{formatProductPrice(r.price_cents)}</td>
+                  <td className="min-w-[140px]">{r.category ?? '—'}</td>
+                  <td className="whitespace-nowrap">{r.market ? MARKET[r.market] ?? r.market : '—'}</td>
+                  <td className="whitespace-nowrap text-right">{formatProductPrice(r.price_cents)}</td>
                   <td><span className={`rounded-full border px-2.5 py-0.5 text-xs ${r.is_active ? 'border-green-600 text-green-700' : 'border-[#9A97B3] text-[#6E6A8A]'}`}>{r.is_active ? 'Active' : 'Inactive'}</span></td>
                 </tr>
               ))}
