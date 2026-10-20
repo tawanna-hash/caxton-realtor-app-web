@@ -151,16 +151,43 @@ export default function AppShell({
       }
     } catch {}
 
-    // Listen for cross-tab pub changes (NavDrawer's pub switch dispatches this event)
+    // Re-sync the header with the market cookie. The cookie is the source of
+    // truth that every page body reads, so the header must follow it on any
+    // change: in-page switches, another tab, a ?pub= link, or coming back to
+    // the app (iOS restores pages from cache with a stale market).
     function onPubChange() {
       try {
-        const saved = localStorage.getItem('caxton_pub');
+        const m = document.cookie.match(/(?:^|;\s*)caxton_pub=([^;]+)/);
+        const saved = (m ? decodeURIComponent(m[1]) : null) || localStorage.getItem('caxton_pub');
         if (isPublicActivePubId(saved)) setPub(saved);
       } catch {}
     }
+    function onVisible() {
+      if (document.visibilityState === 'visible') onPubChange();
+    }
     window.addEventListener('savedPubChange', onPubChange);
-    return () => window.removeEventListener('savedPubChange', onPubChange);
+    window.addEventListener('storage', onPubChange);
+    window.addEventListener('focus', onPubChange);
+    window.addEventListener('pageshow', onPubChange);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('savedPubChange', onPubChange);
+      window.removeEventListener('storage', onPubChange);
+      window.removeEventListener('focus', onPubChange);
+      window.removeEventListener('pageshow', onPubChange);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, []);
+
+  // Also re-sync on every route change (a ?pub= link updates the cookie
+  // without remounting the shell).
+  useEffect(() => {
+    try {
+      const m = document.cookie.match(/(?:^|;\s*)caxton_pub=([^;]+)/);
+      const saved = m ? decodeURIComponent(m[1]) : null;
+      if (saved && isPublicActivePubId(saved)) queueMicrotask(() => { setPub(saved); });
+    } catch {}
+  }, [pathname]);
 
   // Hydrate user — 3 sources, in priority order:
   //   PRIORITY 1 (synchronous, no network): localStorage `caxton_session_user`
@@ -285,8 +312,11 @@ export default function AppShell({
     router.push(isAdmin ? '/admin/login' : '/login');
   }, [isAdmin, router]);
 
-  const handlePubSwitch = useCallback(() => {
-    const other = pub === 'realtyline' ? 'newsline' : 'realtyline';
+  const handlePubSwitch = useCallback((targetPubId?: string) => {
+    // Use the market the user actually picked. Toggling from local state
+    // flipped it back whenever the header had drifted out of sync with the
+    // cookie, which left pages on the wrong market.
+    const other = targetPubId && isPubId(targetPubId) ? targetPubId : pub === 'realtyline' ? 'newsline' : 'realtyline';
     try {
       // Cookie is the source of truth; localStorage is a legacy mirror.
       const maxAge = 60 * 60 * 24 * 365;

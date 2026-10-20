@@ -161,7 +161,7 @@ type Props = {
   isAdmin: boolean;
   user: User;
   onLogout: () => void;
-  onPubSwitch: () => void;
+  onPubSwitch: (targetPubId?: string) => void;
 };
 
 export default function NavDrawer({
@@ -268,7 +268,7 @@ export default function NavDrawer({
                       // Use the host-level switcher hook if AppShell wired one
                       // up; otherwise fall through to a full navigation so
                       // server components re-render with the new cookie.
-                      try { onPubSwitch(); } catch { /* ignore */ }
+                      try { onPubSwitch(m.id); } catch { /* ignore */ }
                       onClose();
                       if (typeof window !== 'undefined') {
                         window.location.assign('/');
