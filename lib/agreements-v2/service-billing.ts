@@ -22,6 +22,10 @@ export const DEFAULT_BILLING: ServiceBilling = { cadence: 'monthly', timing: 'st
 export type PaymentSettings = {
   card: boolean;
   check: boolean;
+  /** Bank (ACH) debit at signing. The partner pays the ACH fee. */
+  bank_now: boolean;
+  /** Invoiced, with a bank (ACH) pay link on each invoice. */
+  bank_invoice: boolean;
   /** Days from invoice to due date. null uses the account default. */
   due_days: number | null;
   /** Show the billing schedule to the client on the review and payment steps. */
@@ -30,7 +34,7 @@ export type PaymentSettings = {
   schedule_view: 'timeline' | 'occurrence';
 };
 
-export const DEFAULT_PAYMENT: PaymentSettings = { card: true, check: true, due_days: null, show_schedule: true, schedule_view: 'timeline' };
+export const DEFAULT_PAYMENT: PaymentSettings = { card: true, check: true, bank_now: true, bank_invoice: true, due_days: null, show_schedule: true, schedule_view: 'timeline' };
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -141,7 +145,7 @@ export function summarize(plans: ServicePlan[], rows: InvoiceRow[]): Summary {
 export function cleanPayment(p: Partial<PaymentSettings> | null | undefined): PaymentSettings {
   const x = p ?? {};
   const due = typeof x.due_days === 'number' && x.due_days >= 0 && x.due_days <= 120 ? Math.round(x.due_days) : null;
-  return { card: x.card !== false, check: x.check !== false, due_days: due, show_schedule: x.show_schedule !== false, schedule_view: x.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
+  return { card: x.card !== false, check: x.check !== false, bank_now: x.bank_now === true, bank_invoice: x.bank_invoice === true, due_days: due, show_schedule: x.show_schedule !== false, schedule_view: x.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
 }
 
 export function billingBadge(b: ServiceBilling): string {

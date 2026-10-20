@@ -487,6 +487,8 @@ export default function BuilderClient() {
               <div>
                 <div className="mb-2 font-medium">Payment methods the client can choose</div>
                 <label className="flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.card} onChange={(e) => update({ payment: { ...doc.payment, card: e.target.checked } })} />Credit card <span className="text-[#6E6A8A]">(3% surcharge added, charged when they sign)</span></label>
+                <label className="mt-2 flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.bank_now} onChange={(e) => update({ payment: { ...doc.payment, bank_now: e.target.checked } })} />Bank account (ACH), pay now <span className="text-[#6E6A8A]">(debited at signing, partner pays the bank fee: 0.8%, max $5)</span></label>
+                <label className="mt-2 flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.bank_invoice} onChange={(e) => update({ payment: { ...doc.payment, bank_invoice: e.target.checked } })} />Invoiced, pay each invoice by bank <span className="text-[#6E6A8A]">(any product; nothing charged at signing)</span></label>
                 <label className="mt-2 flex items-center gap-3"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={doc.payment.check} onChange={(e) => update({ payment: { ...doc.payment, check: e.target.checked } })} />Check <span className="text-[#6E6A8A]">(invoiced on the schedule; print agreements only)</span></label>
               </div>
               <Field label="Number of days until the payment is due" isSelect>
@@ -737,7 +739,7 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
   const [step, setStep] = useState(-1);
   const [mobile, setMobile] = useState(false);
   const pay = doc.payment ?? DEFAULT_PAYMENT;
-  const methods = [pay.card ? 'credit card' : null, pay.check ? 'check' : null].filter(Boolean).join(' or ');
+  const methods = [pay.card ? 'credit card' : null, pay.check ? 'check' : null, pay.bank_now ? 'bank (ACH) now' : null, pay.bank_invoice ? 'bank (ACH) on invoices' : null].filter(Boolean).join(' or ');
   const due = pay.due_days === 0 ? 'Payment is due upon receipt of invoice.' : pay.due_days != null ? `Payment is due ${pay.due_days} ${pay.due_days === 1 ? 'day' : 'days'} after each invoice is issued.` : 'Payment is due on the account default schedule after each invoice is issued.';
   const body = (
     <div className="space-y-4 text-sm text-[#261E5A]">

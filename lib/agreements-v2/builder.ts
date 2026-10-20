@@ -32,6 +32,7 @@ async function ensure(sql: Sql) {
     services jsonb NOT NULL DEFAULT '[]'::jsonb,
     updated_at timestamptz NOT NULL DEFAULT now())`;
   await sql`ALTER TABLE agreements_v2_meta ADD COLUMN IF NOT EXISTS payment jsonb`;
+  await sql`ALTER TABLE agreements_v2_meta ADD COLUMN IF NOT EXISTS options jsonb`;
   ready = true;
 }
 
@@ -71,14 +72,16 @@ export type AgreementMeta = {
   expires_at: string | null;
   ask_address: boolean;
   refs: Array<{ name: string; value: string; client_facing: boolean }>;
-  services: Array<{ line_no: number; name: string; description: string; billing?: ServiceBilling }>;
+  services: Array<{ line_no: number; name: string; description: string; billing?: ServiceBilling; optional?: boolean; discount_note?: string }>;
   payment: PaymentSettings | null;
+  /** Packages the client chooses between. One entry (or none) means no choice. */
+  options: Array<{ name: string; line_nos: number[] }> | null;
 };
 
 export async function getAgreementMeta(agreementId: string, sql: Sql = getSql()): Promise<AgreementMeta | null> {
   try {
     await ensure(sql);
-    const rows = await sql`SELECT name, intro, note, to_char(expires_at, 'YYYY-MM-DD') AS expires_at, ask_address, refs, services, payment FROM agreements_v2_meta WHERE agreement_id = ${agreementId}` as unknown as AgreementMeta[];
+    const rows = await sql`SELECT name, intro, note, to_char(expires_at, 'YYYY-MM-DD') AS expires_at, ask_address, refs, services, payment, options FROM agreements_v2_meta WHERE agreement_id = ${agreementId}` as unknown as AgreementMeta[];
     return rows[0] ?? null;
   } catch {
     return null;
@@ -87,8 +90,8 @@ export async function getAgreementMeta(agreementId: string, sql: Sql = getSql())
 
 export async function saveAgreementMeta(agreementId: string, m: Partial<AgreementMeta>, sql: Sql = getSql()): Promise<void> {
   await ensure(sql);
-  await sql`INSERT INTO agreements_v2_meta (agreement_id, name, intro, note, expires_at, ask_address, refs, services, payment)
-    VALUES (${agreementId}, ${m.name ?? null}, ${m.intro ?? null}, ${m.note ?? null}, ${m.expires_at ?? null}, ${m.ask_address ?? false}, ${JSON.stringify(m.refs ?? [])}::jsonb, ${JSON.stringify(m.services ?? [])}::jsonb, ${m.payment ? JSON.stringify(m.payment) : null}::jsonb)
+  await sql`INSERT INTO agreements_v2_meta (agreement_id, name, intro, note, expires_at, ask_address, refs, services, payment, options)
+    VALUES (${agreementId}, ${m.name ?? null}, ${m.intro ?? null}, ${m.note ?? null}, ${m.expires_at ?? null}, ${m.ask_address ?? false}, ${JSON.stringify(m.refs ?? [])}::jsonb, ${JSON.stringify(m.services ?? [])}::jsonb, ${m.payment ? JSON.stringify(m.payment) : null}::jsonb, ${m.options ? JSON.stringify(m.options) : null}::jsonb)
     ON CONFLICT (agreement_id) DO UPDATE SET name = EXCLUDED.name, intro = EXCLUDED.intro, note = EXCLUDED.note, expires_at = EXCLUDED.expires_at,
-      ask_address = EXCLUDED.ask_address, refs = EXCLUDED.refs, services = EXCLUDED.services, payment = EXCLUDED.payment, updated_at = now()`;
+      ask_address = EXCLUDED.ask_address, refs = EXCLUDED.refs, services = EXCLUDED.services, payment = EXCLUDED.payment, options = EXCLUDED.options, updated_at = now()`;
 }
