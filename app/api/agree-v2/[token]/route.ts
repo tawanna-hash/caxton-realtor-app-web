@@ -197,7 +197,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       if (checkRequestState(ag.audit_log) === null) {
         const note = typeof body.note === 'string' ? body.note.trim().slice(0, 300) : '';
         await recordNewPartnerEvent(sql, id, CHECK_REQUEST_EVENT, `Partner asked for approval to pay by check.${note ? ` Note: ${note}` : ''}`);
-        await notifyCheckRequest(ag, note);
+        const alert = await notifyCheckRequest(ag, note);
+        await recordNewPartnerEvent(sql, id, 'newpartner_v2_check_alert', alert.sent ? `Team alert emailed (message ${alert.messageId ?? 'no id'}).` : `Team alert not sent: ${alert.reason ?? 'unknown'}.`);
       }
       return NextResponse.json({ ok: true });
     } catch (err) {
