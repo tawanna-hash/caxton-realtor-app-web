@@ -105,7 +105,7 @@ export function InvoiceDrawer({
   const defaultDueDate = addCalendarDays(defaultBillingDate, 20);
 
   const [form, setForm] = useState({
-    number: existing ? (existing.number ?? '') : 'INV #16201',
+    number: existing ? (existing.number ?? '') : 'INV #16301',
     advertiser_id: initialAdvertiserId as number | null,
     agreement_id: initialAgreementId,
     status: (existing?.status ?? 'draft') as InvoiceStatus,
@@ -138,12 +138,12 @@ export function InvoiceDrawer({
     if (!isCreate) return;
     let alive = true;
     fetch('/api/admin/invoices?next_number=1')
-      .then((response) => response.ok ? response.json() : { next_number: 'INV #16201' })
+      .then((response) => response.ok ? response.json() : { next_number: 'INV #16301' })
       .then((data: { next_number?: string }) => {
         if (!alive || !data.next_number) return;
         setForm((current) => ({ ...current, number: data.next_number ?? current.number }));
       })
-      .catch(() => { /* Keep INV #16201 as the safe starting number. */ });
+      .catch(() => { /* Keep INV #16301 as the safe starting number. */ });
     return () => { alive = false; };
   }, [isCreate]);
 

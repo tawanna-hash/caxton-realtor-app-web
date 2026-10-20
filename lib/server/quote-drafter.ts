@@ -16,6 +16,7 @@
  */
 
 import { getSql } from '@/lib/db';
+import { allocateInvoiceNumber } from '@/lib/server/invoice-lifecycle';
 import { ApiError } from '@/lib/server/error';
 import {
   PACKAGES,
@@ -29,7 +30,6 @@ import {
   monthlyRateForMarkets,
 } from '@/lib/media-kit';
 import {
-  formatInvoiceNumber,
   type InvoiceLineItem,
   type Invoice,
 } from '@/lib/invoices';
@@ -506,16 +506,7 @@ export async function draftQuote(
       ? new Date().toISOString().slice(0, 10)
       : null);
 
-  // Generate invoice number per publication per year.
-  const year = new Date().getFullYear();
-  const seqRows = (await sql`
-    SELECT count(*)::int AS n
-      FROM invoices i
-      JOIN advertisers a ON a.id = i.advertiser_id
-     WHERE a.publication = ${billPublication}
-       AND EXTRACT(YEAR FROM i.created_at) = ${year}
-  `) as unknown as Array<{ n: number }>;
-  const number = formatInvoiceNumber(billPublication, year, (seqRows[0]?.n ?? 0) + 1);
+  const number = await allocateInvoiceNumber(sql);
 
   // ── Insert invoice tied to agreement ─────────────────────────────────
   const invRows = (await sql`
@@ -925,15 +916,7 @@ async function draftBundledQuote(
 
   // Inline invoice INSERT (matches single-line path style).
   const invoiceLines: InvoiceLineItem[] = computed.map((c) => c.invoice_line);
-  const year = new Date().getFullYear();
-  const seqRows = (await sql`
-    SELECT count(*)::int AS n
-      FROM invoices i
-      JOIN advertisers a ON a.id = i.advertiser_id
-     WHERE a.publication = ${billPublication}
-       AND EXTRACT(YEAR FROM i.created_at) = ${year}
-  `) as unknown as Array<{ n: number }>;
-  const number = formatInvoiceNumber(billPublication, year, (seqRows[0]?.n ?? 0) + 1);
+  const number = await allocateInvoiceNumber(sql);
 
   const invRows = (await sql`
     INSERT INTO invoices (

@@ -18,7 +18,7 @@ import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 import { withNeonTransaction } from '@/lib/server/db/neon';
-import { nextDocumentNumber } from '@/lib/server/invoice-lifecycle';
+import { INVOICE_NUMBER_START, allocateInvoiceNumberWithClient, nextDocumentNumber } from '@/lib/server/invoice-lifecycle';
 import {
   appendInvoiceAudit,
   autoChargeInvoice,
@@ -59,21 +59,19 @@ export async function GET(req: NextRequest) {
     const sql = getSql();
     if (searchParams.get('next_number') === '1') {
       const rows = await sql`
-        SELECT (
-          GREATEST(
-            COALESCE(MAX(
-              CASE
-                WHEN number ~ '^INV #[0-9]+$' THEN substring(number from '[0-9]+')::bigint
-                WHEN number ~ '^[0-9]+$' THEN number::bigint
-                ELSE NULL
-              END
-            ), 0),
-            16200
-          ) + 1
+        SELECT GREATEST(
+          ${INVOICE_NUMBER_START}::bigint,
+          COALESCE((SELECT next_value FROM document_number_counters WHERE series = 'invoice'), 0)::bigint,
+          COALESCE((SELECT MAX(
+            CASE
+              WHEN number ~ '^INV #[0-9]{1,9}$' THEN substring(number from '[0-9]+')::bigint
+              WHEN number ~ '^[0-9]{1,9}$' THEN number::bigint
+              ELSE NULL
+            END
+          ) FROM invoices), 0)::bigint + 1
         )::text AS next_sequence
-        FROM invoices
       ` as unknown as Array<{ next_sequence: string }>;
-      return NextResponse.json({ next_number: `INV #${rows[0]?.next_sequence ?? '16201'}` });
+      return NextResponse.json({ next_number: `INV #${rows[0]?.next_sequence ?? INVOICE_NUMBER_START}` });
     }
     let rows: unknown[];
     if (advertiserId !== null) {
@@ -283,24 +281,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
         const sequence = await nextDocumentNumber(client, series);
         number = `SR-${year}-${String(sequence).padStart(4, '0')}`;
       } else if (!number) {
-        await client.query(
-          `INSERT INTO document_number_counters (series, next_value)
-           SELECT 'invoice',
-                  GREATEST(
-                    COALESCE(MAX(
-                      CASE
-                        WHEN number ~ '^INV #[0-9]+$' THEN substring(number from '[0-9]+')::integer
-                        WHEN number ~ '^[0-9]+$' THEN number::integer
-                        ELSE NULL
-                      END
-                    ), 0),
-                    16200
-                  ) + 1
-             FROM invoices
-           ON CONFLICT (series) DO NOTHING`,
-        );
-        const sequence = await nextDocumentNumber(client, 'invoice');
-        number = `INV #${sequence}`;
+        number = await allocateInvoiceNumberWithClient(client);
       }
 
       const rows = await client.query(
