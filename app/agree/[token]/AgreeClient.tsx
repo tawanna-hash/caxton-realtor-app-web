@@ -20,10 +20,18 @@ type Summary = {
   needs_full_form: boolean;
   full_form_url: string;
   allow_check: boolean;
+  bank_now_available?: boolean;
+  bank_invoice_available?: boolean;
+  bank_fee_cents?: number | null;
+  bank_charge_cents?: number | null;
+  timeline_bank_now?: TimelineView;
+  timeline_bank_invoice?: TimelineView;
   card_available: boolean;
   card_charge_cents: number | null;
   card_base_cents: number | null;
-  lines: Array<{ package_label: string; description: string | null; channel: string; quantity: number; amount_cents: number; pay_now: boolean }>;
+  lines: Array<{ line_no?: number; package_label: string; description: string | null; channel: string; quantity: number; amount_cents: number; pay_now: boolean; optional?: boolean; discount_note?: string | null }>;
+  needs_option?: boolean;
+  options?: Array<{ name: string; total_cents: number; lines: Array<{ line_no: number; package_label: string; description: string | null; amount_cents: number; optional: boolean; discount_note: string | null }> }> | null;
   expired: boolean;
   details: { name: string | null; note: string | null; ask_address: boolean; refs: Array<{ name: string; value: string }>; expires_at: string | null } | null;
   placement: { lines: PlacementNeed[]; single: PlacementNeed | null };
@@ -51,7 +59,7 @@ export default function AgreeClient({ token }: { token: string }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [fields, setFields] = useState<Fields>({});
-  const [pay, setPay] = useState<'check' | 'card'>('check');
+  const [pay, setPay] = useState<'check' | 'card' | 'bank_now' | 'bank_invoice'>('check');
   const [name, setName] = useState('');
   const [agree, setAgree] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -61,8 +69,14 @@ export default function AgreeClient({ token }: { token: string }) {
   const stripeRef = useRef<StripePaymentHandle>(null);
   const [cardReady, setCardReady] = useState(false);
   const [cardPaid, setCardPaid] = useState(false);
+  const [bankPi, setBankPi] = useState<string | null>(null);
+  const bankRef = useRef<StripePaymentHandle>(null);
+  const [bankReady, setBankReady] = useState(false);
   // Placement dates keyed by line number (0 = single-product agreement). Index 0 is the start / preferred date.
   const [dates, setDates] = useState<Record<number, string[]>>({});
+  const [reloadKey, setReloadKey] = useState(0);
+  const [pickedOption, setPickedOption] = useState(0);
+  const [declined, setDeclined] = useState<number[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -74,7 +88,7 @@ export default function AgreeClient({ token }: { token: string }) {
         if (!alive) return;
         const s = j as Summary;
         setData(s);
-        if (!s.allow_check) setPay('card');
+        if (!s.allow_check) setPay(s.card_available ? 'card' : s.bank_now_available ? 'bank_now' : s.bank_invoice_available ? 'bank_invoice' : 'card');
         const seed: Record<number, string[]> = {};
         for (const n of [...s.placement.lines, ...(s.placement.single ? [s.placement.single] : [])]) {
           seed[n.line_no] = n.channel === 'email'
@@ -86,11 +100,30 @@ export default function AgreeClient({ token }: { token: string }) {
       })
       .catch((e: unknown) => { if (alive) setLoadError(e instanceof Error ? e.message : 'This link is not valid.'); });
     return () => { alive = false; };
-  }, [token]);
+  }, [token, reloadKey]);
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setFields((f) => ({ ...f, [k]: e.target.value }));
 
   const needs: PlacementNeed[] = data ? [...data.placement.lines, ...(data.placement.single ? [data.placement.single] : [])] : [];
+
+  async function submitChoice() {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const r = await fetch(`/api/agree-v2/${encodeURIComponent(token)}`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'choose', option: data?.needs_option ? pickedOption : undefined, declined }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Could not save your choice.');
+      setDeclined([]);
+      setReloadKey((k) => k + 1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save your choice.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   function nextFromReview() {
     setError(null);
@@ -110,6 +143,22 @@ export default function AgreeClient({ token }: { token: string }) {
 
   async function nextFromPay() {
     setError(null);
+    if (pay === 'bank_now') {
+      if (bankPi) return setStep(2);
+      if (!bankRef.current) return setError('The bank form is not ready yet. Please wait a moment and try again.');
+      setSubmitting(true);
+      try {
+        const r = await bankRef.current.confirm();
+        if ('skipped' in r) throw new Error('The bank form did not load. Please reload the page.');
+        setBankPi(r.paymentIntentId);
+        setStep(2);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Your bank payment could not be started.');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
     if (pay !== 'card') return setStep(2);
     if (cardPaid) return setStep(2);
     if (!stripeRef.current) return setError('The card form is not ready yet. Please wait a moment and try again.');
@@ -146,7 +195,7 @@ export default function AgreeClient({ token }: { token: string }) {
       const res = await fetch(`/api/agree-v2/${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ signerName: name.trim(), termsAccepted: true, paymentMode: pay, fields, placement: buildPlacement() }),
+        body: JSON.stringify({ signerName: name.trim(), termsAccepted: true, paymentMode: pay, bankPaymentIntentId: pay === 'bank_now' ? bankPi : undefined, fields, placement: buildPlacement() }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -191,6 +240,7 @@ export default function AgreeClient({ token }: { token: string }) {
       {data.lines.map((l, i) => (
         <div key={i}>
           <div className="flex justify-between gap-4"><dt className="text-[#6E6A8A]">{l.package_label}{l.quantity > 1 ? ` × ${l.quantity}` : ''}</dt><dd className="text-right font-medium text-[#1B1726]">{money(l.amount_cents)}</dd></div>
+          {l.discount_note && <p className="text-xs text-green-700">{l.discount_note}</p>}
           {l.description && <p className="mt-1 whitespace-pre-line text-xs text-[#4A4767]">{l.description}</p>}
         </div>
       ))}
@@ -239,7 +289,46 @@ export default function AgreeClient({ token }: { token: string }) {
         </ol>
       </div>
 
-      {step === 0 && (
+      {step === 0 && !data.expired && (data.needs_option || data.lines.some((l) => l.optional)) && (
+        <div className={card}>
+          <h2 className="text-lg font-semibold text-[#261E5A]">{data.needs_option ? 'Choose your package' : 'Choose your services'}</h2>
+          <p className="mt-1 text-sm text-[#4A4767]">{data.needs_option ? 'Pick the option that fits you best. You can still review everything before you pay.' : 'Untick anything you do not want.'}</p>
+          <div className="mt-4 space-y-4">
+            {(data.needs_option && data.options ? data.options : [{ name: '', total_cents: data.lines.reduce((n, l) => n + l.amount_cents, 0), lines: data.lines.map((l) => ({ line_no: l.line_no ?? 0, package_label: l.package_label, description: l.description, amount_cents: l.amount_cents, optional: l.optional === true, discount_note: l.discount_note ?? null })) }]).map((o, oi) => {
+              const active = !data.needs_option || pickedOption === oi;
+              return (
+                <div key={oi} className={`rounded-md border p-4 ${active ? 'border-[#5B3FE3] bg-[#F7F5FF]' : 'border-[#ECEAF4]'}`}>
+                  {data.needs_option && (
+                    <label className="flex cursor-pointer items-center justify-between gap-3 text-sm font-semibold text-[#261E5A]">
+                      <span className="flex items-center gap-2"><input type="radio" name="pkg" className="h-4 w-4 accent-[#5B3FE3]" checked={pickedOption === oi} onChange={() => { setPickedOption(oi); setDeclined([]); }} />{o.name}</span>
+                      <span>{money(o.total_cents)}</span>
+                    </label>
+                  )}
+                  <ul className={`${data.needs_option ? 'mt-3' : ''} space-y-3 text-sm`}>
+                    {o.lines.map((l) => (
+                      <li key={l.line_no}>
+                        <div className="flex items-start justify-between gap-3">
+                          <label className="flex items-start gap-2 text-[#261E5A]">
+                            {l.optional && active ? <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#5B3FE3]" checked={!declined.includes(l.line_no)} onChange={(e) => setDeclined((d) => (e.target.checked ? d.filter((n) => n !== l.line_no) : [...d, l.line_no]))} /> : null}
+                            <span>{l.package_label}{l.optional ? <span className="ml-2 rounded-full border border-[#D8D5E6] px-2 py-0.5 text-[10px] text-[#6E6A8A]">Optional</span> : null}</span>
+                          </label>
+                          <span className="font-medium text-[#1B1726]">{money(l.amount_cents)}</span>
+                        </div>
+                        {l.discount_note && <div className="text-xs text-green-700">{l.discount_note}</div>}
+                        {l.description && <p className="mt-1 whitespace-pre-line text-xs text-[#4A4767]">{l.description}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+          {error && <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          <button type="button" onClick={submitChoice} disabled={submitting} className={`${pill} mt-5`}>{submitting ? 'Saving…' : 'Continue'}</button>
+        </div>
+      )}
+
+      {step === 0 && !(data.needs_option || data.lines.some((l) => l.optional)) && (
         <div className={card}>
           <h2 className="text-lg font-semibold text-[#261E5A]">Review your details</h2>
           <p className="mt-1 text-sm text-[#4A4767]">We filled in what we have. Fix anything that is out of date.</p>
@@ -317,10 +406,32 @@ export default function AgreeClient({ token }: { token: string }) {
                 )}
               </>
             )}
+            {data.bank_now_available && (
+              <>
+                <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-4 text-sm ${pay === 'bank_now' ? 'border-[#5B3FE3] bg-[#F3F0FF]' : 'border-[#D8D5E6]'}`}>
+                  <input type="radio" name="pay" checked={pay === 'bank_now'} disabled={cardPaid} onChange={() => setPay('bank_now')} className="accent-[#5B3FE3]" />
+                  <span>Bank account (ACH), pay now <span className="text-[#6E6A8A]">(debited today)</span></span>
+                </label>
+                {pay === 'bank_now' && (
+                  <div className="rounded-md border border-[#D8D5E6] p-4">
+                    <p className="mb-3 rounded-md bg-[#FEF8CC] p-3 text-xs text-[#645600]">
+                      A bank payment fee of {money(data.bank_fee_cents ?? 0)} is added. {money(data.bank_charge_cents ?? null)} will be debited from your bank account{data.lines.length > 0 ? ' for the items due now' : ' for the first issue'}. Bank payments can take a few business days to clear.
+                    </p>
+                    <StripePaymentBlock ref={bankRef} token={token} endpoint={`/api/agree-v2/${encodeURIComponent(token)}/bank-intent`} adRateCents={data.card_base_cents ?? data.bank_charge_cents ?? 0} onReadyChange={setBankReady} />
+                  </div>
+                )}
+              </>
+            )}
+            {data.bank_invoice_available && (
+              <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-4 text-sm ${pay === 'bank_invoice' ? 'border-[#5B3FE3] bg-[#F3F0FF]' : 'border-[#D8D5E6]'}`}>
+                <input type="radio" name="pay" checked={pay === 'bank_invoice'} disabled={cardPaid} onChange={() => setPay('bank_invoice')} className="accent-[#5B3FE3]" />
+                <span>Invoiced, pay each invoice by bank (ACH) <span className="text-[#6E6A8A]">(nothing is charged today)</span></span>
+              </label>
+            )}
           </div>
           <div className="mt-6 rounded-md border border-[#ECEAF4] p-4">
             <h3 className="mb-3 text-sm font-semibold text-[#261E5A]">Billing timeline</h3>
-            {pay === 'check' && data.schedule_view === 'occurrence' && data.schedule_groups?.length ? (
+            {(pay === 'check' || pay === 'bank_invoice') && data.schedule_view === 'occurrence' && data.schedule_groups?.length ? (
               <div className="space-y-4">
                 {data.schedule_groups.map((g, i) => (
                   <div key={i}>
@@ -330,13 +441,13 @@ export default function AgreeClient({ token }: { token: string }) {
                 ))}
               </div>
             ) : (
-              <BillingTimeline timeline={pay === 'card' ? data.timeline_card : data.timeline_check} empty="Your billing dates will be confirmed after you sign." />
+              <BillingTimeline timeline={pay === 'card' ? data.timeline_card : pay === 'bank_now' ? (data.timeline_bank_now ?? null) : pay === 'bank_invoice' ? (data.timeline_bank_invoice ?? null) : data.timeline_check} empty="Your billing dates will be confirmed after you sign." />
             )}
           </div>
           {error && <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <div className="mt-5 flex gap-3">
             <button type="button" onClick={() => setStep(0)} className={ghost}>Back</button>
-            <button type="button" onClick={nextFromPay} disabled={submitting || (pay === 'card' && !cardPaid && !cardReady)} className={pill}>{submitting ? 'Processing…' : pay === 'card' && !cardPaid ? `Pay ${money(data.card_charge_cents)} and continue` : 'Continue to sign'}</button>
+            <button type="button" onClick={nextFromPay} disabled={submitting || (pay === 'card' && !cardPaid && !cardReady) || (pay === 'bank_now' && !bankPi && !bankReady)} className={pill}>{submitting ? 'Processing…' : pay === 'card' && !cardPaid ? `Pay ${money(data.card_charge_cents)} and continue` : pay === 'bank_now' && !bankPi ? `Pay ${money(data.bank_charge_cents ?? null)} by bank and continue` : 'Continue to sign'}</button>
           </div>
         </div>
       )}

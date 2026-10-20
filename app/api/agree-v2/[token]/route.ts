@@ -28,9 +28,11 @@ import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
 import { getDefaults } from '@/lib/agreements-v2/settings';
 import { getAgreementMeta } from '@/lib/agreements-v2/builder';
 import { invoiceRows, occurrenceGroups, plansForLines, type PaymentSettings } from '@/lib/agreements-v2/service-billing';
+import { applyChoice } from '@/lib/agreements-v2/options';
 import { buildPlacementPatches, placementNeeds } from '@/lib/agreements-v2/placement';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
 import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
+import { processingFeeCents } from '@/lib/payment-processing-fees';
 import { POST as liveSign } from '@/app/api/ad-sign/[token]/route';
 
 export const runtime = 'nodejs';
@@ -85,7 +87,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     const meta = await getAgreementMeta(ag.id, sql);
     const expired = Boolean(meta?.expires_at && meta.expires_at < new Date().toISOString().slice(0, 10) && !ag.signed_at);
     const tlAgreement = { ...ag, ad_rate_cents: ag.ad_rate_cents, amount_cents: (ag.lines_total ?? 0) > 0 ? ag.lines_total : ag.amount_cents } as Agreement;
-    const payOpts: PaymentSettings = { card: meta?.payment?.card !== false, check: meta?.payment?.check !== false, due_days: meta?.payment?.due_days ?? null, show_schedule: meta?.payment?.show_schedule !== false, schedule_view: meta?.payment?.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
+    const payOpts: PaymentSettings = { card: meta?.payment?.card !== false, check: meta?.payment?.check !== false, bank_now: meta?.payment?.bank_now === true, bank_invoice: meta?.payment?.bank_invoice === true, due_days: meta?.payment?.due_days ?? null, show_schedule: meta?.payment?.show_schedule !== false, schedule_view: meta?.payment?.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
     // Per-service billing options saved with the agreement drive the schedule the partner sees.
     let perService: ReturnType<typeof checkTimeline> | null = null;
     const startIso = ag.start_date ? new Date(ag.start_date as unknown as string).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
@@ -121,8 +123,17 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       needs_full_form: needsFullForm(ag),
       lines: lines.map((l) => {
         const m = meta?.services.find((x) => x.line_no === l.line_no);
-        return { ...l, package_label: m?.name || l.package_label, description: m?.description || null };
+        return { ...l, package_label: m?.name || l.package_label, description: m?.description || null, optional: m?.optional === true, discount_note: m?.discount_note || null };
       }),
+      needs_option: (meta?.options?.length ?? 0) > 1,
+      options: (meta?.options?.length ?? 0) > 1 ? meta!.options!.map((o) => ({
+        name: o.name,
+        total_cents: lines.filter((l) => o.line_nos.includes(Number(l.line_no))).reduce((n, l) => n + Number(l.amount_cents || 0), 0),
+        lines: lines.filter((l) => o.line_nos.includes(Number(l.line_no))).map((l) => {
+          const m = meta!.services.find((x) => x.line_no === l.line_no);
+          return { line_no: l.line_no, package_label: m?.name || l.package_label, description: m?.description || null, amount_cents: l.amount_cents, optional: m?.optional === true, discount_note: m?.discount_note || null };
+        }),
+      })) : null,
       details: meta ? { name: meta.name, note: meta.note, ask_address: meta.ask_address, refs: meta.refs.filter((r) => r.client_facing), expires_at: meta.expires_at } : null,
       expired,
       placement: placementNeeds({ ...ag, channel } as never, lines as never),
@@ -130,6 +141,14 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       card_base_cents: base,
       card_charge_cents: surcharged,
       timeline_check: !payOpts.show_schedule || !allowsCheckPayment(channel) ? null : perService ?? checkTimeline(tlAgreement, defaults),
+      timeline_bank_invoice: !payOpts.show_schedule ? null : perService ?? checkTimeline(tlAgreement, defaults),
+      bank_now_available: isStripeConfigured() && base != null && payOpts.bank_now,
+      bank_fee_cents: base != null ? processingFeeCents(base, 'ach') : null,
+      bank_charge_cents: base != null ? base + processingFeeCents(base, 'ach') : null,
+      bank_invoice_available: payOpts.bank_invoice,
+      timeline_bank_now: payOpts.show_schedule && base != null
+        ? { ok: true, hidden: 0, entries: [{ date: null, label: 'Debited from your bank today', amount_cents: base + processingFeeCents(base, 'ach'), note: 'includes the bank payment fee' }, { date: null, label: 'Later invoices', amount_cents: null, note: 'sent to you, payable by bank transfer' }] }
+        : null,
       timeline_card: payOpts.show_schedule ? cardTimeline(ag, base, surcharged) : null,
       schedule_hidden: !payOpts.show_schedule,
       schedule_view: payOpts.schedule_view,
@@ -162,6 +181,19 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'invalid json' }, { status: 400 }); }
 
+  if (body.action === 'choose') {
+    try {
+      const { sql, ag } = await load(id);
+      if (!ag) return NextResponse.json({ error: 'not found' }, { status: 404 });
+      const res = await applyChoice(getSql(), id, { option: typeof body.option === 'number' ? body.option : undefined, declined: Array.isArray(body.declined) ? (body.declined as unknown[]).map(Number) : [] });
+      if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
+      await recordNewPartnerEvent(sql, id, 'newpartner_v2_choice', `Partner chose a package or declined optional services. ${res.kept} service${res.kept === 1 ? '' : 's'} kept.`);
+      return NextResponse.json({ ok: true });
+    } catch (err) {
+      return NextResponse.json({ error: 'failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });
+    }
+  }
+
   const signerName = typeof body.signerName === 'string' ? body.signerName.trim() : '';
   if (!signerName) return NextResponse.json({ error: 'Please type your full name to sign.' }, { status: 400 });
   if (body.termsAccepted !== true) return NextResponse.json({ error: 'Please accept the terms to continue.' }, { status: 400 });
@@ -174,11 +206,37 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     if (meta?.expires_at && meta.expires_at < new Date().toISOString().slice(0, 10)) {
       return NextResponse.json({ error: 'This agreement has expired. Please contact us for a new one.' }, { status: 410 });
     }
+    if ((meta?.options?.length ?? 0) > 1) {
+      return NextResponse.json({ error: 'Please choose one of the packages first.' }, { status: 400 });
+    }
     if (needsFullForm(ag)) {
       return NextResponse.json({ error: 'This agreement needs the full form.', code: 'needs_full_form' }, { status: 422 });
     }
 
     const mode = typeof body.paymentMode === 'string' ? body.paymentMode : '';
+    let bankIntentId: string | null = null;
+    if (mode === 'bank_now') {
+      if (!isStripeConfigured()) return NextResponse.json({ error: 'Bank payment is not available right now.' }, { status: 402 });
+      if (meta?.payment?.bank_now !== true) return NextResponse.json({ error: 'Bank payment is not available for this agreement.' }, { status: 400 });
+      const piId = typeof body.bankPaymentIntentId === 'string' ? body.bankPaymentIntentId : '';
+      if (!piId) return NextResponse.json({ error: 'Please connect your bank account on the payment step.' }, { status: 402 });
+      try {
+        const pi = await getStripe().paymentIntents.retrieve(piId);
+        const expected = chargeBaseCents(ag);
+        if (pi.metadata?.agreement_id !== ag.id || !pi.payment_method_types.includes('us_bank_account') || expected == null || pi.amount !== expected + processingFeeCents(expected, 'ach')) {
+          return NextResponse.json({ error: 'That bank payment does not match this agreement. Please go back and try again.' }, { status: 402 });
+        }
+        if (!['succeeded', 'processing'].includes(pi.status)) {
+          return NextResponse.json({ error: 'Your bank payment was not completed. Please go back and try again.' }, { status: 402 });
+        }
+        bankIntentId = pi.id;
+      } catch {
+        return NextResponse.json({ error: 'We could not confirm your bank payment. Please try again.' }, { status: 402 });
+      }
+    }
+    if (mode === 'bank_invoice' && meta?.payment?.bank_invoice !== true) {
+      return NextResponse.json({ error: 'Bank payment on invoices is not available for this agreement.' }, { status: 400 });
+    }
     if (mode === 'card') {
       // The card was charged on the Pay step through the live PaymentIntent
       // endpoint. Only accept it if Stripe confirms that intent went through.
@@ -195,7 +253,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         return NextResponse.json({ error: 'We could not confirm your card payment. Please try again.' }, { status: 402 });
       }
     }
-    if (mode !== 'check' && mode !== 'card') {
+    if (mode !== 'check' && mode !== 'card' && mode !== 'bank_now' && mode !== 'bank_invoice') {
       return NextResponse.json({ error: 'Please choose how you would like to pay.' }, { status: 400 });
     }
     if (mode === 'card' && meta?.payment?.card === false) {
@@ -208,7 +266,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ error: 'Check payment is not available for this agreement.' }, { status: 400 });
     }
 
-    const patches: Record<string, unknown> = { payment_mode: mode };
+    const patches: Record<string, unknown> = { payment_mode: mode === 'bank_now' || mode === 'bank_invoice' ? 'invoice' : mode };
     const given = (body.fields ?? {}) as Record<string, unknown>;
     for (const k of EDITABLE) {
       const v = given[k];
@@ -260,7 +318,10 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) return NextResponse.json(data, { status: res.status });
 
-    await recordNewPartnerEvent(sql, id, 'newpartner_v2_accepted', `Signed via the new-partner flow by "${signerName}" (${mode})`);
+    await recordNewPartnerEvent(sql, id, 'newpartner_v2_accepted', `Signed via the new-partner flow by "${signerName}" (${mode === 'bank_now' ? 'bank payment now' : mode === 'bank_invoice' ? 'invoiced, pay by bank' : mode})`);
+    if (bankIntentId) {
+      await recordNewPartnerEvent(sql, id, 'newpartner_v2_bank_payment', `Bank (ACH) payment started at signing: ${bankIntentId}. The first amount is already covered, so skip or adjust the first invoice when reviewing the draft billing schedule.`);
+    }
     // Phase 3: draft recurring schedule for review. Never blocks the signing.
     await createDraftScheduleForAgreement(sql, id, null);
     return NextResponse.json({ ok: true });

@@ -38,7 +38,7 @@ test('invoices group by date and summary', () => {
 });
 test('plansForLines needs saved billing; payment defaults', () => {
   assert.equal(m.plansForLines([{ line_no: 1, package_label: 'x', amount_cents: 1 }], [{ line_no: 1 }], ctx), null);
-  assert.deepEqual(m.cleanPayment({ card: false }), { card: false, check: true, due_days: null, show_schedule: true, schedule_view: 'timeline' });
+  assert.deepEqual(m.cleanPayment({ card: false }), { card: false, check: true, bank_now: false, bank_invoice: false, due_days: null, show_schedule: true, schedule_view: 'timeline' });
   assert.equal(m.termMonths({ channel: 'app', app_weeks: 5 }), 2);
 });
 

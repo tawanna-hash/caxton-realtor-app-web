@@ -175,7 +175,9 @@ export async function sendNewPartnerEmail(
   if (!(await getNotifications(sql)).client_new_partner_invite) return { ok: false, error: 'This email is turned off in Notification settings' };
   const meta = await getAgreementMeta(agreementId, sql);
   const li = await sql`SELECT line_no, package_label, amount_cents FROM agreement_line_items WHERE agreement_id = ${agreementId} ORDER BY line_no`.catch(() => []) as unknown as Array<{ line_no: number; package_label: string; amount_cents: number }>;
-  const emailLines = li.map((l) => ({ label: meta?.services.find((x) => x.line_no === l.line_no)?.name || l.package_label, cents: l.amount_cents }));
+  const emailLines = (meta?.options?.length ?? 0) > 1
+    ? meta!.options!.map((o) => ({ label: `${o.name} (choose one)`, cents: li.filter((l) => o.line_nos.includes(l.line_no)).reduce((n, l) => n + l.amount_cents, 0) }))
+    : li.map((l) => ({ label: meta?.services.find((x) => x.line_no === l.line_no)?.name || l.package_label, cents: l.amount_cents }));
   const link = agreementLink(agreementId);
   const result = await sendEmail({
     to,

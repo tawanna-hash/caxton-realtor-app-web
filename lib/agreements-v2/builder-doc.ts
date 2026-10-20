@@ -24,6 +24,13 @@ export type ServiceLine = {
   description: string;
   /** How this service is invoiced. Missing means the account default (monthly, automatic). */
   billing?: ServiceBilling;
+  /** Which package (option) this service belongs to, 0-based. Missing means the first. */
+  option?: number;
+  /** Price before a discount. When set, price_cents is the discounted price the client pays. */
+  list_cents?: number;
+  discount?: { type: 'pct' | 'amount'; value: number };
+  /** The client may decline this service when approving. */
+  optional?: boolean;
 };
 
 export type BuilderDoc = {
@@ -40,6 +47,8 @@ export type BuilderDoc = {
   note: string;
   refs: Array<{ name: string; value: string; client_facing: boolean }>;
   payment: PaymentSettings;
+  /** Package names. More than one means the client picks one package. */
+  options: string[];
 };
 
 export type Catalog = {
@@ -62,6 +71,7 @@ export const EMPTY_DOC: BuilderDoc = {
   note: '',
   refs: [],
   payment: DEFAULT_PAYMENT,
+  options: ['Option 1'],
 };
 
 /** Catalog price for a service as configured, in cents. */
@@ -79,8 +89,18 @@ export function defaultPriceCents(l: Pick<ServiceLine, 'channel' | 'package_id' 
   return Math.round((slot?.weekly[l.app_markets ?? 1] ?? 0) * 100 * Math.max(1, l.app_weeks ?? 1));
 }
 
-export function docTotalCents(doc: Pick<BuilderDoc, 'services'>): number {
-  return doc.services.reduce((n, s) => n + Math.max(0, Math.round(s.price_cents || 0)), 0);
+export const optionOf = (s: Pick<ServiceLine, 'option'>, count: number): number => Math.min(Math.max(0, s.option ?? 0), Math.max(0, count - 1));
+
+/** Price after a discount, in cents. Never below zero. */
+export function discountedCents(list: number, d: { type: 'pct' | 'amount'; value: number } | undefined): number {
+  if (!d || !(d.value > 0)) return Math.max(0, Math.round(list));
+  const off = d.type === 'pct' ? Math.round(list * Math.min(100, d.value) / 100) : Math.round(d.value * 100);
+  return Math.max(0, Math.round(list) - off);
+}
+
+export function docTotalCents(doc: Pick<BuilderDoc, 'services'> & { options?: string[] }, option?: number): number {
+  const count = doc.options?.length ?? 1;
+  return doc.services.filter((s) => option === undefined || optionOf(s, count) === option).reduce((n, s) => n + Math.max(0, Math.round(s.price_cents || 0)), 0);
 }
 
 const addDaysIso = (iso: string, n: number) => {
@@ -110,11 +130,30 @@ export function docProblems(doc: BuilderDoc): string[] {
   if (doc.services.length === 0) out.push('Add at least one service.');
   if (doc.services.some((s) => !(s.price_cents > 0))) out.push('Every service needs a price above $0.');
   if (doc.effective === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(doc.effective_date)) out.push('Choose the effective date.');
+  const optCount = doc.options?.length ?? 1;
+  for (let o = 0; o < optCount; o++) {
+    if (optCount > 1 && !doc.services.some((s) => optionOf(s, optCount) === o)) out.push(`${doc.options[o] || `Option ${o + 1}`} has no services. Add one or remove the package.`);
+    if (optCount > 1 && doc.services.filter((s) => optionOf(s, optCount) === o).every((s) => s.optional)) out.push(`${doc.options[o] || `Option ${o + 1}`} needs at least one required service.`);
+  }
+  if (optCount === 1 && doc.services.length > 0 && doc.services.every((s) => s.optional)) out.push('At least one service must be required.');
   const pay = doc.payment ?? DEFAULT_PAYMENT;
-  if (!pay.card && !pay.check) out.push('Allow at least one payment method.');
-  if (!pay.card && doc.services.some((s) => s.channel !== 'print')) out.push('Check payments are only available for print agreements. Allow credit card.');
+  if (!pay.card && !pay.check && !pay.bank_now && !pay.bank_invoice) out.push('Allow at least one payment method.');
+  if (!pay.card && !pay.bank_now && !pay.bank_invoice && doc.services.some((s) => s.channel !== 'print')) out.push('Check payments are only available for print agreements. Allow credit card or bank payment.');
   if (doc.services.some((s) => s.billing?.start === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(s.billing.start_date))) out.push('Choose the billing start date for each service that bills on a specific date.');
   return out;
+}
+
+/** Services in line order: package by package. Line numbers on the saved agreement follow this order. */
+export function orderedServices(doc: Pick<BuilderDoc, 'services'> & { options?: string[] }): ServiceLine[] {
+  const count = doc.options?.length ?? 1;
+  return doc.services.map((s, i) => ({ s, i })).sort((a, b) => optionOf(a.s, count) - optionOf(b.s, count) || a.i - b.i).map((x) => x.s);
+}
+
+/** Package definitions for the saved agreement: which line numbers belong to each. */
+export function optionDefs(doc: Pick<BuilderDoc, 'services'> & { options?: string[] }): Array<{ name: string; line_nos: number[] }> {
+  const names = doc.options?.length ? doc.options : ['Option 1'];
+  const ordered = orderedServices(doc);
+  return names.map((name, o) => ({ name: name.trim() || `Option ${o + 1}`, line_nos: ordered.map((s, i) => (optionOf(s, names.length) === o ? i + 1 : 0)).filter(Boolean) }));
 }
 
 /** Body for POST /api/admin/quotes (bundled quote with explicit prices). */
@@ -125,7 +164,7 @@ export function quotePayload(doc: BuilderDoc, publication: Pub) {
       : { name: doc.new_client!.name.trim(), contact_email: doc.new_client!.email.trim(), billing_email: doc.new_client!.email.trim(), publication: publication === 'both' ? 'austin' : publication },
     rep_name: doc.new_client?.contact?.trim() || undefined,
     memo: doc.name.trim() || undefined,
-    line_items: doc.services.map((s) => ({
+    line_items: orderedServices(doc).map((s) => ({
       channel: s.channel,
       package_id: s.package_id,
       ...(s.channel === 'print' ? { size: s.size, months: Math.max(1, s.months ?? 1) } : {}),

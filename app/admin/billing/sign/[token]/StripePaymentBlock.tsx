@@ -25,6 +25,8 @@ export interface StripePaymentHandle {
 
 interface Props {
   token: string;
+  /** Override the PaymentIntent endpoint (bank payments on the new-partner page). Defaults to the live card endpoint. */
+  endpoint?: string;
   /** Cents. If 0/missing the block renders an "ad rate required" message instead. */
   adRateCents: number;
   /** Force re-fetch the PaymentIntent when amount changes. */
@@ -46,7 +48,7 @@ interface PIResp {
 }
 
 const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function StripePaymentBlock(
-  { token, adRateCents, refreshKey, onReadyChange },
+  { token, endpoint, adRateCents, refreshKey, onReadyChange },
   ref,
 ) {
   const [pi, setPi] = useState<PIResp | null>(null);
@@ -63,7 +65,7 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
     }
     setLoading(true);
     setError(null);
-    fetch(`/api/sign/${token}/payment-intent`, { method: 'POST' })
+    fetch(endpoint ?? `/api/sign/${token}/payment-intent`, { method: 'POST' })
       .then(async (r) => {
         const j = (await r.json()) as PIResp | { error: string; detail?: string };
         if (!r.ok) {
@@ -85,7 +87,7 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
     return () => {
       cancelled = true;
     };
-  }, [token, adRateCents, refreshKey]);
+  }, [token, endpoint, adRateCents, refreshKey]);
 
   // Inner component (has access to Elements context)
   const Inner = useMemo(
