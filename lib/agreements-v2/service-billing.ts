@@ -26,9 +26,11 @@ export type PaymentSettings = {
   due_days: number | null;
   /** Show the billing schedule to the client on the review and payment steps. */
   show_schedule: boolean;
+  /** How the partner sees automatic billing: dated invoices, or grouped by billing occurrence. */
+  schedule_view: 'timeline' | 'occurrence';
 };
 
-export const DEFAULT_PAYMENT: PaymentSettings = { card: true, check: true, due_days: null, show_schedule: true };
+export const DEFAULT_PAYMENT: PaymentSettings = { card: true, check: true, due_days: null, show_schedule: true, schedule_view: 'timeline' };
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -139,7 +141,7 @@ export function summarize(plans: ServicePlan[], rows: InvoiceRow[]): Summary {
 export function cleanPayment(p: Partial<PaymentSettings> | null | undefined): PaymentSettings {
   const x = p ?? {};
   const due = typeof x.due_days === 'number' && x.due_days >= 0 && x.due_days <= 120 ? Math.round(x.due_days) : null;
-  return { card: x.card !== false, check: x.check !== false, due_days: due, show_schedule: x.show_schedule !== false };
+  return { card: x.card !== false, check: x.check !== false, due_days: due, show_schedule: x.show_schedule !== false, schedule_view: x.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
 }
 
 export function billingBadge(b: ServiceBilling): string {
@@ -158,4 +160,23 @@ export function plansForLines(
     const m = metaServices.find((x) => x.line_no === l.line_no);
     return planServiceBilling({ label: m?.name || l.package_label, total_cents: l.amount_cents, billing: cleanBilling(m?.billing) }, ctx);
   });
+}
+
+const ordinal = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
+const longDate = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+
+export type OccurrenceGroup = { title: string; total_cents: number; items: Array<{ label: string; cents: number }> };
+
+/** Services grouped the way Anchor shows "By billing occurrence": same cadence and day billed together. */
+export function occurrenceGroups(plans: ServicePlan[]): OccurrenceGroup[] {
+  const by = new Map<string, OccurrenceGroup>();
+  for (const p of plans) {
+    const key = p.manual ? 'manual' : p.one_time || p.occurrences === 1 ? `once:${p.first_run_date}` : `monthly:${p.day_of_month}`;
+    const title = p.manual ? 'Billed manually, when billing is started' : p.one_time || p.occurrences === 1 ? `Billed once on ${longDate(p.first_run_date as string)}` : `Billed monthly on the ${ordinal(p.day_of_month)}`;
+    const g = by.get(key) ?? { title, total_cents: 0, items: [] };
+    g.total_cents += p.manual ? 0 : p.amount_cents;
+    g.items.push({ label: p.label, cents: p.manual ? p.total_cents : p.amount_cents });
+    by.set(key, g);
+  }
+  return [...by.values()];
 }

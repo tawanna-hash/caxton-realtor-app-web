@@ -27,6 +27,8 @@ type Summary = {
   expired: boolean;
   details: { name: string | null; note: string | null; ask_address: boolean; refs: Array<{ name: string; value: string }>; expires_at: string | null } | null;
   placement: { lines: PlacementNeed[]; single: PlacementNeed | null };
+  schedule_view?: 'timeline' | 'occurrence';
+  schedule_groups?: Array<{ title: string; total_cents: number; items: Array<{ label: string; cents: number }> }> | null;
   timeline_check: TimelineView;
   timeline_card: TimelineView;
   fields: Fields;
@@ -318,7 +320,18 @@ export default function AgreeClient({ token }: { token: string }) {
           </div>
           <div className="mt-6 rounded-md border border-[#ECEAF4] p-4">
             <h3 className="mb-3 text-sm font-semibold text-[#261E5A]">Billing timeline</h3>
-            <BillingTimeline timeline={pay === 'card' ? data.timeline_card : data.timeline_check} empty="Your billing dates will be confirmed after you sign." />
+            {pay === 'check' && data.schedule_view === 'occurrence' && data.schedule_groups?.length ? (
+              <div className="space-y-4">
+                {data.schedule_groups.map((g, i) => (
+                  <div key={i}>
+                    <div className="text-sm font-semibold text-[#261E5A]">{g.title}{g.total_cents > 0 ? ` - ${money(g.total_cents)}` : ''}</div>
+                    <ul className="mt-1 list-disc pl-5 text-sm text-[#4A4767]">{g.items.map((it, k) => <li key={k}>{it.label} <span className="text-[#6E6A8A]">{money(it.cents)}</span></li>)}</ul>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <BillingTimeline timeline={pay === 'card' ? data.timeline_card : data.timeline_check} empty="Your billing dates will be confirmed after you sign." />
+            )}
           </div>
           {error && <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <div className="mt-5 flex gap-3">

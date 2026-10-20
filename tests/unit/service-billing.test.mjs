@@ -38,6 +38,19 @@ test('invoices group by date and summary', () => {
 });
 test('plansForLines needs saved billing; payment defaults', () => {
   assert.equal(m.plansForLines([{ line_no: 1, package_label: 'x', amount_cents: 1 }], [{ line_no: 1 }], ctx), null);
-  assert.deepEqual(m.cleanPayment({ card: false }), { card: false, check: true, due_days: null, show_schedule: true });
+  assert.deepEqual(m.cleanPayment({ card: false }), { card: false, check: true, due_days: null, show_schedule: true, schedule_view: 'timeline' });
   assert.equal(m.termMonths({ channel: 'app', app_weeks: 5 }), 2);
+});
+
+test('occurrence groups mirror Anchor: same day billed together', () => {
+  const plans = [
+    m.planServiceBilling({ label: 'A', total_cents: 40000, billing: b({ term_months: 1 }) }, ctx),
+    m.planServiceBilling({ label: 'B', total_cents: 20000, billing: b({ term_months: 4 }) }, ctx),
+    m.planServiceBilling({ label: 'C', total_cents: 20000, billing: b({ term_months: 4 }) }, ctx),
+  ];
+  const g = m.occurrenceGroups(plans);
+  assert.equal(g.length, 2);
+  assert.equal(g[0].title, 'Billed once on November 18, 2026');
+  assert.equal(g[1].title, 'Billed monthly on the 18th');
+  assert.equal(g[1].total_cents, 10000);
 });
