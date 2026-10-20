@@ -5,11 +5,11 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
-import RenewalsV2Client from './RenewalsV2Client';
+import AgreementsBeta from './AgreementsBeta';
 
 export const dynamic = 'force-dynamic';
 
 export default async function RenewalsV2Page() {
   if (!(await getCurrentAdmin())) redirect('/admin/login');
-  return <RenewalsV2Client />;
+  return <AgreementsBeta />;
 }

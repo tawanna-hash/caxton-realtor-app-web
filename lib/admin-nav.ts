@@ -55,7 +55,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Referral Network', href: '/admin/referral-network', description: 'Provider applications and approvals' },
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
       { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
-      { label: 'Renewals (Beta)', href: '/admin/agreements/renewals-v2', description: 'One-tap renewals, new build' },
+      { label: 'Agreements (Beta)', href: '/admin/agreements/renewals-v2', description: 'One-tap renewals and new-partner agreements' },
       { label: 'Media Kit',    href: '/admin/ads/media-kit',   description: '2026 packages, rates & deadlines' },
     ],
   },
