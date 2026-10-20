@@ -26,6 +26,7 @@ import { brandForPublication } from '@/lib/email-templates';
 import { channelOfRow, chargeBaseCents, needsFullForm, totalCents, recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
 import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
 import { getDefaults } from '@/lib/agreements-v2/settings';
+import { buildPlacementPatches, placementNeeds } from '@/lib/agreements-v2/placement';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
 import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
 import { POST as liveSign } from '@/app/api/ad-sign/[token]/route';
@@ -73,7 +74,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
 
     const channel = channelOfRow(ag);
     const lines = (await sql`
-      SELECT package_label, channel, ad_size, frequency, quantity, amount_cents, pay_now, start_date, end_date
+      SELECT line_no, package_label, channel, ad_size, frequency, quantity, amount_cents, pay_now, start_date, end_date, preferred_send_dates
         FROM agreement_line_items WHERE agreement_id = ${ag.id} ORDER BY line_no
     `.catch(() => [])) as unknown as Array<Record<string, unknown>>;
     const base = chargeBaseCents(ag);
@@ -94,6 +95,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       end_date: ag.end_date,
       needs_full_form: needsFullForm(ag),
       lines,
+      placement: placementNeeds({ ...ag, channel } as never, lines as never),
       card_available: isStripeConfigured() && base != null,
       card_base_cents: base,
       card_charge_cents: surcharged,
@@ -185,6 +187,18 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       if (typeof v === 'string' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
         return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 });
       }
+    }
+
+    // Extra details for non-print products (send dates, app start dates).
+    const lineRows = (await sql`
+      SELECT line_no, package_label, channel, frequency, quantity, start_date, preferred_send_dates
+        FROM agreement_line_items WHERE agreement_id = ${id} ORDER BY line_no
+    `.catch(() => [])) as unknown as Parameters<typeof placementNeeds>[1];
+    const needs = placementNeeds(channelOfRow(ag) === 'print' ? { ...ag, channel: 'print' } as never : { ...ag, channel: channelOfRow(ag) } as never, lineRows);
+    if (needs.lines.length || needs.single) {
+      const built = buildPlacementPatches(needs, body.placement as never, new Date().toISOString().slice(0, 10));
+      if (!built.ok) return NextResponse.json({ error: built.error }, { status: 400 });
+      Object.assign(patches, built.patches);
     }
 
     const liveReq = new NextRequest(new URL(`/api/ad-sign/${token}`, req.url), {

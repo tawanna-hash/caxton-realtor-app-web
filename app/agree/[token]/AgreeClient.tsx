@@ -5,6 +5,8 @@ import BillingTimeline, { type TimelineView } from '@/components/anchor/Timeline
 import StripePaymentBlock, { type StripePaymentHandle } from '@/app/admin/billing/sign/[token]/StripePaymentBlock';
 
 type Fields = Record<string, string>;
+type PlacementNeed = { line_no: number; label: string; channel: 'email' | 'app'; start_date: string | null; preferred_send_dates: string[] };
+const SEND_LABELS = ['Preferred send date', 'Optional send date 1', 'Optional send date 2', 'Optional send date 3'];
 type Summary = {
   brand: string;
   signed: boolean;
@@ -22,6 +24,7 @@ type Summary = {
   card_charge_cents: number | null;
   card_base_cents: number | null;
   lines: Array<{ package_label: string; channel: string; quantity: number; amount_cents: number; pay_now: boolean }>;
+  placement: { lines: PlacementNeed[]; single: PlacementNeed | null };
   timeline_check: TimelineView;
   timeline_card: TimelineView;
   fields: Fields;
@@ -54,6 +57,8 @@ export default function AgreeClient({ token }: { token: string }) {
   const stripeRef = useRef<StripePaymentHandle>(null);
   const [cardReady, setCardReady] = useState(false);
   const [cardPaid, setCardPaid] = useState(false);
+  // Placement dates keyed by line number (0 = single-product agreement). Index 0 is the start / preferred date.
+  const [dates, setDates] = useState<Record<number, string[]>>({});
 
   useEffect(() => {
     let alive = true;
@@ -66,6 +71,13 @@ export default function AgreeClient({ token }: { token: string }) {
         const s = j as Summary;
         setData(s);
         if (!s.allow_check) setPay('card');
+        const seed: Record<number, string[]> = {};
+        for (const n of [...s.placement.lines, ...(s.placement.single ? [s.placement.single] : [])]) {
+          seed[n.line_no] = n.channel === 'email'
+            ? [n.preferred_send_dates[0] ?? n.start_date ?? '', n.preferred_send_dates[1] ?? '', n.preferred_send_dates[2] ?? '', n.preferred_send_dates[3] ?? '']
+            : [n.start_date ?? ''];
+        }
+        setDates(seed);
         setFields(Object.fromEntries(Object.entries(s.fields).map(([k, v]) => [k, String(v ?? '')])));
       })
       .catch((e: unknown) => { if (alive) setLoadError(e instanceof Error ? e.message : 'This link is not valid.'); });
@@ -74,11 +86,16 @@ export default function AgreeClient({ token }: { token: string }) {
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setFields((f) => ({ ...f, [k]: e.target.value }));
 
+  const needs: PlacementNeed[] = data ? [...data.placement.lines, ...(data.placement.single ? [data.placement.single] : [])] : [];
+
   function nextFromReview() {
     setError(null);
     if (!fields.company_name?.trim()) return setError('Please enter your company name.');
     if (!fields.rep_name?.trim()) return setError('Please enter your contact name.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.advertiser_email ?? '')) return setError('Please enter a valid email address.');
+    for (const n of needs) {
+      if (!dates[n.line_no]?.[0]) return setError(n.channel === 'email' ? `Please choose a preferred send date for ${n.label}.` : `Please choose a start date for ${n.label}.`);
+    }
     setStep(1);
   }
 
@@ -100,6 +117,17 @@ export default function AgreeClient({ token }: { token: string }) {
     }
   }
 
+  function buildPlacement() {
+    if (!data) return undefined;
+    const pick = (n: PlacementNeed) => (n.channel === 'email'
+      ? { preferred_send_dates: (dates[n.line_no] ?? []).filter(Boolean) }
+      : { start_date: dates[n.line_no]?.[0] });
+    return {
+      lines: data.placement.lines.map((n) => ({ line_no: n.line_no, ...pick(n) })),
+      single: data.placement.single ? pick(data.placement.single) : undefined,
+    };
+  }
+
   async function submit() {
     setError(null);
     if (!name.trim()) return setError('Please type your full name to sign.');
@@ -109,7 +137,7 @@ export default function AgreeClient({ token }: { token: string }) {
       const res = await fetch(`/api/agree-v2/${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ signerName: name.trim(), termsAccepted: true, paymentMode: pay, fields }),
+        body: JSON.stringify({ signerName: name.trim(), termsAccepted: true, paymentMode: pay, fields, placement: buildPlacement() }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -206,6 +234,31 @@ export default function AgreeClient({ token }: { token: string }) {
             </div>
             <label className="block text-sm text-[#4A4767]">Billing email (if different)<input className={input} type="email" value={fields.billing_email ?? ''} onChange={set('billing_email')} /></label>
           </div>
+          {needs.length > 0 && (
+            <div className="mt-6 space-y-4">
+              <h3 className="text-sm font-semibold text-[#261E5A]">Placement details</h3>
+              {needs.map((n) => (
+                <div key={n.line_no} className="rounded-md border border-[#ECEAF4] p-4">
+                  <div className="mb-2 text-sm font-medium text-[#261E5A]">{n.label}{n.channel === 'email' ? ' send dates' : ' start date'}</div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {(n.channel === 'email' ? SEND_LABELS : ['Start date']).map((label, i) => (
+                      <label key={label} className="block text-xs text-[#4A4767]">
+                        {label}{i === 0 && <span className="text-red-700"> *</span>}
+                        <input
+                          type="date"
+                          min={new Date().toISOString().slice(0, 10)}
+                          value={dates[n.line_no]?.[i] ?? ''}
+                          onChange={(e) => setDates((d) => { const row = [...(d[n.line_no] ?? [])]; row[i] = e.target.value; return { ...d, [n.line_no]: row }; })}
+                          className="mt-1 w-full border border-[#D8D5E6] text-sm"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  {n.channel === 'email' && <p className="mt-2 text-xs text-[#6E6A8A]">Optional dates are backups if your preferred date is taken.</p>}
+                </div>
+              ))}
+            </div>
+          )}
           <h3 className="mb-2 mt-6 text-sm font-semibold text-[#261E5A]">Your order</h3>
           {summary}
           {error && <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
