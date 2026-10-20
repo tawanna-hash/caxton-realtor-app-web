@@ -70,7 +70,7 @@ test('card option is offered on the Pay step (not selected here, nothing is char
   await expect(page.getByLabel(/credit card/i)).toBeVisible();
 });
 
-test('non-print agreement routes to the full form', async ({ page }) => {
+test('agreement with no chargeable amount routes to the full form', async ({ page }) => {
   test.skip(!FULL, 'no full-form link');
   await page.goto(FULL);
   const link = page.getByRole('link', { name: /^continue$/i });

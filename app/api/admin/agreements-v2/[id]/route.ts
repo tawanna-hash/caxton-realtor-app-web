@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { timelinesForAgreement } from '@/lib/agreements-v2/timeline';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
 
 export const runtime = 'nodejs';
@@ -24,6 +25,16 @@ export const POST = withAdminTracking(async function POST(
   if (!UUID_RE.test(id)) return NextResponse.json({ error: 'invalid id' }, { status: 400 });
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* optional */ }
+  if (body.action === 'timeline') {
+    try {
+      await ensureSchema();
+      const t = await timelinesForAgreement(getSql(), id);
+      if (!t) return NextResponse.json({ error: 'not found' }, { status: 404 });
+      return NextResponse.json(t);
+    } catch (err) {
+      return NextResponse.json({ error: 'failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });
+    }
+  }
   if (body.action !== 'create_schedule') return NextResponse.json({ error: 'unknown action' }, { status: 400 });
   try {
     await ensureSchema();
