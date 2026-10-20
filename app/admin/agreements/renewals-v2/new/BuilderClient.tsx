@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { A } from '@/components/anchor/ui';
 import { DEFAULT_BILLING, DEFAULT_PAYMENT, billingBadge, cleanBilling, termMonths, type ServiceBilling } from '@/lib/agreements-v2/service-billing';
 import {
-  EMPTY_DOC, defaultPriceCents, docProblems, docTotalCents, quotePayload,
+  EMPTY_DOC, defaultPriceCents, discountedCents, docProblems, docTotalCents, optionDefs, optionOf, orderedServices, quotePayload,
   type BuilderDoc, type Catalog, type Pub, type ServiceLine,
 } from '@/lib/agreements-v2/builder-doc';
 
@@ -25,6 +25,7 @@ const money = (c: number) => `$${(c / 100).toLocaleString('en-US', { minimumFrac
 const fmtDay = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 const today = () => new Date().toISOString().slice(0, 10);
 const PUB_LABEL: Record<Pub, string> = { austin: 'Austin (RealtyLine)', san_antonio: 'San Antonio (Newsline)', both: 'Both markets' };
+const discountNote = (s: Pick<ServiceLine, 'discount'>) => (s.discount ? (s.discount.type === 'pct' ? `${s.discount.value}% off` : `$${s.discount.value} off`) : '');
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
@@ -66,6 +67,11 @@ export default function BuilderClient() {
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const dirty = useRef(false);
+  const [activeOpt0, setActiveOpt] = useState(0);
+  const [renaming, setRenaming] = useState(false);
+  const opts = doc.options?.length ? doc.options : ['Option 1'];
+  const activeOpt = Math.min(activeOpt0, opts.length - 1);
+  const activeServices = doc.services.filter((x) => optionOf(x, opts.length) === activeOpt);
 
   const [panel, setPanel] = useState(false);
   const [signDate, setSignDate] = useState(today());
@@ -153,17 +159,17 @@ export default function BuilderClient() {
       try {
         const r = await fetch('/api/admin/agreements-v2/builder', {
           method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ action: 'timeline', doc, sign_date: signDate }),
+          body: JSON.stringify({ action: 'timeline', doc: { ...doc, services: activeServices, options: [opts[activeOpt] ?? 'Option 1'] }, sign_date: signDate }),
         });
         setTimeline(await r.json());
         setMonth(0);
       } catch { setTimeline({ ok: false, reason: 'Could not build the timeline.' }); }
     }, 400);
     return () => window.clearTimeout(t);
-  }, [panel, doc, signDate]);
+  }, [panel, doc, signDate, activeOpt]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const total = docTotalCents(doc);
-  const problems = useMemo(() => docProblems(doc), [doc]);
+  const total = docTotalCents({ services: activeServices });
+  const problems = useMemo(() => docProblems({ ...doc, options: opts }), [doc]); // eslint-disable-line react-hooks/exhaustive-deps
   const client = advertisers.find((a) => a.id === doc.advertiser_id) ?? null;
   const firstPub: Pub = doc.services[0]?.publication ?? 'austin';
 
@@ -185,7 +191,7 @@ export default function BuilderClient() {
   async function createAgreement(): Promise<string> {
     const q = await fetch('/api/admin/quotes', {
       method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(quotePayload(doc, firstPub)),
+      body: JSON.stringify(quotePayload({ ...doc, options: opts }, firstPub)),
     });
     const qj = await q.json();
     if (!q.ok) throw new Error(qj.error || qj.message || `Could not create the agreement (HTTP ${q.status})`);
@@ -198,8 +204,9 @@ export default function BuilderClient() {
           name: doc.name, intro: doc.intro, note: doc.note, ask_address: doc.ask_address,
           expires_days: doc.expires ? doc.expires_days : null,
           refs: doc.refs,
-          services: doc.services.map((sv, i) => ({ line_no: i + 1, name: sv.name, description: sv.description, billing: { ...cleanBilling(sv.billing), term_months: termMonths(sv) } })),
+          services: orderedServices({ services: doc.services, options: opts }).map((sv, i) => ({ line_no: i + 1, name: sv.name, description: sv.description, billing: { ...cleanBilling(sv.billing), term_months: termMonths(sv) }, ...(sv.optional ? { optional: true } : {}), ...(sv.discount ? { discount_note: discountNote(sv) } : {}) })),
           payment: doc.payment,
+          options: optionDefs({ services: doc.services, options: opts }),
         },
       }),
     });
@@ -434,19 +441,43 @@ export default function BuilderClient() {
           <section className={A.card}>
             <h2 className="border-b border-[#ECEAF4] px-6 py-4 text-lg font-semibold text-[#261E5A]">Services provided</h2>
             <div className="space-y-3 p-6">
-              {doc.services.length === 0 && <p className="text-sm text-[#6E6A8A]">No services yet. Add the products this agreement covers.</p>}
-              {doc.services.map((s, i) => (
+              <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Packages">
+                {opts.map((name, o) => (
+                  <button key={o} type="button" role="tab" aria-selected={o === activeOpt} onClick={() => { setActiveOpt(o); setRenaming(false); }} className={`rounded-md border px-4 py-2 text-sm ${o === activeOpt ? 'border-[#5B3FE3] bg-[#F3F0FF] font-medium text-[#261E5A]' : 'border-[#D8D5E6] text-[#6E6A8A]'}`}>
+                    {name || `Option ${o + 1}`} <span className="ml-1 text-xs">{money(docTotalCents({ services: doc.services, options: opts }, o))}</span>
+                  </button>
+                ))}
+                {opts.length < 4 && <button type="button" className={A.small} onClick={() => { update({ options: [...opts, `Option ${opts.length + 1}`] }); setActiveOpt(opts.length); }}>+ Add package</button>}
+              </div>
+              {opts.length > 1 && <p className="text-xs text-[#6E6A8A]">The client picks one package, then approves it. Each package has its own services and total.</p>}
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                {renaming ? (
+                  <>
+                    <input className={`${A.input} max-w-xs`} value={opts[activeOpt]} onChange={(e) => update({ options: opts.map((n, o) => (o === activeOpt ? e.target.value : n)) })} aria-label="Package name" />
+                    <button type="button" className={A.small} onClick={() => setRenaming(false)}>Done</button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" className={A.small} onClick={() => setRenaming(true)}>Rename package</button>
+                    <button type="button" className={A.small} onClick={() => { if (opts.length >= 4) return; const idx = opts.length; update({ options: [...opts, `${opts[activeOpt]} copy`], services: [...doc.services, ...activeServices.map((x) => ({ ...x, id: uid(), option: idx }))] }); setActiveOpt(idx); }} disabled={opts.length >= 4}>Duplicate package</button>
+                    {opts.length > 1 && <button type="button" className={A.small} onClick={() => { update({ options: opts.filter((_, o) => o !== activeOpt), services: doc.services.filter((x) => optionOf(x, opts.length) !== activeOpt).map((x) => ({ ...x, option: optionOf(x, opts.length) > activeOpt ? optionOf(x, opts.length) - 1 : optionOf(x, opts.length) })) }); setActiveOpt(0); }}>Remove package</button>}
+                  </>
+                )}
+              </div>
+              {activeServices.length === 0 && <p className="text-sm text-[#6E6A8A]">No services yet. Add the products this agreement covers.</p>}
+              {doc.services.map((s, i) => optionOf(s, opts.length) !== activeOpt ? null : (
                 <div key={s.id} className="rounded-lg border border-[#ECEAF4] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="font-medium text-[#261E5A]">{svcLabel(s)}</div>
+                      <div className="font-medium text-[#261E5A]">{svcLabel(s)}{s.optional && <span className="ml-2 rounded-full border border-[#D8D5E6] px-2 py-0.5 text-[10px] font-normal text-[#6E6A8A]">Optional</span>}</div>
+                      {s.discount && s.list_cents ? <div className="text-xs text-green-700">{discountNote(s)}</div> : null}
                       {s.description && <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs text-[#6E6A8A]">{s.description}</p>}
                     </div>
-                    <div className="text-right font-semibold text-[#261E5A]">{money(s.price_cents)}</div>
+                    <div className="text-right font-semibold text-[#261E5A]">{s.discount && s.list_cents ? <div className="text-xs font-normal text-[#6E6A8A] line-through">{money(s.list_cents)}</div> : null}{money(s.price_cents)}</div>
                   </div>
                   <BillingControls billing={s.billing ?? DEFAULT_BILLING} onChange={(b) => update({ services: doc.services.map((x) => (x.id === s.id ? { ...x, billing: b } : x)) })} />
                   <div className="mt-3 flex gap-2">
-                    <button type="button" className={A.small} onClick={() => setEditIdx(i)}>Edit name and description</button>
+                    <button type="button" className={A.small} onClick={() => setEditIdx(i)}>Edit service, discount and options</button>
                     <button type="button" className={A.small} onClick={() => update({ services: doc.services.filter((x) => x.id !== s.id) })}>Remove</button>
                   </div>
                 </div>
@@ -462,7 +493,7 @@ export default function BuilderClient() {
                   </div>
                 </div>
               )}
-              {doc.services.length > 0 && <div className="flex justify-between border-t border-[#ECEAF4] pt-3 text-sm font-semibold text-[#261E5A]"><span>Agreement total</span><span>{money(total)}</span></div>}
+              {doc.services.length > 0 && <div className="flex justify-between border-t border-[#ECEAF4] pt-3 text-sm font-semibold text-[#261E5A]"><span>{opts.length > 1 ? `${opts[activeOpt] || 'Package'} total` : 'Agreement total'}</span><span>{money(total)}</span></div>}
             </div>
           </section>
 
@@ -536,7 +567,7 @@ export default function BuilderClient() {
       </div>
 
       {/* Add service */}
-      {addOpen && catalog && <ServiceModal catalog={catalog} onClose={() => setAddOpen(false)} onSave={(s) => { update({ services: [...doc.services, s] }); setAddOpen(false); }} />}
+      {addOpen && catalog && <ServiceModal catalog={catalog} onClose={() => setAddOpen(false)} onSave={(s) => { update({ services: [...doc.services, { ...s, option: activeOpt }] }); setAddOpen(false); }} />}
 
       {/* Edit name and description */}
       {editIdx !== null && doc.services[editIdx] && (
@@ -559,7 +590,7 @@ export default function BuilderClient() {
       {/* Client preview */}
       {previewOpen && (
         <PreviewModal
-          doc={doc}
+          doc={{ ...doc, services: activeServices }}
           intro={doc.intro.replace('{first_name}', doc.new_client?.contact?.split(' ')[0] || 'there').replace('{company}', doc.new_client?.name || client?.name || 'your company')}
           preparedFor={doc.new_client?.name || client?.name || ''}
           total={total}
@@ -670,18 +701,30 @@ function ServiceModal({ catalog, onClose, onSave }: { catalog: Catalog; onClose:
 function EditServiceModal({ service, onClose, onSave }: { service: ServiceLine; onClose: () => void; onSave: (p: Partial<ServiceLine>) => void }) {
   const [name, setName] = useState(service.name);
   const [description, setDescription] = useState(service.description);
-  const [price, setPrice] = useState((service.price_cents / 100).toString());
+  const [price, setPrice] = useState(((service.list_cents ?? service.price_cents) / 100).toString());
+  const [dType, setDType] = useState<'pct' | 'amount'>(service.discount?.type ?? 'pct');
+  const [dValue, setDValue] = useState(service.discount ? service.discount.value.toString() : '');
+  const [optional, setOptional] = useState(service.optional === true);
+  const list = Math.round(Number(price) * 100) || 0;
+  const disc = Number(dValue) > 0 ? { type: dType, value: Number(dValue) } : undefined;
+  const final = discountedCents(list, disc);
   return (
-    <Modal title="Service name & description" onClose={onClose}>
+    <Modal title="Edit service" onClose={onClose}>
       <Field label="Service name"><input className={A.input} value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <div>
         <div className="mb-1 text-sm text-[#6E6A8A]">Service description</div>
-        <textarea className={`${A.input} min-h-[180px]`} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What the client gets. Start lines with a dash for a list." />
+        <textarea className={`${A.input} min-h-[140px]`} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What the client gets. Start lines with a dash for a list." />
       </div>
       <Field label="Price (USD)"><input type="number" min={0} step="0.01" className={A.input} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Discount type" isSelect><select className={sel} value={dType} onChange={(e) => setDType(e.target.value as 'pct' | 'amount')}><option value="pct">Percent off</option><option value="amount">Dollars off</option></select></Field>
+        <Field label={dType === 'pct' ? 'Percent' : 'Dollars'}><input type="number" min={0} step="0.01" className={A.input} value={dValue} onChange={(e) => setDValue(e.target.value)} placeholder="No discount" /></Field>
+      </div>
+      <p className="text-sm text-[#261E5A]">The client pays <strong>{money(final)}</strong>{disc ? <span className="text-[#6E6A8A]"> ({money(list)} before the discount)</span> : null}</p>
+      <label className="flex items-center gap-3 text-sm text-[#261E5A]"><input type="checkbox" className="h-4 w-4 accent-[#5B3FE3]" checked={optional} onChange={(e) => setOptional(e.target.checked)} />Optional service <span className="text-[#6E6A8A]">(the client can decline it when approving)</span></label>
       <div className="flex justify-end gap-3">
         <button type="button" className={A.outline} onClick={onClose}>Cancel</button>
-        <button type="button" className={A.primary} disabled={!name.trim()} onClick={() => onSave({ name: name.trim(), description, price_cents: Math.round(Number(price) * 100) || service.price_cents })}>Save</button>
+        <button type="button" className={A.primary} disabled={!name.trim() || final <= 0} onClick={() => onSave({ name: name.trim(), description, price_cents: final, list_cents: disc ? list : undefined, discount: disc, optional: optional || undefined })}>Save</button>
       </div>
     </Modal>
   );
