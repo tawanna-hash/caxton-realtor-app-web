@@ -24,6 +24,7 @@ type Candidate = {
   needs_full_form: boolean;
   state: 'not_started' | 'live_sent' | 'sent' | 'opened';
   last_sent_at: string | null;
+  check_request?: 'requested' | 'approved' | null;
 };
 
 const STATE_LABEL: Record<Candidate['state'], string> = { not_started: 'Not sent', live_sent: 'Sent (current flow)', sent: 'Sent', opened: 'Opened' };
@@ -117,7 +118,7 @@ export default function NewPartnersPanel() {
     } finally { setBusy(null); }
   }
 
-  async function act(id: string, action: 'preview' | 'send') {
+  async function act(id: string, action: 'preview' | 'send' | 'approve_check') {
     setBusy(`${id}:${action}`);
     setNotice(null);
     try {
@@ -127,6 +128,7 @@ export default function NewPartnersPanel() {
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || j.detail || `HTTP ${res.status}`);
       if (action === 'preview') window.open(`${j.link}?preview=1`, '_blank', 'noopener');
+      else if (action === 'approve_check') setNotice('Check payment approved. The partner can now choose to pay by check.');
       else setNotice(`Agreement link sent to ${j.sent_to}.`);
       reload();
     } catch (e) {
@@ -164,10 +166,13 @@ export default function NewPartnersPanel() {
                 <td className="text-[#261E5A]">{money(r.total_cents)}</td>
                 <td>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATE_STYLE[r.state]}`}>{STATE_LABEL[r.state]}</span>
+                  {r.check_request === 'requested' && <div className="mt-1 text-xs text-amber-700">Asked to pay by check</div>}
+                  {r.check_request === 'approved' && <div className="mt-1 text-xs text-green-700">Check approved</div>}
                   {r.last_sent_at && <div className="mt-1 text-xs text-[#6E6A8A]">{new Date(r.last_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>}
                 </td>
                 <td>
                   <div className="flex justify-end gap-2">
+                    {r.check_request === 'requested' && <button onClick={() => act(r.id, 'approve_check')} disabled={busy !== null} className={A.small}>{busy === `${r.id}:approve_check` ? '…' : 'Approve check'}</button>}
                     <button onClick={() => act(r.id, 'preview')} disabled={busy !== null} className={A.small}>{busy === `${r.id}:preview` ? '…' : 'Preview'}</button>
                     <button onClick={() => void openTimeline(r, 'view')} disabled={busy !== null} className={A.small}>{busy === `${r.id}:timeline` ? '…' : 'Timeline'}</button>
                     <button onClick={() => void openTimeline(r, 'send')} disabled={busy !== null || !r.email} className={A.small}>

@@ -7,6 +7,7 @@
 // month/year timing grid, attachments, signing-link flow, amend flow,
 // and the legacy system-fields panel.
 
+import { RENEWAL_CAP_PCT } from "@/lib/renewals-v2/pricing";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   AgreementWithAdvertiser,
@@ -233,9 +234,9 @@ export function AgreementDrawer({
 
   // Rate-lock enforcement: a renewal drafted after the prior agreement's
   // exp_date no longer automatically carries over the old locked rate.
-  // Instead it uses the current published rate card, capped to a 15%
+  // Instead it uses the current published rate card, capped to a 2%
   // increase over the old rate when the card price would jump by more
-  // than 15% (protects against a big card-price swing since the last
+  // than 2% (protects against a big card-price swing since the last
   // sign). Only applies to renewals (renewedFrom) of PRINT agreements —
   // the rate card has no entries for digital/eblast, so those still
   // carry over the old rate unchanged. Editing an existing agreement
@@ -257,16 +258,16 @@ export function AgreementDrawer({
     if (!looked) return null; // no rate-card entry (e.g. digital/eblast) — leave old behavior
     const oldRate = oldRateCents / 100;
     const cardRate = looked.rate;
-    const cappedRate = Math.round(oldRate * 1.15 * 100) / 100;
-    // Card price is the floor, but cap the jump to +15% over the old rate
-    // when the card price would be more than 15% above the old rate.
+    const cappedRate = Math.round(oldRate * (1 + RENEWAL_CAP_PCT / 100) * 100) / 100;
+    // Card price is the floor, but cap the jump to +2% over the old rate
+    // when the card price would be more than 2% above the old rate.
     const newRate =
-      cardRate > oldRate * 1.15 ? cappedRate : Math.max(cardRate, oldRate);
+      cardRate > oldRate * (1 + RENEWAL_CAP_PCT / 100) ? cappedRate : Math.max(cardRate, oldRate);
     return {
       rate: newRate,
       oldRate,
       cardRate,
-      capped: cardRate > oldRate * 1.15,
+      capped: cardRate > oldRate * (1 + RENEWAL_CAP_PCT / 100),
     };
   }, [rateLockExpired, renewedFrom]);
 
@@ -1267,7 +1268,7 @@ export function AgreementDrawer({
                     {rateLockOverride.oldRate.toFixed(2)} to $
                     {rateLockOverride.rate.toFixed(2)} (
                     {rateLockOverride.capped
-                      ? "capped at +15% over the old rate"
+                      ? `capped at +${RENEWAL_CAP_PCT}% over the old rate`
                       : "current rate card"}
                     ). Edit if needed before sending.
                   </div>
