@@ -33,7 +33,7 @@ type Row = Agreement & {
   sched_status: string | null;
   sched_amount: number | null;
   sched_max: number | null;
-  sched_start: string | null;
+  sched_start: string | Date | null;
 };
 
 const has = (log: AgreementAuditEntry[] | null | undefined, ...names: string[]) =>
@@ -87,7 +87,7 @@ export async function listBoard(sql: Sql): Promise<BoardItem[]> {
       schedule_state,
       schedule_id: r.sched_id,
       timeline: r.sched_id && r.sched_amount != null && r.sched_max != null
-        ? { count: r.sched_max, amount_cents: r.sched_amount, start: r.sched_start ? String(r.sched_start).slice(0, 10) : null }
+        ? { count: r.sched_max, amount_cents: r.sched_amount, start: r.sched_start ? (r.sched_start instanceof Date ? r.sched_start.toISOString() : String(r.sched_start)).slice(0, 10) : null }
         : null,
     };
   });
