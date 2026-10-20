@@ -89,6 +89,7 @@ export function FilterChip<T extends string>({
         type="button"
         onClick={() => { setDraft(value); setOpen((o) => !o); }}
         aria-expanded={open}
+        aria-haspopup="dialog"
         className="anchor-chip inline-flex items-center gap-2 rounded-full border border-[#261E5A] bg-white px-4 py-2 text-sm text-[#261E5A]"
       >
         {label}<Chevron up={open} />
@@ -192,7 +193,7 @@ export function EditColumns({ cols, visible, onApply }: { cols: ColumnDef[]; vis
   }, [open]);
   return (
     <div className="relative" ref={ref}>
-      <button type="button" className={`${A.outline} inline-flex items-center gap-2`} aria-expanded={open} onClick={() => { setDraft(visible); setOpen((o) => !o); }}>
+      <button type="button" className={`${A.outline} inline-flex items-center gap-2`} aria-expanded={open} aria-haspopup="dialog" onClick={() => { setDraft(visible); setOpen((o) => !o); }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
         Edit columns
       </button>
