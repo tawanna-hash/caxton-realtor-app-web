@@ -2,10 +2,13 @@
 //
 // Renewals (Beta). Pure renewal pricing, mirroring the rate-lock rule used by
 // the admin Renew drawer: an expired prior agreement no longer carries its
-// locked rate; the renewal uses the current rate card, capped at +15% over
-// the prior rate. Channels without a rate card keep the prior rate.
+// locked rate; the renewal uses the current rate card, capped at +2% over
+// the prior rate (RENEWAL_CAP_PCT). Channels without a rate card keep the prior rate.
 
 import { lookupRate } from '@/lib/agreement-pricing';
+
+/** Largest increase a renewal can carry over the prior rate. */
+export const RENEWAL_CAP_PCT = 2;
 
 export type RenewalPrice = {
   rateCents: number | null;
@@ -41,9 +44,9 @@ export function computeRenewalPrice(
   if (!looked) return base;
   const oldRate = priorRateCents / 100;
   const cardRate = looked.rate;
-  const capped = cardRate > oldRate * 1.15;
+  const capped = cardRate > oldRate * (1 + RENEWAL_CAP_PCT / 100);
   const newRate = capped
-    ? Math.round(oldRate * 1.15 * 100) / 100
+    ? Math.round(oldRate * (1 + RENEWAL_CAP_PCT / 100) * 100) / 100
     : Math.max(cardRate, oldRate);
   return {
     rateCents: Math.round(newRate * 100),

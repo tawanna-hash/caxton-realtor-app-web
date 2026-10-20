@@ -19,7 +19,12 @@ export type ServiceBilling = {
 
 export const DEFAULT_BILLING: ServiceBilling = { cadence: 'monthly', timing: 'start', day: null, start: 'next', start_date: '' };
 
+/** Largest annual price increase an agreement can carry. */
+export const MAX_ANNUAL_INCREASE_PCT = 2;
+
 export type PaymentSettings = {
+  /** Percent added to each service's monthly amount every contract year after the first (0 to 2). */
+  annual_increase_pct: number;
   card: boolean;
   check: boolean;
   /** Bank (ACH) debit at signing. The partner pays the ACH fee. */
@@ -34,7 +39,7 @@ export type PaymentSettings = {
   schedule_view: 'timeline' | 'occurrence';
 };
 
-export const DEFAULT_PAYMENT: PaymentSettings = { card: true, check: true, bank_now: true, bank_invoice: true, due_days: null, show_schedule: true, schedule_view: 'timeline' };
+export const DEFAULT_PAYMENT: PaymentSettings = { annual_increase_pct: 0, card: true, check: true, bank_now: true, bank_invoice: true, due_days: null, show_schedule: true, schedule_view: 'timeline' };
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -83,12 +88,14 @@ export type ServicePlan = {
   first_run_date: string | null;
   day_of_month: number;
   dates: string[];
+  /** Amount of each invoice when it changes over the term (annual increase). Same length as dates. */
+  amounts?: number[];
 };
 
 /** One service's billing plan. `start` is the agreement's effective date (YYYY-MM-DD). */
 export function planServiceBilling(
   svc: { label: string; total_cents: number; billing: ServiceBilling },
-  ctx: { start: string; billing_day: number },
+  ctx: { start: string; billing_day: number; increase_pct?: number },
 ): ServicePlan {
   const b = cleanBilling(svc.billing);
   const total = Math.max(0, Math.round(svc.total_cents));
@@ -111,7 +118,10 @@ export function planServiceBilling(
     if (b.timing === 'end') first = addMonthsIso(first, 1);
   }
   const dates = Array.from({ length: occurrences }, (_, i) => addMonthsIso(first, i));
-  return { label: svc.label, total_cents: total, amount_cents: Math.round(total / occurrences), occurrences, manual: false, one_time: oneTime, first_run_date: first, day_of_month: dom, dates };
+  const base = Math.round(total / occurrences);
+  const pct = Math.min(MAX_ANNUAL_INCREASE_PCT, Math.max(0, Number(ctx.increase_pct) || 0));
+  const amounts = !oneTime && pct > 0 && occurrences > 12 ? dates.map((_, i) => Math.round(base * Math.pow(1 + pct / 100, Math.floor(i / 12)))) : undefined;
+  return { label: svc.label, total_cents: total, amount_cents: base, occurrences, manual: false, one_time: oneTime, first_run_date: first, day_of_month: dom, dates, ...(amounts ? { amounts } : {}) };
 }
 
 export type InvoiceRow = { date: string; due: string; total: number; items: Array<{ label: string; cents: number }> };
@@ -121,10 +131,11 @@ export function invoiceRows(plans: ServicePlan[], dueDays: number): InvoiceRow[]
   const by = new Map<string, InvoiceRow>();
   for (const p of plans) {
     if (p.manual) continue;
-    for (const date of p.dates) {
+    for (const [i, date] of p.dates.entries()) {
+      const cents = p.amounts?.[i] ?? p.amount_cents;
       const row = by.get(date) ?? { date, due: addDaysIso(date, dueDays), total: 0, items: [] };
-      row.items.push({ label: p.label, cents: p.amount_cents });
-      row.total += p.amount_cents;
+      row.items.push({ label: p.label, cents });
+      row.total += cents;
       by.set(date, row);
     }
   }
@@ -137,7 +148,7 @@ export function summarize(plans: ServicePlan[], rows: InvoiceRow[]): Summary {
   return {
     first_invoice: rows[0] ? { date: rows[0].date, cents: rows[0].total } : null,
     recurring_annual_cents: plans.filter((p) => !p.manual && !p.one_time && p.occurrences > 1).reduce((n, p) => n + p.amount_cents * 12, 0),
-    total_cents: plans.filter((p) => !p.manual).reduce((n, p) => n + p.amount_cents * p.occurrences, 0),
+    total_cents: plans.filter((p) => !p.manual).reduce((n, p) => n + (p.amounts ? p.amounts.reduce((a, b) => a + b, 0) : p.amount_cents * p.occurrences), 0),
     manual_labels: plans.filter((p) => p.manual).map((p) => p.label),
   };
 }
@@ -145,7 +156,8 @@ export function summarize(plans: ServicePlan[], rows: InvoiceRow[]): Summary {
 export function cleanPayment(p: Partial<PaymentSettings> | null | undefined): PaymentSettings {
   const x = p ?? {};
   const due = typeof x.due_days === 'number' && x.due_days >= 0 && x.due_days <= 120 ? Math.round(x.due_days) : null;
-  return { card: x.card !== false, check: x.check !== false, bank_now: x.bank_now === true, bank_invoice: x.bank_invoice === true, due_days: due, show_schedule: x.show_schedule !== false, schedule_view: x.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
+  const inc = Math.round(Math.min(MAX_ANNUAL_INCREASE_PCT, Math.max(0, Number(x.annual_increase_pct) || 0)) * 100) / 100;
+  return { annual_increase_pct: inc, card: x.card !== false, check: x.check !== false, bank_now: x.bank_now === true, bank_invoice: x.bank_invoice === true, due_days: due, show_schedule: x.show_schedule !== false, schedule_view: x.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
 }
 
 export function billingBadge(b: ServiceBilling): string {
@@ -157,7 +169,7 @@ export function billingBadge(b: ServiceBilling): string {
 export function plansForLines(
   lines: Array<{ line_no: number; package_label: string; amount_cents: number }>,
   metaServices: Array<{ line_no: number; name?: string; billing?: ServiceBilling }>,
-  ctx: { start: string; billing_day: number },
+  ctx: { start: string; billing_day: number; increase_pct?: number },
 ): ServicePlan[] | null {
   if (!metaServices.some((m) => m.billing)) return null;
   return lines.map((l) => {

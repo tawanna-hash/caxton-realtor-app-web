@@ -96,7 +96,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       const dueDays = pay.due_days ?? defaults.due_days ?? 15;
       const billingDay = typeof defaults.billing_day === 'number' ? defaults.billing_day : Math.min(28, Math.max(1, Number(start.slice(8, 10)) || 1));
       const plans = doc.services.map((sv) =>
-        planServiceBilling({ label: sv.name || 'Service', total_cents: sv.price_cents, billing: { ...cleanBilling(sv.billing), term_months: termMonths(sv) } }, { start, billing_day: billingDay }));
+        planServiceBilling({ label: sv.name || 'Service', total_cents: sv.price_cents, billing: { ...cleanBilling(sv.billing), term_months: termMonths(sv) } }, { start, billing_day: billingDay, increase_pct: pay.annual_increase_pct }));
       const invoices = invoiceRows(plans, dueDays);
       const sum = summarize(plans, invoices);
       if (!sum.first_invoice) return NextResponse.json({ ok: false, reason: 'Every service is billed manually, so nothing is scheduled. Choose a start option on a service to see invoices.' });
