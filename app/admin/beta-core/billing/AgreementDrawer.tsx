@@ -967,6 +967,7 @@ export function AgreementDrawer({
 
   return (
     <DrawerShell
+      popup
       title={
         isCreate
           ? renewedFrom
