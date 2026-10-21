@@ -136,7 +136,7 @@ export default function NewPartnersPanel() {
         <SearchBox value={q} onChange={setQ} label="Search new partners" />
         <div className="flex items-center gap-3">
           <button onClick={() => { setFormError(null); setCreating(true); }} className="text-sm font-medium text-[color:var(--ds-primary)]" style={{ border: 0, background: 'transparent' }}>Quick create</button>
-          <a href="/admin/agreements/renewals-v2/new" className={A.primary}>Create agreement</a>
+          <a href="/admin/agreements/renewals-v2?new=1" className={A.primary}>Create agreement</a>
         </div>
       </div>
       {notice && <div className={A.notice}>{notice}</div>}

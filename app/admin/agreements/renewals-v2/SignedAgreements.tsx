@@ -82,9 +82,23 @@ export default function SignedAgreements() {
   const [notice, setNotice] = useState<string | null>(null);
   const [imp, setImp] = useState(false);
   const [drawer, setDrawer] = useState<null | 'new' | AgreementWithAdvertiser>(null);
+  const [renewing, setRenewing] = useState<AgreementWithAdvertiser | null>(null);
+  const [handled, setHandled] = useState(false);
   const [quote, setQuote] = useState(false);
   const [dErr, setDErr] = useState<string | null>(null);
   const advs = useJson('/api/admin/advertisers', (j) => (j.advertisers ?? []) as AdvertiserOption[], [] as AdvertiserOption[]);
+  useEffect(() => {
+    if (handled) return;
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('new') === '1') { setHandled(true); setDrawer('new'); window.history.replaceState(null, '', window.location.pathname); return; }
+    const rid = sp.get('renew');
+    if (rid && agr.data.length) {
+      const found = agr.data.find((x) => String(x.id) === rid);
+      setHandled(true);
+      if (found) setRenewing(found as unknown as AgreementWithAdvertiser); else setDErr('Could not find that agreement to renew.');
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [handled, agr.data]);
   const camps = useJson('/api/admin/ads/campaigns', (j) => (j.campaigns ?? []) as AdCampaignOption[], [] as AdCampaignOption[]);
 
   const lastBilled = useMemo(() => {
@@ -154,7 +168,7 @@ export default function SignedAgreements() {
       {dErr && <div className={A.error}>{dErr}</div>}
       {slot && createPortal(<div className="flex flex-wrap items-center gap-3 [&_*]:!normal-case">
         <Menu label="More Actions" items={[{ label: 'Import agreements', onClick: () => setImp(true) }, { label: 'Export agreements', onClick: () => exportCsv(rows) }]} />
-        <Menu primary label="Create Agreement" items={[{ label: 'Use a template', href: '/admin/agreements/renewals-v2?tab=templates' }, { label: 'Start from scratch', onClick: () => setDrawer('new') }, { label: 'New quote', onClick: () => setQuote(true) }, { label: 'Import with AI', disabled: true }]} />
+        <Menu primary label="Create Agreement" items={[{ label: 'Use a template', href: '/admin/agreements/templates-beta' }, { label: 'Start from scratch', onClick: () => setDrawer('new') }, { label: 'New quote', onClick: () => setQuote(true) }, { label: 'Import with AI', disabled: true }]} />
       </div>, slot)}
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search agreements" />
@@ -176,13 +190,14 @@ export default function SignedAgreements() {
       </div>
       {notice && <div className={A.notice}>{notice}</div>}
       <NewQuoteModal open={quote} onClose={() => setQuote(false)} />
-      {drawer && (
+      {(drawer || renewing) && (
         <AgreementDrawer
-          existing={drawer === 'new' ? undefined : drawer}
+          existing={drawer && drawer !== 'new' ? drawer : undefined}
+          renewedFrom={renewing ?? undefined}
           advertisers={advs.data}
           adCampaigns={camps.data}
-          onClose={() => setDrawer(null)}
-          onSaved={async () => { setDrawer(null); setVersion((v) => v + 1); }}
+          onClose={() => { setDrawer(null); setRenewing(null); }}
+          onSaved={async () => { setDrawer(null); setRenewing(null); setVersion((v) => v + 1); }}
           onRefresh={async () => { setVersion((v) => v + 1); }}
           onError={setDErr}
           onGenerateInvoice={() => { setDrawer(null); window.location.href = '/admin/billing-hub'; }}

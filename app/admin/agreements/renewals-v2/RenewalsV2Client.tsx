@@ -282,6 +282,7 @@ export default function RenewalsV2Client() {
                 </td>
                 <td>
                   <div className="flex items-center justify-end gap-2">
+                    <a href={`/admin/agreements/renewals-v2?renew=${r.id}`} className={A.small}>Renew</a>
                     <button
                       onClick={() => { if (window.confirm(`Email the renewal link to ${r.email}?`)) void act(r.id, 'send'); }}
                       disabled={busy !== null || !r.email}
