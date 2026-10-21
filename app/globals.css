@@ -2262,7 +2262,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   --ds-selected: #EEE8FD;
   --ds-page: #F3F4F7;
   --ds-placeholder: #8E8BA6;
-  --ds-r-control: 10px;
+  --ds-r-control: 9999px;
   --ds-r-card: 14px;
 }
 [data-anchor-ui='true'] {
@@ -2360,3 +2360,11 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 }
 [data-admin-ui='true'] [data-anchor-ui='true'] table thead th:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
 [data-admin-ui='true'] [data-anchor-ui='true'] table thead th:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+
+/* Pill shape (border-radius: 9999px) for every admin control: dropdowns,
+   text inputs and buttons. Textareas, checkboxes and radios keep their shape. */
+[data-admin-ui='true'] select,
+[data-admin-ui='true'] input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']),
+[data-admin-ui='true'] button:not([role='tab']):not(.anchor-toggle):not([role='switch']):not([role='checkbox']) {
+  border-radius: 9999px;
+}
