@@ -54,7 +54,7 @@ export const POST = withAdminTracking(async function POST(req: Request) {
         name, sku, item_type, category, market,
         price_cents, cost_cents, income_account, expense_account,
         sales_description, purchase_description, is_active,
-        billing_occurrence, pricing_type, price_max_cents, discount_value, discount_unit, billing_trigger, service_terms, reference_fields
+        billing_occurrence, pricing_type, price_max_cents, discount_value, discount_unit, billing_trigger, service_terms, reference_fields, bundle_items
       ) VALUES (
         ${name}, ${body.sku ?? null}, ${itemType}, ${body.category ?? null}, ${body.market ?? null},
         ${body.price_cents ?? null}, ${body.cost_cents ?? null},
@@ -63,7 +63,8 @@ export const POST = withAdminTracking(async function POST(req: Request) {
         ${body.is_active ?? true},
         ${body.billing_occurrence ?? 'one_time'}, ${body.pricing_type ?? 'fixed'}, ${body.price_max_cents ?? null},
         ${body.discount_value ?? null}, ${body.discount_unit === 'amount' ? 'amount' : 'percent'}, ${body.billing_trigger === 'automatic' ? 'automatic' : 'manual'},
-        ${body.service_terms ?? null}, ${JSON.stringify(Array.isArray(body.reference_fields) ? body.reference_fields : [])}::jsonb
+        ${body.service_terms ?? null}, ${JSON.stringify(Array.isArray(body.reference_fields) ? body.reference_fields : [])}::jsonb,
+        ${JSON.stringify(Array.isArray(body.bundle_items) ? body.bundle_items : [])}::jsonb
       )
       RETURNING *
     `) as unknown as ProductService[];

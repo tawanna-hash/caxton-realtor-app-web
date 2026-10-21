@@ -629,6 +629,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     "billing_trigger text NOT NULL DEFAULT 'manual'",
     'service_terms text',
     "reference_fields jsonb NOT NULL DEFAULT '[]'::jsonb",
+    "bundle_items jsonb NOT NULL DEFAULT '[]'::jsonb",
   ]) {
     await step(() => sql.query(`ALTER TABLE products_services ADD COLUMN IF NOT EXISTS ${col}`));
   }

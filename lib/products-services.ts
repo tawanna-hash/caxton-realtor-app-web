@@ -33,6 +33,7 @@ export interface ProductService {
   billing_trigger: 'automatic' | 'manual';
   service_terms: string | null;
   reference_fields: string[];
+  bundle_items: string[];
   created_at: string;
   updated_at: string;
 }
@@ -44,7 +45,7 @@ export const PRODUCT_SERVICE_PATCHABLE_FIELDS = [
   'sales_description', 'purchase_description',
   'is_active',
   'billing_occurrence', 'pricing_type', 'price_max_cents', 'discount_value', 'discount_unit',
-  'billing_trigger', 'service_terms', 'reference_fields',
+  'billing_trigger', 'service_terms', 'reference_fields', 'bundle_items',
 ] as const;
 
 export const PRODUCT_SERVICE_TYPE_VALUES = new Set<ProductServiceType>([

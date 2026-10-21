@@ -80,6 +80,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
         case 'billing_trigger':       await sql`UPDATE products_services SET billing_trigger = ${raw === 'automatic' ? 'automatic' : 'manual'} WHERE id = ${id}`; break;
         case 'service_terms':         await sql`UPDATE products_services SET service_terms = ${raw as string | null} WHERE id = ${id}`; break;
         case 'reference_fields':      await sql`UPDATE products_services SET reference_fields = ${JSON.stringify(Array.isArray(raw) ? raw : [])}::jsonb WHERE id = ${id}`; break;
+        case 'bundle_items':          await sql`UPDATE products_services SET bundle_items = ${JSON.stringify(Array.isArray(raw) ? raw : [])}::jsonb WHERE id = ${id}`; break;
         case 'is_active':             await sql`UPDATE products_services SET is_active = ${Boolean(raw)}                         WHERE id = ${id}`; break;
       }
       updated.push(field);
