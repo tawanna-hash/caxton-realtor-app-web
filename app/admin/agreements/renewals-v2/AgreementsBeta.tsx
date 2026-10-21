@@ -4,6 +4,7 @@ import { useState } from 'react';
 import RenewalsV2Client from './RenewalsV2Client';
 import NewPartnersPanel from './NewPartnersPanel';
 import StatusBoard from './StatusBoard';
+import SignedAgreements from './SignedAgreements';
 import TemplatesPanel from './TemplatesPanel';
 import DefaultsPanel from './DefaultsPanel';
 import NotificationsPanel from './NotificationsPanel';
@@ -82,8 +83,9 @@ export default function AgreementsBeta() {
       </div>
       {tab === 'board' && (
         <div className="space-y-6">
+          <SignedAgreements />
           <Collapsible title="Waiting to be signed"><NewPartnersPanel /></Collapsible>
-          <Collapsible title="All agreements"><StatusBoard /></Collapsible>
+          <Collapsible title="Pipeline: drafts, sent and signed"><StatusBoard /></Collapsible>
         </div>
       )}
       {tab === 'renewals' && <RenewalsV2Client />}
