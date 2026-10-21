@@ -107,7 +107,7 @@ export default function DashboardBeta() {
     { title: 'Send an agreement', done: board.data.some((b) => b.stage !== 'draft'), body: 'Create an agreement from a template and send it for signature.', href: '/admin/agreements/renewals-v2/new', cta: 'Create agreement' },
     { title: 'Connect your bank account', done: stat.data.stripe, body: 'Payouts go to the bank account connected in Stripe.', href: '/admin/payouts-beta', cta: 'View payouts' },
     { title: 'Verify your business', done: Boolean(biz.data.address && biz.data.city), body: 'Complete the business address in Business details.', href: '/admin/settings-beta/business-details', cta: 'Open Business details' },
-    { title: 'Activate your account', done: inv.data.some((i) => i.status === 'paid'), body: 'Your account is active once the first invoice is paid.', href: '/admin/billing-hub', cta: 'Open Billing Hub' },
+    { title: 'Activate your account', done: inv.data.some((i) => i.status === 'paid'), body: 'Your account is active once the first invoice is paid.', href: '/admin/billing-hub', cta: 'Open Billing' },
   ];
   const doneCount = steps.filter((s) => s.done).length;
   const allDone = doneCount === steps.length;
