@@ -120,7 +120,7 @@ export default function NewsletterCTA({
   return (
     <div className={wrapperClass}>
       <p className="text-center text-2xl font-bold text-gray-900 leading-tight mb-2">{headline}</p>
-      <p className="text-center text-base text-gray-500 font-light mb-6">{deck}</p>
+      <p className="text-center text-base text-gray-600 font-light mb-6">{deck}</p>
       {submitted ? (
         <p className="text-center text-base text-gray-700 font-medium py-4">
           {'\u2713'}{' '}
