@@ -7,12 +7,11 @@ import StatusBoard from './StatusBoard';
 import SignedAgreements from './SignedAgreements';
 import TemplatesPanel from './TemplatesPanel';
 import DefaultsPanel from './DefaultsPanel';
-import NotificationsPanel from './NotificationsPanel';
 import RecurringPanel from './RecurringPanel';
 import StatementsPanel from './StatementsPanel';
 import { A } from '@/components/anchor/ui';
 
-type Tab = 'board' | 'renewals' | 'templates' | 'recurring' | 'statements' | 'defaults' | 'notifications';
+type Tab = 'board' | 'renewals' | 'templates' | 'recurring' | 'statements' | 'defaults';
 const TABS: Array<[Tab, string]> = [
   ['board', 'Agreements'],
   ['renewals', 'Renewals'],
@@ -20,7 +19,6 @@ const TABS: Array<[Tab, string]> = [
   ['recurring', 'Recurring invoices'],
   ['statements', 'Statements'],
   ['defaults', 'Default settings'],
-  ['notifications', 'Notifications'],
 ];
 const SUB: Record<Tab, string> = {
   board: 'Create and send new partner agreements, approve check requests, and track every agreement.',
@@ -29,7 +27,6 @@ const SUB: Record<Tab, string> = {
   recurring: 'Every recurring invoice schedule from Get Paid, including drafts made when agreements are signed.',
   statements: 'Partners with an open balance and their statement of account.',
   defaults: 'Set the default values of new agreements you create.',
-  notifications: 'Set which notifications you and your partners will receive.',
 };
 
 function Collapsible({ title, children }: { title: string; children: React.ReactNode }) {
@@ -84,7 +81,6 @@ export default function AgreementsBeta() {
       {tab === 'recurring' && <RecurringPanel />}
       {tab === 'statements' && <StatementsPanel />}
       {tab === 'defaults' && <DefaultsPanel />}
-      {tab === 'notifications' && <NotificationsPanel />}
     </div>
   );
 }
