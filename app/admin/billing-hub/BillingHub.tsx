@@ -143,7 +143,7 @@ export default function BillingHub() {
       {client && tab === 'invoices' && <InvoicesTab client={client} invoices={invoices} agreements={agreements} intent={intent} onIntentDone={() => setIntent(null)} />}
       {client && tab === 'recurring' && <RecurringPanel clientId={client.id} />}
       {client && tab === 'statements' && <StatementsPanel />}
-      {client && tab === 'paymentlinks' && <PaymentLinksPanel />}
+      {client && tab === 'paymentlinks' && <PaymentLinksPanel clientId={client.id} />}
       {client && tab === 'activity' && <ActivityTab invoices={invoices} agreements={agreement ? [agreement] : agreements} />}
 
       {control && <ControlDrawer onClose={() => setControl(false)} onBill={(m, seed) => { setControl(false); setBill({ mode: m, seed }); }} />}

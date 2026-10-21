@@ -77,7 +77,8 @@ export default function RecurringPanel({ clientId = null }: { clientId?: number 
       .catch((e) => setLoadError(e instanceof Error ? e.message : 'Could not load recurring invoices.'));
   }, []);
 
-  const list = rows ?? [];
+  const [allClients, setAllClients] = useState(false);
+  const list = (rows ?? []).filter((s) => allClients || !clientId || Number(s.advertiser_id) === Number(clientId));
   const summary = useMemo(() => {
     const cutoff = now + 30 * 86_400_000;
     const proj = (items: Sch[]) => items.reduce((a, s) => { const n = projected(s, now, cutoff); return { amount: a.amount + n * amountOf(s), count: a.count + n }; }, { amount: 0, count: 0 });
@@ -139,6 +140,11 @@ export default function RecurringPanel({ clientId = null }: { clientId?: number 
       {(msg || err) && <div role="status" className={err ? A.error : A.notice}>{err || msg}</div>}
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={(v) => filt(() => setQ(v))} label="Search schedules" />
+        {clientId ? (
+          <select aria-label="Client scope" value={allClients ? 'all' : 'client'} onChange={(e) => filt(() => setAllClients(e.target.value === 'all'))} className={SELECT}>
+            <option value="client">This client</option><option value="all">All clients</option>
+          </select>
+        ) : null}
         <select aria-label="Status" value={status} onChange={(e) => filt(() => setStatus(e.target.value))} className={SELECT}>
           <option value="all">All statuses</option><option value="active">Active</option><option value="paused">Paused</option><option value="ended">Ended</option>
         </select>

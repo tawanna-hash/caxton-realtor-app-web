@@ -26,7 +26,7 @@ const stOf = (i: InvoiceWithAdvertiser): St => (i.status === 'paid' ? 'paid' : i
 const LABEL: Record<St, string> = { open: 'Open', overdue: 'Overdue', paid: 'Paid', void: 'Void' };
 const PILL: Record<St, string> = { open: 'bg-[#EEF0F6] text-[color:var(--ds-ink)]', overdue: 'bg-[#FDE8E8] text-[#B42318]', paid: 'bg-[#E6F6EC] text-[#1B7A3D]', void: 'bg-[#EEE] text-[color:var(--ds-body)]' };
 
-export default function PaymentLinksPanel() {
+export default function PaymentLinksPanel({ clientId }: { clientId?: number }) {
   const [invoices, setInvoices] = useState<InvoiceWithAdvertiser[] | null>(null);
   const [advertisers, setAdvertisers] = useState<AdvertiserOption[]>([]);
   const [err, setErr] = useState('');
@@ -45,10 +45,11 @@ export default function PaymentLinksPanel() {
   }, []);
   useEffect(load, [load]);
 
-  const links = useMemo(() => (invoices ?? []).filter((i) => Boolean(i.stripe_payment_link_url)), [invoices]);
+  const links = useMemo(() => (invoices ?? []).filter((i) => Boolean(i.stripe_payment_link_url) && (clientId == null || Number(i.advertiser_id) === Number(clientId))), [invoices, clientId]);
+  const amountOf = (i: InvoiceWithAdvertiser) => (i.status === 'paid' ? i.total_cents : outstandingCents(i));
   const sums = useMemo(() => {
     const by = (s: St) => links.filter((i) => stOf(i) === s);
-    const amt = (l: InvoiceWithAdvertiser[]) => l.reduce((n, i) => n + outstandingCents(i), 0);
+    const amt = (l: InvoiceWithAdvertiser[]) => l.reduce((n, i) => n + amountOf(i), 0);
     return { all: [links.length, amt(links)], open: [by('open').length, amt(by('open'))], overdue: [by('overdue').length, amt(by('overdue'))], paid: [by('paid').length, amt(by('paid'))] };
   }, [links]);
   const rows = useMemo(() => {
@@ -73,7 +74,7 @@ export default function PaymentLinksPanel() {
 
   if (invoices === null) return <p className="text-sm text-[color:var(--ds-body)]">Loading payment links…</p>;
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {([['Created links', sums.all], ['Open links', sums.open], ['Overdue links', sums.overdue], ['Paid links', sums.paid]] as const).map(([l, [c, a]]) => (
           <div key={l} className="rounded-[10px] bg-white px-4 py-3">
@@ -105,7 +106,7 @@ export default function PaymentLinksPanel() {
                 <td className="font-medium text-[color:var(--ds-ink)]">{i.number ?? 'Draft'}</td>
                 <td className="text-[color:var(--ds-ink)]">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td>
                 <td className="text-[color:var(--ds-body)]">{i.bill_to_email ?? '—'}</td>
-                <td className="whitespace-nowrap font-medium text-[color:var(--ds-ink)]">{formatCents(outstandingCents(i))}</td>
+                <td className="whitespace-nowrap font-medium text-[color:var(--ds-ink)]">{formatCents(amountOf(i))}</td>
                 <td><span className={`rounded-full px-3 py-0.5 text-xs ${PILL[stOf(i)]}`}>{LABEL[stOf(i)]}</span></td>
                 <td className="whitespace-nowrap text-right">
                   <span className="inline-flex items-center gap-3 text-sm">
