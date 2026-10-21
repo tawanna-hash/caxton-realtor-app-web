@@ -21,7 +21,7 @@ export default function StatementHistory({ advertiserId, initial }: { advertiser
     setErr(''); setRows((x) => x.filter((y) => y.id !== r.id));
   }
   return (
-    <section className="mb-4 overflow-hidden rounded-[14px] bg-white print:hidden">
+    <section className="mb-4 overflow-hidden rounded-[10px] bg-white print:hidden">
       <div className="flex items-center justify-between px-4 py-3">
         <div>
           <h2 className="text-sm font-semibold text-gray-900">Statement send history</h2>

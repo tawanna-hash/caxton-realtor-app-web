@@ -430,7 +430,7 @@ function ActivityTab({ invoices, agreements }: { invoices: FullInv[]; agreements
                 <span className="mt-[18px] h-2 w-2 rounded-full bg-[#C9CCD6]" />
                 {!last && <span className="absolute left-1/2 top-[30px] bottom-[-16px] w-px -translate-x-1/2 bg-[#D5D8E0]" />}
               </div>
-              <div className="rounded-[14px] bg-white px-4 py-3 text-sm text-[color:var(--ds-ink)]">
+              <div className="rounded-[10px] bg-white px-4 py-3 text-sm text-[color:var(--ds-ink)]">
                 <div className="flex items-center justify-between gap-3">
                   <span className="flex items-center gap-3">
                     <span aria-hidden="true" className="text-[color:var(--ds-body)]">{e.kind === 'notification' ? '\u2709' : '\u25A4'}</span>
@@ -590,7 +590,7 @@ function BulkDialog({ clients, onClose, onDone }: { clients: Adv[]; onClose: () 
   }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Bill clients in bulk">
-      <div className="w-full max-w-xl overflow-hidden rounded-[14px] bg-white">
+      <div className="w-full max-w-xl overflow-hidden rounded-[10px] bg-white">
         <div className="relative bg-[#F3F4F7] px-6 py-4 text-center text-base font-medium text-[color:var(--ds-ink)]">Bill clients in bulk
           <button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: 'transparent' }} className="absolute right-4 top-3 text-lg text-[color:var(--ds-ink)]">&times;</button>
         </div>

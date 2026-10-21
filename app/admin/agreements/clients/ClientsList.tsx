@@ -34,7 +34,7 @@ export default function ClientsList() {
       {loading ? <p className="text-sm text-[color:var(--ds-body)]">Loading…</p> : (
         <div className="overflow-x-auto">
           <table className={`${A.table} min-w-[640px]`}>
-            <thead><tr>{th('name', 'Client name')}{th('status', 'Status')}{th('contact', 'Main contact')}<th>Contact details</th><th /></tr></thead>
+            <thead><tr>{th('name', 'Client name')}{th('status', 'Status')}{th('contact', 'Main contact')}<th className="!font-medium !text-[color:var(--ds-body)]">Contact details</th><th /></tr></thead>
             <tbody>
               {rows.map((a) => (
                 <tr key={a.id}>

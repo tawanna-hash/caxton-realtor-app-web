@@ -187,7 +187,7 @@ export default function NewPartnersPanel() {
 
       {tl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Billing timeline">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[14px] bg-white shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[10px] bg-white shadow-xl">
             <div className="relative bg-[color:var(--ds-selected)] px-6 py-5 text-center">
               <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Billing timeline</h2>
               <p className="text-sm text-[color:var(--ds-body)]">{tl.row.company_name ?? 'Partner'}</p>
@@ -218,7 +218,7 @@ export default function NewPartnersPanel() {
 
       {creating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Create agreement">
-          <div className="w-full max-w-md overflow-hidden rounded-[14px] bg-white shadow-xl">
+          <div className="w-full max-w-md overflow-hidden rounded-[10px] bg-white shadow-xl">
             <div className="relative bg-[color:var(--ds-selected)] px-6 py-5 text-center">
               <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Create agreement</h2>
               <button type="button" aria-label="Close" onClick={() => setCreating(false)} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>

@@ -23,7 +23,7 @@ export default function EmailInvoiceDialog({ invoice, reminder, daysOver, busy, 
     : `Dear ${client},\n\nWe appreciate your business. Please find your invoice details here. Feel free to contact us if you have any questions.\n\nSincerely,\nTawanna Verock\nCaxton Publications Inc.`);
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label={reminder ? 'Review invoice reminder' : `Send invoice ${invoice.number}`}>
-      <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[14px] bg-white shadow-xl">
+      <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[10px] bg-white shadow-xl">
         <header className="flex items-start justify-between border-b border-[color:var(--ds-line)] px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">{reminder ? 'Review invoice reminder' : `Send invoice ${invoice.number ?? ''}`}</h2>
@@ -45,7 +45,7 @@ export default function EmailInvoiceDialog({ invoice, reminder, daysOver, busy, 
             <label className="block text-xs font-medium text-[color:var(--ds-body)]">To<input className={FIELD} type="email" value={to} onChange={(e) => setTo(e.target.value)} /></label>
             <label className="block text-xs font-medium text-[color:var(--ds-body)]">Subject<input className={FIELD} value={subject} onChange={(e) => setSubject(e.target.value)} /></label>
             <label className="block text-xs font-medium text-[color:var(--ds-body)]">Message
-              <textarea className={`${FIELD} min-h-48 rounded-[14px] px-4 py-3 leading-6`} value={body} onChange={(e) => setBody(e.target.value)} />
+              <textarea className={`${FIELD} min-h-48 rounded-[10px] px-4 py-3 leading-6`} value={body} onChange={(e) => setBody(e.target.value)} />
             </label>
           </div>
           <aside className="h-fit rounded-[12px] bg-[color:var(--ds-page)] p-4 text-xs text-[color:var(--ds-body)]">

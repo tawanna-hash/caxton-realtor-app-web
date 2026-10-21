@@ -103,7 +103,7 @@ function ShareLinkDialog({ invoice, onClose, onCreated, onError }: { invoice: In
   }, [invoice.id, onCreated, onError, url]);
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30 p-4" role="dialog" aria-modal="true" aria-label="Share invoice link">
-      <div className="w-full max-w-md rounded-[14px] bg-white p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-[10px] bg-white p-6 shadow-xl">
         <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Invoice link for {invoice.number ?? 'draft'}</h2>
         <p className="mt-2 text-sm text-[color:var(--ds-body)]">Copy this link and share it yourself. Your client can view and pay the invoice online. Nothing is emailed from beta.</p>
         <div className="mt-4 min-h-10 break-all rounded-[10px] border border-[color:var(--ds-line)] bg-[color:var(--ds-page)] px-3 py-2 text-sm text-[color:var(--ds-ink)]">{loading ? 'Creating secure link…' : url || 'Link could not be created.'}</div>

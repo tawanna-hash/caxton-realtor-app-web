@@ -93,7 +93,7 @@ export function FilterChip<T extends string>({
         {label}<Chevron up={open} />
       </button>
       {open && (
-        <div className="absolute left-0 z-30 mt-2 w-64 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-4 shadow-lg" role="dialog" aria-label={title}>
+        <div className="absolute left-0 z-30 mt-2 w-64 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-4 shadow-lg" role="dialog" aria-label={title}>
           <div className="mb-3 flex items-center justify-between text-sm text-[color:var(--ds-body)]">
             {title}
             <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="text-lg leading-none text-[color:var(--ds-ink)]">×</button>
@@ -196,7 +196,7 @@ export function EditColumns({ cols, visible, onApply }: { cols: ColumnDef[]; vis
         Edit columns
       </button>
       {open && (
-        <div className="absolute right-0 z-30 mt-2 w-64 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-4 shadow-lg" role="dialog" aria-label="Edit columns">
+        <div className="absolute right-0 z-30 mt-2 w-64 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-4 shadow-lg" role="dialog" aria-label="Edit columns">
           <div className="mb-3 flex items-center justify-between text-sm text-[color:var(--ds-body)]">
             Edit columns
             <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="text-lg leading-none text-[color:var(--ds-ink)]">×</button>
@@ -268,7 +268,7 @@ export function RowMenu({ items, label = 'More actions' }: { items: MenuItem[]; 
         <span aria-hidden="true">⋯</span>
       </button>
       {open && pos && (
-        <div role="menu" style={{ position: 'fixed', top: pos.top, right: pos.right }} className="z-[70] w-56 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
+        <div role="menu" style={{ position: 'fixed', top: pos.top, right: pos.right }} className="z-[70] w-56 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
           {shown.map((i) => {
             const cls = `block w-full rounded-[10px] px-3 py-2 text-left text-sm ${i.danger ? 'text-red-700' : 'text-[color:var(--ds-ink)]'} hover:bg-[color:var(--ds-hover)] disabled:opacity-50`;
             return i.href ? (

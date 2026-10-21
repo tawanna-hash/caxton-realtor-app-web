@@ -40,7 +40,7 @@ export function CreateProposal({ label = 'Create agreement' }: { label?: string 
         <span aria-hidden="true" className="inline-block text-[10px] leading-none">&#9660;</span>
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-full z-40 mt-1.5 w-56 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
+        <div role="menu" className="absolute right-0 top-full z-40 mt-1.5 w-56 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
           <a role="menuitem" href={NEW_PROPOSAL} className="block rounded-[10px] px-3 py-2 text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]">Blank agreement</a>
           <a role="menuitem" href={TEMPLATES} className="block rounded-[10px] px-3 py-2 text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]">From a template</a>
         </div>

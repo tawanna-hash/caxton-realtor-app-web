@@ -62,7 +62,7 @@ export default function ContactsList() {
       {loading ? <p className="text-sm text-[color:var(--ds-body)]">Loading…</p> : (
         <div className="overflow-x-auto">
           <table className={`${A.table} min-w-[640px]`}>
-            <thead><tr>{th('client', 'Client name')}{th('status', 'Status')}{th('name', 'Contact name')}<th>Contact details</th><th /></tr></thead>
+            <thead><tr>{th('client', 'Client name')}{th('status', 'Status')}{th('name', 'Contact name')}<th className="!font-medium !text-[color:var(--ds-body)]">Contact details</th><th /></tr></thead>
             <tbody>
               {rows.slice(0, 300).map((c) => (
                 <tr key={c.key}>

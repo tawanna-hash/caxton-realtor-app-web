@@ -77,8 +77,8 @@ export function DepositReport({ kind, payments, from, to, preparedBy }: { kind: 
         </div>
       </div>
       <div className="flex flex-wrap items-end gap-3 print:hidden">
-        <label className="text-xs text-[color:var(--ds-body)]">From<input type="date" value={f} onChange={(e) => setF(e.target.value)} className={`${A.input} mt-1 block w-[170px]`} /></label>
-        <label className="text-xs text-[color:var(--ds-body)]">To<input type="date" value={t} onChange={(e) => setT(e.target.value)} className={`${A.input} mt-1 block w-[170px]`} /></label>
+        <label className="text-xs text-[color:var(--ds-body)]">From<input type="date" value={f} onChange={(e) => setF(e.target.value)} className={`${A.input} mt-1 block !w-[170px]`} /></label>
+        <label className="text-xs text-[color:var(--ds-body)]">To<input type="date" value={t} onChange={(e) => setT(e.target.value)} className={`${A.input} mt-1 block !w-[170px]`} /></label>
         <button type="button" className={A.outline} onClick={() => router.push(`${base}?${new URLSearchParams({ from: f, to: t })}`)}>Update range</button>
       </div>
 
@@ -116,7 +116,7 @@ export function DepositReport({ kind, payments, from, to, preparedBy }: { kind: 
               <thead><tr>{cols.map(([k, l, right]) => {
                 const dir = sort.k === k ? (sort.dir === 1 ? 'asc' : 'desc') as 'asc' | 'desc' : undefined;
                 const click = () => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : 1 }));
-                return right ? <th key={k} className="text-right"><SortTh label={l} dir={dir} onClick={click} /></th> : <SortTh key={k} label={l} dir={dir} onClick={click} />;
+                return right ? <th key={k} className="text-right"><div className="flex justify-end"><SortTh label={l} dir={dir} onClick={click} /></div></th> : <SortTh key={k} label={l} dir={dir} onClick={click} />;
               })}</tr></thead>
               <tbody>{rows.map((p) => <tr key={p.id} className="align-top">{cols.map(([k, , right]) => <td key={k} className={`${right ? 'text-right ' : ''}text-[color:var(--ds-ink)]`}>{cell(p, k)}</td>)}</tr>)}</tbody>
               <tfoot><tr><td colSpan={cols.length - 1} className="text-right font-semibold">{slip ? 'Total deposit' : 'Total'}</td><td className="text-right font-semibold tabular-nums">{formatCents(total)}</td></tr></tfoot>

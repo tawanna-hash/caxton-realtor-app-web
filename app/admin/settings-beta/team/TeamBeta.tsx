@@ -55,7 +55,7 @@ export default function TeamBeta() {
       {err && <div className={A.error}>{err}</div>}
       {msg && <div className={A.notice}>{msg}</div>}
       {invite && (
-        <div className="space-y-3 rounded-[14px] bg-white p-5">
+        <div className="space-y-3 rounded-[10px] bg-white p-5">
           <h2 className="text-lg font-medium text-[color:var(--ds-ink)]">{edit ? 'Edit team member' : 'Invite team member'}</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block"><span className="mb-1 block text-xs text-[color:var(--ds-body)]">Full name</span><input className={A.input} value={name} onChange={(e) => setName(e.target.value)} /></label>

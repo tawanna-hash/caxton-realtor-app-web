@@ -71,10 +71,10 @@ function Shell({ title, onExport, filters, children }: { title: string; onExport
   );
 }
 function RangeSelect({ value, onChange }: { value: Range; onChange: (r: Range) => void }) {
-  return <select aria-label="Date range" className={`${A.input} w-[170px]`} value={value} onChange={(e) => onChange(e.target.value as Range)}>{RANGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>;
+  return <select aria-label="Date range" className={`${A.input} !w-[170px]`} value={value} onChange={(e) => onChange(e.target.value as Range)}>{RANGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>;
 }
 function ClientFilter({ value, onChange, names }: { value: string; onChange: (v: string) => void; names: string[] }) {
-  return <select aria-label="Client name" className={`${A.input} w-[200px]`} value={value} onChange={(e) => onChange(e.target.value)}><option value="">All clients</option>{names.map((n) => <option key={n} value={n}>{n}</option>)}</select>;
+  return <select aria-label="Client name" className={`${A.input} !w-[200px]`} value={value} onChange={(e) => onChange(e.target.value)}><option value="">All clients</option>{names.map((n) => <option key={n} value={n}>{n}</option>)}</select>;
 }
 type Col<T> = { key: string; label: string; right?: boolean; val: (r: T) => string | number; show?: (r: T) => React.ReactNode };
 function Table<T extends { id: string }>({ cols, rows, loading, tableClass, empty }: { cols: Array<Col<T>>; rows: T[]; loading: boolean; tableClass?: string; empty?: string }) {
@@ -83,7 +83,7 @@ function Table<T extends { id: string }>({ cols, rows, loading, tableClass, empt
   return (
     <div className="overflow-x-auto">
       <table className={`${A.table} min-w-[720px] ${tableClass ?? ''}`}>
-        <thead><tr>{cols.map((c) => (c.right ? <th key={c.key} className="text-right"><SortTh label={c.label} dir={sort.k === c.key ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} onClick={() => setSort((s) => ({ k: c.key, dir: s.k === c.key ? (s.dir === 1 ? -1 : 1) : 1 }))} /></th> : <SortTh key={c.key} label={c.label} dir={sort.k === c.key ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} onClick={() => setSort((s) => ({ k: c.key, dir: s.k === c.key ? (s.dir === 1 ? -1 : 1) : 1 }))} />))}</tr></thead>
+        <thead><tr>{cols.map((c) => (c.right ? <th key={c.key} className="text-right"><div className="flex justify-end"><SortTh label={c.label} dir={sort.k === c.key ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} onClick={() => setSort((s) => ({ k: c.key, dir: s.k === c.key ? (s.dir === 1 ? -1 : 1) : 1 }))} /></div></th> : <SortTh key={c.key} label={c.label} dir={sort.k === c.key ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} onClick={() => setSort((s) => ({ k: c.key, dir: s.k === c.key ? (s.dir === 1 ? -1 : 1) : 1 }))} />))}</tr></thead>
         <tbody>
           {!loading && sorted.length === 0 && <tr><td colSpan={cols.length}><EmptyState title="No data" body={empty ?? 'Nothing matches the current filters.'} /></td></tr>}
           {sorted.map((r) => <tr key={r.id}>{cols.map((c) => <td key={c.key} className={`${c.right ? 'text-right ' : ''}text-[color:var(--ds-ink)]`}>{c.show ? c.show(r) : c.val(r)}</td>)}</tr>)}
@@ -122,12 +122,12 @@ function Revenue() {
   }, [inv.data, range, by, bd, client]);
   const names = useMemo(() => [...new Set(inv.data.map((i) => i.advertiser_name).filter(Boolean) as string[])].sort(), [inv.data]);
   const total = rows.reduce((s, r) => s + r.cents, 0);
-  const cols: Array<Col<RevRow>> = [{ key: 'period', label: by === 'all' ? 'Period' : by[0].toUpperCase() + by.slice(1), val: (r) => r.period }, ...(bd.includes('service') ? [{ key: 'service', label: 'Service name', val: (r: RevRow) => r.service }] : []), ...(bd.includes('client') ? [{ key: 'client', label: 'Client name', val: (r: RevRow) => r.client }] : []), { key: 'rev', label: 'Revenue', right: true, val: (r) => r.cents, show: (r) => money(r.cents) }];
+  const cols: Array<Col<RevRow>> = [{ key: 'period', label: by === 'all' ? 'Period' : by[0].toUpperCase() + by.slice(1), val: (r) => r.period, show: (r) => (/^\d{4}-\d{2}$/.test(r.period) ? new Date(`${r.period}-15T12:00:00`).toLocaleString('en-US', { month: 'short', year: 'numeric' }) : r.period) }, ...(bd.includes('service') ? [{ key: 'service', label: 'Service name', val: (r: RevRow) => r.service }] : []), ...(bd.includes('client') ? [{ key: 'client', label: 'Client name', val: (r: RevRow) => r.client }] : []), { key: 'rev', label: 'Revenue', right: true, val: (r) => r.cents, show: (r) => money(r.cents) }];
   return (
     <Shell title="Revenue Breakdown Report" onExport={() => csv('revenue-breakdown', cols.map((c) => c.label), rows.map((r) => cols.map((c) => (c.key === 'rev' ? (r.cents / 100).toFixed(2) : c.val(r)))))}
       filters={<>
         <RangeSelect value={range} onChange={setRange} />
-        <select aria-label="Group by" className={`${A.input} w-[130px]`} value={by} onChange={(e) => setBy(e.target.value as typeof by)}>{['day', 'week', 'month', 'quarter', 'year', 'all'].map((v) => <option key={v} value={v}>{v === 'all' ? 'All time' : v[0].toUpperCase() + v.slice(1)}</option>)}</select>
+        <select aria-label="Group by" className={`${A.input} !w-[130px]`} value={by} onChange={(e) => setBy(e.target.value as typeof by)}>{['day', 'week', 'month', 'quarter', 'year', 'all'].map((v) => <option key={v} value={v}>{v === 'all' ? 'All time' : v[0].toUpperCase() + v.slice(1)}</option>)}</select>
         <label className="inline-flex items-center gap-2 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={bd.includes('service')} onChange={() => setBd((b) => (b.includes('service') ? b.filter((x) => x !== 'service') : [...b, 'service']))} /> Service name</label>
         <label className="inline-flex items-center gap-2 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={bd.includes('client')} onChange={() => setBd((b) => (b.includes('client') ? b.filter((x) => x !== 'client') : [...b, 'client']))} /> Client name</label>
         <ClientFilter value={client} onChange={setClient} names={names} />

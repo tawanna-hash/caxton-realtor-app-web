@@ -33,7 +33,7 @@ function BulkMenu({ items, disabled }: { items: MenuItem[]; disabled: boolean })
         <span aria-hidden="true" className="inline-block text-[10px] leading-none">&#9660;</span>
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-full z-40 mt-1.5 w-48 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
+        <div role="menu" className="absolute right-0 top-full z-40 mt-1.5 w-48 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
           {items.map((i) => (
             <button key={i.label} type="button" role="menuitem" style={{ border: 0, background: 'transparent' }} className={`block w-full rounded-[10px] px-3 py-2 text-left text-sm hover:bg-[color:var(--ds-hover)] ${i.danger ? 'text-red-700' : 'text-[color:var(--ds-ink)]'}`} onClick={() => { setOpen(false); i.onClick?.(); }}>{i.label}</button>
           ))}

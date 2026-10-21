@@ -115,8 +115,8 @@ export default function PayoutsBeta() {
 
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={(v) => { setQ(v); setPage(1); }} label="Search payouts" />
-        <select aria-label="Date range" className={`${A.input} w-[170px]`} value={range} onChange={(e) => { setRange(e.target.value); setPage(1); }}>{RANGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
-        <select aria-label="Rows per page" className={`${A.input} w-[110px]`} value={perPage} onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}>{[25, 50, 100].map((n) => <option key={n} value={n}>{n} rows</option>)}</select>
+        <select aria-label="Date range" className={`${A.input} !w-[170px]`} value={range} onChange={(e) => { setRange(e.target.value); setPage(1); }}>{RANGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+        <select aria-label="Rows per page" className={`${A.input} !w-[110px]`} value={perPage} onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}>{[25, 50, 100].map((n) => <option key={n} value={n}>{n} rows</option>)}</select>
       </div>
 
       {!rows && !error ? <p className={A.subtitle}>Loading payouts from Stripe…</p> : rows && rows.length === 0 && !q ? (

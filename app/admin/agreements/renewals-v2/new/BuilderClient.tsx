@@ -31,7 +31,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[14px] bg-white shadow-xl">
+      <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[10px] bg-white shadow-xl">
         <div className="relative bg-[color:var(--ds-selected)] px-4 py-5 text-center sm:px-6">
           <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">{title}</h2>
           <button type="button" aria-label="Close" onClick={onClose} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
@@ -293,7 +293,7 @@ export default function BuilderClient() {
             <button type="button" className={A.primary} disabled={problems.length > 0 || busy} onClick={() => setSendOpen(true)} title={problems[0]}>Send</button>
             <button type="button" aria-label="More send options" aria-haspopup="menu" aria-expanded={sendMenu} className={`${A.primary} ml-px px-3 text-base leading-none`} disabled={problems.length > 0 || busy} onClick={() => { setSendMenu((o) => !o); }}>▾</button>
             {sendMenu && (
-              <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
+              <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
                 <button type="button" role="menuitem" className="w-full rounded-[10px] px-3 py-2 text-left text-sm text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setSendOpen(true); }}>Send now by email</button>
                 <button type="button" role="menuitem" className="w-full rounded-[10px] px-3 py-2 text-left text-sm text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => { setSendMenu(false); setShareOpen(true); }}>Share by link</button>
               </div>
@@ -610,7 +610,7 @@ export default function BuilderClient() {
       {/* Share by link */}
       {sentInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Agreement sent">
-          <div className="w-full max-w-4xl overflow-hidden rounded-[14px] bg-white shadow-xl">
+          <div className="w-full max-w-4xl overflow-hidden rounded-[10px] bg-white shadow-xl">
             <div className="relative px-4 py-8 text-center sm:px-8">
               <button type="button" aria-label="Close" onClick={() => router.push('/admin/agreements/renewals-v2?tab=sent')} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
               <svg className="mx-auto" width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true"><circle cx="32" cy="32" r="22" stroke="#047857" strokeWidth="4" opacity=".7" /><path d="M22 33l7 7 14-15" stroke="#047857" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -626,7 +626,7 @@ export default function BuilderClient() {
                   { t: 'Create Another Agreement', d: 'Ready to send another one? Go for it', b: 'Create Agreement', go: () => { window.location.href = '/admin/agreements/renewals-v2/new'; } },
                   { t: 'Back To My Dashboard', d: 'Go back to your dashboard and continue working', b: 'Go To Dashboard', go: () => router.push('/admin') },
                 ].map((c) => (
-                  <div key={c.t} className="flex flex-col items-center rounded-[14px] bg-white p-4 text-center">
+                  <div key={c.t} className="flex flex-col items-center rounded-[10px] bg-white p-4 text-center">
                     <div className="text-sm font-semibold text-[color:var(--ds-ink)]">{c.t}</div>
                     <p className="mt-2 flex-1 text-xs text-[color:var(--ds-body)]">{c.d}</p>
                     <button type="button" className={`${A.outline} mt-4`} disabled={'disabled' in c && c.disabled} onClick={() => { void c.go(); }}>{c.b}</button>
@@ -825,11 +825,11 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
   const due = pay.due_days === 0 ? 'Payment is due upon receipt of invoice.' : pay.due_days != null ? `Payment is due ${pay.due_days} ${pay.due_days === 1 ? 'day' : 'days'} after each invoice is issued.` : 'Payment is due on the account default schedule after each invoice is issued.';
   const body = (
     <div className="space-y-4 text-sm text-[color:var(--ds-ink)]">
-      {step === 0 && <p className="whitespace-pre-line rounded-[14px] bg-white p-5">{intro}</p>}
+      {step === 0 && <p className="whitespace-pre-line rounded-[10px] bg-white p-5">{intro}</p>}
       {step === 1 && (
         <>
           {doc.services.map((sv) => (
-            <div key={sv.id} className="rounded-[14px] bg-white p-5">
+            <div key={sv.id} className="rounded-[10px] bg-white p-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">{sv.name || 'Service'}</span>
                 <span className="flex items-center gap-3"><span className="rounded-full border border-[color:var(--ds-primary)] px-2.5 py-0.5 text-xs">{billingBadge(sv.billing ?? DEFAULT_BILLING).replace(', automatically', '')}</span><span className="font-semibold">{money(sv.price_cents)}</span></span>
@@ -837,14 +837,14 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
               {sv.description && <p className="mt-3 whitespace-pre-line text-[color:var(--ds-body)]">{sv.description}</p>}
             </div>
           ))}
-          {doc.refs.filter((r) => r.client_facing && r.name).map((r, i) => <div key={i} className="flex justify-between rounded-[14px] bg-white px-5 py-3 text-xs"><span className="text-[color:var(--ds-body)]">{r.name}</span><span>{r.value}</span></div>)}
-          <div className="flex justify-between rounded-[14px] bg-white px-5 py-3 font-semibold"><span>Agreement total</span><span>{money(total)}</span></div>
-          {doc.note && <p className="whitespace-pre-line rounded-[14px] bg-white p-5 text-[color:var(--ds-body)]">{doc.note}</p>}
+          {doc.refs.filter((r) => r.client_facing && r.name).map((r, i) => <div key={i} className="flex justify-between rounded-[10px] bg-white px-5 py-3 text-xs"><span className="text-[color:var(--ds-body)]">{r.name}</span><span>{r.value}</span></div>)}
+          <div className="flex justify-between rounded-[10px] bg-white px-5 py-3 font-semibold"><span>Agreement total</span><span>{money(total)}</span></div>
+          {doc.note && <p className="whitespace-pre-line rounded-[10px] bg-white p-5 text-[color:var(--ds-body)]">{doc.note}</p>}
         </>
       )}
-      {step === 2 && <p className="rounded-[14px] bg-white p-5 text-[color:var(--ds-body)]">The advertising terms for the selected products appear here for the client to read before paying. They are the same terms shown on the live signing page.</p>}
+      {step === 2 && <p className="rounded-[10px] bg-white p-5 text-[color:var(--ds-body)]">The advertising terms for the selected products appear here for the client to read before paying. They are the same terms shown on the live signing page.</p>}
       {step === 3 && (
-        <div className="space-y-4 rounded-[14px] bg-white p-5">
+        <div className="space-y-4 rounded-[10px] bg-white p-5">
           <div><div className="font-semibold">Effective date of agreement</div><div className="text-[color:var(--ds-body)]">{doc.effective === 'date' && doc.effective_date ? fmtDay(doc.effective_date) : 'On acceptance'}</div></div>
           <div><div className="font-semibold">Payment terms</div><div className="text-[color:var(--ds-body)]">{due} Accepted: {methods || 'none'}.</div></div>
           {doc.ask_address && <div><div className="font-semibold">Address</div><div className="text-[color:var(--ds-body)]">You will be asked for your address before signing.</div></div>}
@@ -852,7 +852,7 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
         </div>
       )}
       {step === 4 && (
-        <div className="rounded-[14px] bg-white p-5">
+        <div className="rounded-[10px] bg-white p-5">
           <div className="mb-3 inline-flex rounded-full bg-[color:var(--ds-page)] p-1 text-xs"><span className="rounded-full bg-white px-4 py-1.5 font-medium shadow">Type</span><span className="px-4 py-1.5 text-[color:var(--ds-body)]">Draw</span></div>
           <div className="border-b border-[color:var(--ds-line)] py-6 text-2xl italic text-[color:var(--ds-placeholder)]">Type your name…</div>
           <p className="mt-3 text-xs text-[color:var(--ds-body)]">On the live page the client picks how to pay, then signs. Preview only; nothing is saved.</p>
@@ -862,7 +862,7 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
   );
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Client preview">
-      <div className="flex h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-[14px] bg-white shadow-xl">
+      <div className="flex h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-[10px] bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-[color:var(--ds-line)] px-5 py-3 text-sm text-[color:var(--ds-ink)]">
           <span>You are in preview mode. No activity will be saved.</span>
           <div className="flex items-center gap-3">

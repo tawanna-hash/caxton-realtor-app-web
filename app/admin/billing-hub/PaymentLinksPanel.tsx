@@ -76,7 +76,7 @@ export default function PaymentLinksPanel() {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {([['Created links', sums.all], ['Open links', sums.open], ['Overdue links', sums.overdue], ['Paid links', sums.paid]] as const).map(([l, [c, a]]) => (
-          <div key={l} className="rounded-[14px] bg-white px-4 py-3">
+          <div key={l} className="rounded-[10px] bg-white px-4 py-3">
             <div className="text-xs text-[color:var(--ds-body)]">{l} ({c})</div>
             <div className="text-xl font-medium text-[color:var(--ds-ink)]">{formatCents(a)}</div>
           </div>

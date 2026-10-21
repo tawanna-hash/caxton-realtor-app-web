@@ -47,7 +47,7 @@ function bounds(p: Period, now = new Date()): { start: Date; end: Date } {
   }
 }
 
-const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => <div className={`rounded-[14px] bg-white p-5 ${className}`}>{children}</div>;
+const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => <div className={`rounded-[10px] bg-white p-5 ${className}`}>{children}</div>;
 const H2 = ({ children }: { children: React.ReactNode }) => <h2 className="text-lg font-medium text-[color:var(--ds-ink)]">{children}</h2>;
 const Pill = ({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) => (
   <button type="button" aria-pressed={on} onClick={onClick} style={{ background: on ? 'var(--ds-selected)' : 'transparent' }} className={`rounded-full border px-4 py-1.5 text-sm ${on ? 'border-[color:var(--ds-primary)] text-[color:var(--ds-primary)]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{children}</button>
@@ -125,7 +125,7 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
   return (
     <div className="space-y-6">
       {!dismissed && d.overdue.length > 0 && (
-        <div role="status" className="flex flex-wrap items-center gap-3 rounded-[14px] bg-[#FDE8E8] px-5 py-3 text-sm text-[#7A1B12]">
+        <div role="status" className="flex flex-wrap items-center gap-3 rounded-[10px] bg-[#FDE8E8] px-5 py-3 text-sm text-[#7A1B12]">
           <span className="font-medium">{d.overdue.length} invoice{d.overdue.length === 1 ? ' is' : 's are'} overdue, totaling {usd0(d.overdueTotal)}.</span>
           <button type="button" className="underline" style={{ border: 0, background: 'transparent' }} onClick={() => { setView('unpaid'); setBucket('overdue'); setPage(0); document.getElementById('gp-invoices')?.scrollIntoView({ behavior: 'smooth' }); }}>Show overdue invoices</button>
           <button type="button" aria-label="Dismiss overdue alert" className="ml-auto text-lg leading-none" style={{ border: 0, background: 'transparent' }} onClick={() => setDismissed(true)}>&times;</button>
@@ -166,7 +166,7 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
           <H2>Invoices</H2>
           <div role="group" aria-label="Invoice view" className="flex gap-2"><Pill on={view === 'unpaid'} onClick={() => { setView('unpaid'); setPage(0); }}>Unpaid ({d.unpaid.length})</Pill><Pill on={view === 'paid'} onClick={() => { setView('paid'); setPage(0); }}>Paid ({d.paid.length})</Pill></div>
           {view === 'unpaid' && (
-            <select aria-label="Aging filter" className={`${A.input} w-auto`} value={bucket} onChange={(e) => { setBucket(e.target.value as typeof bucket); setPage(0); }}>
+            <select aria-label="Aging filter" className={`${A.input} !w-auto`} value={bucket} onChange={(e) => { setBucket(e.target.value as typeof bucket); setPage(0); }}>
               <option value="all">All aging</option><option value="overdue">Overdue</option>
               {ORDER.map((b) => <option key={b} value={b}>{AGING_BUCKET_LABELS[b]}</option>)}
             </select>
@@ -225,7 +225,7 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
         <section className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <H2>Income over time</H2>
-            <select aria-label="Income period" className={`${A.input} ml-auto w-auto`} value={period} onChange={(e) => setPeriod(e.target.value as Period)}>
+            <select aria-label="Income period" className={`${A.input} ml-auto !w-auto`} value={period} onChange={(e) => setPeriod(e.target.value as Period)}>
               {PERIODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>

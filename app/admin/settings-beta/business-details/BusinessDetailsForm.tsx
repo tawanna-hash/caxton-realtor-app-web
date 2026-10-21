@@ -5,7 +5,7 @@ import { A } from '@/components/anchor/ui';
 import type { BusinessDetails } from '@/lib/server/business-settings';
 
 const STATES = 'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC'.split(' ');
-const SECTION = 'rounded-[14px] bg-white p-5 max-w-[640px]';
+const SECTION = 'rounded-[10px] bg-white p-5 max-w-[640px]';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <label className="block"><span className="mb-1 block text-xs text-[color:var(--ds-body)]">{label}</span>{children}</label>;

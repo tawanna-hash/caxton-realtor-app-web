@@ -14,7 +14,7 @@ export type Agr = { id: string; advertiser_id: number | null; status: string; ty
 export type Inv = { id: string; number: string | null; advertiser_id?: number | null; agreement_id: string | null; status: string; total_cents: number; balance_cents: number; issue_date: string | null; due_date: string | null };
 export type Sch = { id: string; name: string; advertiser_id: number; agreement_id: string | null; status: 'active' | 'paused' | 'ended'; frequency: string; interval_count?: number | null; amount_cents: number; tax_cents: number | null; next_run_at: string; end_date?: string | null; max_occurrences?: number | null; occurrences_generated?: number | null };
 
-export const money = (c: number | null | undefined) => (c == null ? '—' : `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`);
+export const money = (c: number | null | undefined) => (c == null ? '—' : `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: (c ?? 0) % 100 ? 2 : 0, maximumFractionDigits: 2 })}`);
 export const day = (v: string | null | undefined) => (v ? new Date(v.length === 10 ? `${v}T12:00:00` : v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
 
 export function useJson<T>(url: string, pick: (j: Record<string, unknown>) => T, empty: T): { data: T; loading: boolean; error: string | null } {

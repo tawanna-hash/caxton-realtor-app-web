@@ -52,7 +52,7 @@ function Menu({ label, items, primary }: { label: string; items: Array<{ label: 
     <div className="relative" ref={ref}>
       <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={primary ? A.primary : A.outline}>{label} <span aria-hidden="true" className="ml-2 text-[10px] leading-none">&#9660;</span></button>
       {open && (
-        <div role="menu" className="absolute right-0 z-30 mt-2 min-w-[200px] rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
+        <div role="menu" className="absolute right-0 z-30 mt-2 min-w-[200px] rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
           {items.map((i) => i.href && !i.disabled
             ? <Link key={i.label} role="menuitem" href={i.href} className="block rounded-full px-4 py-2 text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]">{i.label}</Link>
             : <button key={i.label} role="menuitem" type="button" disabled={i.disabled} onClick={() => { setOpen(false); i.onClick?.(); }} style={{ border: 0, background: 'transparent' }} className="block w-full px-4 py-2 text-left text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)] disabled:opacity-40">{i.label}</button>)}
@@ -158,7 +158,7 @@ export default function SignedAgreements() {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[['Revenue MTD', money(summary.mtd)], ['AR outstanding', money(summary.ar)], ['Overdue', money(summary.overdue)], ['Expiring 30d', String(summary.expiring)]].map(([l, v]) => (
-          <div key={l} className="rounded-[14px] bg-white px-4 py-3"><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="text-xl font-medium text-[color:var(--ds-ink)]">{v}</div></div>
+          <div key={l} className="rounded-[10px] bg-white px-4 py-3"><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="text-xl font-medium text-[color:var(--ds-ink)]">{v}</div></div>
         ))}
       </div>
       {dErr && <div className={A.error}>{dErr}</div>}
@@ -171,12 +171,12 @@ export default function SignedAgreements() {
         <FilterChip<St> title="Agreement status" value={sts} onApply={setSts} options={(Object.keys(ST_LABEL) as St[]).map((v) => ({ value: v, label: ST_LABEL[v] }))} summary={`Agreement status (${sts.length})`} />
         {extra.includes('effective') && <span className="inline-flex items-center gap-2 text-xs text-[color:var(--ds-body)]">Effective date <input type="date" aria-label="Effective from" className={`${A.input} ${dateIn}`} value={eff.from} onChange={(e) => setEff({ ...eff, from: e.target.value })} /> to <input type="date" aria-label="Effective to" className={`${A.input} ${dateIn}`} value={eff.to} onChange={(e) => setEff({ ...eff, to: e.target.value })} /></span>}
         {extra.includes('billed') && <span className="inline-flex items-center gap-2 text-xs text-[color:var(--ds-body)]">Last billed <input type="date" aria-label="Billed from" className={`${A.input} ${dateIn}`} value={bill.from} onChange={(e) => setBill({ ...bill, from: e.target.value })} /> to <input type="date" aria-label="Billed to" className={`${A.input} ${dateIn}`} value={bill.to} onChange={(e) => setBill({ ...bill, to: e.target.value })} /></span>}
-        {extra.includes('payment') && <input aria-label="Payment method" placeholder="Payment method" className={`${A.input} w-[170px]`} value={pay} onChange={(e) => setPay(e.target.value)} />}
-        {extra.includes('amended') && <select aria-label="Is amended" className={`${A.input} w-[130px]`} value={amended} onChange={(e) => setAmended(e.target.value)}><option value="yes">Amended</option><option value="no">Not amended</option></select>}
+        {extra.includes('payment') && <input aria-label="Payment method" placeholder="Payment method" className={`${A.input} !w-[170px]`} value={pay} onChange={(e) => setPay(e.target.value)} />}
+        {extra.includes('amended') && <select aria-label="Is amended" className={`${A.input} !w-[130px]`} value={amended} onChange={(e) => setAmended(e.target.value)}><option value="yes">Amended</option><option value="no">Not amended</option></select>}
         <div className="relative">
           <button type="button" className={A.outline} onClick={() => setAddOpen((o) => !o)} aria-haspopup="menu" aria-expanded={addOpen}>Add filter <span aria-hidden="true" className="ml-2">⊕</span></button>
           {addOpen && (
-            <div role="menu" className="absolute left-0 z-30 mt-2 min-w-[220px] rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
+            <div role="menu" className="absolute left-0 z-30 mt-2 min-w-[220px] rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
               {FILTERS.map(([k, l]) => <button key={k} role="menuitem" type="button" disabled={extra.includes(k)} onClick={() => { setExtra([...extra, k]); setAddOpen(false); }} style={{ border: 0, background: 'transparent' }} className="block w-full px-4 py-2 text-left text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)] disabled:opacity-40">{l}</button>)}
             </div>
           )}
@@ -256,7 +256,7 @@ function ImportDialog({ onClose, onDone }: { onClose: () => void; onDone: () => 
   const upd = (n: number, p: Partial<Done>) => setDone((x) => x.map((y, i) => (i === n ? { ...y, ...p, saved: false } : y)));
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Import agreements">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-[14px] bg-white">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-[10px] bg-white">
         <div className="relative bg-[#F3F4F7] px-6 py-4 text-center text-base font-medium text-[color:var(--ds-ink)]">Import agreements
           <button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: 'transparent' }} className="absolute right-4 top-3 text-lg">&times;</button>
         </div>
@@ -278,8 +278,8 @@ function ImportDialog({ onClose, onDone }: { onClose: () => void; onDone: () => 
                 <div className="font-medium">{d.name}</div>
                 {d.error && !d.id ? <div className="text-xs text-red-700">{d.error}</div> : (
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[color:var(--ds-body)]">
-                    Start <input type="date" className={`${A.input} w-[150px]`} value={d.start} onChange={(e) => upd(n, { start: e.target.value })} />
-                    End <input type="date" className={`${A.input} w-[150px]`} value={d.end} onChange={(e) => upd(n, { end: e.target.value })} />
+                    Start <input type="date" className={`${A.input} !w-[150px]`} value={d.start} onChange={(e) => upd(n, { start: e.target.value })} />
+                    End <input type="date" className={`${A.input} !w-[150px]`} value={d.end} onChange={(e) => upd(n, { end: e.target.value })} />
                     <button type="button" className={A.small} disabled={d.saved} onClick={() => saveDates(n)}>{d.saved ? 'Saved' : 'Save dates'}</button>
                   </div>
                 )}

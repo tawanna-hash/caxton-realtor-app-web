@@ -61,7 +61,7 @@ export default function ApiKeys() {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Generate API key">
-          <div className="w-full max-w-md space-y-4 rounded-[14px] bg-white p-6">
+          <div className="w-full max-w-md space-y-4 rounded-[10px] bg-white p-6">
             <h3 className="text-lg font-medium text-[color:var(--ds-ink)]">{newKey ? 'Copy your API key' : 'Generate API key'}</h3>
             {err && <p className={A.error}>{err}</p>}
             {newKey ? (

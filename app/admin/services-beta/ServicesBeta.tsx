@@ -105,7 +105,7 @@ function ServiceForm({ initial, onCancel, onSaved, bundle, services }: { initial
               ); })}
               <button type="button" onClick={() => { setPick(d.bundle_items); setPicker(true); }} style={{ border: 0, background: 'transparent' }} className="text-sm text-[color:var(--ds-primary)]">＋ Add services</button>
               {picker && (
-                <div role="dialog" aria-label="Add services" className="absolute left-0 z-20 mt-2 w-full rounded-[14px] border border-[color:var(--ds-line)] bg-white p-4 shadow-lg">
+                <div role="dialog" aria-label="Add services" className="absolute left-0 z-20 mt-2 w-full rounded-[10px] border border-[color:var(--ds-line)] bg-white p-4 shadow-lg">
                   <div className="mb-2 flex items-center justify-between text-sm text-[color:var(--ds-body)]">Add services<button type="button" aria-label="Close" onClick={() => setPicker(false)} style={{ border: 0, background: 'transparent' }}>×</button></div>
                   <input aria-label="Search services" placeholder="Search services" className={`${ctl} mb-2`} value={pq} onChange={(e) => setPq(e.target.value)} />
                   <div className="max-h-64 overflow-y-auto">
@@ -244,8 +244,8 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search services" />
         {!isBundle && (<>
-          <select aria-label="Market" value={market} onChange={(e) => setMarket(e.target.value)} style={{ width: 'auto' }} className={`${A.input} w-auto`}><option value="all">All markets</option>{Object.entries(MARKETS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
-          <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: 'auto' }} className={`${A.input} w-auto max-w-64`}><option value="all">All categories</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select>
+          <select aria-label="Market" value={market} onChange={(e) => setMarket(e.target.value)} style={{ width: 'auto' }} className={`${A.input} !w-auto`}><option value="all">All markets</option>{Object.entries(MARKETS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+          <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: 'auto' }} className={`${A.input} !w-auto max-w-64`}><option value="all">All categories</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select>
         </>)}
         <label className="flex items-center gap-2 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="h-4 w-4 accent-[color:var(--ds-primary)]" />Show inactive</label>
         <div className="ml-auto">
@@ -255,7 +255,7 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
       {notice && <div className={A.notice}>{notice}</div>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Catalog summary">
         {([['Active', String(summary.active)], ['Inactive', String(summary.inactive)], ['Categories', String(summary.categories)], ['Average price', summary.avg == null ? '—' : usd(summary.avg)]] as const).map(([l, v]) => (
-          <div key={l} className="rounded-[14px] bg-white px-4 py-3"><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="text-lg font-semibold text-[color:var(--ds-ink)]">{v}</div></div>
+          <div key={l} className="rounded-[10px] bg-white px-4 py-3"><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="text-lg font-semibold text-[color:var(--ds-ink)]">{v}</div></div>
         ))}
       </div>
       <div className="overflow-x-auto">
