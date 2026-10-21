@@ -2368,3 +2368,20 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 [data-admin-ui='true'] button:not([role='tab']):not(.anchor-toggle):not([role='switch']):not([role='checkbox']) {
   border-radius: 9999px;
 }
+
+/* Underline tabs on Anchor-style pages: the selected tab is dark text with a
+   purple underline, never a filled button (the generic selected-button rule
+   was turning it white-on-white). */
+[data-admin-ui='true'] [data-anchor-ui='true'] [role='tab'] {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  border-bottom: 3px solid transparent !important;
+  color: var(--ds-body) !important;
+}
+[data-admin-ui='true'] [data-anchor-ui='true'] [role='tab'][aria-selected='true'] {
+  background-color: transparent !important;
+  border-bottom-color: var(--ds-primary) !important;
+  color: var(--ds-ink) !important;
+  font-weight: 600;
+}
