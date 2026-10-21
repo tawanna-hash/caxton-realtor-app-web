@@ -5,7 +5,6 @@
 // plus a per-payout drill-down of the Stripe balance transactions.
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
 import SortTable from '@/components/anchor/SortTable';
 import { day, money } from '../agreements/clients/data';
@@ -161,7 +160,7 @@ export default function PayoutsBeta() {
           </div>
         </div>
       )}
-      <p className="text-xs text-[color:var(--ds-body)]">Future payouts may vary in amount and date. The older view is still at <Link className="text-[color:var(--ds-primary)]" href="/admin/getpaid/stripepayouts">Get Paid, Payouts from Stripe</Link>.</p>
+      <p className="text-xs text-[color:var(--ds-body)]">Future payouts may vary in amount and date.</p>
     </div>
   );
 }

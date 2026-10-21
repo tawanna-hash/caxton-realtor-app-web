@@ -124,7 +124,7 @@ export default function BusinessDetailsForm() {
 
       <section className={SECTION}>
         <Head title="Bank account information" sub="Payouts are deposited to the bank account connected in Stripe." />
-        <a href="/admin/getpaid/stripepayouts" className={A.primary}>View payouts</a>
+        <a href="/admin/payouts-beta" className={A.primary}>View payouts</a>
       </section>
     </div>
   );
