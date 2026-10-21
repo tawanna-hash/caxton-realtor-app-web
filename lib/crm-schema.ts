@@ -134,6 +134,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   // Free-form
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS additional_contacts jsonb NOT NULL DEFAULT '[]'::jsonb`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS notes text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS reference_fields jsonb NOT NULL DEFAULT '[]'::jsonb`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS tags jsonb NOT NULL DEFAULT '[]'::jsonb`);
 
   // ── Billing↔CRM two-way sync columns (Session 21) ────────────────

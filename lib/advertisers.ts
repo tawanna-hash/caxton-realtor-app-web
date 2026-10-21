@@ -118,6 +118,7 @@ export interface Advertiser {
 
   // Free-form
   additional_contacts?: AdditionalContact[];
+  reference_fields?: Array<{ label: string; value: string }>;
   notes?: string | null;
   tags?: string[];
 
@@ -203,7 +204,7 @@ export const CRM_PATCHABLE_FIELDS = [
   'address', 'address_2', 'city', 'state', 'zip',
   'rep_address', 'rep_city', 'rep_state', 'rep_zip',
   'portal_activated_at', 'portal_onboarded_at',
-  'additional_contacts', 'notes', 'tags',
+  'additional_contacts', 'reference_fields', 'notes', 'tags',
   'billing_contact_name', 'billing_contact_phone', 'billing_email',
   'payment_mode', 'stripe_customer_id', 'card_last4',
 ] as const;

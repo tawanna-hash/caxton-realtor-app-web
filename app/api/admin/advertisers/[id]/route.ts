@@ -168,7 +168,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       if (field === 'email_status' && raw !== null && typeof raw === 'string' && !EMAIL_STATUS.has(raw)) continue;
       if (field === 'payment_mode' && raw !== null && typeof raw === 'string' && !PAYMENT_MODES.has(raw)) continue;
 
-      if (field === 'additional_contacts' || field === 'tags') {
+      if (field === 'additional_contacts' || field === 'tags' || field === 'reference_fields') {
         if (raw === null || Array.isArray(raw)) {
           setClauses.push({ col: field, val: JSON.stringify(raw ?? []) });
         }
@@ -230,6 +230,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'portal_activated_at': await sql`UPDATE advertisers SET portal_activated_at = ${val}        WHERE id = ${idNum}`; break;
         case 'portal_onboarded_at': await sql`UPDATE advertisers SET portal_onboarded_at = ${val}        WHERE id = ${idNum}`; break;
         case 'additional_contacts': await sql`UPDATE advertisers SET additional_contacts = ${val}::jsonb WHERE id = ${idNum}`; break;
+        case 'reference_fields':    await sql`UPDATE advertisers SET reference_fields = ${val}::jsonb WHERE id = ${idNum}`; break;
         case 'notes':               await sql`UPDATE advertisers SET notes = ${val}                      WHERE id = ${idNum}`; break;
         case 'tags':                await sql`UPDATE advertisers SET tags = ${val}::jsonb                WHERE id = ${idNum}`; break;
         case 'billing_contact_name':  await sql`UPDATE advertisers SET billing_contact_name = ${val}     WHERE id = ${idNum}`; break;

@@ -24,7 +24,7 @@ function Modal({ title, onClose, onSave, saving, error, children, saveLabel = 'S
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden><path d="M5 5l14 14M19 5L5 19" /></svg>
         </button>
         <h3 className="px-5 pb-5 pt-9 text-center text-xl font-semibold text-[color:var(--ds-ink)]">{title}</h3>
-        <div className="flex-1 overflow-y-auto px-5">{error && <div className={`${A.error} mb-3`}>{error}</div>}{children}</div>
+        <div className="flex-1 overflow-y-auto px-5 pt-3">{error && <div className={`${A.error} mb-3`}>{error}</div>}{children}</div>
         <div className="shrink-0 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
           <button type="button" disabled={saving} onClick={onSave} className="h-12 w-full rounded-[10px] border-0 bg-[#6240ED] text-base font-medium text-white hover:bg-[#5233d6] disabled:opacity-60">{saving ? 'Saving…' : saveLabel}</button>
         </div>
@@ -57,6 +57,7 @@ export function EditClientModal({ client, onClose }: { client: Adv; onClose: () 
     address: client.address ?? '', address_2: client.address_2 ?? '', city: client.city ?? '', state: client.state ?? '', zip: client.zip ?? '',
   });
   const [kind, setKind] = useState<'business' | 'individual'>(client.type === 'individual' ? 'individual' : 'business');
+  const [refs, setRefs] = useState<Array<{ label: string; value: string }>>(client.reference_fields ?? []);
   const [showAddress, setShowAddress] = useState(Boolean(client.address || client.city || client.zip));
   const [saving, setSaving] = useState(false); const [error, setError] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (v: string) => setF((p) => ({ ...p, [k]: v }));
@@ -65,7 +66,7 @@ export function EditClientModal({ client, onClose }: { client: Adv; onClose: () 
     setSaving(true); setError(null);
     try {
       // `type` on the record is the Partners category, so the Business/Individual toggle is not written to it.
-      await patch(client.id, f); onClose();
+      await patch(client.id, { ...f, reference_fields: refs.filter((r) => r.label.trim() || r.value.trim()) }); onClose();
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not save.'); setSaving(false); }
   };
   return (
@@ -93,7 +94,13 @@ export function EditClientModal({ client, onClose }: { client: Adv; onClose: () 
       ) : <AddLink onClick={() => setShowAddress(true)}>Add address</AddLink>}
       <hr className="my-3 border-0 border-t border-[#DEDCE6]" />
       <h4 className="mb-3 mt-6 text-base font-semibold text-[color:var(--ds-ink)]">Reference fields</h4>
-      <AddLink onClick={() => { /* reference fields are not stored on advertiser records yet */ }}>Add reference field</AddLink>
+      {refs.map((r, i) => (
+        <div key={i} className="mb-5 flex items-start gap-2">
+          <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2"><Field label="Field name" value={r.label} onChange={(v) => setRefs((p) => p.map((x, j) => (j === i ? { ...x, label: v } : x)))} /><Field label="Value" value={r.value} onChange={(v) => setRefs((p) => p.map((x, j) => (j === i ? { ...x, value: v } : x)))} /></div>
+          <button type="button" aria-label="Remove reference field" onClick={() => setRefs((p) => p.filter((_, j) => j !== i))} style={{ border: 0, background: 'transparent' }} className="mt-2 flex h-8 w-8 items-center justify-center text-xl leading-none text-[color:var(--ds-body)]">×</button>
+        </div>
+      ))}
+      <AddLink onClick={() => setRefs((p) => [...p, { label: '', value: '' }])}>Add reference field</AddLink>
     </Modal>
   );
 }

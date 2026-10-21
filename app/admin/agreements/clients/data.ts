@@ -8,6 +8,7 @@ export type Adv = {
   billing_contact_name: string | null; billing_email: string | null; billing_contact_phone: string | null;
   address: string | null; address_2: string | null; city: string | null; state: string | null; zip: string | null;
   card_last4: string | null; payment_mode: string | null; portal_activated_at: string | null;
+  reference_fields?: Array<{ label: string; value: string }> | null;
   additional_contacts: Array<{ name?: string; email?: string; phone?: string; title?: string }> | null;
 };
 export type Agr = { id: string; advertiser_id: number | null; status: string; type: string | null; ad_size: string | null; frequency: string | null; start_date: string | null; signed_at?: string | null; created_at?: string | null };
