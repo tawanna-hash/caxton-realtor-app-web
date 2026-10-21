@@ -6,6 +6,11 @@
 
 export type ProductServiceType = 'service' | 'non_inventory' | 'inventory' | 'bundle';
 
+export type ServiceOccurrence = 'on_demand' | 'one_time' | 'in_stages' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
+export type ServicePricing = 'fixed' | 'hourly' | 'unit' | 'range';
+export const SERVICE_OCCURRENCE_LABELS: Record<ServiceOccurrence, string> = { on_demand: 'On demand', one_time: 'One-time', in_stages: 'In stages', weekly: 'Weekly', biweekly: 'Every two weeks', monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly' };
+export const SERVICE_PRICING_LABELS: Record<ServicePricing, string> = { fixed: 'Fixed price', hourly: 'Price per hour', unit: 'Price per unit', range: 'Price range' };
+
 export interface ProductService {
   id: string;
   name: string;
@@ -20,6 +25,14 @@ export interface ProductService {
   sales_description: string | null;
   purchase_description: string | null;
   is_active: boolean;
+  billing_occurrence: ServiceOccurrence;
+  pricing_type: ServicePricing;
+  price_max_cents: number | null;
+  discount_value: number | null;
+  discount_unit: 'percent' | 'amount';
+  billing_trigger: 'automatic' | 'manual';
+  service_terms: string | null;
+  reference_fields: string[];
   created_at: string;
   updated_at: string;
 }
@@ -30,6 +43,8 @@ export const PRODUCT_SERVICE_PATCHABLE_FIELDS = [
   'income_account', 'expense_account',
   'sales_description', 'purchase_description',
   'is_active',
+  'billing_occurrence', 'pricing_type', 'price_max_cents', 'discount_value', 'discount_unit',
+  'billing_trigger', 'service_terms', 'reference_fields',
 ] as const;
 
 export const PRODUCT_SERVICE_TYPE_VALUES = new Set<ProductServiceType>([

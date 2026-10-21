@@ -60,6 +60,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Clients (Beta)', href: '/admin/agreements/clients', description: 'Main contact person for each client' },
       { label: 'Contacts (Beta)', href: '/admin/agreements/clients/contacts', description: 'Other people inside each client organization', parent: '/admin/agreements/clients' },
       { label: 'Billing Hub (Beta)', href: '/admin/billing-hub', description: 'Agreement, payment methods, invoices and activity for one client' },
+      { label: 'Services (Beta)', href: '/admin/services-beta', description: 'Services, rates, billing occurrence and trigger' },
       { label: 'Media Kit',    href: '/admin/ads/media-kit',   description: '2026 packages, rates & deadlines' },
     ],
   },

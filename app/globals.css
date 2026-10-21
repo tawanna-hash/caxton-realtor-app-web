@@ -2402,3 +2402,15 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 }
 [data-admin-ui='true'] [data-anchor-ui='true'] textarea { border-radius: 20px !important; }
 [data-admin-ui='true'] [data-anchor-ui='true'] select { padding-left: 1.25rem; }
+
+/* Pills, once and for all: border-radius 9999px (Tailwind rounded-full) on every
+   admin nav pill (Quick Links) and every control that opens a menu or popover
+   (dropdown triggers, filter chips, More Actions, Bulk actions, row menus).
+   Underline tabs and toggle switches keep their own shapes. */
+[data-admin-ui='true'] nav[aria-label$='child pages'] a,
+[data-admin-ui='true'] :is(button, a, [role='button'], summary)[aria-haspopup]:not([role='tab']):not([role='switch']),
+[data-admin-ui='true'] :is(button, a, [role='button'])[aria-expanded]:not([role='tab']):not([role='switch']):not([aria-controls^='sidebar']),
+[data-admin-ui='true'] [data-anchor-ui='true'] :is(button, a)[aria-haspopup],
+[data-admin-ui='true'] [data-anchor-ui='true'] :is(button, a)[aria-expanded] {
+  border-radius: 9999px !important;
+}

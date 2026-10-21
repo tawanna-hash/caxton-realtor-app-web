@@ -619,6 +619,19 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       updated_at               timestamptz NOT NULL DEFAULT now()
     )
   `);
+  // Billing settings used by Services (Beta)
+  for (const col of [
+    "billing_occurrence text NOT NULL DEFAULT 'one_time'",
+    "pricing_type text NOT NULL DEFAULT 'fixed'",
+    'price_max_cents integer',
+    'discount_value numeric',
+    "discount_unit text NOT NULL DEFAULT 'percent'",
+    "billing_trigger text NOT NULL DEFAULT 'manual'",
+    'service_terms text',
+    "reference_fields jsonb NOT NULL DEFAULT '[]'::jsonb",
+  ]) {
+    await step(() => sql.query(`ALTER TABLE products_services ADD COLUMN IF NOT EXISTS ${col}`));
+  }
   await step(() => sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_products_services_name ON products_services(name)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_products_services_category ON products_services(category)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_products_services_market   ON products_services(market)`);

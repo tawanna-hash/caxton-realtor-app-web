@@ -72,6 +72,14 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
         case 'expense_account':       await sql`UPDATE products_services SET expense_account = ${raw as string | null}           WHERE id = ${id}`; break;
         case 'sales_description':     await sql`UPDATE products_services SET sales_description = ${raw as string | null}         WHERE id = ${id}`; break;
         case 'purchase_description':  await sql`UPDATE products_services SET purchase_description = ${raw as string | null}      WHERE id = ${id}`; break;
+        case 'billing_occurrence':    await sql`UPDATE products_services SET billing_occurrence = ${String(raw)} WHERE id = ${id}`; break;
+        case 'pricing_type':          await sql`UPDATE products_services SET pricing_type = ${String(raw)} WHERE id = ${id}`; break;
+        case 'price_max_cents':       await sql`UPDATE products_services SET price_max_cents = ${raw as number | null} WHERE id = ${id}`; break;
+        case 'discount_value':        await sql`UPDATE products_services SET discount_value = ${raw as number | null} WHERE id = ${id}`; break;
+        case 'discount_unit':         await sql`UPDATE products_services SET discount_unit = ${raw === 'amount' ? 'amount' : 'percent'} WHERE id = ${id}`; break;
+        case 'billing_trigger':       await sql`UPDATE products_services SET billing_trigger = ${raw === 'automatic' ? 'automatic' : 'manual'} WHERE id = ${id}`; break;
+        case 'service_terms':         await sql`UPDATE products_services SET service_terms = ${raw as string | null} WHERE id = ${id}`; break;
+        case 'reference_fields':      await sql`UPDATE products_services SET reference_fields = ${JSON.stringify(Array.isArray(raw) ? raw : [])}::jsonb WHERE id = ${id}`; break;
         case 'is_active':             await sql`UPDATE products_services SET is_active = ${Boolean(raw)}                         WHERE id = ${id}`; break;
       }
       updated.push(field);

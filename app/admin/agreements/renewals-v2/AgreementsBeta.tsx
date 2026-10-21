@@ -9,13 +9,12 @@ import TemplatesPanel from './TemplatesPanel';
 import DefaultsPanel from './DefaultsPanel';
 import NotificationsPanel from './NotificationsPanel';
 import InvoicesPanel from './InvoicesPanel';
-import ServicesPanel from './ServicesPanel';
 import RecurringPanel from './RecurringPanel';
 import StatementsPanel from './StatementsPanel';
 import PayoutsPanel from './PayoutsPanel';
 import { A } from '@/components/anchor/ui';
 
-type Tab = 'board' | 'renewals' | 'templates' | 'invoices' | 'recurring' | 'statements' | 'payouts' | 'services' | 'defaults' | 'notifications';
+type Tab = 'board' | 'renewals' | 'templates' | 'invoices' | 'recurring' | 'statements' | 'payouts' | 'defaults' | 'notifications';
 const TABS: Array<[Tab, string]> = [
   ['board', 'Agreements'],
   ['renewals', 'Renewals'],
@@ -24,7 +23,6 @@ const TABS: Array<[Tab, string]> = [
   ['recurring', 'Recurring invoices'],
   ['statements', 'Statements'],
   ['payouts', 'Payout'],
-  ['services', 'Services'],
   ['defaults', 'Default settings'],
   ['notifications', 'Notifications'],
 ];
@@ -36,7 +34,6 @@ const SUB: Record<Tab, string> = {
   recurring: 'Every recurring invoice schedule from Get Paid, including drafts made when agreements are signed.',
   statements: 'Partners with an open balance and their statement of account.',
   payouts: 'Payouts from Stripe to your bank, with fees and transaction counts.',
-  services: 'The Products & Services catalog from Get Paid.',
   defaults: 'Set the default values of new agreements you create.',
   notifications: 'Set which notifications you and your partners will receive.',
 };
@@ -94,7 +91,6 @@ export default function AgreementsBeta() {
       {tab === 'recurring' && <RecurringPanel />}
       {tab === 'statements' && <StatementsPanel />}
       {tab === 'payouts' && <PayoutsPanel />}
-      {tab === 'services' && <ServicesPanel />}
       {tab === 'defaults' && <DefaultsPanel />}
       {tab === 'notifications' && <NotificationsPanel />}
     </div>

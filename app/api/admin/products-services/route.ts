@@ -53,13 +53,17 @@ export const POST = withAdminTracking(async function POST(req: Request) {
       INSERT INTO products_services (
         name, sku, item_type, category, market,
         price_cents, cost_cents, income_account, expense_account,
-        sales_description, purchase_description, is_active
+        sales_description, purchase_description, is_active,
+        billing_occurrence, pricing_type, price_max_cents, discount_value, discount_unit, billing_trigger, service_terms, reference_fields
       ) VALUES (
         ${name}, ${body.sku ?? null}, ${itemType}, ${body.category ?? null}, ${body.market ?? null},
         ${body.price_cents ?? null}, ${body.cost_cents ?? null},
         ${body.income_account ?? 'Advertising revenue'}, ${body.expense_account ?? null},
         ${body.sales_description ?? null}, ${body.purchase_description ?? null},
-        ${body.is_active ?? true}
+        ${body.is_active ?? true},
+        ${body.billing_occurrence ?? 'one_time'}, ${body.pricing_type ?? 'fixed'}, ${body.price_max_cents ?? null},
+        ${body.discount_value ?? null}, ${body.discount_unit === 'amount' ? 'amount' : 'percent'}, ${body.billing_trigger === 'automatic' ? 'automatic' : 'manual'},
+        ${body.service_terms ?? null}, ${JSON.stringify(Array.isArray(body.reference_fields) ? body.reference_fields : [])}::jsonb
       )
       RETURNING *
     `) as unknown as ProductService[];
