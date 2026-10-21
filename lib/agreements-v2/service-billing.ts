@@ -151,6 +151,7 @@ export function planServiceBilling(
     first = cand.toISOString().slice(0, 10);
     if (b.timing === 'end') first = addMonthsIso(first, 1);
   }
+  if (b.on_acceptance && b.start !== 'date') { first = ctx.start; dom = Math.min(28, Number(first.slice(8, 10)) || day); }
   const dates = Array.from({ length: occurrences }, (_, i) => addMonthsIso(first, i));
   const base = Math.round(total / occurrences);
   const pct = Math.min(MAX_ANNUAL_INCREASE_PCT, Math.max(0, Number(ctx.increase_pct) || 0));
