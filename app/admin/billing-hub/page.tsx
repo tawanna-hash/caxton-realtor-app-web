@@ -8,7 +8,7 @@ export default async function Page() {
   const admin = await getCurrentAdmin();
   if (!admin) redirect('/admin/login');
   return (
-    <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
+    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
       <BillingHub />
     </div>
   );
