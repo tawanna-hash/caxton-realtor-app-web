@@ -6,7 +6,6 @@
 // like Anchor's "Bill client" dialog.
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Template } from './TemplatesPanel';
 import BillingTimeline, { type TimelineView } from '@/components/anchor/TimelineView';
 import { A, RowMenu, EmptyState, SearchBox } from '@/components/anchor/ui';
 import SortTable from '@/components/anchor/SortTable';
@@ -55,8 +54,7 @@ export default function NewPartnersPanel() {
   const [q, setQ] = useState('');
   const [tick, setTick] = useState(0);
   const [creating, setCreating] = useState(false);
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [nf, setNf] = useState({ template: '', company: '', contact: '', email: '', publication: 'austin', start: '' });
+  const [nf, setNf] = useState({ ad_size: '', months: '1', rate: '', company: '', contact: '', email: '', publication: 'austin', start: '' });
   const [formError, setFormError] = useState<string | null>(null);
   const reload = useCallback(() => setTick((t) => t + 1), []);
 
@@ -72,29 +70,24 @@ export default function NewPartnersPanel() {
     return () => { alive = false; };
   }, [tick]);
 
-  useEffect(() => {
-    if (!creating) return;
-    fetch('/api/admin/agreements-v2/templates', { credentials: 'include' }).then((r) => r.json()).then((j) => setTemplates((j.templates ?? []) as Template[])).catch(() => setTemplates([]));
-  }, [creating]);
-
   async function createAgreement() {
     setFormError(null);
-    const t = templates.find((x) => x.id === nf.template);
-    if (!t) return setFormError('Choose a template.');
-    if (!t.ad_size || !t.ad_rate_cents) return setFormError('That template needs an ad size and a monthly rate.');
+    const rateCents = Math.round(parseFloat(nf.rate) * 100);
+    if (!nf.ad_size.trim()) return setFormError('Enter the ad size.');
+    if (!(rateCents > 0)) return setFormError('Enter a valid monthly rate.');
     if (!nf.company.trim() || !nf.contact.trim()) return setFormError('Enter the company and contact name.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nf.email)) return setFormError('Enter a valid email address.');
     if (!nf.start) return setFormError('Choose a start date.');
-    const months = Math.max(1, parseInt(String(t.frequency ?? '1'), 10) || 1);
+    const months = Math.max(1, parseInt(nf.months || '1', 10) || 1);
     const s = new Date(`${nf.start}T00:00:00Z`);
     const end = new Date(Date.UTC(s.getUTCFullYear(), s.getUTCMonth() + months, 0)).toISOString().slice(0, 10);
     const res = await fetch('/api/admin/agreements', {
       method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ status: 'draft', type: 'print_ad', publication: nf.publication, company_name: nf.company.trim(), rep_name: nf.contact.trim(), advertiser_email: nf.email.trim(), billing_email: nf.email.trim(), ad_size: t.ad_size, frequency: t.frequency, ad_rate_cents: t.ad_rate_cents, amount_cents: t.ad_rate_cents * months, start_date: nf.start, end_date: end }),
+      body: JSON.stringify({ status: 'draft', type: 'print_ad', publication: nf.publication, company_name: nf.company.trim(), rep_name: nf.contact.trim(), advertiser_email: nf.email.trim(), billing_email: nf.email.trim(), ad_size: nf.ad_size.trim(), frequency: String(months), ad_rate_cents: rateCents, amount_cents: rateCents * months, start_date: nf.start, end_date: end }),
     });
     const j = await res.json().catch(() => ({}));
     if (!res.ok) return setFormError(j.error ?? 'Could not create the agreement.');
-    setNf({ template: '', company: '', contact: '', email: '', publication: nf.publication, start: '' });
+    setNf({ ad_size: '', months: '1', rate: '', company: '', contact: '', email: '', publication: nf.publication, start: '' });
     setCreating(false);
     setNotice('Draft agreement created. Preview it, then send.');
     reload();
@@ -231,12 +224,11 @@ export default function NewPartnersPanel() {
               <button type="button" aria-label="Close" onClick={() => setCreating(false)} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
             </div>
             <div className="space-y-5 px-6 py-6">
-              <Floating label="Template">
-                <select className={A.input} value={nf.template} onChange={(e) => setNf({ ...nf, template: e.target.value })}>
-                  <option value="">Select template</option>
-                  {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
-              </Floating>
+              <Floating label="Ad size"><input className={A.input} placeholder="1/4 page" value={nf.ad_size} onChange={(e) => setNf({ ...nf, ad_size: e.target.value })} /></Floating>
+              <div className="grid grid-cols-2 gap-4">
+                <Floating label="Months"><input className={A.input} inputMode="numeric" value={nf.months} onChange={(e) => setNf({ ...nf, months: e.target.value })} /></Floating>
+                <Floating label="Monthly rate ($)"><input className={A.input} inputMode="decimal" value={nf.rate} onChange={(e) => setNf({ ...nf, rate: e.target.value })} /></Floating>
+              </div>
               <Floating label="Market">
                 <select className={A.input} value={nf.publication} onChange={(e) => setNf({ ...nf, publication: e.target.value })}>
                   <option value="austin">RealtyLine (Austin)</option>

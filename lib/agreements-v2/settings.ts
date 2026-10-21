@@ -44,14 +44,8 @@ let ready = false;
 async function ensure(sql: Sql) {
   if (ready) return;
   await sql`CREATE TABLE IF NOT EXISTS agreements_v2_settings (id integer PRIMARY KEY DEFAULT 1, value jsonb NOT NULL DEFAULT '{}'::jsonb, updated_at timestamptz NOT NULL DEFAULT now())`;
-  await sql`CREATE TABLE IF NOT EXISTS agreements_v2_templates (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    name text NOT NULL,
-    ad_size text,
-    frequency text,
-    ad_rate_cents integer,
-    created_at timestamptz NOT NULL DEFAULT now(),
-    updated_at timestamptz NOT NULL DEFAULT now())`;
+  // Saved rates were retired; drop their table.
+  await sql`DROP TABLE IF EXISTS agreements_v2_templates`;
   ready = true;
 }
 
@@ -99,27 +93,6 @@ export async function saveDefaults(input: Record<string, unknown>, sql: Sql = ge
 export function renderIntro(text: string, ag: { rep_name?: string | null; company_name?: string | null }): string {
   const first = (ag.rep_name ?? '').trim().split(/\s+/)[0] || 'there';
   return text.replace(/\{first_name\}/g, first).replace(/\{company\}/g, ag.company_name ?? 'your company');
-}
-
-export async function listTemplates(sql: Sql = getSql()): Promise<AgreementTemplate[]> {
-  await ensure(sql);
-  return await sql`SELECT id, name, ad_size, frequency, ad_rate_cents, updated_at FROM agreements_v2_templates ORDER BY updated_at DESC` as unknown as AgreementTemplate[];
-}
-
-export async function createTemplate(
-  t: { name: string; ad_size?: string | null; frequency?: string | null; ad_rate_cents?: number | null },
-  sql: Sql = getSql(),
-): Promise<AgreementTemplate> {
-  await ensure(sql);
-  const rows = await sql`INSERT INTO agreements_v2_templates (name, ad_size, frequency, ad_rate_cents)
-    VALUES (${t.name}, ${t.ad_size ?? null}, ${t.frequency ?? null}, ${t.ad_rate_cents ?? null})
-    RETURNING id, name, ad_size, frequency, ad_rate_cents, updated_at` as unknown as AgreementTemplate[];
-  return rows[0];
-}
-
-export async function deleteTemplate(id: string, sql: Sql = getSql()): Promise<void> {
-  await ensure(sql);
-  await sql`DELETE FROM agreements_v2_templates WHERE id = ${id}`;
 }
 
 /* ---------- Notification settings ---------- */
