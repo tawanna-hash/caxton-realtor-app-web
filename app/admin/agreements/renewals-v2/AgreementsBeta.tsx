@@ -56,9 +56,12 @@ export default function AgreementsBeta() {
   const [tab, setTab] = useState<Tab>(want && TABS.some(([k]) => k === want) ? want : 'board');
   return (
     <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
-      <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
         <h1 className={A.title}>Agreements <span className="ml-1 rounded-full border border-[color:var(--ds-primary)] px-2 py-0.5 align-middle text-xs font-medium text-[color:var(--ds-primary)]">Beta</span></h1>
-        <p className={A.subtitle}>{SUB[tab]}</p>
+        {tab !== 'board' && <p className={A.subtitle}>{SUB[tab]}</p>}
+        </div>
+        <div id="agr-actions" className="flex flex-wrap items-center gap-3" />
       </div>
       <div className="flex gap-x-8 overflow-x-auto whitespace-nowrap border-b border-[color:var(--ds-line)]" role="tablist" aria-label="Agreements beta">
         {TABS.map(([key, label]) => (
@@ -74,13 +77,15 @@ export default function AgreementsBeta() {
         ))}
       </div>
       {tab === 'board' && (
+        <SignedAgreements />
+      )}
+      {tab === 'sent' && (
         <div className="space-y-6">
-          <SignedAgreements />
+          <SentClient />
           <Collapsible title="Waiting to be signed"><NewPartnersPanel /></Collapsible>
           <Collapsible title="Pipeline: drafts, sent and signed"><StatusBoard /></Collapsible>
         </div>
       )}
-      {tab === 'sent' && <SentClient />}
       {tab === 'drafts' && <BuilderList kind="draft" />}
       {tab === 'archived' && <BuilderList kind="archived" />}
       {tab === 'renewals' && <RenewalsV2Client />}

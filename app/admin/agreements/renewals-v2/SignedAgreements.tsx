@@ -6,6 +6,7 @@
 // columns and a per-row menu.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { A, EmptyState, FilterChip, RowMenu, SearchBox } from '@/components/anchor/ui';
 import { SortTh } from '../clients/StatusFilter';
@@ -63,6 +64,10 @@ function Menu({ label, items, primary }: { label: string; items: Array<{ label: 
 }
 
 export default function SignedAgreements() {
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => { setSlot(document.getElementById('agr-actions')); }, []);
+  const team = useJson('/api/admin/team', (j) => (j.admins ?? []) as Array<{ email: string; fullName: string | null }>, [] as Array<{ email: string; fullName: string | null }>);
+  const who = (e: string | null) => (e ? team.data.find((t) => t.email.toLowerCase() === e.toLowerCase())?.fullName || e : '—');
   const [version, setVersion] = useState(0);
   const agr = useJson(`/api/admin/agreements?v=${version}`, (j) => (j.agreements ?? []) as Agr[], [] as Agr[]);
   const inv = useJson('/api/admin/invoices', (j) => (j.invoices ?? []) as Inv[], [] as Inv[]);
@@ -94,7 +99,7 @@ export default function SignedAgreements() {
     const out = all.filter((a) => {
       const s = stOf(a) as St; if (!sts.includes(s)) return false;
       if (n && !nameOf(a).toLowerCase().includes(n)) return false;
-      const e = (a.start_date ?? '').slice(0, 10), b = lastBilled.get(a.id) ?? '';
+      const e = (a.start_date ?? a.signed_at ?? '').slice(0, 10), b = lastBilled.get(a.id) ?? '';
       if (extra.includes('effective') && ((eff.from && e < eff.from) || (eff.to && e > eff.to))) return false;
       if (extra.includes('billed') && ((bill.from && (!b || b < bill.from)) || (bill.to && (!b || b > bill.to)))) return false;
       if (extra.includes('payment') && pay && !payOf(a).toLowerCase().includes(pay.toLowerCase())) return false;
@@ -106,16 +111,6 @@ export default function SignedAgreements() {
   }, [all, q, sts, extra, eff, bill, pay, amended, sort, lastBilled]);
 
   const th = (k: typeof sort.k, label: string) => <SortTh label={label} dir={sort.k === k ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} onClick={() => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : 1 }))} />;
-  const summary = useMemo(() => {
-    const month = today().slice(0, 7); const lim = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
-    let mtd = 0, ar = 0, overdue = 0, expiring = 0;
-    for (const i of inv.data as Array<Inv & { amount_paid_cents?: number; paid_at?: string | null; is_overdue?: boolean }>) {
-      if (i.paid_at && i.paid_at.slice(0, 7) === month) mtd += i.amount_paid_cents ?? 0;
-      if (i.status !== 'paid' && i.status !== 'void' && i.status !== 'draft') { ar += i.balance_cents; if (i.is_overdue) overdue += i.balance_cents; }
-    }
-    for (const a of agr.data) { const e = a.end_date?.slice(0, 10); if (stOf(a) === 'active' && e && e >= today() && e <= lim) expiring++; }
-    return { mtd, ar, overdue, expiring };
-  }, [inv.data, agr.data]);
   const chosen = rows.filter((r) => sel.includes(r.id));
 
   function exportCsv(list: Agr[]) {
@@ -156,16 +151,11 @@ export default function SignedAgreements() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[['Revenue MTD', money(summary.mtd)], ['AR outstanding', money(summary.ar)], ['Overdue', money(summary.overdue)], ['Expiring 30d', String(summary.expiring)]].map(([l, v]) => (
-          <div key={l} className="rounded-[10px] bg-white px-4 py-3"><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="text-xl font-medium text-[color:var(--ds-ink)]">{v}</div></div>
-        ))}
-      </div>
       {dErr && <div className={A.error}>{dErr}</div>}
-      <div className="flex flex-wrap items-center justify-end gap-3">
+      {slot && createPortal(<>
         <Menu label="More Actions" items={[{ label: 'Import agreements', onClick: () => setImp(true) }, { label: 'Export agreements', onClick: () => exportCsv(rows) }]} />
-        <Menu primary label="Create agreement" items={[{ label: 'Use a template', href: '/admin/agreements/renewals-v2?tab=templates' }, { label: 'Start from scratch', onClick: () => setDrawer('new') }, { label: 'New quote', onClick: () => setQuote(true) }, { label: 'Import with AI', disabled: true }]} />
-      </div>
+        <Menu primary label="Create Agreement" items={[{ label: 'Use a template', href: '/admin/agreements/renewals-v2?tab=templates' }, { label: 'Start from scratch', onClick: () => setDrawer('new') }, { label: 'New quote', onClick: () => setQuote(true) }, { label: 'Import with AI', disabled: true }]} />
+      </>, slot)}
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search agreements" />
         <FilterChip<St> title="Agreement status" value={sts} onApply={setSts} options={(Object.keys(ST_LABEL) as St[]).map((v) => ({ value: v, label: ST_LABEL[v] }))} summary={`Agreement status (${sts.length})`} />
@@ -174,7 +164,7 @@ export default function SignedAgreements() {
         {extra.includes('payment') && <input aria-label="Payment method" placeholder="Payment method" className={`${A.input} !w-[170px]`} value={pay} onChange={(e) => setPay(e.target.value)} />}
         {extra.includes('amended') && <select aria-label="Is amended" className={`${A.input} !w-[130px]`} value={amended} onChange={(e) => setAmended(e.target.value)}><option value="yes">Amended</option><option value="no">Not amended</option></select>}
         <div className="relative">
-          <button type="button" className={A.outline} onClick={() => setAddOpen((o) => !o)} aria-haspopup="menu" aria-expanded={addOpen}>Add filter <span aria-hidden="true" className="ml-2">⊕</span></button>
+          <button type="button" className={`${A.outline} !border-dashed !border-[#B8BCC8] !text-[color:var(--ds-body)]`} onClick={() => setAddOpen((o) => !o)} aria-haspopup="menu" aria-expanded={addOpen}>Add filter <span aria-hidden="true" className="ml-2">⊕</span></button>
           {addOpen && (
             <div role="menu" className="absolute left-0 z-30 mt-2 min-w-[220px] rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
               {FILTERS.map(([k, l]) => <button key={k} role="menuitem" type="button" disabled={extra.includes(k)} onClick={() => { setExtra([...extra, k]); setAddOpen(false); }} style={{ border: 0, background: 'transparent' }} className="block w-full px-4 py-2 text-left text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)] disabled:opacity-40">{l}</button>)}
@@ -182,7 +172,7 @@ export default function SignedAgreements() {
           )}
         </div>
         {extra.length > 0 && <button type="button" className="text-xs text-[color:var(--ds-primary)]" style={{ border: 0, background: 'transparent' }} onClick={() => { setExtra([]); setEff({ from: '', to: '' }); setBill({ from: '', to: '' }); setPay(''); }}>Clear filters</button>}
-        <div className="ml-auto"><Menu label="Bulk actions" items={[{ label: `Export selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => exportCsv(chosen) }, { label: `Terminate selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => terminate(chosen) }]} /></div>
+        <div className={`ml-auto ${chosen.length === 0 ? "opacity-50" : ""}`}><Menu label="Bulk actions" items={[{ label: `Export selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => exportCsv(chosen) }, { label: `Terminate selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => terminate(chosen) }]} /></div>
       </div>
       {notice && <div className={A.notice}>{notice}</div>}
       <NewQuoteModal open={quote} onClose={() => setQuote(false)} />
@@ -213,11 +203,11 @@ export default function SignedAgreements() {
                 <td><input type="checkbox" aria-label={`Select ${nameOf(a)}`} checked={sel.includes(a.id)} onChange={() => setSel((c) => (c.includes(a.id) ? c.filter((x) => x !== a.id) : [...c, a.id]))} className="h-4 w-4 accent-[color:var(--ds-primary)]" /></td>
                 <td><div className="font-semibold text-[color:var(--ds-ink)]">{nameOf(a)}</div><div className="text-xs text-[color:var(--ds-body)]">Agreement{a.ad_size ? ` · ${a.ad_size}` : ''}</div></td>
                 <td><span className={`rounded-full border px-2 py-0.5 text-xs ${ST_STYLE[s]}`}>{ST_LABEL[s]}</span></td>
-                <td className="text-[color:var(--ds-ink)]">{a.created_by ?? '—'}</td>
-                <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(a.start_date)}</td>
+                <td className="text-[color:var(--ds-ink)]">{who(a.created_by)}</td>
+                <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(a.start_date ?? a.signed_at)}</td>
                 <td className="text-[color:var(--ds-ink)]">{payOf(a) || '—'}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{lastBilled.get(a.id) ? day(lastBilled.get(a.id)) : '—'}</td>
-                <td className="text-right"><RowMenu items={menu(a)} /></td>
+                <td className="text-right"><RowMenu plain items={menu(a)} /></td>
               </tr>
             ); })}
           </tbody>

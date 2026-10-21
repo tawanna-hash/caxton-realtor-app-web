@@ -234,7 +234,7 @@ export function Toggle({ on, onChange, label, disabled }: { on: boolean; onChang
 export type MenuItem = { label: string; onClick?: () => void; href?: string; disabled?: boolean; danger?: boolean };
 
 /** One "more" button per row or card. Keeps a single main action visible and tucks the rest into a menu. */
-export function RowMenu({ items, label = 'More actions' }: { items: MenuItem[]; label?: string }) {
+export function RowMenu({ items, label = 'More actions', plain = false }: { items: MenuItem[]; label?: string; plain?: boolean }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -258,14 +258,15 @@ export function RowMenu({ items, label = 'More actions' }: { items: MenuItem[]; 
         aria-label={label}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="anchor-outline inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[color:var(--ds-line)] bg-white text-lg leading-none text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]"
+        className={plain ? 'inline-flex h-9 w-9 items-center justify-center text-lg leading-none text-[color:var(--ds-ink)]' : 'anchor-outline inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[color:var(--ds-line)] bg-white text-lg leading-none text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]'}
+        style={plain ? { border: 0, background: 'transparent' } : undefined}
         onClick={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
           setPos({ top: r.bottom + 6, right: Math.max(8, window.innerWidth - r.right) });
           setOpen((o) => !o);
         }}
       >
-        <span aria-hidden="true">⋯</span>
+        <span aria-hidden="true" className={plain ? 'inline-block rotate-90' : undefined}>⋯</span>
       </button>
       {open && pos && (
         <div role="menu" style={{ position: 'fixed', top: pos.top, right: pos.right }} className="z-[70] w-56 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
