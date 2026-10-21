@@ -75,7 +75,7 @@ export default function BusinessDetailsForm() {
       </section>
 
       <section className={SECTION}>
-        <Head title="Brand settings" sub="Customize your proposals' appearance" />
+        <Head title="Brand settings" sub="Customize your agreements' appearance" />
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <div className="flex h-24 w-40 items-center justify-center rounded-[10px] bg-[color:var(--ds-page)]">

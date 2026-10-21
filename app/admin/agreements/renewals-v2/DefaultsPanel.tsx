@@ -1,6 +1,6 @@
 'use client';
 
-// Agreements (Beta) default settings, laid out like Anchor's "Proposals default
+// Agreements (Beta) default settings, laid out like Anchor's "Agreements default
 // configuration": title and Save changes on one row, one white card, sections,
 // label left and control right.
 
@@ -52,8 +52,8 @@ export default function DefaultsPanel() {
     <div className="max-w-4xl space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-[color:var(--ds-ink)]">Proposals default configuration</h2>
-          <p className="text-sm text-[color:var(--ds-body)]">Set the default values of new proposals you create</p>
+          <h2 className="text-xl font-semibold text-[color:var(--ds-ink)]">Agreements default configuration</h2>
+          <p className="text-sm text-[color:var(--ds-body)]">Set the default values of new agreements you create</p>
         </div>
         <button onClick={save} disabled={saving} className={A.primary}>{saving ? 'Saving…' : 'Save changes'}</button>
       </div>
@@ -66,9 +66,9 @@ export default function DefaultsPanel() {
               {[0, 7, 15, 20, 30, 45, 60].map((n) => <option key={n} value={n}>{n === 0 ? 'On receipt of invoice' : `${n} days`}</option>)}
             </select>
           </SettingRow>
-          <SettingRow label="Proposal expiration in days">
+          <SettingRow label="Agreement expiration in days">
             <select className={A.input} value={d.proposal_expiry_days ?? ''} onChange={(e) => setD({ ...d, proposal_expiry_days: e.target.value ? Number(e.target.value) : null })}>
-              <option value="">Proposals don&apos;t expire</option>
+              <option value="">Agreements don&apos;t expire</option>
               {[7, 14, 30, 60].map((n) => <option key={n} value={n}>{n} days</option>)}
             </select>
           </SettingRow>

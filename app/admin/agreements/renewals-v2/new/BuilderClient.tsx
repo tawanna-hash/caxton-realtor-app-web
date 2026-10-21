@@ -429,7 +429,7 @@ export default function BuilderClient() {
               <p className="-mt-3 text-xs text-[color:var(--ds-body)]">Use {'{first_name}'} and {'{company}'} to personalize.</p>
               <label className="flex items-center gap-3 text-sm text-[color:var(--ds-ink)]">
                 <input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={doc.expires} onChange={(e) => update({ expires: e.target.checked })} />
-                Set an expiration for this proposal
+                Set an expiration for this agreement
                 {doc.expires && (
                   <span className="ml-2 inline-flex items-center gap-2">
                     <input type="number" min={1} max={365} aria-label="Days until expiry" value={doc.expires_days} onChange={(e) => update({ expires_days: Math.max(1, Math.min(365, Number(e.target.value) || 1)) })} className="w-20 rounded-[10px] border border-[color:var(--ds-line)] px-2 py-1 text-sm" />
@@ -609,21 +609,21 @@ export default function BuilderClient() {
 
       {/* Share by link */}
       {sentInfo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Proposal sent">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Agreement sent">
           <div className="w-full max-w-4xl overflow-hidden rounded-[14px] bg-white shadow-xl">
             <div className="relative px-4 py-8 text-center sm:px-8">
               <button type="button" aria-label="Close" onClick={() => router.push('/admin/agreements/proposals/sent')} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
               <svg className="mx-auto" width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true"><circle cx="32" cy="32" r="22" stroke="#047857" strokeWidth="4" opacity=".7" /><path d="M22 33l7 7 14-15" stroke="#047857" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              <h2 className="mt-4 text-2xl font-semibold text-[color:var(--ds-ink)]">Proposal Sent</h2>
-              <p className="mt-1 text-base text-[color:var(--ds-ink)]">Your proposal was emailed to {sentInfo.to}</p>
+              <h2 className="mt-4 text-2xl font-semibold text-[color:var(--ds-ink)]">Agreement Sent</h2>
+              <p className="mt-1 text-base text-[color:var(--ds-ink)]">Your agreement was emailed to {sentInfo.to}</p>
             </div>
             <div className="bg-[color:var(--ds-page)] px-4 py-6 sm:px-8">
               <h3 className="text-center text-xl font-semibold text-[color:var(--ds-ink)]">What&apos;s Next?</h3>
               <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  { t: 'Share', d: 'Use a different channel to share this proposal', b: copied ? 'Link Copied' : 'Copy Link', disabled: !sentInfo.link, go: async () => { if (sentInfo.link) { await navigator.clipboard.writeText(sentInfo.link); setCopied(true); } } },
+                  { t: 'Share', d: 'Use a different channel to share this agreement', b: copied ? 'Link Copied' : 'Copy Link', disabled: !sentInfo.link, go: async () => { if (sentInfo.link) { await navigator.clipboard.writeText(sentInfo.link); setCopied(true); } } },
                   { t: 'Monitor', d: 'Keep track of the approval process', b: 'Review Progress', go: () => router.push('/admin/agreements/proposals/sent') },
-                  { t: 'Create Another Proposal', d: 'Ready to send another one? Go for it', b: 'Create Proposal', go: () => { window.location.href = '/admin/agreements/renewals-v2/new'; } },
+                  { t: 'Create Another Agreement', d: 'Ready to send another one? Go for it', b: 'Create Agreement', go: () => { window.location.href = '/admin/agreements/renewals-v2/new'; } },
                   { t: 'Back To My Dashboard', d: 'Go back to your dashboard and continue working', b: 'Go To Dashboard', go: () => router.push('/admin') },
                 ].map((c) => (
                   <div key={c.t} className="flex flex-col items-center rounded-[14px] bg-white p-4 text-center">
@@ -848,7 +848,7 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
           <div><div className="font-semibold">Effective date of agreement</div><div className="text-[color:var(--ds-body)]">{doc.effective === 'date' && doc.effective_date ? fmtDay(doc.effective_date) : 'On acceptance'}</div></div>
           <div><div className="font-semibold">Payment terms</div><div className="text-[color:var(--ds-body)]">{due} Accepted: {methods || 'none'}.</div></div>
           {doc.ask_address && <div><div className="font-semibold">Address</div><div className="text-[color:var(--ds-body)]">You will be asked for your address before signing.</div></div>}
-          {doc.expires && <div><div className="font-semibold">Expiration</div><div className="text-[color:var(--ds-body)]">This proposal expires {doc.expires_days} days after it is sent.</div></div>}
+          {doc.expires && <div><div className="font-semibold">Expiration</div><div className="text-[color:var(--ds-body)]">This agreement expires {doc.expires_days} days after it is sent.</div></div>}
         </div>
       )}
       {step === 4 && (
@@ -876,14 +876,14 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
           <div className={`flex min-h-[70%] w-full flex-col rounded-xl bg-[color:var(--ds-selected)] ${mobile ? 'max-w-sm' : 'max-w-4xl'}`}>
             {step === -1 ? (
               <div className="p-10">
-                <h2 className="text-3xl font-bold text-[color:var(--ds-ink)]">{doc.name || 'Proposal for review'}</h2>
+                <h2 className="text-3xl font-bold text-[color:var(--ds-ink)]">{doc.name || 'Agreement for review'}</h2>
                 <h3 className="mt-6 text-xl font-semibold text-[color:var(--ds-ink)]">Prepared for {preparedFor}</h3>
-                <p className="mt-2 text-sm text-[color:var(--ds-body)]">Realty News Now has sent you this proposal for your review and approval.</p>
+                <p className="mt-2 text-sm text-[color:var(--ds-body)]">Realty News Now has sent you this agreement for your review and approval.</p>
                 <button type="button" className={`${A.primary} mt-8`} onClick={() => setStep(0)}>Get started →</button>
               </div>
             ) : (
               <div className={`flex flex-1 ${mobile ? 'flex-col' : ''}`}>
-                <nav className={`${mobile ? 'border-b' : 'w-60 shrink-0 border-r'} border-[color:var(--ds-line)] bg-white p-5 text-sm`} aria-label="Proposal steps">
+                <nav className={`${mobile ? 'border-b' : 'w-60 shrink-0 border-r'} border-[color:var(--ds-line)] bg-white p-5 text-sm`} aria-label="Agreement steps">
                   <div className="mb-4 font-semibold text-[color:var(--ds-ink)]">Realty News Now</div>
                   <ul className={mobile ? 'flex flex-wrap gap-2' : 'space-y-3'}>
                     {PREVIEW_STEPS.map((l, i) => <li key={l}><button type="button" onClick={() => setStep(i)} className={`text-left ${i === step ? 'font-semibold text-[color:var(--ds-primary)]' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0, background: 'transparent' }}>{l}</button></li>)}

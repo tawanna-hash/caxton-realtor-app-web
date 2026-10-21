@@ -14,7 +14,7 @@ const LINKS: Array<[string, string]> = [
 export default function ProposalsNav() {
   const path = usePathname() ?? '';
   return (
-    <nav aria-label="Proposals" className="-mx-1 flex gap-2 overflow-x-auto border-b border-[color:var(--ds-line)] px-1">
+    <nav aria-label="Agreements" className="-mx-1 flex gap-2 overflow-x-auto border-b border-[color:var(--ds-line)] px-1">
       {LINKS.map(([slug, label]) => {
         const active = path.endsWith(`/proposals/${slug}`);
         return (

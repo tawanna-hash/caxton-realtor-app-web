@@ -2,7 +2,7 @@
 
 // Agreements (Beta) main list, matched to Anchor's signed Agreements page:
 // count, search, Agreement status filter (Active / Completed / Terminated),
-// Add filter, Bulk actions, More Actions, Create proposal menu, sortable
+// Add filter, Bulk actions, More Actions, Create agreement menu, sortable
 // columns and a per-row menu.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -138,7 +138,7 @@ export default function SignedAgreements() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-end gap-3">
         <Menu label="More Actions" items={[{ label: 'Import agreements', href: '/admin/agreements' }, { label: 'Export agreements', onClick: () => exportCsv(rows) }]} />
-        <Menu primary label="Create proposal" items={[{ label: 'Use a template', href: '/admin/agreements/proposals/templates' }, { label: 'Start from scratch', href: '/admin/agreements/renewals-v2/new' }, { label: 'Import with AI', disabled: true }]} />
+        <Menu primary label="Create agreement" items={[{ label: 'Use a template', href: '/admin/agreements/proposals/templates' }, { label: 'Start from scratch', href: '/admin/agreements/renewals-v2/new' }, { label: 'Import with AI', disabled: true }]} />
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search agreements" />

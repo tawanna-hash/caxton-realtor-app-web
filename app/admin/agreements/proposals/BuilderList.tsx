@@ -13,8 +13,8 @@ export type ListKind = 'draft' | 'archived' | 'template';
 
 const CFG = {
   draft: { title: 'Drafts', nameCol: 'Client name', dateCol: 'Last modified', key: 'drafts', sub: 'Agreement' },
-  archived: { title: 'Archived proposals', nameCol: 'Client name', dateCol: 'Archived on', key: 'archived', sub: 'Agreement' },
-  template: { title: 'Proposal templates', nameCol: 'Template name', dateCol: 'Last updated on', key: 'templates', sub: '' },
+  archived: { title: 'Archived agreements', nameCol: 'Client name', dateCol: 'Archived on', key: 'archived', sub: 'Agreement' },
+  template: { title: 'Agreement templates', nameCol: 'Template name', dateCol: 'Last updated on', key: 'templates', sub: '' },
 } as const;
 
 function BulkMenu({ items, disabled }: { items: MenuItem[]; disabled: boolean }) {
@@ -104,9 +104,9 @@ export default function BuilderList({ kind }: { kind: ListKind }) {
       {notice && <div className={A.notice}>{notice}</div>}
       {error && <div className={A.error}>{error}</div>}
       {rows === null && !error && <p className="text-sm text-[color:var(--ds-body)]">Loading…</p>}
-      {empty && kind === 'archived' && <EmptyPanel tag="Archived" title="No archived proposals yet" body="When you archive a proposal, it stays here for reference." />}
-      {empty && kind === 'draft' && <EmptyPanel tag="Draft" title="No drafts yet" body="Proposals you start and leave unfinished are saved here automatically." />}
-      {empty && kind === 'template' && <EmptyPanel tag="Template" title="No templates yet" body="Build a proposal, then choose Save as template to reuse it." />}
+      {empty && kind === 'archived' && <EmptyPanel tag="Archived" title="No archived agreements yet" body="When you archive an agreement, it stays here for reference." />}
+      {empty && kind === 'draft' && <EmptyPanel tag="Draft" title="No drafts yet" body="Agreements you start and leave unfinished are saved here automatically." />}
+      {empty && kind === 'template' && <EmptyPanel tag="Template" title="No templates yet" body="Build an agreement, then choose Save as template to reuse it." />}
       {rows !== null && rows.length > 0 && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">

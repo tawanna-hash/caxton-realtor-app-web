@@ -87,11 +87,11 @@ function ServiceForm({ initial, onCancel, onSaved, bundle, services }: { initial
           </div>
           <Field label="Billing trigger">
             <select className={ctl} value={d.billing_trigger} onChange={(e) => set('billing_trigger', e.target.value as 'automatic' | 'manual')}>
-              <option value="automatic">Automatic, on proposal acceptance</option>
+              <option value="automatic">Automatic, on agreement acceptance</option>
               <option value="manual">Manual</option>
             </select>
           </Field>
-          <p className="text-xs text-[color:var(--ds-body)]">{d.billing_trigger === 'automatic' ? 'The service will be charged on proposal acceptance without requiring action.' : 'You will be required to trigger the invoice.'}</p>
+          <p className="text-xs text-[color:var(--ds-body)]">{d.billing_trigger === 'automatic' ? 'The service will be charged on agreement acceptance without requiring action.' : 'You will be required to trigger the invoice.'}</p>
           {bundle && (
             <div className="relative">
               <div className="mb-2 text-sm font-semibold text-[color:var(--ds-ink)]">Included services</div>
@@ -205,7 +205,7 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className={A.title}>{isBundle ? 'Bundles' : 'Services'} ({rows.length})</h1>
-          <p className={`${A.subtitle} mt-1 max-w-xl`}>{isBundle ? 'Group multiple services into a single-priced bundle to offer clients in proposals.' : 'Create and manage the services you provide to clients. You may customize the services per client when generating each new proposal.'}</p>
+          <p className={`${A.subtitle} mt-1 max-w-xl`}>{isBundle ? 'Group multiple services into a single-priced bundle to offer clients in agreements.' : 'Create and manage the services you provide to clients. You may customize the services per client when generating each new agreement.'}</p>
         </div>
         <div className="flex gap-3">
           <input ref={file} type="file" accept=".csv,text/csv" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) importCsv(f); e.target.value = ''; }} />
@@ -228,7 +228,7 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
             {th('name', 'Service name')}{th('rate', 'Rate')}{isBundle && <th className="text-xs font-medium text-[color:var(--ds-body)]">Services</th>}{th('occ', 'Billing occurrence')}{th('trig', 'Billing trigger')}<th />
           </tr></thead>
           <tbody>
-            {!list.loading && rows.length === 0 && <tr><td colSpan={isBundle ? 7 : 6}><EmptyState title={isBundle ? 'Elevate your offering with bundles' : 'No services'} body={isBundle ? 'Group multiple services into a single-priced bundle.' : 'Create your first service to use it in proposals and agreements.'} action={{ label: isBundle ? 'Create Bundle' : 'New service', onClick: () => setForm(blank) }} /></td></tr>}
+            {!list.loading && rows.length === 0 && <tr><td colSpan={isBundle ? 7 : 6}><EmptyState title={isBundle ? 'Elevate your offering with bundles' : 'No services'} body={isBundle ? 'Group multiple services into a single-priced bundle.' : 'Create your first service to use it in agreements and agreements.'} action={{ label: isBundle ? 'Create Bundle' : 'New service', onClick: () => setForm(blank) }} /></td></tr>}
             {rows.map((p) => (
               <tr key={p.id} className={p.is_active ? '' : 'opacity-60'}>
                 <td><input type="checkbox" aria-label={`Select ${p.name}`} checked={sel.includes(p.id)} onChange={() => setSel((c) => (c.includes(p.id) ? c.filter((x) => x !== p.id) : [...c, p.id]))} className="h-4 w-4 accent-[color:var(--ds-primary)]" /></td>

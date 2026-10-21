@@ -1,6 +1,6 @@
 'use client';
 
-// Pieces shared by the Proposals pages.
+// Pieces shared by the Agreements pages.
 
 import { useEffect, useRef, useState } from 'react';
 import { A } from '@/components/anchor/ui';
@@ -23,8 +23,8 @@ export function stamp(iso: string): string {
   return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-/** Split button: Create proposal, with a menu for starting from a template. */
-export function CreateProposal({ label = 'Create proposal' }: { label?: string }) {
+/** Split button: Create agreement, with a menu for starting from a template. */
+export function CreateProposal({ label = 'Create agreement' }: { label?: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -36,12 +36,12 @@ export function CreateProposal({ label = 'Create proposal' }: { label?: string }
   return (
     <div ref={ref} className="relative inline-flex">
       <a href={NEW_PROPOSAL} className={A.primary} style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0 }}>{label}</a>
-      <button type="button" aria-label="More ways to create a proposal" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={`${A.primary} px-3`} style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, marginLeft: 1 }}>
+      <button type="button" aria-label="More ways to create an agreement" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={`${A.primary} px-3`} style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, marginLeft: 1 }}>
         <span aria-hidden="true" className="inline-block text-[10px] leading-none">&#9660;</span>
       </button>
       {open && (
         <div role="menu" className="absolute right-0 top-full z-40 mt-1.5 w-56 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
-          <a role="menuitem" href={NEW_PROPOSAL} className="block rounded-[10px] px-3 py-2 text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]">Blank proposal</a>
+          <a role="menuitem" href={NEW_PROPOSAL} className="block rounded-[10px] px-3 py-2 text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]">Blank agreement</a>
           <a role="menuitem" href={TEMPLATES} className="block rounded-[10px] px-3 py-2 text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]">From a template</a>
         </div>
       )}
@@ -82,7 +82,7 @@ export function EmptyPanel({ tag, title, body, cta = true }: { tag: string; titl
       <Doc tag={tag} />
       <h2 className="mt-6 text-lg font-semibold text-[color:var(--ds-ink)]">{title}</h2>
       <p className="mt-1 max-w-md text-sm text-[color:var(--ds-body)]">{body}</p>
-      {cta && <div className="mt-6"><CreateProposal label="Create a proposal" /></div>}
+      {cta && <div className="mt-6"><CreateProposal label="Create an agreement" /></div>}
     </div>
   );
 }

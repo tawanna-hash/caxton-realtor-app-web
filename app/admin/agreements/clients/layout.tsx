@@ -1,4 +1,4 @@
-// Clients (Beta): the record that exists once a proposal is approved. Clients,
+// Clients (Beta): the record that exists once an agreement is approved. Clients,
 // Contacts and a client page with Summary, Upcoming invoices and Issued
 // invoices, laid out like Anchor. Read-only: it reads existing records.
 

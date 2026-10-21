@@ -14,14 +14,14 @@ export const REPORTS = [
   { slug: 'revenue', title: 'Revenue Breakdown', body: 'Review historical revenue with detailed breakdowns across various time intervals. This revenue data is based on paid invoices and accounts for any refunds and disputes, if applicable. Note that the revenue data does not include any platform fees.' },
   { slug: 'active-services', title: 'Active Services', body: 'View all active services across all of your agreements with options to apply various filters.' },
   { slug: 'future-invoices', title: 'Future Invoices', body: 'View all invoices scheduled for issuance over the next 12 months.' },
-  { slug: 'sent-proposals', title: 'Sent Proposals', body: 'View all sent proposals by their sent date and current status.' },
+  { slug: 'sent-proposals', title: 'Sent Agreements', body: 'View all sent agreements by their sent date and current status.' },
   { slug: 'remaining-credit', title: 'Remaining Credit', body: 'View the remaining credit your clients have per agreement.' },
 ] as const;
 
 export function ReportsIndex() {
   return (
     <div className="space-y-4">
-      <div><h1 className={A.title}>All Reports</h1><p className={`${A.subtitle} mt-1`}>Run and export reports on revenue, services, invoices, proposals and credit.</p></div>
+      <div><h1 className={A.title}>All Reports</h1><p className={`${A.subtitle} mt-1`}>Run and export reports on revenue, services, invoices, agreements and credit.</p></div>
       <div className="space-y-3">
         {REPORTS.map((r) => (
           <section key={r.slug} className="flex items-center justify-between gap-6 rounded-[10px] bg-white px-5 py-4">
@@ -193,7 +193,7 @@ function FutureInvoices() {
   );
 }
 
-// ---------- Sent Proposals ----------
+// ---------- Sent Agreements ----------
 type PropRow = { id: string; client: string; by: string; sent: string; approved: string; status: string };
 function SentProposals() {
   const agr = useJson('/api/admin/agreements', (j) => (j.agreements ?? []) as Agr[], noAgr);
@@ -213,9 +213,9 @@ function SentProposals() {
     { key: 'status', label: 'Status', val: (r) => r.status, show: (r) => <Pill t={r.status} tone={r.status === 'Signed' ? 'green' : r.status === 'Sent' ? 'amber' : 'red'} /> },
   ];
   return (
-    <Shell title="Proposals Report" onExport={() => csv('proposals', cols.map((c) => c.label), rows.map((r) => [r.client, r.by, day(r.sent), r.approved ? day(r.approved) : '', r.status]))}
+    <Shell title="Agreements Report" onExport={() => csv('agreements', cols.map((c) => c.label), rows.map((r) => [r.client, r.by, day(r.sent), r.approved ? day(r.approved) : '', r.status]))}
       filters={<><RangeSelect value={range} onChange={setRange} /><ClientFilter value={client} onChange={setClient} names={[...new Set(agr.data.map(clientOf))].sort()} /></>}>
-      <Table cols={cols} rows={rows} loading={agr.loading} empty="No proposals were sent in this date range." />
+      <Table cols={cols} rows={rows} loading={agr.loading} empty="No agreements were sent in this date range." />
     </Shell>
   );
 }

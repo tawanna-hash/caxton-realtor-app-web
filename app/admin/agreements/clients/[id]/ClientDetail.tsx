@@ -96,7 +96,7 @@ export default function ClientDetail({ id }: { id: number }) {
             <p className="text-xs text-[color:var(--ds-body)]">{a.type === 'individual' ? 'Individual' : 'Business'} · Created on {day(a.created_at)}</p>
           </div>
         </div>
-        <RowMenu items={[{ label: 'Create proposal', href: '/admin/agreements/renewals-v2/new' }, { label: 'Open in Get Paid', href: '/admin/getpaid' }]} />
+        <RowMenu items={[{ label: 'Create agreement', href: '/admin/agreements/renewals-v2/new' }, { label: 'Open in Get Paid', href: '/admin/getpaid' }]} />
       </div>
 
       <div role="tablist" aria-label="Client" className="flex gap-2 overflow-x-auto border-b border-[color:var(--ds-line)]">
@@ -124,7 +124,7 @@ export default function ClientDetail({ id }: { id: number }) {
               <p className="mt-4 text-xs text-[color:var(--ds-body)]">Overdue invoices</p>
               {overdue.length === 0 ? <p className="mt-1 text-sm text-[color:var(--ds-body)]">There are no overdue invoices to display.</p> : overdue.map((i) => <div key={i.id} className="mt-1 flex justify-between rounded-[10px] border border-[#C8102E] bg-[#FDECEF] p-3 text-sm text-[#9B0C23]"><span>{i.number} · due {day(i.due_date)}</span><span className="font-semibold">{money(i.balance_cents)}</span></div>)}
             </Card>
-            <Card title="Recent agreements" action={<Link href="/admin/agreements/renewals-v2/new" className={link}>Create proposal</Link>}>
+            <Card title="Recent agreements" action={<Link href="/admin/agreements/renewals-v2/new" className={link}>Create agreement</Link>}>
               {myAgr.length === 0 ? <p className="text-sm text-[color:var(--ds-body)]">No agreements yet.</p> : (
                 <ul className="space-y-2">
                   {myAgr.slice(0, 5).map((g) => (

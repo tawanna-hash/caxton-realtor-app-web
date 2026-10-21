@@ -21,7 +21,7 @@ export default function SentClient() {
     let alive = true;
     fetch('/api/admin/agreements-v2/board', { credentials: 'include' })
       .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.detail || j.error || `HTTP ${r.status}`); if (alive) setItems((j.items as Item[]).filter((i) => i.stage === 'sent' || i.stage === 'opened')); })
-      .catch((e) => { if (alive) setError(e instanceof Error ? e.message : 'Could not load proposals.'); });
+      .catch((e) => { if (alive) setError(e instanceof Error ? e.message : 'Could not load agreements.'); });
     return () => { alive = false; };
   }, [tick]);
 
@@ -45,14 +45,14 @@ export default function SentClient() {
   const empty = items !== null && items.length === 0;
   return (
     <div className="space-y-5">
-      <PageHeader title="Sent proposals">{!empty && <CreateProposal />}</PageHeader>
+      <PageHeader title="Sent agreements">{!empty && <CreateProposal />}</PageHeader>
       {notice && <div className={A.notice}>{notice}</div>}
       {error && <div className={A.error}>{error}</div>}
       {items === null && !error && <p className="text-sm text-[color:var(--ds-body)]">Loading…</p>}
-      {empty && <EmptyPanel tag="Proposals" title="Create proposals in a matter of minutes" body="Our proposals are designed for a fast setup with smart fields, a service library, and default settings." />}
+      {empty && <EmptyPanel tag="Agreements" title="Create agreements in a matter of minutes" body="Our agreements are designed for a fast setup with smart fields, a service library, and default settings." />}
       {items !== null && items.length > 0 && (
         <>
-          <SearchBox value={q} onChange={setQ} label="Search sent proposals" />
+          <SearchBox value={q} onChange={setQ} label="Search sent agreements" />
           <div className="overflow-x-auto">
             <SortTable rows={rows} cols={[{ label: 'Client name', get: (r) => r.company_name }, { label: 'Type', get: (r) => r.kind }, { label: 'Status', get: (r) => r.stage }, { label: 'Monthly', get: (r) => r.rate_cents }, { label: 'Last activity', get: (r) => r.last_activity_at }, { label: '' }]} className={`${A.table} min-w-[640px]`}>
 {(rws) => (<>
@@ -66,7 +66,7 @@ export default function SentClient() {
                     <td className="text-right"><button type="button" className={A.small} disabled={busy !== null || !i.email} onClick={() => resend(i)}>{busy === i.id ? '…' : 'Resend'}</button></td>
                   </tr>
                 ))}
-                {rows.length === 0 && <tr><td colSpan={6} className="py-10 text-center text-[color:var(--ds-body)]">No proposals match your search.</td></tr>}
+                {rows.length === 0 && <tr><td colSpan={6} className="py-10 text-center text-[color:var(--ds-body)]">No agreements match your search.</td></tr>}
               </>)}
 </SortTable>
           </div>

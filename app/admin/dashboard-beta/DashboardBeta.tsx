@@ -1,7 +1,7 @@
 'use client';
 
 // Dashboard (Beta): Anchor's dashboard layout, fed by this app's own data.
-// Sections: setup checklist, Invoices, Agreements, Payouts, Revenue, Sent proposals.
+// Sections: setup checklist, Invoices, Agreements, Payouts, Revenue, Sent agreements.
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -103,8 +103,8 @@ export default function DashboardBeta() {
 
   const steps: Array<{ title: string; done: boolean; body: string; href: string; cta: string }> = [
     { title: 'Create your account', done: true, body: 'You are signed in to the admin workspace.', href: '/admin', cta: '' },
-    { title: 'Set up your brand', done: Boolean(biz.data.logo), body: 'Add your logo and brand colors so proposals and invoices look like yours.', href: '/admin/settings-beta/business-details', cta: 'Open Business details' },
-    { title: 'Send a proposal', done: board.data.some((b) => b.stage !== 'draft'), body: 'Create a proposal from a template and send it for signature.', href: '/admin/agreements/renewals-v2/new', cta: 'Create proposal' },
+    { title: 'Set up your brand', done: Boolean(biz.data.logo), body: 'Add your logo and brand colors so agreements and invoices look like yours.', href: '/admin/settings-beta/business-details', cta: 'Open Business details' },
+    { title: 'Send an agreement', done: board.data.some((b) => b.stage !== 'draft'), body: 'Create an agreement from a template and send it for signature.', href: '/admin/agreements/renewals-v2/new', cta: 'Create agreement' },
     { title: 'Connect your bank account', done: stat.data.stripe, body: 'Payouts go to the bank account connected in Stripe.', href: '/admin/payouts-beta', cta: 'View payouts' },
     { title: 'Verify your business', done: Boolean(biz.data.address && biz.data.city), body: 'Complete the business address in Business details.', href: '/admin/settings-beta/business-details', cta: 'Open Business details' },
     { title: 'Activate your account', done: inv.data.some((i) => i.status === 'paid'), body: 'Your account is active once the first invoice is paid.', href: '/admin/billing-hub', cta: 'Open Billing Hub' },
@@ -116,7 +116,7 @@ export default function DashboardBeta() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className={A.title}>Welcome back</h1>
-        <Link href="/admin/agreements/renewals-v2/new" className={A.primary}>Create proposal</Link>
+        <Link href="/admin/agreements/renewals-v2/new" className={A.primary}>Create agreement</Link>
       </div>
 
       {!allDone && (
@@ -186,9 +186,9 @@ export default function DashboardBeta() {
           <Bars values={d.expectedBy} color="#D5D4E0" money legend="Expected" />
         </Panel>
 
-        <Panel title="Sent proposals">
+        <Panel title="Sent agreements">
           <div className="grid grid-cols-2 gap-3">
-            <Stat label="Proposals sent this year" value={String(d.sentThisYear.length)} />
+            <Stat label="Agreements sent this year" value={String(d.sentThisYear.length)} />
             <Stat label="Median time to sign" value={`${d.median} Days`} />
           </div>
           <Bars values={d.signedBy} legend="Signed" />
