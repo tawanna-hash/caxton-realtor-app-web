@@ -44,7 +44,12 @@ const receivedDate = (i: Inv) => {
   const latest = (i.payments ?? []).reduce<string | null>((m, p) => (p.payment_date && (!m || p.payment_date > m) ? p.payment_date : m), null);
   return latest ?? i.paid_at;
 };
-const daysOver = (i: Inv, now: number) => (i.due_date ? Math.max(1, Math.floor((now - new Date(`${iso(i.due_date)}T12:00:00`).getTime()) / 86_400_000)) : 0);
+// Whole calendar days past the due date, so it matches the dashboard aging.
+const daysOver = (i: Inv, now: number) => {
+  if (!i.due_date) return 0;
+  const t = new Date(now); t.setHours(0, 0, 0, 0);
+  return Math.max(1, Math.round((t.getTime() - new Date(`${iso(i.due_date)}T00:00:00`).getTime()) / 86_400_000));
+};
 const statusText = (i: Inv, now: number) =>
   i.is_overdue ? `Overdue ${daysOver(i, now)} days` : i.status === 'paid' ? 'Paid' : i.status === 'sent' ? 'Open' : i.status[0].toUpperCase() + i.status.slice(1);
 const isReceipt = (i: Inv) => Boolean(i.number?.startsWith('SR-'));
@@ -170,7 +175,10 @@ function ActivityPanel({ invoice, now, onClose, onEdit }: { invoice: Inv; now: n
             <h3 className="font-semibold text-[color:var(--ds-ink)]">Products and services</h3>
             <div className="mt-3 space-y-3">
               {lines.map((l, n) => (
-                <div key={n} className="text-xs"><div className="font-medium text-[color:var(--ds-ink)]">{l.description}</div><div className="text-[color:var(--ds-body)]">{l.qty} × {formatCents(l.unit_cents)} · {formatCents(l.qty * l.unit_cents)}</div></div>
+                <div key={n} className="text-xs">
+                  <div className="font-medium text-[color:var(--ds-ink)]">{l.description}</div>
+                  <div className="text-[color:var(--ds-body)]">{Number.isFinite(l.qty) && Number.isFinite(l.unit_cents) ? `${l.qty} × ${formatCents(l.unit_cents)} · ${formatCents(l.qty * l.unit_cents)}` : lines.length === 1 ? formatCents(invoice.total_cents) : 'Amount on invoice'}</div>
+                </div>
               ))}
             </div>
           </section>
@@ -445,7 +453,6 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
             cols={[
               { label: <input type="checkbox" aria-label="Select all shown invoices" checked={shown.length > 0 && shown.every((i) => sel.has(i.id))} onChange={(e) => setSel(e.target.checked ? new Set(shown.map((i) => i.id)) : new Set())} /> },
               { label: 'Date', get: (r) => txDate(r) },
-              { label: 'Billing date', get: (r) => r.issued_at },
               { label: 'Payment received', get: (r) => receivedDate(r) },
               { label: 'Type', get: (r) => (isReceipt(r) ? 'Sales receipt' : 'Invoice') },
               { label: 'No.', get: (r) => r.number },
@@ -461,12 +468,11 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
                 <tr key={i.id}>
                   <td><input type="checkbox" aria-label={`Select ${i.number ?? 'invoice'}`} checked={sel.has(i.id)} onChange={() => setSel((c) => { const n = new Set(c); if (n.has(i.id)) n.delete(i.id); else n.add(i.id); return n; })} /></td>
                   <td className="whitespace-nowrap">{day(txDate(i))}</td>
-                  <td className="whitespace-nowrap">{day(i.issued_at)}</td>
                   <td className="whitespace-nowrap">{day(receivedDate(i))}</td>
                   <td className="whitespace-nowrap">{isReceipt(i) ? 'Sales receipt' : 'Invoice'}</td>
                   <td className="max-w-[160px] truncate whitespace-nowrap font-medium text-[color:var(--ds-ink)]" title={i.number ?? undefined}>{i.number ?? 'Draft'}</td>
                   <td className="min-w-[180px]">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td>
-                  <td className="max-w-[220px] truncate" title={memoOf(i)}>{memoOf(i) || '—'}</td>
+                  <td className="max-w-[180px] truncate" title={memoOf(i)}>{memoOf(i) || '—'}</td>
                   <td className="whitespace-nowrap text-right font-medium">{formatCents(i.total_cents)}</td>
                   <td><StatusChip i={i} now={now} /></td>
                   <td className="whitespace-nowrap text-right">

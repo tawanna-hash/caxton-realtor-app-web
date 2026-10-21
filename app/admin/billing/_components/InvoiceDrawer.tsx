@@ -225,7 +225,9 @@ export function InvoiceDrawer({
     updateLineItems(form.line_items.map((li, idx) => idx === i ? { ...li, [key]: typeof val === 'number' ? val : (key === 'description' ? val : Number(val) || 0) } : li));
 
   const linesTotal = previewLineItemsTotal(form.line_items);
-  const effectiveAmount = form.amount_dollars ? Math.round(parseFloat(form.amount_dollars) * 100) : linesTotal;
+  // Imported invoices keep their stored amount while the line items are untouched (matches what Save sends).
+  const linesUntouched = Boolean(existing) && JSON.stringify(form.line_items) === JSON.stringify(existing?.line_items ?? []);
+  const effectiveAmount = form.amount_dollars ? Math.round(parseFloat(form.amount_dollars) * 100) : (linesUntouched && existing?.amount_cents != null ? existing.amount_cents : linesTotal);
 
   // Agreements as the drawer currently understands them: the freshly saved card
   // (if any) is merged onto its agreement so every downstream memo behaves
