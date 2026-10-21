@@ -32,7 +32,7 @@ export const POST = withAdminTracking(async function POST(
     return NextResponse.json({ error: 'invalid id' }, { status: 400 });
   }
 
-  let body: { from?: string; to?: string; subject?: string; message?: string };
+  let body: { from?: string; to?: string; subject?: string; message?: string; scope?: 'overdue' | 'all'; invoice_ids?: string[] };
   try {
     body = await req.json();
   } catch {
@@ -47,7 +47,10 @@ export const POST = withAdminTracking(async function POST(
   }
 
   try {
-    const original = await loadPartnerStatement(advertiserId);
+    const original = await loadPartnerStatement(advertiserId, {
+      scope: body.scope === 'all' ? 'all' : 'overdue',
+      invoiceIds: Array.isArray(body.invoice_ids) ? body.invoice_ids.filter((x) => typeof x === 'string') : undefined,
+    });
     if (!original) {
       return NextResponse.json(
         { error: 'no outstanding invoices found for this partner' },

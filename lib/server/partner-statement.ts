@@ -7,6 +7,7 @@ import { withNeonTransaction } from '@/lib/server/db/neon';
 import {
   InvoiceLifecycleError,
   invalidateInvoiceCheckoutSessions,
+  invalidateStatementCheckoutSessions,
   lockInvoiceRemainingBalance,
   markCheckoutSessionFailed,
   markCheckoutSessionOpen,
@@ -40,6 +41,10 @@ export type PartnerStatement = {
   notYetDueCents: number;
   outstandingCents: number;
   overduePaymentLinkUrl: string | null;
+  /** 'overdue' (default) makes the pay-all link cover overdue invoices only; 'all' makes it a Pay Balance in Full link. */
+  payScope?: 'overdue' | 'all';
+  /** Amount covered by the pay-all link when payScope is 'all'. */
+  payAllCents?: number;
   invoices: PartnerStatementInvoice[];
 };
 
@@ -55,7 +60,11 @@ type StatementPaymentSessionRow = {
   stripe_checkout_session_id: string | null;
 };
 
-export async function loadPartnerStatement(advertiserId: number): Promise<PartnerStatement | null> {
+export async function loadPartnerStatement(
+  advertiserId: number,
+  opts: { invoiceIds?: string[]; scope?: 'overdue' | 'all' } = {},
+): Promise<PartnerStatement | null> {
+  const onlyIds = opts.invoiceIds && opts.invoiceIds.length > 0 ? opts.invoiceIds : null;
   await ensureSchema();
   const sql = getSql();
   const advertisers = (await sql`
@@ -86,6 +95,7 @@ export async function loadPartnerStatement(advertiserId: number): Promise<Partne
     ) pay ON true
     WHERE i.advertiser_id = ${advertiserId}
       AND i.status NOT IN ('paid', 'void', 'draft')
+      AND (${onlyIds}::text[] IS NULL OR i.id::text = ANY(${onlyIds}::text[]))
       AND GREATEST(i.total_cents - COALESCE(pay.amount_paid_cents, 0), 0) > 0
     ORDER BY i.issued_at ASC NULLS LAST, i.created_at ASC
   `) as unknown as PartnerStatementInvoice[];
@@ -132,13 +142,14 @@ export async function loadPartnerStatement(advertiserId: number): Promise<Partne
     notYetDueCents,
     outstandingCents: overdueCents + notYetDueCents,
     overduePaymentLinkUrl: null,
+    payScope: opts.scope ?? 'overdue',
     invoices,
   };
 }
 
 function overdueAllocations(statement: PartnerStatement): StatementInvoiceAllocation[] {
   return statement.invoices
-    .filter((invoice) => invoice.is_overdue)
+    .filter((invoice) => statement.payScope === 'all' || invoice.is_overdue)
     .map((invoice) => {
       const amountCents = Number(invoice.balance_cents);
       if (!isSafeCents(amountCents, { positive: true })) {
@@ -229,6 +240,18 @@ export async function getOrCreatePartnerStatementOverdueLink(
       // session containing any charged invoice. It is intentionally stronger
       // than advertiser-wide expiry: unrelated statements remain usable.
       for (const allocation of allocations) {
+        if (statement.payScope === 'all') {
+          // Pay Balance in Full sits next to the individual links. A payment on
+          // either one expires the other, so only older statement links are
+          // revoked here.
+          await invalidateStatementCheckoutSessions(client, allocation.invoiceId);
+          const stale = await client.query<{ id: string }>(
+            `SELECT id FROM statement_payment_sessions WHERE status = 'open' AND invoice_allocations @> $1::jsonb LIMIT 1`,
+            [JSON.stringify([{ invoiceId: allocation.invoiceId }])],
+          );
+          if (stale.rows.length > 0) throw new InvoiceLifecycleError('an existing checkout session could not be safely expired', 409);
+          continue;
+        }
         await invalidateInvoiceCheckoutSessions(client, allocation.invoiceId);
         const stillOpen = await client.query<{ id: string }>(
           `SELECT id
@@ -295,7 +318,7 @@ export async function getOrCreatePartnerStatementOverdueLink(
               currency: 'usd',
               unit_amount: baseAmountCents,
               product_data: {
-                name: `Pay ${allocations.length} overdue invoice${allocations.length === 1 ? '' : 's'}`,
+                name: statement.payScope === 'all' ? `Pay balance in full (${allocations.length} invoice${allocations.length === 1 ? '' : 's'})` : `Pay ${allocations.length} overdue invoice${allocations.length === 1 ? '' : 's'}`,
                 description: `Caxton Publications invoices: ${invoiceLabels}`.slice(0, 500),
               },
             },
@@ -363,16 +386,16 @@ export async function getOrCreatePartnerStatementOverdueLink(
       result.allocations.map((allocation) => allocation.amountCents),
       'statement payment',
     );
+    const scopeAll = statement.payScope === 'all';
     return {
       ...statement,
-      overdueCents,
-      outstandingCents: overdueCents + statement.notYetDueCents,
+      ...(scopeAll ? { payAllCents: overdueCents } : { overdueCents, outstandingCents: overdueCents + statement.notYetDueCents }),
       overduePaymentLinkUrl: result.url,
       // The aggregate session invalidated individual links for these invoices;
       // never include the now-stale URLs in the rendered statement.
       invoices: statement.invoices.map((invoice) => {
         const allocation = allocationById.get(invoice.id);
-        return allocation
+        return allocation && !scopeAll
           ? {
               ...invoice,
               amount_paid_cents: Math.max(Number(invoice.total_cents) - allocation.amountCents, 0),
@@ -604,8 +627,8 @@ export function renderPartnerStatementEmail(
   const messageHtml = escapeHtml(personalMessage).replaceAll('\n', '<br>');
   const payAllHtml = statement.overduePaymentLinkUrl
     ? `<div style="margin:0 0 22px;padding:16px;background:#FFF3E0;border:1px solid #FFF3E0;text-align:center">
-        <div style="font-size:13px;font-weight:700;color:#301D5D;margin-bottom:10px">Total overdue: ${statementMoney(statement.overdueCents)}</div>
-        <a href="${escapeHtml(statement.overduePaymentLinkUrl)}" style="display:inline-block;background:#301D5D;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;font-weight:700">Pay all overdue invoices</a>
+        <div style="font-size:13px;font-weight:700;color:#301D5D;margin-bottom:10px">${statement.payScope === 'all' ? `Balance in full: ${statementMoney(statement.payAllCents ?? statement.outstandingCents)}` : `Total overdue: ${statementMoney(statement.overdueCents)}`}</div>
+        <a href="${escapeHtml(statement.overduePaymentLinkUrl)}" style="display:inline-block;background:#301D5D;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;font-weight:700">${statement.payScope === 'all' ? 'Pay Balance in Full' : 'Pay all overdue invoices'}</a>
       </div>`
     : '';
 
@@ -647,7 +670,7 @@ export function renderPartnerStatementEmail(
     )
     .join('\n\n');
   const payAllText = statement.overduePaymentLinkUrl
-    ? `\nPay all overdue invoices (${statementMoney(statement.overdueCents)}): ${statement.overduePaymentLinkUrl}\n`
+    ? (statement.payScope === 'all' ? `\nPay balance in full (${statementMoney(statement.payAllCents ?? statement.outstandingCents)}): ${statement.overduePaymentLinkUrl}\n` : `\nPay all overdue invoices (${statementMoney(statement.overdueCents)}): ${statement.overduePaymentLinkUrl}\n`)
     : '';
   const text = `${personalMessage}\n\nSTATEMENT OF ACCOUNT\n${statement.billToName}\nAs of ${statementDate(statement.asOf)}\n\nOverdue: ${statementMoney(statement.overdueCents)}\nNot yet due: ${statementMoney(statement.notYetDueCents)}\nOutstanding balance (USD): ${statementMoney(statement.outstandingCents)}\n${payAllText}\n${invoiceText}\n\nWe appreciate your business.`;
 

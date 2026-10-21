@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { A, RowMenu } from '@/components/anchor/ui';
+import { computeNextRun, type RecurringFrequency } from '@/lib/recurring-invoices';
+import StatementDialog from './StatementDialog';
 import { mainOf, othersOf } from '../contacts/ContactsList';
 import { GROUP_LABEL, mergeClients, day, money, useJson, type Adv, type Agr, type Inv, type Sch } from '../data';
 
@@ -39,6 +41,8 @@ export default function ClientDetail({ id }: { id: number }) {
   const [tab, setTab] = useState<Tab>('summary');
   const [agrFilter, setAgrFilter] = useState('all');
   const [q, setQ] = useState('');
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [stmtOpen, setStmtOpen] = useState(false);
 
   const a = useMemo(() => mergeClients(adv.data).find((c) => c.records.some((r) => r.id === id)), [adv.data, id]);
   const ids = useMemo(() => new Set(a?.records.map((r) => r.id) ?? [id]), [a, id]);
@@ -61,6 +65,23 @@ export default function ClientDetail({ id }: { id: number }) {
   const info = (i: Inv) => (i.balance_cents <= 0 && i.total_cents > 0 ? 'Paid in full' : payMissing ? 'Missing payment method' : 'Awaiting payment');
   const schedulesShown = mySch.filter((s) => agrFilter === 'all' || s.agreement_id === agrFilter);
   const issuedShown = issued.filter((i) => !q.trim() || (i.number ?? '').toLowerCase().includes(q.trim().toLowerCase()));
+  // A signed multi-month agreement is one schedule that issues an invoice each
+  // month. List every remaining month so each one shows under Upcoming invoices.
+  const upcomingRows = schedulesShown.flatMap((s) => {
+    const total = s.max_occurrences ?? null;
+    const done = s.occurrences_generated ?? 0;
+    const left = total != null ? Math.max(total - done, 0) : s.end_date ? 60 : 1;
+    const out: Array<{ key: string; name: string; label: string; date: string; status: string; amount: number }> = [];
+    let when = new Date(s.next_run_at);
+    for (let n = 0; n < Math.min(left, 60); n++) {
+      if (s.end_date && when.toISOString().slice(0, 10) > String(s.end_date).slice(0, 10)) break;
+      out.push({ key: `${s.id}-${n}`, name: s.name, label: total != null ? `${done + n + 1} of ${total}` : s.frequency, date: when.toISOString(), status: s.status === 'paused' ? 'Pending approval' : 'Scheduled', amount: s.amount_cents + (s.tax_cents ?? 0) });
+      when = computeNextRun(when, s.frequency as RecurringFrequency, s.interval_count ?? 1);
+    }
+    return out;
+  }).sort((p2, q2) => p2.date.localeCompare(q2.date));
+  const payable = issuedShown.filter((i) => i.status !== 'void' && i.balance_cents > 0);
+  const chosen = payable.filter((i) => picked.has(i.id));
   const agrIds = [...new Set(mySch.map((s) => s.agreement_id).filter(Boolean) as string[])];
   const address = [a.address, a.address_2, [a.city, a.state].filter(Boolean).join(', '), a.zip].filter(Boolean).join(' ');
 
@@ -154,20 +175,20 @@ export default function ClientDetail({ id }: { id: number }) {
             </label>
             <Link href="/admin/agreements/renewals-v2" className={A.outline}>Billing Control</Link>
           </div>
-          {schedulesShown.length === 0 ? (
+          {upcomingRows.length === 0 ? (
             <p className="py-8 text-center text-sm text-[color:var(--ds-ink)]">There are no scheduled invoices to show.<br />Open Billing Control to review how this client is billed.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className={`${A.table} min-w-[560px]`}>
-                <thead><tr><th>Service</th><th>Repeats</th><th>Next Issue Date</th><th>Status</th><th className="text-right">Total</th></tr></thead>
+                <thead><tr><th>Service</th><th>Installment</th><th>Issue date</th><th>Status</th><th className="text-right">Total</th></tr></thead>
                 <tbody>
-                  {schedulesShown.map((s) => (
-                    <tr key={s.id}>
-                      <td className="font-medium text-[color:var(--ds-ink)]">{s.name}</td>
-                      <td className="capitalize">{s.frequency}</td>
-                      <td className="whitespace-nowrap">{day(s.next_run_at)}</td>
-                      <td>{s.status === 'paused' ? 'Pending approval' : 'Scheduled'}</td>
-                      <td className="text-right">{money(s.amount_cents + (s.tax_cents ?? 0))}</td>
+                  {upcomingRows.map((r) => (
+                    <tr key={r.key}>
+                      <td className="font-medium text-[color:var(--ds-ink)]">{r.name}</td>
+                      <td className="capitalize">{r.label}</td>
+                      <td className="whitespace-nowrap">{day(r.date)}</td>
+                      <td>{r.status}</td>
+                      <td className="text-right">{money(r.amount)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -179,27 +200,35 @@ export default function ClientDetail({ id }: { id: number }) {
 
       {tab === 'issued' && (
         <div className="space-y-4">
-          <input className={`${A.input} sm:w-72`} placeholder="Search…" aria-label="Search invoices" value={q} onChange={(e) => setQ(e.target.value)} />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <input className={`${A.input} sm:w-72`} placeholder="Search…" aria-label="Search invoices" value={q} onChange={(e) => setQ(e.target.value)} />
+            <button type="button" className={A.primary} disabled={payable.length === 0} onClick={() => { if (chosen.length === 0) setPicked(new Set(payable.map((x) => x.id))); setStmtOpen(true); }}>
+              {chosen.length > 0 ? `Create statement (${chosen.length})` : 'Create statement'}
+            </button>
+          </div>
           <div className="overflow-x-auto">
             <table className={`${A.table} min-w-[680px]`}>
-              <thead><tr><th>Invoice ID</th><th>Invoice Status</th><th>Additional Information</th><th>Issue Date</th><th>Due Date</th><th className="text-right">Total</th></tr></thead>
+              <thead><tr><th><input type="checkbox" aria-label="Select all unpaid invoices" checked={payable.length > 0 && chosen.length === payable.length} onChange={(e) => setPicked(e.target.checked ? new Set(payable.map((x) => x.id)) : new Set())} /></th><th>Invoice ID</th><th>Invoice Status</th><th>Additional Information</th><th>Issue Date</th><th>Due Date</th><th className="text-right">Total</th><th className="text-right">Balance</th></tr></thead>
               <tbody>
                 {issuedShown.map((i) => (
                   <tr key={i.id}>
+                    <td>{payable.some((x) => x.id === i.id) && <input type="checkbox" aria-label={`Select ${i.number ?? 'invoice'}`} checked={picked.has(i.id)} onChange={(e) => setPicked((p) => { const n = new Set(p); if (e.target.checked) n.add(i.id); else n.delete(i.id); return n; })} />}</td>
                     <td className="font-medium text-[color:var(--ds-ink)]">{i.number ?? '—'}</td>
                     <td><span className={pill}>{invStatus(i)}</span></td>
                     <td>{info(i)}</td>
                     <td className="whitespace-nowrap">{day(i.issue_date)}</td>
                     <td className="whitespace-nowrap">{day(i.due_date)}</td>
                     <td className="text-right">{money(i.total_cents)}</td>
+                    <td className="text-right">{money(i.balance_cents)}</td>
                   </tr>
                 ))}
-                {issuedShown.length === 0 && <tr><td colSpan={6} className="py-10 text-center text-[color:var(--ds-body)]">No invoices have been issued.</td></tr>}
+                {issuedShown.length === 0 && <tr><td colSpan={8} className="py-10 text-center text-[color:var(--ds-body)]">No invoices have been issued.</td></tr>}
               </tbody>
             </table>
           </div>
         </div>
       )}
+      {stmtOpen && <StatementDialog client={a} invoices={chosen.length ? chosen : payable} onClose={() => setStmtOpen(false)} />}
     </div>
   );
 }

@@ -12,7 +12,7 @@ export type Adv = {
 };
 export type Agr = { id: string; advertiser_id: number | null; status: string; type: string | null; ad_size: string | null; frequency: string | null; start_date: string | null; signed_at?: string | null; created_at?: string | null };
 export type Inv = { id: string; number: string | null; advertiser_id?: number | null; agreement_id: string | null; status: string; total_cents: number; balance_cents: number; issue_date: string | null; due_date: string | null };
-export type Sch = { id: string; name: string; advertiser_id: number; agreement_id: string | null; status: 'active' | 'paused' | 'ended'; frequency: string; amount_cents: number; tax_cents: number | null; next_run_at: string };
+export type Sch = { id: string; name: string; advertiser_id: number; agreement_id: string | null; status: 'active' | 'paused' | 'ended'; frequency: string; interval_count?: number | null; amount_cents: number; tax_cents: number | null; next_run_at: string; end_date?: string | null; max_occurrences?: number | null; occurrences_generated?: number | null };
 
 export const money = (c: number | null | undefined) => (c == null ? '—' : `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`);
 export const day = (v: string | null | undefined) => (v ? new Date(v.length === 10 ? `${v}T12:00:00` : v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
@@ -38,21 +38,17 @@ export const FILTER_LABEL: Record<StatusFilter, string> = { active: 'Active', pr
 
 export const GROUP_OPTIONS: Array<{ value: Group; label: string }> = [{ value: 'active', label: 'Active' }, { value: 'prospect', label: 'Prospect' }, { value: 'archived', label: 'Archived' }];
 
-// One company can have a record per market (Austin, San Antonio). They are
-// shown as a single client with one chip per market.
+// Each market (Austin, San Antonio) keeps its own client record because the
+// contacts and billing details differ. The market shows as a chip.
 export const MARKET: Record<string, string> = { austin: 'Austin', san_antonio: 'San Antonio' };
-export const norm = (n: string | null | undefined) => (n ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 export type Client = Adv & { records: Adv[]; markets: string[]; group: Group };
-const RANK: Record<Group, number> = { active: 0, prospect: 1, archived: 2 };
 export const mainName = (a: Adv) => [a.first_name, a.last_name].filter(Boolean).join(' ');
 
 export function mergeClients(list: Adv[]): Client[] {
-  const by = new Map<string, Adv[]>();
-  for (const a of list) { const k = norm(a.name) || `id-${a.id}`; by.set(k, [...(by.get(k) ?? []), a]); }
-  return [...by.values()].map((records) => {
-    const sorted = [...records].sort((x, y) => (mainName(y) ? 1 : 0) - (mainName(x) ? 1 : 0) || x.id - y.id);
-    const markets = [...new Set(records.flatMap((r) => (r.publication === 'both' ? ['austin', 'san_antonio'] : r.publication ? [r.publication] : [])))].map((m) => MARKET[m] ?? m);
-    const group = records.map((r) => groupOf(r.status)).sort((p, q) => RANK[p] - RANK[q])[0];
-    return { ...sorted[0], records: sorted, markets, group };
-  });
+  return list.map((a) => ({
+    ...a,
+    records: [a],
+    markets: a.publication === 'both' ? ['Austin', 'San Antonio'] : a.publication ? [MARKET[a.publication] ?? a.publication] : [],
+    group: groupOf(a.status),
+  }));
 }

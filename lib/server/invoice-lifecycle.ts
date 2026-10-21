@@ -162,6 +162,28 @@ export async function invalidateInvoiceCheckoutSessions(
 }
 
 /**
+ * Expire only the open statement (pay-in-full) sessions that include this
+ * invoice, leaving the invoice's own individual payment link alone. Used when
+ * a Pay Balance in Full link is issued next to individual links: paying either
+ * one later runs invalidateInvoiceCheckoutSessions, which expires the other.
+ */
+export async function invalidateStatementCheckoutSessions(client: PoolClient, invoiceId: string): Promise<void> {
+  const rows = await client.query<{ id: string; stripe_checkout_session_id: string | null }>(
+    `SELECT id, stripe_checkout_session_id
+       FROM statement_payment_sessions
+      WHERE status = 'open' AND invoice_allocations @> $1::jsonb
+      FOR UPDATE`,
+    [JSON.stringify([{ invoiceId }])],
+  );
+  const stripe = isStripeConfigured() ? getStripe() : null;
+  for (const row of rows.rows) {
+    if (await expireStripeSession(stripe, row.stripe_checkout_session_id)) {
+      await client.query(`UPDATE statement_payment_sessions SET status = 'expired' WHERE id = $1 AND status = 'open'`, [row.id]);
+    }
+  }
+}
+
+/**
  * Expire a Stripe Checkout Session and return whether the LOCAL record can
  * safely be marked terminal. Returns true when Stripe confirms the session
  * is expired/complete (including "already expired/complete" errors), and

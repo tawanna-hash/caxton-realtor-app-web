@@ -139,7 +139,7 @@ export async function generatePartnerStatementPdf(statement: PartnerStatement): 
     addLink(
       doc,
       page,
-      `Pay all overdue (${statementMoney(statement.overdueCents)})`,
+      statement.payScope === 'all' ? `Pay Balance in Full (${statementMoney(statement.payAllCents ?? statement.outstandingCents)})` : `Pay all overdue (${statementMoney(statement.overdueCents)})`,
       statement.overduePaymentLinkUrl,
       310,
       y - 16,
