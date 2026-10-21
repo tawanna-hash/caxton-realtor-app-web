@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { A, RowMenu } from '@/components/anchor/ui';
-import { contactsOf } from '../contacts/ContactsList';
-import { GROUP_LABEL, groupOf, day, money, useJson, type Adv, type Agr, type Inv, type Sch } from '../data';
+import { mainOf, othersOf } from '../contacts/ContactsList';
+import { GROUP_LABEL, mergeClients, day, money, useJson, type Adv, type Agr, type Inv, type Sch } from '../data';
 
 const noAdv: Adv[] = [];
 const noAgr: Agr[] = [];
@@ -40,10 +40,11 @@ export default function ClientDetail({ id }: { id: number }) {
   const [agrFilter, setAgrFilter] = useState('all');
   const [q, setQ] = useState('');
 
-  const a = adv.data.find((x) => x.id === id);
-  const myAgr = useMemo(() => agr.data.filter((x) => x.advertiser_id === id), [agr.data, id]);
-  const myInv = useMemo(() => inv.data.filter((x) => x.advertiser_id === id).sort((p, q2) => (q2.issue_date ?? '').localeCompare(p.issue_date ?? '')), [inv.data, id]);
-  const mySch = useMemo(() => sch.data.filter((x) => x.advertiser_id === id && x.status !== 'ended').sort((p, q2) => p.next_run_at.localeCompare(q2.next_run_at)), [sch.data, id]);
+  const a = useMemo(() => mergeClients(adv.data).find((c) => c.records.some((r) => r.id === id)), [adv.data, id]);
+  const ids = useMemo(() => new Set(a?.records.map((r) => r.id) ?? [id]), [a, id]);
+  const myAgr = useMemo(() => agr.data.filter((x) => (x.advertiser_id != null && ids.has(x.advertiser_id))), [agr.data, ids]);
+  const myInv = useMemo(() => inv.data.filter((x) => (x.advertiser_id != null && ids.has(x.advertiser_id))).sort((p, q2) => (q2.issue_date ?? '').localeCompare(p.issue_date ?? '')), [inv.data, ids]);
+  const mySch = useMemo(() => sch.data.filter((x) => (x.advertiser_id != null && ids.has(x.advertiser_id)) && x.status !== 'ended').sort((p, q2) => p.next_run_at.localeCompare(q2.next_run_at)), [sch.data, ids]);
   const today = new Date().toISOString().slice(0, 10);
   const overdue = myInv.filter((i) => i.balance_cents > 0 && i.status !== 'void' && i.status !== 'draft' && i.due_date && i.due_date.slice(0, 10) < today);
   const issued = myInv.filter((i) => i.status !== 'draft');
@@ -55,7 +56,8 @@ export default function ClientDetail({ id }: { id: number }) {
   if (adv.loading) return <p className="text-sm text-[color:var(--ds-body)]">Loading…</p>;
   if (!a) return <div className={A.error}>That client was not found. <Link href="/admin/agreements/clients" className={link}>Back to clients</Link></div>;
 
-  const payMissing = !a.card_last4 && a.payment_mode !== 'card';
+  const allContacts = [mainOf(a), ...othersOf(a)].filter((p): p is NonNullable<ReturnType<typeof mainOf>> => !!p);
+  const payMissing = !a.records.some((r) => r.card_last4) && !a.records.some((r) => r.payment_mode === 'card');
   const info = (i: Inv) => (i.balance_cents <= 0 && i.total_cents > 0 ? 'Paid in full' : payMissing ? 'Missing payment method' : 'Awaiting payment');
   const schedulesShown = mySch.filter((s) => agrFilter === 'all' || s.agreement_id === agrFilter);
   const issuedShown = issued.filter((i) => !q.trim() || (i.number ?? '').toLowerCase().includes(q.trim().toLowerCase()));
@@ -68,7 +70,7 @@ export default function ClientDetail({ id }: { id: number }) {
         <div className="flex items-start gap-3">
           <Link href="/admin/agreements/clients" aria-label="Back to clients" className="mt-1 text-xl text-[color:var(--ds-ink)]">&lsaquo;</Link>
           <div>
-            <h2 className="flex flex-wrap items-center gap-2 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[color:var(--ds-ink)]">{a.name}<span className="rounded-full border border-[#047857] bg-[#E6F6EF] px-2.5 py-0.5 text-xs font-medium text-[#065F46]">{GROUP_LABEL[groupOf(a.status)]}</span></h2>
+            <h2 className="flex flex-wrap items-center gap-2 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[color:var(--ds-ink)]">{a.name}<span className="rounded-full border border-[#047857] bg-[#E6F6EF] px-2.5 py-0.5 text-xs font-medium text-[#065F46]">{GROUP_LABEL[a.group]}</span>{a.markets.map((m) => <span key={m} className="rounded-full border border-[color:var(--ds-line)] px-2.5 py-0.5 text-xs font-medium text-[color:var(--ds-body)]">{m}</span>)}</h2>
             <p className="text-xs text-[color:var(--ds-body)]">{a.type === 'individual' ? 'Individual' : 'Business'} · Created on {day(a.created_at)}</p>
           </div>
         </div>
@@ -121,7 +123,7 @@ export default function ClientDetail({ id }: { id: number }) {
             </Card>
             <Card title="Contacts" action={<Link href="/admin/crm" className={link}>Add contact</Link>}>
               <ul className="space-y-2">
-                {contactsOf(a).map((c, i) => (
+                {allContacts.map((c, i) => (
                   <li key={i} className="rounded-[10px] border border-[color:var(--ds-line)] p-3 text-sm">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2 font-medium text-[color:var(--ds-ink)]">{c.name}{i === 0 && !a.portal_activated_at && <span className={pill}>No portal access</span>}</div>
@@ -131,7 +133,7 @@ export default function ClientDetail({ id }: { id: number }) {
                     {c.phone && <div className="mt-1 flex items-center gap-2 text-xs text-[color:var(--ds-body)]"><span aria-hidden="true">&#9990;</span>{c.phone}</div>}
                   </li>
                 ))}
-                {contactsOf(a).length === 0 && <li className="text-sm text-[color:var(--ds-body)]">No contacts on file.</li>}
+                {allContacts.length === 0 && <li className="text-sm text-[color:var(--ds-body)]">No contacts on file.</li>}
               </ul>
             </Card>
             <Card title="Payment methods" action={<Link href="/admin/crm" className={link}>Add a payment method</Link>}>

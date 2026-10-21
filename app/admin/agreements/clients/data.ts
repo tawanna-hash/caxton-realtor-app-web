@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 export type Adv = {
-  id: number; name: string; company: string | null; type: string | null; status: string | null; created_at: string;
+  id: number; name: string; publication?: string | null; company: string | null; type: string | null; status: string | null; created_at: string;
   first_name: string | null; last_name: string | null; contact_email: string | null; portal_email: string | null; phone: string | null;
   billing_contact_name: string | null; billing_email: string | null; billing_contact_phone: string | null;
   address: string | null; address_2: string | null; city: string | null; state: string | null; zip: string | null;
@@ -37,3 +37,22 @@ export type StatusFilter = Group | 'all';
 export const FILTER_LABEL: Record<StatusFilter, string> = { active: 'Active', prospect: 'Prospects', archived: 'Archived', all: 'All' };
 
 export const GROUP_OPTIONS: Array<{ value: Group; label: string }> = [{ value: 'active', label: 'Active' }, { value: 'prospect', label: 'Prospect' }, { value: 'archived', label: 'Archived' }];
+
+// One company can have a record per market (Austin, San Antonio). They are
+// shown as a single client with one chip per market.
+export const MARKET: Record<string, string> = { austin: 'Austin', san_antonio: 'San Antonio' };
+export const norm = (n: string | null | undefined) => (n ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+export type Client = Adv & { records: Adv[]; markets: string[]; group: Group };
+const RANK: Record<Group, number> = { active: 0, prospect: 1, archived: 2 };
+export const mainName = (a: Adv) => [a.first_name, a.last_name].filter(Boolean).join(' ');
+
+export function mergeClients(list: Adv[]): Client[] {
+  const by = new Map<string, Adv[]>();
+  for (const a of list) { const k = norm(a.name) || `id-${a.id}`; by.set(k, [...(by.get(k) ?? []), a]); }
+  return [...by.values()].map((records) => {
+    const sorted = [...records].sort((x, y) => (mainName(y) ? 1 : 0) - (mainName(x) ? 1 : 0) || x.id - y.id);
+    const markets = [...new Set(records.flatMap((r) => (r.publication === 'both' ? ['austin', 'san_antonio'] : r.publication ? [r.publication] : [])))].map((m) => MARKET[m] ?? m);
+    const group = records.map((r) => groupOf(r.status)).sort((p, q) => RANK[p] - RANK[q])[0];
+    return { ...sorted[0], records: sorted, markets, group };
+  });
+}
