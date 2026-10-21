@@ -393,18 +393,26 @@ function ActivityTab({ invoices, agreements }: { invoices: FullInv[]; agreements
           <button type="button" role="switch" aria-checked={notif} onClick={() => setNotif((n) => !n)} style={{ border: 0, padding: 0 }} className={`relative h-6 w-11 rounded-full ${notif ? 'bg-[color:var(--ds-primary)]' : 'bg-[color:var(--ds-line)]'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${notif ? 'left-[22px]' : 'left-0.5'}`} /></button>
         </label>
       </div>
-      <ol className="space-y-3">
-        {shown.map((e) => {
+      <ol className="relative">
+        {shown.map((e, idx) => {
           const [pre, post] = e.text.split('{link}');
+          const last = idx === shown.length - 1;
           return (
-            <li key={e.key} className="grid grid-cols-[150px_1fr] items-start gap-4">
-              <div className="pt-3 text-right text-xs text-[color:var(--ds-ink)]">{dt(e.at)}</div>
-              <div className="rounded-[10px] bg-white px-4 py-3 text-sm text-[color:var(--ds-ink)] shadow-sm">
+            <li key={e.key} className="grid grid-cols-[150px_20px_1fr] items-start gap-x-3 pb-4">
+              <div className="pt-3.5 text-right text-xs text-[color:var(--ds-ink)]">{dt(e.at)}</div>
+              <div className="relative flex h-full justify-center">
+                <span className="mt-[18px] h-2 w-2 rounded-full bg-[#C9CCD6]" />
+                {!last && <span className="absolute left-1/2 top-[30px] bottom-[-16px] w-px -translate-x-1/2 bg-[#D5D8E0]" />}
+              </div>
+              <div className="rounded-[14px] bg-white px-4 py-3 text-sm text-[color:var(--ds-ink)]">
                 <div className="flex items-center justify-between gap-3">
-                  <span>{pre}{e.link && <Link href={e.link.href} className="text-[color:var(--ds-primary)]">{e.link.label}</Link>}{post}</span>
-                  {e.detail && <button type="button" aria-label="Show details" style={{ border: 0, background: 'transparent' }} onClick={() => setOpen(open === e.key ? null : e.key)}>{open === e.key ? '⌃' : '⌄'}</button>}
+                  <span className="flex items-center gap-3">
+                    <span aria-hidden="true" className="text-[color:var(--ds-body)]">{e.kind === 'notification' ? '\u2709' : '\u25A4'}</span>
+                    <span>{pre}{e.link && <Link href={e.link.href} className="text-[color:var(--ds-primary)]">{e.link.label}</Link>}{post}</span>
+                  </span>
+                  {e.detail && <button type="button" aria-label="Show details" style={{ border: 0, background: 'transparent' }} className="text-[10px] text-[color:var(--ds-body)]" onClick={() => setOpen(open === e.key ? null : e.key)}>{open === e.key ? '\u25B2' : '\u25BC'}</button>}
                 </div>
-                {open === e.key && e.detail && <p className="mt-2 text-xs text-[color:var(--ds-body)]">{e.detail}</p>}
+                {open === e.key && e.detail && <p className="mt-2 pl-8 text-xs text-[color:var(--ds-body)]">{e.detail}</p>}
               </div>
             </li>
           );
