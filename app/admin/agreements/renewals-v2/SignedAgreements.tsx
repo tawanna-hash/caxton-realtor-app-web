@@ -150,12 +150,12 @@ export default function SignedAgreements() {
   const dateIn = 'w-[150px]';
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 [&_*]:!normal-case">
       {dErr && <div className={A.error}>{dErr}</div>}
-      {slot && createPortal(<>
+      {slot && createPortal(<div className="flex flex-wrap items-center gap-3 [&_*]:!normal-case">
         <Menu label="More Actions" items={[{ label: 'Import agreements', onClick: () => setImp(true) }, { label: 'Export agreements', onClick: () => exportCsv(rows) }]} />
         <Menu primary label="Create Agreement" items={[{ label: 'Use a template', href: '/admin/agreements/renewals-v2?tab=templates' }, { label: 'Start from scratch', onClick: () => setDrawer('new') }, { label: 'New quote', onClick: () => setQuote(true) }, { label: 'Import with AI', disabled: true }]} />
-      </>, slot)}
+      </div>, slot)}
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search agreements" />
         <FilterChip<St> title="Agreement status" value={sts} onApply={setSts} options={(Object.keys(ST_LABEL) as St[]).map((v) => ({ value: v, label: ST_LABEL[v] }))} summary={`Agreement status (${sts.length})`} />
