@@ -13,6 +13,7 @@ import { A, FilterChip, RowMenu, SearchBox } from '@/components/anchor/ui';
 import { computeNextRun, type RecurringFrequency } from '@/lib/recurring-invoices';
 import { day, money, useJson, GROUP_LABEL, groupOf, marketsOf, type Adv, type Inv, type Sch } from '../agreements/clients/data';
 import SortCaret from '@/components/anchor/SortCaret';
+import AllInvoices from './AllInvoices';
 
 type AuditEntry = { event: string; timestamp: string; user_email?: string; details?: string };
 type Agr = {
@@ -297,6 +298,7 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
 
 /* ---------------- Invoices tab ---------------- */
 function InvoicesTab({ client, invoices, agreements }: { client: Adv; invoices: FullInv[]; agreements: Agr[] }) {
+  const [scope, setScope] = useState<'client' | 'all'>('client');
   const [q, setQ] = useState(''); const [st, setSt] = useState<string[]>([]);
   const [from, setFrom] = useState(''); const [to, setTo] = useState(''); const [addOpen, setAddOpen] = useState(false);
   const [sort, setSort] = useState<{ k: 'number' | 'issue' | 'due' | 'total'; dir: 1 | -1 }>({ k: 'number', dir: -1 });
@@ -306,8 +308,17 @@ function InvoicesTab({ client, invoices, agreements }: { client: Adv; invoices: 
   const rows = invoices.filter((i) => i.status !== 'draft' || true).filter((i) => (st.length === 0 || st.includes(i.status)) && (!q.trim() || (i.number ?? '').toLowerCase().includes(q.trim().toLowerCase())) && (!from || (i.issue_date ?? '') >= from) && (!to || (i.issue_date ?? '') <= to))
     .sort((a, b) => { const v = (i: FullInv) => (sort.k === 'number' ? i.number ?? '' : sort.k === 'issue' ? i.issue_date ?? '' : sort.k === 'due' ? i.due_date ?? '' : String(i.total_cents).padStart(12, '0')); return sort.dir * v(a).localeCompare(v(b)); });
   const th = (k: typeof sort.k, l: string, right = false) => <th className={right ? 'text-right' : ''}><button type="button" style={{ border: 0, background: 'transparent', padding: 0 }} className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--ds-body)]" onClick={() => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : 1 }))}>{l}<SortCaret dir={sort.k === k ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} /></button></th>;
+  const scopeSwitch = (
+    <div role="group" aria-label="Invoice scope" className="flex gap-2">
+      {([['client', 'This client'], ['all', 'All clients']] as const).map(([k, l]) => (
+        <button key={k} type="button" aria-pressed={scope === k} onClick={() => setScope(k)} style={{ background: scope === k ? 'var(--ds-selected)' : 'transparent' }} className={`rounded-full border px-4 py-1.5 text-sm ${scope === k ? 'border-[color:var(--ds-primary)] text-[color:var(--ds-primary)]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{l}</button>
+      ))}
+    </div>
+  );
+  if (scope === 'all') return <div className="space-y-4">{scopeSwitch}<AllInvoices /></div>;
   return (
     <div className="space-y-4">
+      {scopeSwitch}
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search invoices" />
         <FilterChip<string> title="Invoice status" options={statuses} value={st} onApply={setSt} summary="Invoice status" />

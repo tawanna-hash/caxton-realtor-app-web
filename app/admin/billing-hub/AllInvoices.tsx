@@ -1,7 +1,7 @@
 'use client';
 
-// Agreements (Beta): every invoice from Get Paid, read-only, in the Anchor-style
-// Invoices layout. Reads the same invoice records, so nothing is duplicated.
+// Billing Hub, Invoices tab, "All clients" scope: every invoice from Get Paid, read-only.
+// Reads the same invoice records, so nothing is duplicated.
 
 import { useEffect, useMemo, useState } from 'react';
 import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
@@ -23,7 +23,7 @@ function Status({ i }: { i: Inv }) {
   return <span className={`rounded-full border px-2.5 py-0.5 text-xs capitalize ${tone}`}>{s}</span>;
 }
 
-export default function InvoicesPanel() {
+export default function AllInvoices() {
   const [rows, setRows] = useState<Inv[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState('');
