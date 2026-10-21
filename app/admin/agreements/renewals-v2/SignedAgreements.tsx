@@ -10,10 +10,10 @@ import Link from 'next/link';
 import { A, EmptyState, FilterChip, RowMenu, SearchBox } from '@/components/anchor/ui';
 import { SortTh } from '../clients/StatusFilter';
 import { day, money, useJson, type Inv } from '../clients/data';
-import { AgreementDrawer } from '@/app/admin/billing/_components/AgreementDrawer';
-import NewQuoteModal from '@/app/admin/_components/NewQuoteModal';
+import { AgreementDrawer } from '@/app/admin/beta-core/billing/AgreementDrawer';
+import NewQuoteModal from '@/app/admin/beta-core/NewQuoteModal';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
-import type { AdCampaignOption, AdvertiserOption } from '@/app/admin/billing/_components/types';
+import type { AdCampaignOption, AdvertiserOption } from '@/app/admin/beta-core/billing/types';
 
 type Agr = {
   id: string; advertiser_id: number | null; company_name: string | null; advertiser_name: string | null; status: string; type: string | null;

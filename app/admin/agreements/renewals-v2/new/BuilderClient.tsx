@@ -809,7 +809,7 @@ function BillingControls({ billing, onChange }: { billing: ServiceBilling; onCha
       <p className="text-xs text-[color:var(--ds-body)]">
         {b.start === 'next' && 'The first invoice goes out on the next billing day after the agreement takes effect.'}
         {b.start === 'date' && 'The first invoice goes out on this exact date. Later invoices follow monthly. Past dates are invoiced right away.'}
-        {manual && 'Nothing is invoiced for this service until someone starts billing in Get Paid.'}
+        {manual && 'Nothing is invoiced for this service until someone starts billing in Billing.'}
       </p>
     </div>
   );

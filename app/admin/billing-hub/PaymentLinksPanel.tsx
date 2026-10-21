@@ -7,10 +7,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
 import SortTable from '@/components/anchor/SortTable';
-import { PaymentLinkDrawer } from '@/app/admin/ar/PaymentActionDrawers';
+import { PaymentLinkDrawer } from '@/app/admin/beta-core/PaymentActionDrawers';
 import { formatCents, outstandingCents } from '@/lib/invoices';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
-import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
+import type { AdvertiserOption } from '@/app/admin/beta-core/billing/types';
 
 type St = 'open' | 'overdue' | 'paid' | 'void';
 const PAGE = 25;

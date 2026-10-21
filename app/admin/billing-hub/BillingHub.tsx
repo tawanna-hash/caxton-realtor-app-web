@@ -200,8 +200,8 @@ function AgreementTab({ client, agreement }: { client: Adv; agreement: Agr | nul
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end gap-3">
-        <Link href={`/admin/billing?agreement=${agreement.id}`} className={`${A.primary} px-7`}>Edit</Link>
-        <RowMenu items={[{ label: 'Open in Get Paid', href: `/admin/billing?agreement=${agreement.id}` }]} />
+        <Link href={`/admin/agreements/renewals-v2?tab=sent`} className={`${A.primary} px-7`}>Edit</Link>
+        <RowMenu items={[{ label: 'Open agreements', href: '/admin/agreements/renewals-v2' }]} />
       </div>
       <div className="mx-auto max-w-[620px] space-y-4">
         <div className="relative overflow-hidden rounded-[10px] bg-white">
@@ -370,7 +370,7 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
           <tbody>
             {rows.map((i) => (
               <tr key={i.id}>
-                <td><Link href={`/admin/invoices/${i.id}/preview`} className="font-semibold text-[color:var(--ds-ink)] hover:underline">{i.number ?? '—'}</Link></td>
+                <td><Link href={`/admin/billing-hub/invoice/${i.id}/preview`} className="font-semibold text-[color:var(--ds-ink)] hover:underline">{i.number ?? '—'}</Link></td>
                 <td className="text-[color:var(--ds-ink)]">{client.name}</td>
                 <td><span className="rounded-full border border-[color:var(--ds-body)] px-2 py-0.5 text-[11px] text-[color:var(--ds-body)]">{cap(i.status === 'sent' ? 'issued' : i.status)}</span></td>
                 <td className="text-[color:var(--ds-ink)]">{info(i)}</td>
@@ -378,7 +378,7 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(i.issue_date)}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(i.due_date)}</td>
                 <td className="text-right text-[color:var(--ds-ink)]">{money(i.total_cents)}</td>
-                <td className="text-right"><RowMenu items={[{ label: 'View invoice', href: `/admin/invoices/${i.id}/preview` }, { label: 'Edit invoice', onClick: () => { setFocusQ(i.number ?? ''); setScope('all'); } }]} /></td>
+                <td className="text-right"><RowMenu items={[{ label: 'View invoice', href: `/admin/billing-hub/invoice/${i.id}/preview` }, { label: 'Edit invoice', onClick: () => { setFocusQ(i.number ?? ''); setScope('all'); } }]} /></td>
               </tr>
             ))}
             {rows.length === 0 && <tr><td colSpan={9} className="py-10 text-center text-[color:var(--ds-body)]">No invoices to show.</td></tr>}
@@ -400,7 +400,7 @@ function ActivityTab({ invoices, agreements }: { invoices: FullInv[]; agreements
       out.push({ key: `a-${a.id}-${n}`, at: e.timestamp, kind: /email|sent|remind/i.test(e.event) ? 'notification' : 'agreement', text: `Agreement ${label}${e.user_email ? ` by ${e.user_email}` : ''}.`, detail: e.details });
     }
     for (const i of invoices) {
-      const link = { label: i.number ?? 'invoice', href: `/admin/invoices/${i.id}/preview` };
+      const link = { label: i.number ?? 'invoice', href: `/admin/billing-hub/invoice/${i.id}/preview` };
       if (i.issued_at || i.issue_date) out.push({ key: `i-${i.id}`, at: i.issued_at ?? `${i.issue_date}T12:00:00`, kind: 'invoice', text: 'Invoice {link} was issued.', link });
       if (i.paid_at) out.push({ key: `p-${i.id}`, at: i.paid_at, kind: 'invoice', text: 'Invoice {link} was paid in full.', link });
       for (const [n, e] of (i.audit_log ?? []).entries()) {

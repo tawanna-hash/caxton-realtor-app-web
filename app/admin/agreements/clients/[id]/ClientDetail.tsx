@@ -96,7 +96,7 @@ export default function ClientDetail({ id }: { id: number }) {
             <p className="text-xs text-[color:var(--ds-body)]">{a.type === 'individual' ? 'Individual' : 'Business'} · Created on {day(a.created_at)}</p>
           </div>
         </div>
-        <RowMenu items={[{ label: 'Create agreement', href: '/admin/agreements/renewals-v2/new' }, { label: 'Open in Get Paid', href: '/admin/getpaid' }]} />
+        <RowMenu items={[{ label: 'Create agreement', href: '/admin/agreements/renewals-v2/new' }, { label: 'Open billing', href: `/admin/billing-hub?clientId=${id}` }]} />
       </div>
 
       <div role="tablist" aria-label="Client" className="flex gap-2 overflow-x-auto border-b border-[color:var(--ds-line)]">
@@ -108,7 +108,7 @@ export default function ClientDetail({ id }: { id: number }) {
       {tab === 'summary' && (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <div className="space-y-5">
-            <Card title="Billing overview" action={<span className="flex items-center gap-3"><button type="button" className={link} style={{ border: 0, background: 'transparent' }} onClick={() => setTab('upcoming')}>Manage billing</button><span className="h-4 w-px bg-[color:var(--ds-line)]" /><Link href="/admin/getpaid/invoices" className={link}>Bill client</Link></span>}>
+            <Card title="Billing overview" action={<span className="flex items-center gap-3"><button type="button" className={link} style={{ border: 0, background: 'transparent' }} onClick={() => setTab('upcoming')}>Manage billing</button><span className="h-4 w-px bg-[color:var(--ds-line)]" /><Link href={`/admin/billing-hub?clientId=${id}`} className={link}>Bill client</Link></span>}>
               <p className="text-xs text-[color:var(--ds-body)]">Upcoming invoice</p>
               <div className="mt-1 rounded-[10px] border border-[color:var(--ds-line)] p-3">
                 {next ? (<><div className="flex justify-between text-sm"><span>To be issued on {day(next.next_run_at)}</span><span className="font-semibold">{money(nextTotal)}</span></div><button type="button" className={link} style={{ border: 0, background: 'transparent', padding: 0 }} onClick={() => setTab('upcoming')}>View Details</button></>) : <p className="text-sm text-[color:var(--ds-body)]">No invoice is scheduled.</p>}
@@ -116,7 +116,7 @@ export default function ClientDetail({ id }: { id: number }) {
               <p className="mt-4 text-xs text-[color:var(--ds-body)]">Latest invoice</p>
               <div className="mt-1 rounded-[10px] border border-[color:var(--ds-line)] p-3">
                 {latest ? (<>
-                  <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2"><span className="font-medium text-[color:var(--ds-primary)]">{latest.number ?? 'Invoice'}</span><span className={pill}>{invStatus(latest)}</span></span><RowMenu items={[{ label: 'Open in Get Paid', href: '/admin/getpaid/invoices' }]} /></div>
+                  <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2"><span className="font-medium text-[color:var(--ds-primary)]">{latest.number ?? 'Invoice'}</span><span className={pill}>{invStatus(latest)}</span></span><RowMenu items={[{ label: 'Open billing', href: `/admin/billing-hub?clientId=${id}` }]} /></div>
                   <p className="mt-1 text-xs text-[color:var(--ds-body)]">Issue date: {day(latest.issue_date)}</p>
                   <div className="mt-2 flex justify-between border-t border-[color:var(--ds-line)] pt-2 text-sm font-semibold"><span>Total</span><span>{money(latest.total_cents)}</span></div>
                 </>) : <p className="text-sm text-[color:var(--ds-body)]">No invoices have been issued.</p>}

@@ -10,10 +10,10 @@ import SortTable from '@/components/anchor/SortTable';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents, outstandingCents } from '@/lib/invoices';
-import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
-import { InvoiceDrawer } from '@/app/admin/billing/_components/InvoiceDrawer';
-import { PaymentLinkDrawer, RecordPaymentDrawer, SalesReceiptDrawer } from '@/app/admin/ar/PaymentActionDrawers';
-import { ScheduledInvoicesPanel } from '@/app/admin/getpaid/_components/ScheduledInvoicesPanel';
+import type { AdvertiserOption } from '@/app/admin/beta-core/billing/types';
+import { InvoiceDrawer } from '@/app/admin/beta-core/billing/InvoiceDrawer';
+import { PaymentLinkDrawer, RecordPaymentDrawer, SalesReceiptDrawer } from '@/app/admin/beta-core/PaymentActionDrawers';
+import { ScheduledInvoicesPanel } from '@/app/admin/beta-core/ScheduledInvoicesPanel';
 import { isNative } from '@/lib/native/runtime';
 import { BETA_EMAIL_ENABLED } from '@/lib/beta-email';
 import EmailInvoiceDialog, { type EmailValues } from './EmailInvoiceDialog';
@@ -355,7 +355,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
     void run(async () => { await patch(i, { memo: [i.memo, `Task (${stamp}): ${note.trim()}`].filter(Boolean).join('\n') }); return `Task added to ${i.number}.`; }, 'Could not create task.');
   };
   const print = (i: Inv, packing = false) => {
-    const url = `/admin/invoices/${i.id}/preview${packing ? '?packing=1' : ''}`;
+    const url = `/admin/billing-hub/invoice/${i.id}/preview${packing ? '?packing=1' : ''}`;
     if (isNative() || window.matchMedia('(max-width: 767px)').matches) window.location.assign(url);
     else window.open(url, '_blank', 'noopener,noreferrer');
   };

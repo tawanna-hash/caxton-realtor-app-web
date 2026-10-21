@@ -25,7 +25,7 @@ export default function AvailableApps() {
       <section>
         <h2 className="mb-3 text-base font-medium text-[color:var(--ds-ink)]">Payments</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Card name="Stripe" blurb="Card and ACH payments, payment links and payouts for invoices." badge={s ? (s.stripe ? `Connected (${s.stripe_mode})` : 'Not configured') : '…'} action={<a className={A.small} href="/admin/getpaid/stripepayouts">View payouts</a>} />
+          <Card name="Stripe" blurb="Card and ACH payments, payment links and payouts for invoices." badge={s ? (s.stripe ? `Connected (${s.stripe_mode})` : 'Not configured') : '…'} action={<a className={A.small} href="/admin/payouts-beta">View payouts</a>} />
         </div>
       </section>
       <section>

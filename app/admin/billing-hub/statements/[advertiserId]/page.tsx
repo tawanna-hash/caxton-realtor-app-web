@@ -16,7 +16,7 @@ import {
   getOrCreatePartnerStatementOverdueLink,
   loadPartnerStatement,
 } from '@/lib/server/partner-statement';
-import PrintInvoiceButton from '@/app/admin/invoices/[id]/preview/PrintInvoiceButton';
+import PrintInvoiceButton from '@/app/admin/beta-core/PrintInvoiceButton';
 import GenerateLinkButton, { GenerateStatementLinkButton } from './GenerateLinkButton';
 import StatementHistory from './StatementHistory';
 
@@ -314,7 +314,7 @@ export default async function StatementPage({
                 ) : (
                   <div>
                     <Link
-                      href={`/admin/invoices/${invoice.id}/preview`}
+                      href={`/admin/billing-hub/invoice/${invoice.id}/preview`}
                       className="font-semibold text-[#42277C] underline print:text-neutral-900 print:no-underline"
                     >
                       {invoice.number ?? invoice.id.slice(0, 8)}

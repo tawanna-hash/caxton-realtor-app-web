@@ -12,7 +12,7 @@ import { SortTh } from '../agreements/clients/StatusFilter';
 import { formatCents } from '@/lib/invoices';
 import { PUBLICATION_OPTIONS } from '@/lib/publication-theme';
 import type { DepositPaymentRow } from '@/lib/server/deposit-reports';
-import { shortDate } from '@/app/admin/billing/_components/helpers';
+import { shortDate } from '@/app/admin/beta-core/billing/helpers';
 import { BETA_EMAIL_ENABLED } from '@/lib/beta-email';
 
 const PUB = new Map(PUBLICATION_OPTIONS.map((o) => [o.id as string, o.label]));

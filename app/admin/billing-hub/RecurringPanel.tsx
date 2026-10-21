@@ -10,8 +10,8 @@ import SortTable from '@/components/anchor/SortTable';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import { computeNextRun, frequencyLabel, type RecurringScheduleWithAdvertiser } from '@/lib/recurring-invoices';
 import { formatCents } from '@/lib/invoices';
-import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
-import { RecurringScheduleDrawer } from '@/app/admin/ar/RecurringScheduleDrawer';
+import type { AdvertiserOption } from '@/app/admin/beta-core/billing/types';
+import { RecurringScheduleDrawer } from '@/app/admin/beta-core/RecurringScheduleDrawer';
 import { BETA_EMAIL_ENABLED } from '@/lib/beta-email';
 
 type Sch = RecurringScheduleWithAdvertiser;

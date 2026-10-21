@@ -100,7 +100,7 @@ export default function StatusBoard() {
       const res = await fetch(`/api/admin/agreements-v2/${i.id}`, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'create_schedule' }) });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || j.detail || `HTTP ${res.status}`);
-      setNotice('Draft billing schedule created. Review it in Get Paid before activating.');
+      setNotice('Draft billing schedule created. Review it in Billing > Recurring invoices before activating.');
       reload();
     } catch (e) {
       setNotice(`Could not create schedule: ${e instanceof Error ? e.message : 'error'}`);
