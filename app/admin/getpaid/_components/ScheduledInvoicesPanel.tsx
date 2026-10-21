@@ -147,7 +147,7 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
                         </span>
                       </td>
                       <td className={`${td} text-right`}>
-                        <Link href="/admin/getpaid/reoccuringpayments" className="font-medium text-[#301D5D] hover:underline">Edit schedule</Link>
+                        <Link href="/admin/billing-hub?tab=recurring" className="font-medium text-[#301D5D] hover:underline">Edit schedule</Link>
                       </td>
                     </tr>
                   );
@@ -256,7 +256,7 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
                     <td className={`${td} text-right`}>{remaining}</td>
                     <td className={`${td} text-right font-medium`}>{formatCents(amount)}</td>
                     <td className={`${td} text-right`}>
-                      <Link href="/admin/getpaid/reoccuringpayments" className="font-medium text-[#301D5D] hover:underline">Edit schedule</Link>
+                      <Link href="/admin/billing-hub?tab=recurring" className="font-medium text-[#301D5D] hover:underline">Edit schedule</Link>
                     </td>
                   </tr>
                 ))}

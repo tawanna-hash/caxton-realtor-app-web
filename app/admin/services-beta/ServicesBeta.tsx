@@ -11,6 +11,7 @@ import { SortTh } from '../agreements/clients/StatusFilter';
 import { useJson } from '../agreements/clients/data';
 import { ITEM_TYPE_LABELS, SERVICE_OCCURRENCE_LABELS, SERVICE_PRICING_LABELS, type ProductService, type ProductServiceType, type ServiceOccurrence, type ServicePricing } from '@/lib/products-services';
 
+const FEATURED_CATEGORY = 'Print & Digital Replica Packages';
 const MARKETS: Record<string, string> = { austin: 'Austin', san_antonio: 'San Antonio', both: 'Austin/San Antonio' };
 const TYPES = (['service', 'non_inventory', 'inventory'] as ProductServiceType[]).map((v) => [v, ITEM_TYPE_LABELS[v]] as const);
 
@@ -162,7 +163,9 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
       && (category === 'all' || p.category === category)
       && (!n || [p.name, p.sku, p.category, p.sales_description, p.income_account].filter(Boolean).join(' ').toLowerCase().includes(n)));
     const key = (p: ProductService): string | number => sort.k === 'name' ? p.name.toLowerCase() : sort.k === 'sku' ? (p.sku ?? '').toLowerCase() : sort.k === 'type' ? ITEM_TYPE_LABELS[p.item_type] : sort.k === 'cat' ? (p.category ?? '').toLowerCase() : sort.k === 'rate' ? (p.price_cents ?? -1) : sort.k === 'occ' ? SERVICE_OCCURRENCE_LABELS[p.billing_occurrence] ?? '' : trigger(p);
-    return out.sort((a, b) => (key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : 0) * sort.dir);
+    // Print & Digital Replica Packages always lead the list, then the chosen sort applies within each group.
+    const lead = (p: ProductService) => (p.category === FEATURED_CATEGORY ? 0 : 1);
+    return out.sort((a, b) => lead(a) - lead(b) || (key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : 0) * sort.dir);
   }, [list.data, q, sort, isBundle, showInactive, market, category]);
   const scope = useMemo(() => list.data.filter((p) => (isBundle ? p.item_type === 'bundle' : p.item_type !== 'bundle')), [list.data, isBundle]);
   const categories = useMemo(() => Array.from(new Set(scope.map((p) => p.category).filter(Boolean))).sort() as string[], [scope]);

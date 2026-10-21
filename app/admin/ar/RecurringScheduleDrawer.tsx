@@ -90,7 +90,9 @@ export function RecurringScheduleDrawer({
   onClose,
   onSaved,
   onError,
+  emailOff = false,
 }: {
+  emailOff?: boolean;
   existing?: RecurringScheduleWithAdvertiser;
   advertisers: AdvertiserOption[];
   agreements: AgreementWithAdvertiser[];
@@ -127,7 +129,7 @@ export function RecurringScheduleDrawer({
     existing?.create_days_in_advance ?? 0,
   );
   const [autoSend, setAutoSend] = useState<boolean>(
-    existing?.auto_send ?? true,
+    existing?.auto_send ?? !emailOff,
   );
   const [startDate, setStartDate] = useState<string>(
     toISODateString(existing?.start_date) ||
@@ -178,7 +180,7 @@ export function RecurringScheduleDrawer({
   );
   const [printLater, setPrintLater] = useState(existing?.print_later ?? false);
   const [emailReminders, setEmailReminders] = useState(
-    existing?.email_reminders ?? true,
+    existing?.email_reminders ?? !emailOff,
   );
   const [paymentInstructions, setPaymentInstructions] = useState(
     existing?.payment_instructions ?? "",
@@ -593,9 +595,10 @@ export function RecurringScheduleDrawer({
               <input
                 type="checkbox"
                 checked={autoSend}
+                disabled={emailOff}
                 onChange={(e) => setAutoSend(e.target.checked)}
               />
-              Email generated invoices automatically when they are created (unchecked, they stay as drafts for review)
+              Email generated invoices automatically when they are created (unchecked, they stay as drafts for review){emailOff ? ' (email is off in beta)' : ''}
             </label>
             <div className="grid gap-2 rounded-lg border border-gray-200 p-3 sm:grid-cols-2">
               <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -618,9 +621,10 @@ export function RecurringScheduleDrawer({
                 <input
                   type="checkbox"
                   checked={emailReminders}
+                  disabled={emailOff}
                   onChange={(e) => setEmailReminders(e.target.checked)}
                 />
-                Automatic invoice reminders
+                Automatic invoice reminders{emailOff ? ' (off in beta)' : ''}
               </label>
             </div>
           </Section>

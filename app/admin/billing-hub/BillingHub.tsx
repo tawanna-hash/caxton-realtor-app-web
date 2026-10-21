@@ -141,7 +141,7 @@ export default function BillingHub() {
       {client && tab === 'agreement' && <AgreementTab client={client} agreement={agreement ?? agreements[0] ?? null} />}
       {client && tab === 'payment' && <PaymentTab client={client} agreement={agreement ?? agreements.find((a) => a.signed_at) ?? agreements[0] ?? null} onSaved={() => setVersion((v) => v + 1)} />}
       {client && tab === 'invoices' && <InvoicesTab client={client} invoices={invoices} agreements={agreements} intent={intent} onIntentDone={() => setIntent(null)} />}
-      {client && tab === 'recurring' && <RecurringPanel />}
+      {client && tab === 'recurring' && <RecurringPanel clientId={client.id} />}
       {client && tab === 'statements' && <StatementsPanel />}
       {client && tab === 'paymentlinks' && <PaymentLinksPanel />}
       {client && tab === 'activity' && <ActivityTab invoices={invoices} agreements={agreement ? [agreement] : agreements} />}
