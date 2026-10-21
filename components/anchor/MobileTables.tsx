@@ -8,7 +8,7 @@ export default function MobileTables() {
   useEffect(() => {
     const label = () => {
       document.querySelectorAll<HTMLTableElement>("[data-admin-ui='true'] table").forEach((t) => {
-        const heads = Array.from(t.querySelectorAll('thead th')).map((h) => (h.textContent || '').trim());
+        const heads = Array.from(t.querySelectorAll('thead th')).map((h) => (h.textContent || '').replace(/[▲▼▴▾↕↑↓]/g, '').trim());
         if (!heads.length) return;
         t.querySelectorAll('tbody tr').forEach((tr) => {
           Array.from(tr.children).forEach((c, i) => {

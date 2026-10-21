@@ -2460,6 +2460,7 @@ textarea.anchor-input { border-radius: 14px !important; padding: 0.75rem 1rem !i
   [data-admin-ui='true'] table tbody { display: block; }
   [data-admin-ui='true'] table tbody tr { display: block; background: #fff; border-radius: 10px; margin-bottom: 8px; padding: 6px 12px; }
   [data-admin-ui='true'] table tbody td { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0 !important; border: 0 !important; text-align: right !important; width: auto !important; min-width: 0; }
+  [data-admin-ui='true'] table tbody td > :last-child { min-width: 0; }
   [data-admin-ui='true'] table tbody td::before { content: attr(data-label); flex: none; max-width: 45%; text-align: left; font-size: 12px; color: #6b7280; }
   [data-admin-ui='true'] table tbody td[data-label='']::before { content: none; }
   [data-admin-ui='true'] table tbody td[colspan] { display: block; text-align: left !important; }
