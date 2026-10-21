@@ -530,7 +530,7 @@ export default function AppShell({
           <SwipeBackShell area={isAdmin ? 'admin' : 'public'}>
             {isAdmin && !pathname?.includes('/hotspots') ? (
               /* Mint kit: page content sits in one rounded white panel on the lavender canvas. */
-              <div className={`mx-3 mb-6 rounded-3xl sm:mx-5 lg:mx-6 ${/^\/admin\/agreements\/(clients|renewals-v2|proposals)/.test(pathname ?? '') || (pathname ?? '').startsWith('/admin/billing-hub') || (pathname ?? '').startsWith('/admin/services-beta') ? 'bg-[#F3F4F7]' : 'border border-[#ECE8F5] bg-white shadow-sm'}`}>
+              <div className={`mx-3 mb-6 rounded-3xl sm:mx-5 lg:mx-6 ${/^\/admin\/agreements\/(clients|renewals-v2|proposals)/.test(pathname ?? '') || (pathname ?? '').startsWith('/admin/billing-hub') || (pathname ?? '').startsWith('/admin/services-beta') || (pathname ?? '').startsWith('/admin/reports-beta') ? 'bg-[#F3F4F7]' : 'border border-[#ECE8F5] bg-white shadow-sm'}`}>
                 {children}
               </div>
             ) : (
