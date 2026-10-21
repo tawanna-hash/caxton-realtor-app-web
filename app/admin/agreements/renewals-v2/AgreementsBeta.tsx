@@ -46,6 +46,25 @@ const SUB: Record<Tab, string> = {
   notifications: 'Set which notifications you and your partners will receive.',
 };
 
+function Collapsible({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <section>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="flex min-h-12 w-full items-center justify-between gap-3 border-b border-[color:var(--ds-line)] pb-3 text-left"
+        style={{ borderTop: 0, borderLeft: 0, borderRight: 0, background: 'transparent', borderRadius: 0 }}
+      >
+        <span className="text-base font-semibold text-[color:var(--ds-ink)]">{title}</span>
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true" className={`shrink-0 text-[color:var(--ds-body)] transition-transform ${open ? 'rotate-180' : ''}`}><path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </button>
+      <div className={open ? 'pt-4' : 'hidden'}>{children}</div>
+    </section>
+  );
+}
+
 export default function AgreementsBeta() {
   const [tab, setTab] = useState<Tab>('board');
   return (
@@ -67,7 +86,12 @@ export default function AgreementsBeta() {
           </button>
         ))}
       </div>
-      {tab === 'board' && <div className="space-y-8"><NewPartnersPanel /><StatusBoard /></div>}
+      {tab === 'board' && (
+        <div className="space-y-6">
+          <Collapsible title="Waiting to be signed"><NewPartnersPanel /></Collapsible>
+          <Collapsible title="All agreements"><StatusBoard /></Collapsible>
+        </div>
+      )}
       {tab === 'renewals' && <RenewalsV2Client />}
       {tab === 'templates' && <TemplatesPanel />}
       {tab === 'accounts' && <AccountsPanel />}
