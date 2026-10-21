@@ -38,7 +38,7 @@ export default function ClientsList() {
             <tbody>
               {rows.map((a) => (
                 <tr key={a.id}>
-                  <td><Link href={`/admin/agreements/clients/${a.id}`} className="font-semibold text-[color:var(--ds-ink)] hover:underline">{a.name}</Link>{a.markets.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{a.markets.map((m) => <span key={m} className="rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[11px] font-normal text-[color:var(--ds-body)]">{m}</span>)}</div>}</td>
+                  <td><div className="flex flex-wrap items-center gap-2"><Link href={`/admin/agreements/clients/${a.id}`} className="font-semibold text-[color:var(--ds-ink)] hover:underline">{a.name}</Link>{a.markets.map((m) => <span key={m} className="rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[11px] font-normal text-[color:var(--ds-body)]">{m}</span>)}</div></td>
                   <td className="font-semibold text-[color:var(--ds-ink)]">{GROUP_LABEL[a.group]}</td>
                   <td className="text-[color:var(--ds-ink)]">{person(a) || '—'}</td>
                   <td className="text-[color:var(--ds-ink)]">{a.contact_email ?? '—'}<div className="text-xs text-[color:var(--ds-body)]">{a.phone ?? ''}</div></td>
