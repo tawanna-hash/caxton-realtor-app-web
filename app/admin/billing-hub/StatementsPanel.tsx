@@ -1,7 +1,7 @@
 'use client';
 
-// Agreements (Beta): partners with an open balance and their statement of
-// account, read-only. Sending stays in Get Paid.
+// Billing > Statements: partners with an open balance, each with a full
+// statement of account page. Emailing statements is off in beta.
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -46,7 +46,7 @@ export default function StatementsPanel() {
         <SearchBox value={q} onChange={setQ} />
         <label className="flex items-center gap-2 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} />Overdue only</label>
         <span className="text-xs text-[color:var(--ds-body)]">{shown.length} of {rows.length} partners</span>
-        <Link href="/admin/getpaid/statements" className={`${A.outline} ml-auto`}>Send in Get Paid</Link>
+        <span className="ml-auto text-xs text-[color:var(--ds-body)]">Emailing statements is off in beta. Open a statement to copy its payment links.</span>
       </div>
       {shown.length === 0 ? <EmptyState title="No statements found" body="Try a different search." /> : (
         <div className="overflow-x-auto">
@@ -60,7 +60,7 @@ export default function StatementsPanel() {
                   <td className={`whitespace-nowrap text-right ${r.overdue_cents > 0 ? 'text-red-700' : ''}`}>{money(r.overdue_cents)}</td>
                   <td className="whitespace-nowrap text-right font-medium">{money(r.outstanding_cents)}</td>
                   <td className="whitespace-nowrap">{day(r.last_sent_at)}{r.send_count > 1 ? ` (${r.send_count}x)` : ''}</td>
-                  <td className="whitespace-nowrap"><Link className="text-[color:var(--ds-primary)]" href={`/admin/getpaid/statements/${r.advertiser_id}`}>View statement</Link></td>
+                  <td className="whitespace-nowrap"><Link className="text-[color:var(--ds-primary)]" href={`/admin/billing-hub/statements/${r.advertiser_id}`}>View statement</Link></td>
                 </tr>
               ))}
             </>)}

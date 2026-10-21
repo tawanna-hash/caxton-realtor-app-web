@@ -5,7 +5,7 @@ const INVOICE_VIEW_PATHS = [
   '/admin/getpaid/invoices',
   '/admin/getpaid/salestransactions',
   '/admin/getpaid/accountsreceivables',
-  '/admin/getpaid/statements',
+  '/admin/billing-hub',
   '/admin/invoices',
   '/admin/ar',
   '/admin/agreements',

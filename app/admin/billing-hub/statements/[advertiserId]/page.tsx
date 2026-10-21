@@ -1,4 +1,4 @@
-// app/admin/getpaid/statements/[advertiserId]/page.tsx
+// app/admin/billing-hub/statements/[advertiserId]/page.tsx
 //
 // Statement of Account for one partner — mirrors the invoice document
 // design (app/admin/invoices/[id]/preview/page.tsx): same letterhead,
@@ -16,9 +16,9 @@ import {
   getOrCreatePartnerStatementOverdueLink,
   loadPartnerStatement,
 } from '@/lib/server/partner-statement';
-import PrintInvoiceButton from '../../../invoices/[id]/preview/PrintInvoiceButton';
+import PrintInvoiceButton from '@/app/admin/invoices/[id]/preview/PrintInvoiceButton';
 import GenerateLinkButton, { GenerateStatementLinkButton } from './GenerateLinkButton';
-import StatementEmailButton from '../StatementEmailButton';
+import StatementHistory from './StatementHistory';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -31,7 +31,7 @@ async function generateStatementOverdueLink(advertiserId: number) {
     throw new Error('There are no overdue invoices to include.');
   }
   await getOrCreatePartnerStatementOverdueLink(statement, { forceRefresh: true });
-  revalidatePath(`/admin/getpaid/statements/${advertiserId}`);
+  revalidatePath(`/admin/billing-hub/statements/${advertiserId}`);
 }
 
 function isSafeHttpUrl(value: string | null | undefined): value is string {
@@ -206,110 +206,17 @@ export default async function StatementPage({
     <div className="mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">
       <div className="mb-4 flex items-center justify-between print:hidden">
         <div>
+          <Link href="/admin/billing-hub" className="text-xs text-gray-500 underline">Back to Billing</Link>
           <h1 className="text-lg font-semibold text-gray-900">Statement of Account</h1>
           <p className="text-sm text-gray-500">{advertiser.name}</p>
         </div>
         <div className="flex items-center gap-2">
-          <StatementEmailButton
-            advertiserId={advertiser.id}
-            advertiserName={advertiser.name}
-            recipient={recipient}
-          />
+          <span className="text-xs text-gray-500">Emailing is off in beta</span>
           <PrintInvoiceButton />
         </div>
       </div>
 
-      <section className="mb-4 overflow-hidden rounded border border-gray-200 bg-white print:hidden">
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-          <div>
-            <h2 className="text-sm font-semibold text-gray-900">Statement Send History</h2>
-            <p className="text-xs text-gray-500">
-              {sendHistory.length
-                ? `${sendHistory.length.toLocaleString()} successful ${sendHistory.length === 1 ? 'delivery' : 'deliveries'}`
-                : 'No statements have been sent yet.'}
-            </p>
-          </div>
-          {sendHistory[0] && (
-            <div className="text-right text-xs text-gray-500">
-              Last sent
-              <div className="font-medium text-gray-900">
-                {new Date(sendHistory[0].sent_at).toLocaleString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  timeZone: 'America/Chicago',
-                  timeZoneName: 'short',
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-        {sendHistory.length > 0 && (
-          <div className="max-h-72 divide-y divide-gray-100 overflow-auto md:hidden">
-            {sendHistory.map((event) => (
-              <div key={event.id} className="space-y-2 px-4 py-3 text-xs">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="text-gray-700">
-                    {new Date(event.sent_at).toLocaleString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      timeZone: 'America/Chicago',
-                    })}
-                    {event.sent_by && <div className="text-[11px] text-gray-400">by {event.sent_by}</div>}
-                  </div>
-                  <div className="whitespace-nowrap text-right font-medium text-gray-900">{money(event.outstanding_cents)}</div>
-                </div>
-                <div className="text-gray-700" title={event.subject}>{event.recipient_email}</div>
-                <div className="flex items-center justify-between text-gray-500">
-                  <span>{event.sender_email}</span>
-                  <span>{event.invoice_count} {event.invoice_count === 1 ? 'invoice' : 'invoices'}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        {sendHistory.length > 0 && (
-          <div className="hidden max-h-72 overflow-auto md:block">
-            <table className="w-full text-left text-xs">
-              <thead className="sticky top-0 bg-gray-50 text-gray-600">
-                <tr>
-                  <th className="px-4 py-2 font-semibold">Date</th>
-                  <th className="px-3 py-2 font-semibold">Recipient</th>
-                  <th className="px-3 py-2 font-semibold">From</th>
-                  <th className="px-3 py-2 text-right font-semibold">Invoices</th>
-                  <th className="px-4 py-2 text-right font-semibold">Balance sent</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {sendHistory.map((event) => (
-                  <tr key={event.id}>
-                    <td className="whitespace-nowrap px-4 py-3 text-gray-700">
-                      {new Date(event.sent_at).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        timeZone: 'America/Chicago',
-                      })}
-                      {event.sent_by && <div className="text-[11px] text-gray-400">by {event.sent_by}</div>}
-                    </td>
-                    <td className="px-3 py-3 text-gray-700" title={event.subject}>{event.recipient_email}</td>
-                    <td className="px-3 py-3 text-gray-600">{event.sender_email}</td>
-                    <td className="px-3 py-3 text-right text-gray-700">{event.invoice_count}</td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">{money(event.outstanding_cents)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <StatementHistory advertiserId={advertiser.id} initial={JSON.parse(JSON.stringify(sendHistory))} />
 
       <article className="bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-8">
         <header className="grid grid-cols-[1fr_auto] gap-8 border-b border-neutral-300 pb-4">

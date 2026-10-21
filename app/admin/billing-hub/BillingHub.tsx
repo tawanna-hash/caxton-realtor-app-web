@@ -16,6 +16,7 @@ import SortCaret from '@/components/anchor/SortCaret';
 import AllInvoices from './AllInvoices';
 import RecurringPanel from './RecurringPanel';
 import StatementsPanel from './StatementsPanel';
+import PaymentLinksPanel from './PaymentLinksPanel';
 
 type AuditEntry = { event: string; timestamp: string; user_email?: string; details?: string };
 type Agr = {
@@ -26,8 +27,8 @@ type Agr = {
 };
 type FullInv = Inv & { issued_at?: string | null; paid_at?: string | null; created_at?: string | null; audit_log?: AuditEntry[]; bill_to_name?: string | null };
 type Product = { id: string | number; name: string; description?: string | null; unit_price_cents?: number | null; price_cents?: number | null; active?: boolean | null; billing_type?: string | null };
-type Tab = 'hub' | 'agreement' | 'payment' | 'invoices' | 'recurring' | 'statements' | 'activity';
-const TABS: Array<[Tab, string]> = [['hub', 'Billing'], ['agreement', 'Agreement'], ['payment', 'Payment Methods'], ['invoices', 'Invoices'], ['recurring', 'Recurring invoices'], ['statements', 'Statements'], ['activity', 'Activity Log']];
+type Tab = 'hub' | 'agreement' | 'payment' | 'invoices' | 'recurring' | 'statements' | 'paymentlinks' | 'activity';
+const TABS: Array<[Tab, string]> = [['hub', 'Billing'], ['agreement', 'Agreement'], ['payment', 'Payment Methods'], ['invoices', 'Invoices'], ['recurring', 'Recurring invoices'], ['statements', 'Statements'], ['paymentlinks', 'Payment links'], ['activity', 'Activity Log']];
 const none: never[] = [];
 const cap = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 const dt = (v: string) => new Date(v).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -127,6 +128,7 @@ export default function BillingHub() {
       {client && tab === 'invoices' && <InvoicesTab client={client} invoices={invoices} agreements={agreements} />}
       {client && tab === 'recurring' && <RecurringPanel />}
       {client && tab === 'statements' && <StatementsPanel />}
+      {client && tab === 'paymentlinks' && <PaymentLinksPanel />}
       {client && tab === 'activity' && <ActivityTab invoices={invoices} agreements={agreement ? [agreement] : agreements} />}
 
       {control && <ControlDrawer onClose={() => setControl(false)} onBill={(m, seed) => { setControl(false); setBill({ mode: m, seed }); }} />}

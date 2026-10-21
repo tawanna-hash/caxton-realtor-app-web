@@ -77,7 +77,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Get Paid Dashboard', href: '/admin/getpaid/accountsreceivables', description: 'Aging and outstanding balances' },
       { label: 'Sales Transactions', href: '/admin/getpaid/salestransactions', description: 'All customer sales activity' },
       { label: 'Invoices', href: '/admin/getpaid/invoices', description: 'Billable charges and payment status' },
-      { label: 'Statements', href: '/admin/getpaid/statements', description: 'Partner balances, statements and payment links' },
       { label: 'Recurring Invoices', href: '/admin/getpaid/reoccuringpayments', description: 'Recurring invoice schedules' },
       { label: 'Deposit Slip', href: '/admin/reports/deposits', description: 'Printable check deposit summary' },
       { label: 'Deposit Detail', href: '/admin/reports/detail', description: 'Printable check payment detail report' },
