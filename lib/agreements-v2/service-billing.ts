@@ -5,7 +5,7 @@
 // builder timeline, the partner page timeline and the signing draft schedules.
 
 export type ServiceBilling = {
-  cadence: 'monthly' | 'one_time';
+  cadence: 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'one_time' | 'stages';
   /** Invoice at the start of the billing cycle (the billing day) or one cycle later. */
   timing: 'start' | 'end';
   /** Day of the month, 1 to 28. null uses the account default. */
@@ -15,6 +15,16 @@ export type ServiceBilling = {
   start_date: string;
   /** Number of monthly invoices when billed monthly. Filled from the service when the agreement is sent. */
   term_months?: number;
+  /** One time or first stage: invoice when the agreement is accepted. */
+  on_acceptance?: boolean;
+  /** Weekly billing: 1 = Monday ... 7 = Sunday. */
+  weekday?: number;
+  /** Hourly services: rate per hour and the hours pre-approved for each billing period. Billed manually from logged hours. */
+  hourly?: { rate_cents: number; cap_hours: number };
+  /** Billed in stages: share of the price and what starts each invoice. */
+  stages?: Array<{ pct: number; trigger: 'acceptance' | 'manual' }>;
+  /** Prorate the first payment. */
+  prorate?: boolean;
 };
 
 export const DEFAULT_BILLING: ServiceBilling = { cadence: 'monthly', timing: 'start', day: null, start: 'next', start_date: '' };
@@ -53,12 +63,17 @@ export function cleanBilling(b: Partial<ServiceBilling> | null | undefined): Ser
   const x = b ?? {};
   const day = typeof x.day === 'number' && x.day >= 1 && x.day <= 28 ? Math.round(x.day) : null;
   return {
-    cadence: x.cadence === 'one_time' ? 'one_time' : 'monthly',
+    cadence: x.cadence === 'one_time' || x.cadence === 'weekly' || x.cadence === 'quarterly' || x.cadence === 'yearly' || x.cadence === 'stages' ? x.cadence : 'monthly',
     timing: x.timing === 'end' ? 'end' : 'start',
     day,
     start: x.start === 'date' || x.start === 'manual' ? x.start : 'next',
     start_date: typeof x.start_date === 'string' && ISO.test(x.start_date) ? x.start_date : '',
     ...(typeof x.term_months === 'number' && x.term_months >= 1 ? { term_months: Math.min(60, Math.round(x.term_months)) } : {}),
+    ...(x.on_acceptance ? { on_acceptance: true } : {}),
+    ...(typeof x.weekday === 'number' && x.weekday >= 1 && x.weekday <= 7 ? { weekday: Math.round(x.weekday) } : {}),
+    ...(x.hourly && x.hourly.rate_cents > 0 ? { hourly: { rate_cents: Math.round(x.hourly.rate_cents), cap_hours: Math.max(0, Number(x.hourly.cap_hours) || 0) } } : {}),
+    ...(x.cadence === 'stages' ? { stages: (Array.isArray(x.stages) && x.stages.length ? x.stages : [{ pct: 50, trigger: 'acceptance' as const }, { pct: 50, trigger: 'manual' as const }]).map((g) => ({ pct: Math.max(0, Number(g.pct) || 0), trigger: g.trigger === 'acceptance' ? 'acceptance' as const : 'manual' as const })) } : {}),
+    ...(x.prorate ? { prorate: true } : {}),
   };
 }
 
@@ -102,7 +117,26 @@ export function planServiceBilling(
   if (b.start === 'manual') {
     return { label: svc.label, total_cents: total, amount_cents: total, occurrences: 0, manual: true, one_time: b.cadence === 'one_time', first_run_date: null, day_of_month: b.day ?? ctx.billing_day, dates: [] };
   }
+  if (b.cadence === 'stages' && b.stages?.length) {
+    const auto = b.stages.map((g) => ({ g, cents: Math.round(total * g.pct / 100) })).filter((x) => x.g.trigger === 'acceptance');
+    const first0 = ctx.start;
+    return { label: svc.label, total_cents: total, amount_cents: auto[0]?.cents ?? 0, occurrences: auto.length, manual: auto.length === 0, one_time: true, first_run_date: auto.length ? first0 : null, day_of_month: b.day ?? ctx.billing_day, dates: auto.map(() => first0), amounts: auto.map((x) => x.cents) };
+  }
   const oneTime = b.cadence === 'one_time';
+  if (!oneTime && (b.cadence === 'weekly' || b.cadence === 'quarterly' || b.cadence === 'yearly')) {
+    const term = Math.max(1, b.term_months ?? 1);
+    const step = b.cadence === 'weekly' ? 0 : b.cadence === 'quarterly' ? 3 : 12;
+    const n = b.cadence === 'weekly' ? Math.max(1, Math.round(term * 52 / 12)) : Math.max(1, Math.ceil(term / step));
+    let first0 = b.start === 'date' && b.start_date ? b.start_date : ctx.start;
+    if (b.cadence === 'weekly' && b.weekday && !(b.start === 'date' && b.start_date)) {
+      const d = new Date(`${first0}T00:00:00Z`);
+      const want = b.weekday % 7;
+      d.setUTCDate(d.getUTCDate() + ((want - d.getUTCDay() + 7) % 7));
+      first0 = d.toISOString().slice(0, 10);
+    }
+    const dts = Array.from({ length: n }, (_, i) => (b.cadence === 'weekly' ? addDaysIso(first0, 7 * i) : addMonthsIso(first0, step * i)));
+    return { label: svc.label, total_cents: total, amount_cents: total, occurrences: n, manual: false, one_time: false, first_run_date: first0, day_of_month: Math.min(28, Number(first0.slice(8, 10)) || day0(b, ctx)), dates: dts };
+  }
   const occurrences = oneTime ? 1 : Math.max(1, b.term_months ?? 1);
   const day = b.day ?? ctx.billing_day;
   let first: string;
@@ -123,6 +157,8 @@ export function planServiceBilling(
   const amounts = !oneTime && pct > 0 && occurrences > 12 ? dates.map((_, i) => Math.round(base * Math.pow(1 + pct / 100, Math.floor(i / 12)))) : undefined;
   return { label: svc.label, total_cents: total, amount_cents: base, occurrences, manual: false, one_time: oneTime, first_run_date: first, day_of_month: dom, dates, ...(amounts ? { amounts } : {}) };
 }
+
+function day0(b: ServiceBilling, ctx: { billing_day: number }): number { return b.day ?? ctx.billing_day; }
 
 export type InvoiceRow = { date: string; due: string; total: number; items: Array<{ label: string; cents: number }> };
 
@@ -161,8 +197,10 @@ export function cleanPayment(p: Partial<PaymentSettings> | null | undefined): Pa
 }
 
 export function billingBadge(b: ServiceBilling): string {
-  if (b.start === 'manual') return 'Billed manually';
-  return b.cadence === 'one_time' ? 'Billed one time, automatically' : 'Billed monthly, automatically';
+  const word = b.cadence === 'one_time' ? 'one time' : b.cadence === 'stages' ? `in ${b.stages?.length ?? 2} stages` : b.cadence;
+  if (b.hourly) return `${word === 'one time' ? 'Hourly' : `Billed ${word}`}${b.start === 'manual' ? ', manually' : ''}`;
+  if (b.start === 'manual') return b.cadence === 'monthly' ? 'Billed manually' : `Billed ${word}, manually`;
+  return `Billed ${word}, automatically`;
 }
 
 /** Plans for a saved agreement: its line items matched to the per-service billing saved with it. Null when no service has billing options. */

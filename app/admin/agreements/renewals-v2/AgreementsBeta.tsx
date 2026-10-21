@@ -8,18 +8,16 @@ import RenewalsV2Client from './RenewalsV2Client';
 import NewPartnersPanel from './NewPartnersPanel';
 import StatusBoard from './StatusBoard';
 import SignedAgreements from './SignedAgreements';
-import TemplatesPanel from './TemplatesPanel';
 import DefaultsPanel from './DefaultsPanel';
 import { A } from '@/components/anchor/ui';
 
-type Tab = 'board' | 'sent' | 'drafts' | 'archived' | 'renewals' | 'templates' | 'defaults';
+type Tab = 'board' | 'sent' | 'drafts' | 'archived' | 'renewals' | 'defaults';
 const TABS: Array<[Tab, string]> = [
   ['board', 'Agreements'],
   ['sent', 'Sent'],
   ['drafts', 'Drafts'],
   ['archived', 'Archived'],
   ['renewals', 'Renewals'],
-  ['templates', 'Templates'],
   ['defaults', 'Default settings'],
 ];
 const SUB: Record<Tab, string> = {
@@ -28,7 +26,6 @@ const SUB: Record<Tab, string> = {
   drafts: 'Agreements you started but have not sent.',
   archived: 'Agreements you set aside.',
   renewals: 'One-tap renewals, sent one at a time or as a monthly batch.',
-  templates: 'Saved ad sizes, frequencies and rates for new agreements.',
   defaults: 'Set the default values of new agreements you create.',
 };
 
@@ -53,6 +50,7 @@ function Collapsible({ title, children }: { title: string; children: React.React
 
 export default function AgreementsBeta() {
   const want = useSearchParams()?.get('tab') as Tab | null;
+  if (typeof window !== 'undefined' && (want as string | null) === 'templates') window.location.replace('/admin/agreements/templates-beta');
   const [tab, setTab] = useState<Tab>(want && TABS.some(([k]) => k === want) ? want : 'board');
   return (
     <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
@@ -89,7 +87,6 @@ export default function AgreementsBeta() {
       {tab === 'drafts' && <BuilderList kind="draft" />}
       {tab === 'archived' && <BuilderList kind="archived" />}
       {tab === 'renewals' && <RenewalsV2Client />}
-      {tab === 'templates' && <TemplatesPanel />}
       {tab === 'defaults' && <DefaultsPanel />}
     </div>
   );

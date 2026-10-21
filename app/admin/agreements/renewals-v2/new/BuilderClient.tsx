@@ -779,8 +779,12 @@ function BillingControls({ billing, onChange }: { billing: ServiceBilling; onCha
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Billed" isSelect>
           <select className={sel} value={b.cadence} onChange={(e) => set({ cadence: e.target.value as ServiceBilling['cadence'] })} disabled={manual}>
+            <option value="weekly">Weekly</option>
             <option value="monthly">Monthly, over the service term</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="yearly">Yearly</option>
             <option value="one_time">One time</option>
+            <option value="stages">In stages</option>
           </select>
         </Field>
         <Field label="Invoice at" isSelect>
@@ -803,6 +807,36 @@ function BillingControls({ billing, onChange }: { billing: ServiceBilling; onCha
           </select>
         </Field>
       </div>
+      {b.cadence === 'weekly' && (
+        <Field label="Billing weekday" isSelect>
+          <select className={sel} value={b.weekday ?? ''} onChange={(e) => set({ weekday: e.target.value ? Number(e.target.value) : undefined })}>
+            <option value="">Any day</option>
+            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((d, i) => <option key={d} value={i + 1}>{d}s</option>)}
+          </select>
+        </Field>
+      )}
+      {b.hourly && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Hourly rate ($)"><input type="number" min={0} step="0.01" className={A.input} value={b.hourly.rate_cents / 100} onChange={(e) => set({ hourly: { ...b.hourly!, rate_cents: Math.round(Number(e.target.value || 0) * 100) } })} /></Field>
+          <Field label="Hours pre-approved per period"><input type="number" min={0} step="0.5" className={A.input} value={b.hourly.cap_hours} onChange={(e) => set({ hourly: { ...b.hourly!, cap_hours: Number(e.target.value || 0) } })} /></Field>
+        </div>
+      )}
+      {b.cadence === 'stages' && (
+        <div className="space-y-2">
+          {(b.stages ?? [{ pct: 50, trigger: 'acceptance' as const }, { pct: 50, trigger: 'manual' as const }]).map((g, i, arr) => (
+            <div key={i} className="grid grid-cols-2 gap-3">
+              <Field label={`Stage ${i + 1} percent`}><input type="number" min={0} max={100} className={A.input} value={g.pct} onChange={(e) => set({ stages: arr.map((x, j) => (j === i ? { ...x, pct: Number(e.target.value || 0) } : x)) })} /></Field>
+              <Field label="Starts" isSelect>
+                <select className={sel} value={g.trigger} onChange={(e) => set({ stages: arr.map((x, j) => (j === i ? { ...x, trigger: e.target.value as 'acceptance' | 'manual' } : x)) })}>
+                  <option value="acceptance">On agreement acceptance</option>
+                  <option value="manual">Manually</option>
+                </select>
+              </Field>
+            </div>
+          ))}
+        </div>
+      )}
+      <label className="flex items-center gap-3 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={!!b.prorate} onChange={(e) => set({ prorate: e.target.checked || undefined })} />Prorate the first payment</label>
       {b.start === 'date' && (
         <input type="date" aria-label="First invoice date" value={b.start_date} onChange={(e) => set({ start_date: e.target.value })} className="w-full border border-[color:var(--ds-line)] text-sm text-[color:var(--ds-ink)]" />
       )}
