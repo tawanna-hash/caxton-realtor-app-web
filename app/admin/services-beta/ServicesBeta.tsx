@@ -145,7 +145,7 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
   const [version, setVersion] = useState(0);
   const list = useJson(`/api/admin/products-services?v=${version}`, (j) => (j.products ?? []) as ProductService[], none);
   const [q, setQ] = useState('');
-  const [sort, setSort] = useState<{ k: 'name' | 'rate' | 'occ' | 'trig'; dir: 1 | -1 }>({ k: 'name', dir: 1 });
+  const [sort, setSort] = useState<{ k: 'name' | 'sku' | 'type' | 'cat' | 'rate' | 'occ' | 'trig'; dir: 1 | -1 }>({ k: 'name', dir: 1 });
   const [sel, setSel] = useState<string[]>([]);
   const [market, setMarket] = useState('all');
   const [category, setCategory] = useState('all');
@@ -161,7 +161,7 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
       && (market === 'all' || (p.market ?? 'none') === market)
       && (category === 'all' || p.category === category)
       && (!n || [p.name, p.sku, p.category, p.sales_description, p.income_account].filter(Boolean).join(' ').toLowerCase().includes(n)));
-    const key = (p: ProductService): string | number => sort.k === 'name' ? p.name.toLowerCase() : sort.k === 'rate' ? (p.price_cents ?? -1) : sort.k === 'occ' ? SERVICE_OCCURRENCE_LABELS[p.billing_occurrence] ?? '' : trigger(p);
+    const key = (p: ProductService): string | number => sort.k === 'name' ? p.name.toLowerCase() : sort.k === 'sku' ? (p.sku ?? '').toLowerCase() : sort.k === 'type' ? ITEM_TYPE_LABELS[p.item_type] : sort.k === 'cat' ? (p.category ?? '').toLowerCase() : sort.k === 'rate' ? (p.price_cents ?? -1) : sort.k === 'occ' ? SERVICE_OCCURRENCE_LABELS[p.billing_occurrence] ?? '' : trigger(p);
     return out.sort((a, b) => (key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : 0) * sort.dir);
   }, [list.data, q, sort, isBundle, showInactive, market, category]);
   const scope = useMemo(() => list.data.filter((p) => (isBundle ? p.item_type === 'bundle' : p.item_type !== 'bundle')), [list.data, isBundle]);
@@ -241,8 +241,8 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search services" />
         {!isBundle && (<>
-          <select aria-label="Market" value={market} onChange={(e) => setMarket(e.target.value)} className={`${A.input} w-auto`}><option value="all">All markets</option>{Object.entries(MARKETS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
-          <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)} className={`${A.input} w-auto max-w-64`}><option value="all">All categories</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select>
+          <select aria-label="Market" value={market} onChange={(e) => setMarket(e.target.value)} style={{ width: 'auto' }} className={`${A.input} w-auto`}><option value="all">All markets</option>{Object.entries(MARKETS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+          <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: 'auto' }} className={`${A.input} w-auto max-w-64`}><option value="all">All categories</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select>
         </>)}
         <label className="flex items-center gap-2 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="h-4 w-4 accent-[color:var(--ds-primary)]" />Show inactive</label>
         <div className="ml-auto">
@@ -259,7 +259,7 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
         <table className={`${A.table} min-w-[760px]`}>
           <thead><tr>
             <th className="w-10"><input type="checkbox" aria-label="Select all" checked={allSel} onChange={() => setSel(allSel ? [] : rows.map((r) => r.id))} className="h-4 w-4 accent-[color:var(--ds-primary)]" /></th>
-            {th('name', 'Service name')}{!isBundle && <th className="text-xs font-medium text-[color:var(--ds-body)]">SKU</th>}{!isBundle && <th className="text-xs font-medium text-[color:var(--ds-body)]">Type</th>}{!isBundle && <th className="text-xs font-medium text-[color:var(--ds-body)]">Category</th>}{th('rate', 'Rate')}{isBundle && <th className="text-xs font-medium text-[color:var(--ds-body)]">Services</th>}{th('occ', 'Billing occurrence')}{th('trig', 'Billing trigger')}<th />
+            {th('name', 'Service name')}{!isBundle && th('sku', 'SKU')}{!isBundle && th('type', 'Type')}{!isBundle && th('cat', 'Category')}{th('rate', 'Rate')}{isBundle && <th className="text-xs font-medium text-[color:var(--ds-body)]">Services</th>}{th('occ', 'Billing occurrence')}{th('trig', 'Billing trigger')}<th />
           </tr></thead>
           <tbody>
             {!list.loading && rows.length === 0 && <tr><td colSpan={isBundle ? 7 : 9}><EmptyState title={isBundle ? 'Elevate your offering with bundles' : 'No services'} body={isBundle ? 'Group multiple services into a single-priced bundle.' : 'Create your first service to use it in agreements and agreements.'} action={{ label: isBundle ? 'Create Bundle' : 'New service', onClick: () => setForm(blank) }} /></td></tr>}
