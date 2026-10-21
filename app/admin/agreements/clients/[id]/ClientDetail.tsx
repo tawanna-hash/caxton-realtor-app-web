@@ -77,7 +77,7 @@ export default function ClientDetail({ id }: { id: number }) {
 
       <div role="tablist" aria-label="Client" className="flex gap-2 overflow-x-auto border-b border-[color:var(--ds-line)]">
         {TABS.map(([k, label]) => (
-          <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} style={{ border: 0, borderBottom: '2px solid', borderRadius: 0, background: 'transparent', borderColor: tab === k ? 'var(--ds-primary)' : 'transparent' }} className={`-mb-px whitespace-nowrap px-3 pb-3 pt-2 text-[15px] ${tab === k ? 'font-medium text-[color:var(--ds-ink)]' : 'text-[color:var(--ds-body)]'}`}>{label}</button>
+          <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} style={{ border: 0, borderBottom: '2px solid', borderRadius: 0, boxShadow: 'none', background: 'transparent', color: tab === k ? 'var(--ds-ink)' : 'var(--ds-body)', borderColor: tab === k ? 'var(--ds-primary)' : 'transparent' }} className="-mb-px whitespace-nowrap px-3 pb-3 pt-2 text-[15px]">{label}</button>
         ))}
       </div>
 
