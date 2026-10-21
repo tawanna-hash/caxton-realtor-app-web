@@ -29,3 +29,9 @@ export function useJson<T>(url: string, pick: (j: Record<string, unknown>) => T,
   }, [url]);
   return state;
 }
+
+export type Group = 'active' | 'prospect' | 'archived';
+export const groupOf = (status: string | null | undefined): Group => (status === 'prospect' ? 'prospect' : status === 'archived' || status === 'inactive' ? 'archived' : 'active');
+export const GROUP_LABEL: Record<Group, string> = { active: 'Active', prospect: 'Prospect', archived: 'Archived' };
+export type StatusFilter = Group | 'all';
+export const FILTER_LABEL: Record<StatusFilter, string> = { active: 'Active', prospect: 'Prospects', archived: 'Archived', all: 'All' };

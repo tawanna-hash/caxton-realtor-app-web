@@ -2,15 +2,16 @@
 
 import { useMemo, useState } from 'react';
 import { A, RowMenu, SearchBox } from '@/components/anchor/ui';
-import { useJson, type Adv } from '../data';
+import { GROUP_LABEL, groupOf, useJson, type Adv, type StatusFilter as SF } from '../data';
+import StatusSelect from '../StatusFilter';
 
 const none: Adv[] = [];
-type C = { key: string; client: string; clientId: number; status: string; name: string; email: string | null; phone: string | null };
+type C = { key: string; client: string; clientId: number; status: string; group: string; name: string; email: string | null; phone: string | null };
 
 export function contactsOf(a: Adv): Array<{ name: string; email: string | null; phone: string | null }> {
   const out: Array<{ name: string; email: string | null; phone: string | null }> = [];
   const main = [a.first_name, a.last_name].filter(Boolean).join(' ');
-  if (main || a.contact_email) out.push({ name: main || a.contact_email || '—', email: a.contact_email, phone: a.phone });
+  // The main contact person is the Client itself; Contacts are everyone else.
   if (a.billing_contact_name && a.billing_contact_name !== main) out.push({ name: a.billing_contact_name, email: a.billing_email, phone: a.billing_contact_phone });
   for (const c of a.additional_contacts ?? []) if (c.name || c.email) out.push({ name: c.name || c.email || '—', email: c.email ?? null, phone: c.phone ?? null });
   return out;
@@ -19,16 +20,17 @@ export function contactsOf(a: Adv): Array<{ name: string; email: string | null; 
 export default function ContactsList() {
   const { data, loading, error } = useJson('/api/admin/advertisers', (j) => (j.advertisers ?? []) as Adv[], none);
   const [q, setQ] = useState('');
+  const [st, setSt] = useState<SF>('active');
   const rows = useMemo<C[]>(() => {
-    const all = data.flatMap((a) => contactsOf(a).map((c, i) => ({ key: `${a.id}-${i}`, client: a.name, clientId: a.id, status: a.status === 'inactive' ? 'Inactive' : 'Active', ...c })));
+    const all = data.flatMap((a) => contactsOf(a).map((c, i) => ({ key: `${a.id}-${i}`, client: a.name, clientId: a.id, status: GROUP_LABEL[groupOf(a.status)], group: groupOf(a.status), ...c })));
     const n = q.trim().toLowerCase();
-    return all.filter((c) => !n || c.client.toLowerCase().includes(n) || c.name.toLowerCase().includes(n) || (c.email ?? '').toLowerCase().includes(n));
-  }, [data, q]);
+    return all.filter((c) => (st === 'all' || c.group === st) && (!n || c.client.toLowerCase().includes(n) || c.name.toLowerCase().includes(n) || (c.email ?? '').toLowerCase().includes(n)));
+  }, [data, q, st]);
   return (
     <div className="space-y-5">
-      <h2 className="text-xl font-semibold text-[color:var(--ds-ink)]">Contacts</h2>
+      <div><h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[color:var(--ds-ink)]">Contacts</h1><p className="mt-1 text-sm text-[color:var(--ds-body)]">Other people inside each client organization. The main contact is on the client.</p></div>
       {error && <div className={A.error}>{error}</div>}
-      <SearchBox value={q} onChange={setQ} label="Search contacts" />
+      <div className="flex flex-wrap items-center gap-3"><SearchBox value={q} onChange={setQ} label="Search contacts" /><StatusSelect label="Contact status" value={st} onChange={setSt} /></div>
       {loading ? <p className="text-sm text-[color:var(--ds-body)]">Loading…</p> : (
         <div className="overflow-x-auto">
           <table className={`${A.table} min-w-[640px]`}>
