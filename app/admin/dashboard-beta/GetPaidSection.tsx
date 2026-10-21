@@ -214,12 +214,12 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
       <div className="grid items-stretch gap-6 lg:grid-cols-[1fr_1.4fr]">
         <section className="flex flex-col gap-3">
           <H2>Outstanding by partner</H2>
-          <Card className="flex-1">
-            <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Partner</th><th className="py-2 text-right font-normal">Invoices</th><th className="py-2 text-right font-normal">Overdue</th><th className="py-2 text-right font-normal">Outstanding</th></tr></thead>
-              <tbody>{d.partners.slice(pcur * 8, pcur * 8 + 8).map((p) => <tr key={p.name} className="border-t border-[color:var(--ds-line)]"><td className="py-2.5">{p.name}</td><td className="py-2.5 text-right">{p.count}</td><td className={`py-2.5 text-right ${p.over ? 'text-[#B42318]' : ''}`}>{money(p.over)}</td><td className="py-2.5 text-right">{money(p.total)}</td></tr>)}</tbody></table>
+          <div className="flex-1">
+            <table className={A.table}><thead><tr><th>Partner</th><th className="text-right">Invoices</th><th className="text-right">Overdue</th><th className="text-right">Outstanding</th></tr></thead>
+              <tbody>{d.partners.slice(pcur * 8, pcur * 8 + 8).map((p) => <tr key={p.name} ><td>{p.name}</td><td className="text-right">{p.count}</td><td className={`text-right ${p.over ? 'text-[#B42318]' : ''}`}>{money(p.over)}</td><td className="text-right">{money(p.total)}</td></tr>)}</tbody></table>
             {d.partners.length === 0 && <p className="py-6 text-center text-sm text-[color:var(--ds-body)]">{loading ? 'Loading invoices…' : 'Nothing outstanding'}</p>}
             {partnerPages > 1 && <div className="mt-3 flex justify-end gap-2"><button type="button" className={A.small} disabled={pcur === 0} onClick={() => setPPage(pcur - 1)}>Previous</button><button type="button" className={A.small} disabled={pcur >= partnerPages - 1} onClick={() => setPPage(pcur + 1)}>Next</button></div>}
-          </Card>
+          </div>
         </section>
 
         <section className="flex flex-col gap-3">

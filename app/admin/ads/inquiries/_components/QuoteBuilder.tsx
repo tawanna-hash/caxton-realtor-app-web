@@ -204,7 +204,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
             </a>
           )}
           <a
-            href={`/admin/invoices?focus=${encodeURIComponent(created.id)}`}
+            href={`/admin/billing-hub?tab=invoices&invoice=${encodeURIComponent(created.id)}`}
             className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium border border-[#00E200]/50 bg-white text-[#005A00] hover:bg-[#E0FBE0]"
           >
             Open in Invoices

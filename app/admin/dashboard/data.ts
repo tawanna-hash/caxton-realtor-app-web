@@ -215,7 +215,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
         kind: 'unpaid_invoice',
         count: n,
         label: `${n} unpaid invoice${n === 1 ? '' : 's'}`,
-        href: '/admin/invoices',
+        href: '/admin/billing-hub?tab=invoices',
       });
     }
   } catch {}
@@ -248,7 +248,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
         date: invoice.due_date,
         title: `${invoice.status === 'overdue' ? 'Past due' : 'Invoice due'}${invoice.number ? ` · ${invoice.number}` : ''}`,
         detail: invoice.bill_to_name || 'Open invoice',
-        href: `/admin/getpaid/invoices?id=${invoice.id}`,
+        href: `/admin/billing-hub?tab=invoices&invoice=${invoice.id}`,
         tone: invoice.status === 'overdue' ? 'warning' : 'neutral',
       })),
     );

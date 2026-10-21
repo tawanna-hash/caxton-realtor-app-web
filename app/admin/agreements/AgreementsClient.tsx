@@ -563,14 +563,15 @@ export default function AgreementsClient({
           onError={setError}
           onGenerateInvoice={(seed) => {
             setEditAg(null);
-            // Hand off to /admin/invoices with seed values in query string so
-            // the invoice page opens the create drawer pre-populated.
+            // Hand off to Billing > Invoices with seed values in the query string so
+            // the create drawer opens pre-populated.
             const params = new URLSearchParams();
-            if (seed.advertiser_id !== null) params.set('advertiser_id', String(seed.advertiser_id));
+            if (seed.advertiser_id !== null) params.set('clientId', String(seed.advertiser_id));
+            params.set('tab', 'invoices');
             params.set('agreement_id', seed.agreement_id);
             if (seed.amount_cents !== null) params.set('amount_cents', String(seed.amount_cents));
             params.set('create', '1');
-            router.push(`/admin/invoices?${params.toString()}`);
+            router.push(`/admin/billing-hub?${params.toString()}`);
           }}
         />
       )}

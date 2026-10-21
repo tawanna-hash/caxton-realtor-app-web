@@ -13,7 +13,7 @@ import { A, FilterChip, RowMenu, SearchBox } from '@/components/anchor/ui';
 import { computeNextRun, type RecurringFrequency } from '@/lib/recurring-invoices';
 import { day, money, useJson, GROUP_LABEL, groupOf, marketsOf, type Adv, type Inv, type Sch } from '../agreements/clients/data';
 import SortCaret from '@/components/anchor/SortCaret';
-import AllInvoices from './AllInvoices';
+import AllInvoices, { type InvoiceIntent } from './AllInvoices';
 import RecurringPanel from './RecurringPanel';
 import StatementsPanel from './StatementsPanel';
 import PaymentLinksPanel from './PaymentLinksPanel';
@@ -55,6 +55,7 @@ export default function BillingHub() {
   const [noPick, setNoPick] = useState(false);
   const [bulk, setBulk] = useState(false);
   const [version, setVersion] = useState(0);
+  const [intent, setIntent] = useState<InvoiceIntent | null>(null);
 
   const clients = useMemo(() => [...advs.data].sort((a, b) => a.name.localeCompare(b.name)), [advs.data]);
   useEffect(() => {
@@ -63,6 +64,20 @@ export default function BillingHub() {
     const fromUrl = Number(p.get('clientId'));
     const wanted = p.get('agreementId') ?? '';
     const t = p.get('tab'); if (TABS.some(([k]) => k === t)) setTab(t as Tab);
+    // Legacy Get Paid invoice links: ?invoice=<id> opens that invoice, ?create=1 starts a new one.
+    const invoiceId = p.get('invoice') ?? p.get('edit') ?? p.get('focus') ?? p.get('id');
+    if (invoiceId && !fromUrl) {
+      setTab('invoices');
+      fetch(`/api/admin/invoices/${invoiceId}`, { credentials: 'include' }).then((r) => r.json())
+        .then((j) => { const c = clients.find((x) => x.id === j.invoice?.advertiser_id); if (c) { setClientId(c.id); setIntent({ edit: invoiceId }); } else setNoPick(true); })
+        .catch(() => setNoPick(true));
+      return;
+    }
+    if (p.get('create') === '1') {
+      setTab('invoices');
+      const amt = p.get('amount_cents');
+      setIntent({ create: { advertiser_id: fromUrl || null, agreement_id: p.get('agreement_id') ?? '', amount_cents: amt ? Number(amt) : null } });
+    }
     const pick = (id?: number | null) => { const c = clients.find((x) => x.id === id); if (c) setClientId(c.id); else setNoPick(true); };
     if (wanted && !fromUrl) {
       // Deep link from Agreements (Beta): find the agreement's client first.
@@ -125,7 +140,7 @@ export default function BillingHub() {
       {client && tab === 'hub' && <HubTab schedules={schedules} loading={sch.loading} onControl={() => setControl(true)} />}
       {client && tab === 'agreement' && <AgreementTab client={client} agreement={agreement ?? agreements[0] ?? null} />}
       {client && tab === 'payment' && <PaymentTab client={client} agreement={agreement ?? agreements.find((a) => a.signed_at) ?? agreements[0] ?? null} onSaved={() => setVersion((v) => v + 1)} />}
-      {client && tab === 'invoices' && <InvoicesTab client={client} invoices={invoices} agreements={agreements} />}
+      {client && tab === 'invoices' && <InvoicesTab client={client} invoices={invoices} agreements={agreements} intent={intent} onIntentDone={() => setIntent(null)} />}
       {client && tab === 'recurring' && <RecurringPanel />}
       {client && tab === 'statements' && <StatementsPanel />}
       {client && tab === 'paymentlinks' && <PaymentLinksPanel />}
@@ -311,8 +326,9 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
 }
 
 /* ---------------- Invoices tab ---------------- */
-function InvoicesTab({ client, invoices, agreements }: { client: Adv; invoices: FullInv[]; agreements: Agr[] }) {
-  const [scope, setScope] = useState<'client' | 'all'>('client');
+function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { client: Adv; invoices: FullInv[]; agreements: Agr[]; intent: InvoiceIntent | null; onIntentDone: () => void }) {
+  const [scope, setScope] = useState<'client' | 'all'>(intent ? 'all' : 'client');
+  const [focusQ, setFocusQ] = useState('');
   const [q, setQ] = useState(''); const [st, setSt] = useState<string[]>([]);
   const [from, setFrom] = useState(''); const [to, setTo] = useState(''); const [addOpen, setAddOpen] = useState(false);
   const [sort, setSort] = useState<{ k: 'number' | 'issue' | 'due' | 'total'; dir: 1 | -1 }>({ k: 'number', dir: -1 });
@@ -329,7 +345,7 @@ function InvoicesTab({ client, invoices, agreements }: { client: Adv; invoices: 
       ))}
     </div>
   );
-  if (scope === 'all') return <div className="space-y-4">{scopeSwitch}<AllInvoices /></div>;
+  if (scope === 'all') return <div className="space-y-4">{scopeSwitch}<AllInvoices intent={intent} initialQuery={focusQ} onIntentDone={onIntentDone} /></div>;
   return (
     <div className="space-y-4">
       {scopeSwitch}
@@ -362,7 +378,7 @@ function InvoicesTab({ client, invoices, agreements }: { client: Adv; invoices: 
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(i.issue_date)}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(i.due_date)}</td>
                 <td className="text-right text-[color:var(--ds-ink)]">{money(i.total_cents)}</td>
-                <td className="text-right"><RowMenu items={[{ label: 'View invoice', href: `/admin/invoices/${i.id}/preview` }]} /></td>
+                <td className="text-right"><RowMenu items={[{ label: 'View invoice', href: `/admin/invoices/${i.id}/preview` }, { label: 'Edit invoice', onClick: () => { setFocusQ(i.number ?? ''); setScope('all'); } }]} /></td>
               </tr>
             ))}
             {rows.length === 0 && <tr><td colSpan={9} className="py-10 text-center text-[color:var(--ds-body)]">No invoices to show.</td></tr>}

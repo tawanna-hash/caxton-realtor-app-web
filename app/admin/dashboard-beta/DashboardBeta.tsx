@@ -112,6 +112,8 @@ export default function DashboardBeta() {
   ];
   const doneCount = steps.filter((s) => s.done).length;
   const allDone = doneCount === steps.length;
+  // Only judge setup once every source has loaded, otherwise the checklist flashes while data is still empty.
+  const setupReady = !inv.loading && !board.loading && !biz.loading && !stat.loading;
 
   return (
     <div className="space-y-6">
@@ -120,7 +122,7 @@ export default function DashboardBeta() {
         <Link href="/admin/agreements/renewals-v2/new" className={A.primary}>Create agreement</Link>
       </div>
 
-      {!allDone && (
+      {setupReady && !allDone && (
         <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
           <div className="space-y-3">
             <h2 className="text-lg font-medium text-[color:var(--ds-ink)]">Let&rsquo;s get you up and running</h2>

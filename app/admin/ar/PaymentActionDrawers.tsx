@@ -128,7 +128,7 @@ function PdfPreview({
   );
 }
 
-export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved, onError }: CommonProps) {
+export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved, onError, noEmail = false }: CommonProps & { noEmail?: boolean }) {
   const eligible = invoices.filter((invoice) => !['draft', 'paid', 'void'].includes(invoice.status) && outstandingCents(invoice) > 0);
   const [invoiceId, setInvoiceId] = useState(
     initialInvoiceId && eligible.some((invoice) => invoice.id === initialInvoiceId)
@@ -136,7 +136,7 @@ export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved
       : eligible[0]?.id ?? '',
   );
   const [linkType, setLinkType] = useState<'one-time' | 'multi-use'>('one-time');
-  const [sendEmail, setSendEmail] = useState(true);
+  const [sendEmail, setSendEmail] = useState(!noEmail);
   const [saving, setSaving] = useState(false);
   const [createdUrl, setCreatedUrl] = useState('');
   const [activeTab, setActiveTab] = useState<WorkflowTab>('edit');
@@ -196,10 +196,14 @@ export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved
             ))}
           </select>
         </Field>
-        <label className="flex items-center gap-2 text-sm text-gray-700">
-          <input type="checkbox" checked={sendEmail} onChange={(event) => setSendEmail(event.target.checked)} />
-          Email the secure payment link to the customer
-        </label>
+        {noEmail ? (
+          <p className="text-xs text-gray-500">Emailing is turned off in beta. Copy the secure link below and share it yourself.</p>
+        ) : (
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" checked={sendEmail} onChange={(event) => setSendEmail(event.target.checked)} />
+            Email the secure payment link to the customer
+          </label>
+        )}
         {createdUrl && (
           <div className="rounded-md border border-[#00E200]/30 bg-[#E0FBE0] p-3">
             <div className="text-xs font-medium text-[#005A00]">Payment link created</div>

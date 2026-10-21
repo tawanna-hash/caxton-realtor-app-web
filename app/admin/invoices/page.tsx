@@ -1,52 +1,22 @@
-// app/admin/invoices/page.tsx
-//
-// Invoices workspace: billable charges and payment status. Sibling to
-// /admin/agreements. Server component fetches invoices + supporting
-// advertiser / agreement options for the create drawer.
-
+// Invoices now live in Billing > Invoices. This route only forwards old links
+// (bookmarks, emails) and keeps /admin/invoices/[id]/preview working beside it.
 import { redirect } from 'next/navigation';
-import { ensureSchema, getSql } from '@/lib/db';
-import type { AgreementWithAdvertiser } from '@/lib/agreements';
-import type { InvoiceWithAdvertiser } from '@/lib/invoices';
-import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
-import { getCurrentAdmin } from '@/lib/server/auth/admin';
-import InvoicesClient from './InvoicesClient';
 
 export const dynamic = 'force-dynamic';
 
-async function isAdmin(): Promise<boolean> {
-  try { return (await getCurrentAdmin()) !== null; } catch { return false; }
-}
+type Params = Record<string, string | string[] | undefined>;
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
-export default async function InvoicesPage() {
-  if (!(await isAdmin())) redirect('/admin/login');
-  await ensureSchema();
-  const sql = getSql();
-
-  const [invoices, agreements, advertisers] = await Promise.all([
-    sql`
-      SELECT i.*, adv.name AS advertiser_name,
-        (i.status NOT IN ('paid','void') AND i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
-      FROM invoices i
-      LEFT JOIN advertisers adv ON adv.id = i.advertiser_id
-      ORDER BY i.created_at DESC
-    `.catch(() => [] as unknown[]),
-    sql`
-      SELECT ag.*, adv.name AS advertiser_name
-      FROM agreements ag
-      LEFT JOIN advertisers adv ON adv.id = ag.advertiser_id
-      ORDER BY ag.updated_at DESC
-    `.catch(() => [] as unknown[]),
-    sql`SELECT id, name, publication, contact_email, billing_email, payment_mode, stripe_customer_id, card_last4 FROM advertisers ORDER BY name ASC`
-      .catch(() => [] as unknown[]),
-  ]);
-
-  return (
-    <InvoicesClient
-      initialInvoices={invoices as unknown as InvoiceWithAdvertiser[]}
-      agreements={agreements as unknown as AgreementWithAdvertiser[]}
-      advertisers={advertisers as unknown as AdvertiserOption[]}
-      referenceDate={new Date().toISOString()}
-    />
-  );
+export default async function InvoicesRedirect({ searchParams }: { searchParams: Promise<Params> }) {
+  const sp = await searchParams;
+  const out = new URLSearchParams({ tab: 'invoices' });
+  const invoice = one(sp.edit) ?? one(sp.focus) ?? one(sp.id) ?? one(sp.invoice);
+  if (invoice) out.set('invoice', invoice);
+  if (one(sp.create) === '1') {
+    out.set('create', '1');
+    const adv = one(sp.advertiser_id) ?? one(sp.clientId);
+    if (adv) out.set('clientId', adv);
+    for (const k of ['agreement_id', 'amount_cents'] as const) { const v = one(sp[k]); if (v) out.set(k, v); }
+  }
+  redirect(`/admin/billing-hub?${out.toString()}`);
 }

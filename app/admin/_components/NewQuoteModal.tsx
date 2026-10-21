@@ -1055,7 +1055,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               Open agreement
             </a>
             <a
-              href={`/admin/invoices?focus=${encodeURIComponent(createdInvoice.id)}`}
+              href={`/admin/billing-hub?tab=invoices&invoice=${encodeURIComponent(createdInvoice.id)}`}
               className="inline-flex items-center px-3 py-2 rounded-md text-xs font-medium border border-[#00E200]/50 bg-white text-[#005A00] hover:bg-[#E0FBE0]"
             >
               Open in Invoices
