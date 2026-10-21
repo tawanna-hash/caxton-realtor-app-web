@@ -4,7 +4,7 @@
 // design (app/admin/invoices/[id]/preview/page.tsx): same letterhead,
 // same neutral/print styling, same PrintInvoiceButton. Lists every
 // outstanding invoice with its payment link, cross-referencing whatever
-// is already stored on the invoice from /admin/getpaid/paymentlinks.
+// is already stored on the invoice from Billing > Payment links.
 
 import Image from 'next/image';
 import Link from 'next/link';
