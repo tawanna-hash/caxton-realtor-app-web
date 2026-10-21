@@ -2343,3 +2343,20 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   border-color: var(--ds-primary) !important;
   box-shadow: none !important;
 }
+
+/* Anchor-style pages: tables sit flat on the gray canvas. A gray header band
+   and individual white rows, with no card wrapped around the table. */
+[data-anchor-ui='true'][data-anchor-ui='true'] :is(div, section):has(> table) {
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+[data-admin-ui='true'] [data-anchor-ui='true'] table thead,
+[data-admin-ui='true'] [data-anchor-ui='true'] table thead tr,
+[data-admin-ui='true'] [data-anchor-ui='true'] table thead th {
+  background-color: #E9EAF0;
+  border-bottom: 0;
+}
+[data-admin-ui='true'] [data-anchor-ui='true'] table thead th:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+[data-admin-ui='true'] [data-anchor-ui='true'] table thead th:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
