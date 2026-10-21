@@ -259,8 +259,11 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
   }, [agreement]);
   async function request() {
     setNotice(null);
-    const r = await fetch('/api/admin/portal-links', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ advertiser_id: client.id, purpose: 'login', send_email: true }) });
-    setNotice(r.ok ? `Request sent to ${client.contact_email ?? 'the client'}.` : 'Could not send the request.');
+    const r = await fetch('/api/admin/portal-links', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ advertiser_id: client.id, purpose: 'login', send_email: false }) });
+    // Beta: nothing is emailed to the client. Staff copy the secure link instead.
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.consume_url) { try { await navigator.clipboard.writeText(j.consume_url); setNotice('Secure link copied. No email was sent to the client.'); } catch { setNotice(`No email was sent. Secure link: ${j.consume_url}`); } }
+    else setNotice('Could not create the link.');
   }
   const onFile = agreement?.card_number_last4;
   return (
