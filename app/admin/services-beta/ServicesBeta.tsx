@@ -9,7 +9,10 @@ import { useMemo, useRef, useState } from 'react';
 import { A, EmptyState, RowMenu, SearchBox } from '@/components/anchor/ui';
 import { SortTh } from '../agreements/clients/StatusFilter';
 import { useJson } from '../agreements/clients/data';
-import { SERVICE_OCCURRENCE_LABELS, SERVICE_PRICING_LABELS, type ProductService, type ServiceOccurrence, type ServicePricing } from '@/lib/products-services';
+import { ITEM_TYPE_LABELS, SERVICE_OCCURRENCE_LABELS, SERVICE_PRICING_LABELS, type ProductService, type ProductServiceType, type ServiceOccurrence, type ServicePricing } from '@/lib/products-services';
+
+const MARKETS: Record<string, string> = { austin: 'Austin', san_antonio: 'San Antonio', both: 'Austin/San Antonio' };
+const TYPES = (['service', 'non_inventory', 'inventory'] as ProductServiceType[]).map((v) => [v, ITEM_TYPE_LABELS[v]] as const);
 
 const none = [] as ProductService[];
 const usd = (c: number | null | undefined) => (c == null ? '' : `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 })}`);
@@ -26,11 +29,12 @@ type Draft = {
   id?: string; name: string; sales_description: string; service_terms: string; billing_occurrence: ServiceOccurrence; pricing_type: ServicePricing;
   price: string; price_max: string; discount: string; discount_unit: 'percent' | 'amount'; billing_trigger: 'automatic' | 'manual'; reference_fields: string[];
   category: string; market: string; is_active: boolean; bundle_items: string[];
+  sku: string; item_type: ProductServiceType; income_account: string;
 };
-const blank: Draft = { name: '', sales_description: '', service_terms: '', billing_occurrence: 'one_time', pricing_type: 'fixed', price: '', price_max: '', discount: '', discount_unit: 'percent', billing_trigger: 'automatic', reference_fields: [], category: '', market: '', is_active: true, bundle_items: [] };
-const toDraft = (p: ProductService): Draft => ({ id: p.id, name: p.name, sales_description: p.sales_description ?? '', service_terms: p.service_terms ?? '', billing_occurrence: p.billing_occurrence, pricing_type: p.pricing_type, price: p.price_cents == null ? '' : (p.price_cents / 100).toString(), price_max: p.price_max_cents == null ? '' : (p.price_max_cents / 100).toString(), discount: p.discount_value == null ? '' : String(p.discount_value), discount_unit: p.discount_unit, billing_trigger: p.billing_trigger, reference_fields: p.reference_fields ?? [], category: p.category ?? '', market: p.market ?? '', is_active: p.is_active, bundle_items: p.bundle_items ?? [] });
+const blank: Draft = { name: '', sales_description: '', service_terms: '', billing_occurrence: 'one_time', pricing_type: 'fixed', price: '', price_max: '', discount: '', discount_unit: 'percent', billing_trigger: 'automatic', reference_fields: [], category: '', market: '', is_active: true, bundle_items: [], sku: '', item_type: 'service', income_account: 'Advertising revenue' };
+const toDraft = (p: ProductService): Draft => ({ id: p.id, name: p.name, sales_description: p.sales_description ?? '', service_terms: p.service_terms ?? '', billing_occurrence: p.billing_occurrence, pricing_type: p.pricing_type, price: p.price_cents == null ? '' : (p.price_cents / 100).toString(), price_max: p.price_max_cents == null ? '' : (p.price_max_cents / 100).toString(), discount: p.discount_value == null ? '' : String(p.discount_value), discount_unit: p.discount_unit, billing_trigger: p.billing_trigger, reference_fields: p.reference_fields ?? [], category: p.category ?? '', market: p.market ?? '', is_active: p.is_active, bundle_items: p.bundle_items ?? [], sku: p.sku ?? '', item_type: p.item_type, income_account: p.income_account ?? '' });
 const cents = (v: string) => (v.trim() === '' ? null : Math.round(Number(v) * 100));
-const bodyOf = (d: Draft) => ({ name: d.name.trim(), sales_description: d.sales_description || null, service_terms: d.service_terms || null, billing_occurrence: d.billing_occurrence, pricing_type: d.pricing_type, price_cents: cents(d.price), price_max_cents: d.pricing_type === 'range' ? cents(d.price_max) : null, discount_value: d.discount.trim() === '' ? null : Number(d.discount), discount_unit: d.discount_unit, billing_trigger: d.billing_trigger, reference_fields: d.reference_fields.filter(Boolean), category: d.category || null, market: d.market || null, is_active: d.is_active, bundle_items: d.bundle_items });
+const bodyOf = (d: Draft) => ({ name: d.name.trim(), sales_description: d.sales_description || null, service_terms: d.service_terms || null, billing_occurrence: d.billing_occurrence, pricing_type: d.pricing_type, price_cents: cents(d.price), price_max_cents: d.pricing_type === 'range' ? cents(d.price_max) : null, discount_value: d.discount.trim() === '' ? null : Number(d.discount), discount_unit: d.discount_unit, billing_trigger: d.billing_trigger, reference_fields: d.reference_fields.filter(Boolean), category: d.category || null, market: d.market || null, is_active: d.is_active, bundle_items: d.bundle_items, sku: d.sku.trim() || null, income_account: d.income_account.trim() || null });
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -52,7 +56,7 @@ function ServiceForm({ initial, onCancel, onSaved, bundle, services }: { initial
   async function save() {
     if (!d.name.trim()) { setErr(`${noun} name is required.`); return; }
     setBusy(true); setErr(null);
-    const r = await fetch(d.id ? `/api/admin/products-services/${d.id}` : '/api/admin/products-services', { method: d.id ? 'PATCH' : 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...bodyOf(d), item_type: bundle ? 'bundle' : 'service' }) });
+    const r = await fetch(d.id ? `/api/admin/products-services/${d.id}` : '/api/admin/products-services', { method: d.id ? 'PATCH' : 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...bodyOf(d), item_type: bundle ? 'bundle' : d.item_type }) });
     const j = await r.json().catch(() => ({}));
     setBusy(false);
     if (!r.ok) { setErr(j.error ?? `Could not save the ${noun.toLowerCase()}.`); return; }
@@ -122,6 +126,9 @@ function ServiceForm({ initial, onCancel, onSaved, bundle, services }: { initial
           </div>
           {!bundle && <div className="space-y-3 border-t border-[color:var(--ds-line)] pt-4">
             <div className="text-sm font-semibold text-[color:var(--ds-ink)]">Catalog details</div>
+            <Field label="SKU"><input className={ctl} value={d.sku} onChange={(e) => set('sku', e.target.value)} /></Field>
+            <Field label="Type"><select className={ctl} value={d.item_type} onChange={(e) => set('item_type', e.target.value as ProductServiceType)}>{TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></Field>
+            <Field label="Income account"><input className={ctl} value={d.income_account} onChange={(e) => set('income_account', e.target.value)} /></Field>
             <Field label="Category"><input className={ctl} value={d.category} onChange={(e) => set('category', e.target.value)} /></Field>
             <Field label="Market"><select className={ctl} value={d.market} onChange={(e) => set('market', e.target.value)}><option value="">All markets</option><option value="austin">Austin</option><option value="san_antonio">San Antonio</option><option value="both">Austin and San Antonio</option></select></Field>
             <label className="flex items-center gap-2 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" checked={d.is_active} onChange={(e) => set('is_active', e.target.checked)} className="h-4 w-4 accent-[color:var(--ds-primary)]" /> Active</label>
@@ -140,16 +147,29 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<{ k: 'name' | 'rate' | 'occ' | 'trig'; dir: 1 | -1 }>({ k: 'name', dir: 1 });
   const [sel, setSel] = useState<string[]>([]);
+  const [market, setMarket] = useState('all');
+  const [category, setCategory] = useState('all');
+  const [showInactive, setShowInactive] = useState(false);
   const [form, setForm] = useState<Draft | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
 
   const rows = useMemo(() => {
     const n = q.trim().toLowerCase();
-    const out = list.data.filter((p) => (isBundle ? p.item_type === 'bundle' : p.item_type !== 'bundle') && (!n || p.name.toLowerCase().includes(n)));
+    const out = list.data.filter((p) => (isBundle ? p.item_type === 'bundle' : p.item_type !== 'bundle')
+      && (showInactive || p.is_active)
+      && (market === 'all' || (p.market ?? 'none') === market)
+      && (category === 'all' || p.category === category)
+      && (!n || [p.name, p.sku, p.category, p.sales_description, p.income_account].filter(Boolean).join(' ').toLowerCase().includes(n)));
     const key = (p: ProductService): string | number => sort.k === 'name' ? p.name.toLowerCase() : sort.k === 'rate' ? (p.price_cents ?? -1) : sort.k === 'occ' ? SERVICE_OCCURRENCE_LABELS[p.billing_occurrence] ?? '' : trigger(p);
     return out.sort((a, b) => (key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : 0) * sort.dir);
-  }, [list.data, q, sort, isBundle]);
+  }, [list.data, q, sort, isBundle, showInactive, market, category]);
+  const scope = useMemo(() => list.data.filter((p) => (isBundle ? p.item_type === 'bundle' : p.item_type !== 'bundle')), [list.data, isBundle]);
+  const categories = useMemo(() => Array.from(new Set(scope.map((p) => p.category).filter(Boolean))).sort() as string[], [scope]);
+  const summary = useMemo(() => {
+    const active = scope.filter((p) => p.is_active); const priced = active.filter((p) => p.price_cents != null);
+    return { active: active.length, inactive: scope.length - active.length, categories: new Set(scope.map((p) => p.category ?? 'Uncategorized')).size, avg: priced.length ? Math.round(priced.reduce((n, p) => n + (p.price_cents ?? 0), 0) / priced.length) : null };
+  }, [scope]);
   const th = (k: typeof sort.k, label: string) => <SortTh label={label} dir={sort.k === k ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} onClick={() => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : 1 }))} />;
   const chosen = rows.filter((r) => sel.includes(r.id));
   const allSel = rows.length > 0 && rows.every((r) => sel.includes(r.id));
@@ -157,8 +177,8 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
 
   function exportCsv(items: ProductService[]) {
     const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const head = ['Service name', 'Description', 'Billing occurrence', 'Pricing', 'Price', 'Price to', 'Discount', 'Discount unit', 'Billing trigger'];
-    const lines = [head.map(esc).join(',')].concat(items.map((p) => [p.name, p.sales_description, SERVICE_OCCURRENCE_LABELS[p.billing_occurrence], SERVICE_PRICING_LABELS[p.pricing_type], p.price_cents != null ? p.price_cents / 100 : '', p.price_max_cents != null ? p.price_max_cents / 100 : '', p.discount_value ?? '', p.discount_unit === 'amount' ? '$' : '%', trigger(p)].map(esc).join(',')));
+    const head = ['Service name', 'Description', 'Billing occurrence', 'Pricing', 'Price', 'Price to', 'Discount', 'Discount unit', 'Billing trigger', 'SKU', 'Type', 'Category', 'Market', 'Income account', 'Active'];
+    const lines = [head.map(esc).join(',')].concat(items.map((p) => [p.name, p.sales_description, SERVICE_OCCURRENCE_LABELS[p.billing_occurrence], SERVICE_PRICING_LABELS[p.pricing_type], p.price_cents != null ? p.price_cents / 100 : '', p.price_max_cents != null ? p.price_max_cents / 100 : '', p.discount_value ?? '', p.discount_unit === 'amount' ? '$' : '%', trigger(p), p.sku, ITEM_TYPE_LABELS[p.item_type], p.category, p.market ? MARKETS[p.market] ?? p.market : '', p.income_account, p.is_active ? 'Yes' : 'No'].map(esc).join(',')));
     const url = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
     const a = document.createElement('a'); a.href = url; a.download = isBundle ? 'bundles.csv' : 'services.csv'; a.click(); URL.revokeObjectURL(url);
   }
@@ -177,7 +197,7 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
   async function importCsv(f: File) {
     const data = parseCsv(await f.text()); const head = (data.shift() ?? []).map((h) => h.trim().toLowerCase());
     const col = (names: string[]) => head.findIndex((h) => names.includes(h));
-    const iN = col(['service name', 'name']), iD = col(['description']), iO = col(['billing occurrence']), iP = col(['pricing']), iPr = col(['price', 'rate']), iT = col(['billing trigger']);
+    const iN = col(['service name', 'name']), iD = col(['description']), iO = col(['billing occurrence']), iP = col(['pricing']), iPr = col(['price', 'rate']), iT = col(['billing trigger']), iSku = col(['sku']), iCat = col(['category']), iInc = col(['income account']), iTy = col(['type']);
     if (iN < 0) { setNotice('The file needs a "Service name" column.'); return; }
     const occ = (v: string) => OCC.find(([, l]) => l.toLowerCase() === v.trim().toLowerCase())?.[0] ?? 'one_time';
     const prc = (v: string) => PRC.find(([, l]) => l.toLowerCase() === v.trim().toLowerCase())?.[0] ?? 'fixed';
@@ -185,7 +205,7 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
     for (const r of data) {
       const name = (r[iN] ?? '').trim(); if (!name) continue;
       const price = iPr >= 0 ? Number((r[iPr] ?? '').replace(/[^0-9.]/g, '')) : NaN;
-      const res = await fetch('/api/admin/products-services', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ item_type: isBundle ? 'bundle' : 'service', name, sales_description: iD >= 0 ? r[iD] || null : null, billing_occurrence: iO >= 0 ? occ(r[iO] ?? '') : 'one_time', pricing_type: iP >= 0 ? prc(r[iP] ?? '') : 'fixed', price_cents: Number.isFinite(price) ? Math.round(price * 100) : null, billing_trigger: iT >= 0 && /auto/i.test(r[iT] ?? '') ? 'automatic' : 'manual' }) });
+      const res = await fetch('/api/admin/products-services', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ item_type: isBundle ? 'bundle' : 'service', name, sales_description: iD >= 0 ? r[iD] || null : null, billing_occurrence: iO >= 0 ? occ(r[iO] ?? '') : 'one_time', pricing_type: iP >= 0 ? prc(r[iP] ?? '') : 'fixed', price_cents: Number.isFinite(price) ? Math.round(price * 100) : null, billing_trigger: iT >= 0 && /auto/i.test(r[iT] ?? '') ? 'automatic' : 'manual', ...(iSku >= 0 && r[iSku]?.trim() ? { sku: r[iSku].trim() } : {}), ...(iCat >= 0 && r[iCat]?.trim() ? { category: r[iCat].trim() } : {}), ...(iInc >= 0 && r[iInc]?.trim() ? { income_account: r[iInc].trim() } : {}), ...(!isBundle && iTy >= 0 ? { item_type: TYPES.find(([, l]) => l.toLowerCase() === (r[iTy] ?? '').trim().toLowerCase())?.[0] ?? 'service' } : {}) }) });
       if (res.ok) ok++; else fail++;
     }
     refresh(`Imported ${ok} service${ok === 1 ? '' : 's'}${fail ? `; ${fail} skipped (already exist or invalid)` : ''}.`);
@@ -195,8 +215,12 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
     const res = await Promise.all(items.map((p) => fetch(`/api/admin/products-services/${p.id}`, { method: 'DELETE', credentials: 'include' })));
     refresh(res.every((r) => r.ok) ? 'Deleted.' : 'Some services could not be deleted.');
   }
+  async function toggleActive(p: ProductService) {
+    const r = await fetch(`/api/admin/products-services/${p.id}`, { method: 'PATCH', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ is_active: !p.is_active }) });
+    refresh(r.ok ? (p.is_active ? 'Deactivated.' : 'Activated.') : 'Could not update the service.');
+  }
   async function duplicate(p: ProductService) {
-    const d = toDraft(p); const r = await fetch('/api/admin/products-services', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...bodyOf({ ...d, name: `${p.name} (copy)` }), item_type: isBundle ? 'bundle' : 'service' }) });
+    const d = toDraft(p); const r = await fetch('/api/admin/products-services', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...bodyOf({ ...d, name: `${p.name} (copy)`, sku: '' }), item_type: isBundle ? 'bundle' : d.item_type }) });
     refresh(r.ok ? 'Duplicated.' : 'Could not duplicate the service.');
   }
 
@@ -216,28 +240,41 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search services" />
+        {!isBundle && (<>
+          <select aria-label="Market" value={market} onChange={(e) => setMarket(e.target.value)} className={`${A.input} w-auto`}><option value="all">All markets</option>{Object.entries(MARKETS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+          <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)} className={`${A.input} w-auto max-w-64`}><option value="all">All categories</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select>
+        </>)}
+        <label className="flex items-center gap-2 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} className="h-4 w-4 accent-[color:var(--ds-primary)]" />Show inactive</label>
         <div className="ml-auto">
           <RowMenu label="Bulk actions" items={[{ label: `Export selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => exportCsv(chosen) }, { label: `Delete selected (${chosen.length})`, danger: true, disabled: chosen.length === 0, onClick: () => remove(chosen) }]} />
         </div>
       </div>
       {notice && <div className={A.notice}>{notice}</div>}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Catalog summary">
+        {([['Active', String(summary.active)], ['Inactive', String(summary.inactive)], ['Categories', String(summary.categories)], ['Average price', summary.avg == null ? '—' : usd(summary.avg)]] as const).map(([l, v]) => (
+          <div key={l} className="rounded-[14px] bg-white px-4 py-3"><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="text-lg font-semibold text-[color:var(--ds-ink)]">{v}</div></div>
+        ))}
+      </div>
       <div className="overflow-x-auto">
         <table className={`${A.table} min-w-[760px]`}>
           <thead><tr>
             <th className="w-10"><input type="checkbox" aria-label="Select all" checked={allSel} onChange={() => setSel(allSel ? [] : rows.map((r) => r.id))} className="h-4 w-4 accent-[color:var(--ds-primary)]" /></th>
-            {th('name', 'Service name')}{th('rate', 'Rate')}{isBundle && <th className="text-xs font-medium text-[color:var(--ds-body)]">Services</th>}{th('occ', 'Billing occurrence')}{th('trig', 'Billing trigger')}<th />
+            {th('name', 'Service name')}{!isBundle && <th className="text-xs font-medium text-[color:var(--ds-body)]">SKU</th>}{!isBundle && <th className="text-xs font-medium text-[color:var(--ds-body)]">Type</th>}{!isBundle && <th className="text-xs font-medium text-[color:var(--ds-body)]">Category</th>}{th('rate', 'Rate')}{isBundle && <th className="text-xs font-medium text-[color:var(--ds-body)]">Services</th>}{th('occ', 'Billing occurrence')}{th('trig', 'Billing trigger')}<th />
           </tr></thead>
           <tbody>
-            {!list.loading && rows.length === 0 && <tr><td colSpan={isBundle ? 7 : 6}><EmptyState title={isBundle ? 'Elevate your offering with bundles' : 'No services'} body={isBundle ? 'Group multiple services into a single-priced bundle.' : 'Create your first service to use it in agreements and agreements.'} action={{ label: isBundle ? 'Create Bundle' : 'New service', onClick: () => setForm(blank) }} /></td></tr>}
+            {!list.loading && rows.length === 0 && <tr><td colSpan={isBundle ? 7 : 9}><EmptyState title={isBundle ? 'Elevate your offering with bundles' : 'No services'} body={isBundle ? 'Group multiple services into a single-priced bundle.' : 'Create your first service to use it in agreements and agreements.'} action={{ label: isBundle ? 'Create Bundle' : 'New service', onClick: () => setForm(blank) }} /></td></tr>}
             {rows.map((p) => (
               <tr key={p.id} className={p.is_active ? '' : 'opacity-60'}>
                 <td><input type="checkbox" aria-label={`Select ${p.name}`} checked={sel.includes(p.id)} onChange={() => setSel((c) => (c.includes(p.id) ? c.filter((x) => x !== p.id) : [...c, p.id]))} className="h-4 w-4 accent-[color:var(--ds-primary)]" /></td>
                 <td><button type="button" onClick={() => setForm(toDraft(p))} style={{ border: 0, background: 'transparent', padding: 0 }} className="text-left font-semibold text-[color:var(--ds-ink)]">{p.name}{p.is_active ? '' : ' (inactive)'}</button></td>
+                {!isBundle && <td className="font-mono text-xs text-[color:var(--ds-ink)]">{p.sku ?? '—'}</td>}
+                {!isBundle && <td className="text-[color:var(--ds-ink)]">{ITEM_TYPE_LABELS[p.item_type]}</td>}
+                {!isBundle && <td className="text-[color:var(--ds-ink)]">{p.category ?? '—'}{p.market ? ` · ${MARKETS[p.market] ?? p.market}` : ''}</td>}
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{rate(p)}</td>
                 {isBundle && <td className="text-[color:var(--ds-ink)]">{(p.bundle_items ?? []).length}</td>}
                 <td className="text-[color:var(--ds-ink)]">{SERVICE_OCCURRENCE_LABELS[p.billing_occurrence] ?? '—'}</td>
                 <td className="text-[color:var(--ds-ink)]">{trigger(p)}</td>
-                <td className="text-right"><RowMenu items={[{ label: `Edit ${noun.toLowerCase()}`, onClick: () => setForm(toDraft(p)) }, { label: `Duplicate ${noun.toLowerCase()}`, onClick: () => duplicate(p) }, { label: `Delete ${noun.toLowerCase()}`, danger: true, onClick: () => remove([p]) }]} /></td>
+                <td className="text-right"><RowMenu items={[{ label: `Edit ${noun.toLowerCase()}`, onClick: () => setForm(toDraft(p)) }, { label: `Duplicate ${noun.toLowerCase()}`, onClick: () => duplicate(p) }, { label: p.is_active ? 'Deactivate' : 'Activate', onClick: () => toggleActive(p) }, { label: `Delete ${noun.toLowerCase()}`, danger: true, onClick: () => remove([p]) }]} /></td>
               </tr>
             ))}
           </tbody>

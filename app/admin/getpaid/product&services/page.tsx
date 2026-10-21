@@ -1,5 +1,5 @@
-import ProductsServicesPage from '../../products-services/page';
+import { redirect } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
-
-export default ProductsServicesPage;
+export default function Redirect() {
+  redirect('/admin/services-beta');
+}
