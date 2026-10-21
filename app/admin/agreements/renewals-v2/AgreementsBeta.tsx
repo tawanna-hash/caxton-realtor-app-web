@@ -10,17 +10,15 @@ import DefaultsPanel from './DefaultsPanel';
 import NotificationsPanel from './NotificationsPanel';
 import RecurringPanel from './RecurringPanel';
 import StatementsPanel from './StatementsPanel';
-import PayoutsPanel from './PayoutsPanel';
 import { A } from '@/components/anchor/ui';
 
-type Tab = 'board' | 'renewals' | 'templates' | 'recurring' | 'statements' | 'payouts' | 'defaults' | 'notifications';
+type Tab = 'board' | 'renewals' | 'templates' | 'recurring' | 'statements' | 'defaults' | 'notifications';
 const TABS: Array<[Tab, string]> = [
   ['board', 'Agreements'],
   ['renewals', 'Renewals'],
   ['templates', 'Templates'],
   ['recurring', 'Recurring invoices'],
   ['statements', 'Statements'],
-  ['payouts', 'Payout'],
   ['defaults', 'Default settings'],
   ['notifications', 'Notifications'],
 ];
@@ -30,7 +28,6 @@ const SUB: Record<Tab, string> = {
   templates: 'Saved ad sizes, frequencies and rates for new agreements.',
   recurring: 'Every recurring invoice schedule from Get Paid, including drafts made when agreements are signed.',
   statements: 'Partners with an open balance and their statement of account.',
-  payouts: 'Payouts from Stripe to your bank, with fees and transaction counts.',
   defaults: 'Set the default values of new agreements you create.',
   notifications: 'Set which notifications you and your partners will receive.',
 };
@@ -86,7 +83,6 @@ export default function AgreementsBeta() {
       {tab === 'templates' && <TemplatesPanel />}
       {tab === 'recurring' && <RecurringPanel />}
       {tab === 'statements' && <StatementsPanel />}
-      {tab === 'payouts' && <PayoutsPanel />}
       {tab === 'defaults' && <DefaultsPanel />}
       {tab === 'notifications' && <NotificationsPanel />}
     </div>
