@@ -836,7 +836,9 @@ function BillingControls({ billing, onChange }: { billing: ServiceBilling; onCha
           ))}
         </div>
       )}
-      <label className="flex items-center gap-3 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={!!b.prorate} onChange={(e) => set({ prorate: e.target.checked || undefined })} />Prorate the first payment</label>
+      {b.cadence === 'one_time' && (
+        <label className="flex items-center gap-3 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={!!b.on_acceptance} onChange={(e) => set({ on_acceptance: e.target.checked || undefined })} />Bill on agreement acceptance</label>
+      )}
       {b.start === 'date' && (
         <input type="date" aria-label="First invoice date" value={b.start_date} onChange={(e) => set({ start_date: e.target.value })} className="w-full border border-[color:var(--ds-line)] text-sm text-[color:var(--ds-ink)]" />
       )}

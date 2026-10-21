@@ -23,8 +23,6 @@ export type ServiceBilling = {
   hourly?: { rate_cents: number; cap_hours: number };
   /** Billed in stages: share of the price and what starts each invoice. */
   stages?: Array<{ pct: number; trigger: 'acceptance' | 'manual' }>;
-  /** Prorate the first payment. */
-  prorate?: boolean;
 };
 
 export const DEFAULT_BILLING: ServiceBilling = { cadence: 'monthly', timing: 'start', day: null, start: 'next', start_date: '' };
@@ -73,7 +71,6 @@ export function cleanBilling(b: Partial<ServiceBilling> | null | undefined): Ser
     ...(typeof x.weekday === 'number' && x.weekday >= 1 && x.weekday <= 7 ? { weekday: Math.round(x.weekday) } : {}),
     ...(x.hourly && x.hourly.rate_cents > 0 ? { hourly: { rate_cents: Math.round(x.hourly.rate_cents), cap_hours: Math.max(0, Number(x.hourly.cap_hours) || 0) } } : {}),
     ...(x.cadence === 'stages' ? { stages: (Array.isArray(x.stages) && x.stages.length ? x.stages : [{ pct: 50, trigger: 'acceptance' as const }, { pct: 50, trigger: 'manual' as const }]).map((g) => ({ pct: Math.max(0, Number(g.pct) || 0), trigger: g.trigger === 'acceptance' ? 'acceptance' as const : 'manual' as const })) } : {}),
-    ...(x.prorate ? { prorate: true } : {}),
   };
 }
 
