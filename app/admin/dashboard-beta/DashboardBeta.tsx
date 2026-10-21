@@ -105,7 +105,7 @@ export default function DashboardBeta() {
     { title: 'Create your account', done: true, body: 'You are signed in to the admin workspace.', href: '/admin', cta: '' },
     { title: 'Set up your brand', done: Boolean(biz.data.logo), body: 'Add your logo and brand colors so proposals and invoices look like yours.', href: '/admin/settings-beta/business-details', cta: 'Open Business details' },
     { title: 'Send a proposal', done: board.data.some((b) => b.stage !== 'draft'), body: 'Create a proposal from a template and send it for signature.', href: '/admin/agreements/renewals-v2/new', cta: 'Create proposal' },
-    { title: 'Connect your bank account', done: stat.data.stripe, body: 'Payouts go to the bank account connected in Stripe.', href: '/admin/getpaid/stripepayouts', cta: 'View payouts' },
+    { title: 'Connect your bank account', done: stat.data.stripe, body: 'Payouts go to the bank account connected in Stripe.', href: '/admin/payouts-beta', cta: 'View payouts' },
     { title: 'Verify your business', done: Boolean(biz.data.address && biz.data.city), body: 'Complete the business address in Business details.', href: '/admin/settings-beta/business-details', cta: 'Open Business details' },
     { title: 'Activate your account', done: inv.data.some((i) => i.status === 'paid'), body: 'Your account is active once the first invoice is paid.', href: '/admin/billing-hub', cta: 'Open Billing Hub' },
   ];
@@ -173,7 +173,7 @@ export default function DashboardBeta() {
             <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Date</th><th className="py-2 text-right font-normal">Amount</th><th className="py-2 text-right font-normal">Status</th></tr></thead>
               <tbody>{pay.data.slice(0, 5).map((p) => <tr key={p.id} className="border-t border-[color:var(--ds-line)]"><td className="py-2.5">{day(p.batch_date)}</td><td className="py-2.5 text-right">{money(p.amount_cents)}</td><td className="py-2.5 text-right"><span className="rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-xs capitalize">{p.status.replaceAll('_', ' ')}</span></td></tr>)}</tbody></table>
             {pay.data.length === 0 && <p className="py-6 text-center text-sm text-[color:var(--ds-body)]">{pay.loading ? 'Loading payouts…' : 'Here you will view your payouts'}</p>}
-            <Link href="/admin/getpaid/stripepayouts" className="mt-3 inline-block text-xs text-[color:var(--ds-primary)]">View more</Link>
+            <Link href="/admin/payouts-beta" className="mt-3 inline-block text-xs text-[color:var(--ds-primary)]">View more</Link>
             <p className="mt-1 text-[11px] text-[color:var(--ds-body)]">* Future payouts may vary in amount and date</p>
           </div>
         </Panel>
