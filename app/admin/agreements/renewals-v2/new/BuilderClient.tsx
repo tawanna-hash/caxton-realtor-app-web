@@ -91,8 +91,9 @@ export default function BuilderClient() {
   const [sendMenu, setSendMenu] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareLink, setShareLink] = useState<string | null>(null);
-  const [discardOpen, setDiscardOpen] = useState(false);
+  const [sentInfo, setSentInfo] = useState<{ to: string; link: string | null } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
 
   const update = useCallback((patch: Partial<BuilderDoc>) => {
     dirty.current = true;
@@ -230,7 +231,15 @@ export default function BuilderClient() {
       const sj = await s.json();
       if (!s.ok || sj.ok === false) throw new Error(sj.error || 'The agreement was created but the email did not send.');
       await finishDraft();
-      router.push('/admin/agreements/renewals-v2');
+      setDraftId(null);
+      let link: string | null = null;
+      try {
+        const pr = await fetch(`/api/admin/new-partner-v2/${agreementId}`, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'preview' }) });
+        const pj = await pr.json();
+        if (pr.ok && pj.link) link = pj.link as string;
+      } catch { /* the link is optional on this screen */ }
+      setSendOpen(false);
+      setSentInfo({ to: (sj.sent_to as string | undefined) ?? doc.name ?? 'your partner', link });
     } catch (e) {
       setSendOpen(false);
       setError(`${e instanceof Error ? e.message : 'Send failed.'}${agreementId ? ' The agreement is saved in Partners; you can send it from there.' : ''}`);
@@ -599,6 +608,36 @@ export default function BuilderClient() {
       )}
 
       {/* Share by link */}
+      {sentInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Proposal sent">
+          <div className="w-full max-w-4xl overflow-hidden rounded-[14px] bg-white shadow-xl">
+            <div className="relative px-4 py-8 text-center sm:px-8">
+              <button type="button" aria-label="Close" onClick={() => router.push('/admin/agreements/proposals/sent')} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
+              <svg className="mx-auto" width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true"><circle cx="32" cy="32" r="22" stroke="#047857" strokeWidth="4" opacity=".7" /><path d="M22 33l7 7 14-15" stroke="#047857" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <h2 className="mt-4 text-2xl font-semibold text-[color:var(--ds-ink)]">Proposal Sent</h2>
+              <p className="mt-1 text-base text-[color:var(--ds-ink)]">Your proposal was emailed to {sentInfo.to}</p>
+            </div>
+            <div className="bg-[color:var(--ds-page)] px-4 py-6 sm:px-8">
+              <h3 className="text-center text-xl font-semibold text-[color:var(--ds-ink)]">What&apos;s Next?</h3>
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  { t: 'Share', d: 'Use a different channel to share this proposal', b: copied ? 'Link Copied' : 'Copy Link', disabled: !sentInfo.link, go: async () => { if (sentInfo.link) { await navigator.clipboard.writeText(sentInfo.link); setCopied(true); } } },
+                  { t: 'Monitor', d: 'Keep track of the approval process', b: 'Review Progress', go: () => router.push('/admin/agreements/proposals/sent') },
+                  { t: 'Create Another Proposal', d: 'Ready to send another one? Go for it', b: 'Create Proposal', go: () => { window.location.href = '/admin/agreements/renewals-v2/new'; } },
+                  { t: 'Back To My Dashboard', d: 'Go back to your dashboard and continue working', b: 'Go To Dashboard', go: () => router.push('/admin') },
+                ].map((c) => (
+                  <div key={c.t} className="flex flex-col items-center rounded-[14px] bg-white p-4 text-center">
+                    <div className="text-sm font-semibold text-[color:var(--ds-ink)]">{c.t}</div>
+                    <p className="mt-2 flex-1 text-xs text-[color:var(--ds-body)]">{c.d}</p>
+                    <button type="button" className={`${A.outline} mt-4`} disabled={'disabled' in c && c.disabled} onClick={() => { void c.go(); }}>{c.b}</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="px-4 py-4 text-center text-sm text-[color:var(--ds-ink)] sm:px-8"><span className="font-semibold">Did you know?</span> You can update an agreement. Once approved, you can add new services or make changes to services and terms.</p>
+          </div>
+        </div>
+      )}
       {shareOpen && (
         <Modal title="Share by link" onClose={() => { if (busy) return; setShareOpen(false); if (shareLink) router.push('/admin/agreements/renewals-v2'); }}>
           {!shareLink ? (

@@ -25,7 +25,7 @@ import { termsForChannel } from '@/lib/agreement-terms';
 import { brandForPublication } from '@/lib/email-templates';
 import { channelOfRow, chargeBaseCents, needsFullForm, totalCents, recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
 import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
-import { getDefaults } from '@/lib/agreements-v2/settings';
+import { getDefaults, renderIntro } from '@/lib/agreements-v2/settings';
 import { getAgreementMeta } from '@/lib/agreements-v2/builder';
 import { notifyCheckRequest } from '@/lib/new-partner-v2/check-request-notify';
 import { CHECK_REQUEST_EVENT, PREPAY_NOTE, checkRequestState, prepayRequired } from '@/lib/agreements-v2/prepay';
@@ -139,6 +139,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
         }),
       })) : null,
       details: meta ? { name: meta.name, note: meta.note, ask_address: meta.ask_address, refs: meta.refs.filter((r) => r.client_facing), expires_at: meta.expires_at } : null,
+      intro: renderIntro(meta?.intro || defaults.intro_new, ag),
       expired,
       placement: placementNeeds({ ...ag, channel } as never, lines as never),
       card_available: isStripeConfigured() && base != null && payOpts.card,
