@@ -26,7 +26,7 @@ export default function ClientsList() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em] text-[color:var(--ds-ink)]">Clients</h1>
+        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[color:var(--ds-ink)]">Clients</h1>
         <p className="mt-1 text-sm text-[color:var(--ds-body)]">The main contact person for each client. Other people in the organization are under Contacts.</p>
       </div>
       {error && <div className={A.error}>{error}</div>}

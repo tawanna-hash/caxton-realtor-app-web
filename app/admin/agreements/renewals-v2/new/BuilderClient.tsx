@@ -278,7 +278,7 @@ export default function BuilderClient() {
       {/* Top bar */}
       <div className="sticky top-0 z-40 flex flex-wrap items-center gap-3 border-b border-[color:var(--ds-line)] bg-white px-4 py-3">
         <Link href="/admin/agreements/renewals-v2" aria-label="Close builder" className="text-2xl leading-none text-[color:var(--ds-ink)]">×</Link>
-        <h1 className="text-lg font-semibold text-[color:var(--ds-ink)]">Create agreement</h1>
+        <h1 className="text-[22px] font-semibold text-[color:var(--ds-ink)]">Create agreement</h1>
         {saveState !== 'idle' && (
           <span className="rounded-full border border-green-600 px-2.5 py-0.5 text-xs text-green-700">{saveState === 'saving' ? 'Saving…' : 'Draft saved'}</span>
         )}
