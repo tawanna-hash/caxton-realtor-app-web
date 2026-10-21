@@ -228,7 +228,7 @@ export default function ServicesBeta({ mode = 'service' }: { mode?: 'service' | 
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className={A.title}>{isBundle ? 'Bundles' : 'Services'} ({rows.length})</h1>

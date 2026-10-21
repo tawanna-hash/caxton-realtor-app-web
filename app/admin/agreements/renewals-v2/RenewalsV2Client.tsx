@@ -228,7 +228,7 @@ export default function RenewalsV2Client() {
       )}
 
       {batch && (
-        <div className={`${A.card} space-y-3 border-[color:var(--ds-primary)] p-4`}>
+        <div className={`${A.card} space-y-3 border border-[color:var(--ds-primary)] p-5`}>
           <p className="text-sm font-semibold text-[color:var(--ds-ink)]">
             {wouldSend.length} renewal email{wouldSend.length === 1 ? '' : 's'} will be sent. Nothing has been sent yet.
           </p>

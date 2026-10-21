@@ -58,7 +58,7 @@ export default function DefaultsPanel() {
         <button onClick={save} disabled={saving} className={A.primary}>{saving ? 'Saving…' : 'Save changes'}</button>
       </div>
       {msg && <div className={A.notice}>{msg}</div>}
-      <div className={`${A.card} p-6`}>
+      <div className={`${A.card} p-5`}>
         <h3 className="mb-1 text-sm font-semibold text-[color:var(--ds-ink)]">General settings</h3>
         <div className="divide-y divide-[color:var(--ds-line)]">
           <SettingRow label="Number of days until payment is due">

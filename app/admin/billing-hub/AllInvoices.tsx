@@ -431,12 +431,12 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-2">
-        <div className={`${A.card} p-4`}>
+        <div className={`${A.card} p-5`}>
           <div className="mb-2 text-sm font-semibold text-[color:var(--ds-ink)]">{formatCents(summary.openAmt)} Unpaid</div>
           <div className="grid grid-cols-2 gap-4"><Metric amount={summary.overAmt} count={summary.overN} label="overdue" /><Metric amount={summary.notDueAmt} count={summary.notDueN} label="not due yet" /></div>
           <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-[color:var(--ds-line)]" aria-hidden="true"><div className="bg-red-500" style={{ width: `${summary.openAmt ? (summary.overAmt / summary.openAmt) * 100 : 0}%` }} /></div>
         </div>
-        <div className={`${A.card} p-4`}>
+        <div className={`${A.card} p-5`}>
           <div className="mb-2 text-sm font-semibold text-[color:var(--ds-ink)]">{formatCents(summary.paidAmt)} Paid <span className="ml-1 text-xs font-normal text-[color:var(--ds-body)]">Last 30 days</span></div>
           <div className="grid grid-cols-2 gap-4"><Metric amount={summary.otherAmt} count={summary.otherN} label="other payments" /><Metric amount={summary.stripeAmt} count={summary.stripeN} label="Stripe payments" /></div>
           <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-[color:var(--ds-line)]" aria-hidden="true"><div className="bg-green-600" style={{ width: `${summary.paidAmt ? (summary.otherAmt / summary.paidAmt) * 100 : 0}%` }} /></div>

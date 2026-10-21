@@ -22,7 +22,7 @@ export const REPORTS = [
 
 export function ReportsIndex() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div><h1 className={A.title}>All Reports</h1><p className={`${A.subtitle} mt-1`}>Run and export reports on revenue, services, invoices, agreements and credit.</p></div>
       <div className="space-y-3">
         {REPORTS.map((r) => (
@@ -57,7 +57,7 @@ function csv(name: string, head: string[], rows: Array<Array<string | number | n
 
 function Shell({ title, onExport, filters, children }: { title: string; onExport: () => void; filters?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3"><Link href="/admin/reports-beta" aria-label="Back to reports" className="text-2xl leading-none text-[color:var(--ds-ink)]">&lsaquo;</Link><h1 className={A.title}>{title}</h1></div>

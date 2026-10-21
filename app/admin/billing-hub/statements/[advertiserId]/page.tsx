@@ -207,7 +207,7 @@ export default async function StatementPage({
       <div className="mb-4 flex items-center justify-between print:hidden">
         <div>
           <Link href="/admin/billing-hub" className="text-xs text-gray-500 underline">Back to Billing</Link>
-          <h1 className="text-lg font-semibold text-gray-900">Statement of Account</h1>
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[color:var(--ds-ink)]">Statement of Account</h1>
           <p className="text-sm text-gray-500">{advertiser.name}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ export default async function StatementPage({
 
       <StatementHistory advertiserId={advertiser.id} initial={JSON.parse(JSON.stringify(sendHistory))} />
 
-      <article className="bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-8">
+      <article className="bg-white px-6 py-8 text-[11px] leading-[1.35] text-neutral-800 ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-8">
         <header className="grid grid-cols-[1fr_auto] gap-8 border-b border-neutral-300 pb-4">
           <Image
             src="/brand/caxton-logo.jpg"

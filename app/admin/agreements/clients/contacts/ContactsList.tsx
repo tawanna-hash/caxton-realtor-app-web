@@ -54,7 +54,7 @@ export default function ContactsList() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[color:var(--ds-ink)]">Contacts</h1>
+        <h1 className={A.title}>Contacts</h1>
         <p className="mt-1 text-sm text-[color:var(--ds-body)]">Other people inside each client organization. The main contact is on the client.</p>
       </div>
       {error && <div className={A.error}>{error}</div>}

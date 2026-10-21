@@ -63,7 +63,7 @@ export function DepositReport({ kind, payments, from, to, preparedBy }: { kind: 
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
           <div className="flex items-center gap-3"><Link href="/admin/reports-beta" aria-label="Back to reports" className="text-2xl leading-none text-[color:var(--ds-ink)]">&lsaquo;</Link><h1 className={A.title}>{title}</h1></div>

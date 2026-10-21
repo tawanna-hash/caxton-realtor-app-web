@@ -204,7 +204,7 @@ function AgreementTab({ client, agreement }: { client: Adv; agreement: Agr | nul
         <RowMenu items={[{ label: 'Open in Get Paid', href: `/admin/billing?agreement=${agreement.id}` }]} />
       </div>
       <div className="mx-auto max-w-[620px] space-y-4">
-        <div className="relative overflow-hidden rounded-[10px] bg-white shadow-sm">
+        <div className="relative overflow-hidden rounded-[10px] bg-white">
           <div className="h-6 bg-[color:var(--ds-primary)]" />
           <div className="absolute left-1/2 top-0 h-[84px] w-[84px] -translate-x-1/2 overflow-hidden rounded-full border-4 border-white bg-white shadow">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -219,7 +219,7 @@ function AgreementTab({ client, agreement }: { client: Adv; agreement: Agr | nul
             {approved && <p className="mt-4 border-t border-[color:var(--ds-line)] pt-3 text-[11px] text-[color:var(--ds-body)]">Agreement {approved.event.replace(/_/g, ' ')} {approved.user_email ? `by ${approved.user_email} ` : ''}on {dt(approved.timestamp)}</p>}
           </div>
         </div>
-        <div className="rounded-[10px] bg-white p-6 shadow-sm">
+        <div className="rounded-[10px] bg-white p-6">
           <h3 className="text-lg font-semibold text-[color:var(--ds-ink)]">Services Provided</h3>
           <div className="mt-4 space-y-3">
             {services.map((s, i) => (
@@ -263,7 +263,7 @@ function CardForm({ agreementId, onSaved }: { agreementId: string; onSaved: () =
   }
   const style = { style: { base: { fontSize: '16px', color: '#16132D' } } };
   return (
-    <div id="add-payment-method" className="max-w-[640px] space-y-5 rounded-[12px] bg-white p-6 shadow-sm">
+    <div id="add-payment-method" className="max-w-[640px] space-y-5 rounded-[12px] bg-white p-6">
       <input className={`${box} w-full text-base`} placeholder="Name on card" value={name} onChange={(e) => setName(e.target.value)} />
       <div className={box}><CardNumberElement options={{ ...style, placeholder: 'Card number' }} /></div>
       <div className="grid grid-cols-3 gap-3">
@@ -305,14 +305,14 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
       </div>
       {notice && <p className="text-sm text-[color:var(--ds-body)]">{notice}</p>}
       {onFile && (
-        <div className="max-w-[640px] rounded-[12px] bg-white p-5 text-sm shadow-sm">
+        <div className="max-w-[640px] rounded-[12px] bg-white p-5 text-sm">
           <div className="font-medium text-[color:var(--ds-ink)]">{cap(agreement?.card_type ?? 'Card')} ending in {onFile}</div>
           <div className="text-xs text-[color:var(--ds-body)]">{agreement?.cardholder_name ?? ''}{agreement?.card_expiration ? ` · Expires ${agreement.card_expiration}` : ''}</div>
         </div>
       )}
       <div className="grid max-w-[640px] grid-cols-2 gap-3">
         {([['card', 'Card', 'fee paid by client'], ['ach', 'Secure ACH', '']] as const).map(([k, l, s]) => (
-          <button key={k} type="button" onClick={() => setMethod(k)} style={{ background: '#fff' }} className={`flex items-center justify-between rounded-[8px] border px-4 py-3 text-sm text-[color:var(--ds-ink)] ${method === k ? 'border-2 border-[color:var(--ds-primary)]' : 'border-transparent shadow-sm'}`}>
+          <button key={k} type="button" onClick={() => setMethod(k)} style={{ background: '#fff' }} className={`flex items-center justify-between rounded-[8px] border px-4 py-3 text-sm text-[color:var(--ds-ink)] ${method === k ? 'border-2 border-[color:var(--ds-primary)]' : 'border-transparent'}`}>
             <span>{l}</span><span className="text-[10px] text-[color:var(--ds-body)]">{s}</span>
           </button>
         ))}
@@ -506,12 +506,12 @@ function BillScreen({ client, agreementId, mode, seed, onClose, onDone }: { clie
   }
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto bg-[#E9EAF0]">
-      <div className="flex items-center justify-between bg-white px-4 py-3 shadow-sm">
+      <div className="flex items-center justify-between bg-white px-4 py-3">
         <div className="flex items-center gap-4"><button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: 'transparent' }}>&#10005;</button><span className="h-6 w-px bg-[color:var(--ds-line)]" /><h2 className="text-base font-semibold text-[color:var(--ds-ink)]">Bill client - {client.name}</h2></div>
         <div className="flex items-center gap-3"><span className="text-sm text-[color:var(--ds-body)]">&#128206; Attach Files</span><button type="button" className={A.primary} disabled={!valid || busy} onClick={submit}>{busy ? 'Billing…' : 'Bill now →'}</button></div>
       </div>
       <div className="p-5">
-        <div className="space-y-4 rounded-[10px] bg-white p-5 shadow-sm">
+        <div className="space-y-4 rounded-[10px] bg-white p-5">
           <div className="flex flex-wrap gap-4">
             <label className="relative block w-72"><span className="absolute -top-2 left-3 bg-white px-1 text-[11px] text-[color:var(--ds-body)]">Choose how to bill</span>
               <select className={selectCls} value={how} onChange={(e) => setHow(e.target.value)}><option value="date">Bill on date</option></select><Caret /></label>

@@ -39,7 +39,7 @@ export default function StatementsPanel() {
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {([['Partners with a balance', String(rows.length)], ['Outstanding', money(out)], ['Overdue', money(over)]] as const).map(([l, v]) => (
-          <div key={l} className={`${A.card} p-4`}><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="mt-1 text-xl font-semibold text-[color:var(--ds-ink)]">{v}</div></div>
+          <div key={l} className={`${A.card} p-5`}><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="mt-1 text-xl font-semibold text-[color:var(--ds-ink)]">{v}</div></div>
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-3">

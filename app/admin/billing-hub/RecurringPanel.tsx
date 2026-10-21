@@ -40,7 +40,7 @@ function projected(s: Sch, fromMs: number, toMs: number) {
 
 function Metric({ amount, count, label }: { amount: number; count: number; label: string }) {
   return (
-    <div className={`${A.card} p-4`}>
+    <div className={`${A.card} p-5`}>
       <div className="text-lg font-semibold text-[color:var(--ds-ink)]">{formatCents(amount)}</div>
       <div className="text-xs text-[color:var(--ds-body)]">{count.toLocaleString()} {label}</div>
     </div>

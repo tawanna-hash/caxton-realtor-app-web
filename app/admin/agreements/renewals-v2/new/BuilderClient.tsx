@@ -278,7 +278,7 @@ export default function BuilderClient() {
       {/* Top bar */}
       <div className="sticky top-0 z-40 flex flex-wrap items-center gap-3 border-b border-[color:var(--ds-line)] bg-white px-4 py-3">
         <Link href="/admin/agreements/renewals-v2" aria-label="Close builder" className="text-2xl leading-none text-[color:var(--ds-ink)]">×</Link>
-        <h1 className="text-[22px] font-semibold text-[color:var(--ds-ink)]">Create agreement</h1>
+        <h1 className={A.title}>Create agreement</h1>
         {saveState !== 'idle' && (
           <span className="rounded-full border border-green-600 px-2.5 py-0.5 text-xs text-green-700">{saveState === 'saving' ? 'Saving…' : 'Draft saved'}</span>
         )}
@@ -304,7 +304,7 @@ export default function BuilderClient() {
 
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 lg:flex-row">
         {panel && (
-          <aside className="w-full shrink-0 self-start lg:w-[380px] rounded-[14px] border border-[color:var(--ds-line)] bg-white" aria-label="Billing timeline">
+          <aside className="w-full shrink-0 self-start lg:w-[380px] rounded-[10px] bg-white" aria-label="Billing timeline">
             <div className="flex items-start justify-between p-4">
               <div><h2 className="font-semibold text-[color:var(--ds-ink)]">Billing timeline</h2><p className="text-xs text-[color:var(--ds-body)]">For automatically billed services</p></div>
               <button type="button" aria-label="Close" onClick={() => setPanel(false)} className="text-xl leading-none text-[color:var(--ds-ink)]">×</button>
@@ -361,7 +361,7 @@ export default function BuilderClient() {
                         <span className="text-sm font-semibold text-[color:var(--ds-ink)]">{new Date(`${inv.date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })}</span>
                         <button type="button" aria-label="Next invoice" disabled={month >= timeline.invoices.length - 1} onClick={() => setMonth((m) => m + 1)} className={`${A.small} disabled:opacity-40`}>›</button>
                       </div>
-                      <div className="mt-3 rounded-[14px] border border-[color:var(--ds-line)] p-4 text-sm">
+                      <div className="mt-3 rounded-[10px] bg-[color:var(--ds-page)] p-4 text-sm">
                         <div className="text-xs text-[color:var(--ds-body)]">{fmtDay(inv.date)} · due {fmtDay(inv.due)}</div>
                         {inv.items.map((it, i) => <div key={i} className="mt-2 flex justify-between gap-3 text-[color:var(--ds-ink)]"><span>{it.label}</span><span>{money(it.cents)}</span></div>)}
                         <div className="mt-3 flex justify-between border-t border-[color:var(--ds-line)] pt-2 font-semibold text-[color:var(--ds-ink)]"><span>Total</span><span>{money(inv.total)}</span></div>
@@ -471,7 +471,7 @@ export default function BuilderClient() {
               </div>
               {activeServices.length === 0 && <p className="text-sm text-[color:var(--ds-body)]">No services yet. Add the products this agreement covers.</p>}
               {doc.services.map((s, i) => optionOf(s, opts.length) !== activeOpt ? null : (
-                <div key={s.id} className="rounded-[14px] border border-[color:var(--ds-line)] p-4">
+                <div key={s.id} className="rounded-[10px] bg-[color:var(--ds-page)] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="font-medium text-[color:var(--ds-ink)]">{svcLabel(s)}{s.optional && <span className="ml-2 rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[10px] font-normal text-[color:var(--ds-body)]">Optional</span>}</div>

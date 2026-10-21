@@ -18,7 +18,7 @@ type Tab = (typeof TABS)[number][0];
 
 function Card({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className={`${A.card} p-4 sm:p-5`}>
+    <section className={`${A.card} p-5 sm:p-5`}>
       <div className="mb-3 flex items-center justify-between gap-3"><h3 className="text-base font-semibold text-[color:var(--ds-ink)]">{title}</h3>{action}</div>
       {children}
     </section>
