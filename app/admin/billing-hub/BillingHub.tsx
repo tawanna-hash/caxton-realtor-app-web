@@ -216,7 +216,7 @@ function CardForm({ agreementId, onSaved }: { agreementId: string; onSaved: () =
   useEffect(() => {
     fetch(`/api/admin/agreements/${agreementId}/setup-intent`, { method: 'POST' }).then((r) => r.json()).then((j) => setSecret(j.clientSecret ?? null)).catch(() => setSecret(null));
   }, [agreementId]);
-  const box = 'rounded-[6px] border border-[color:var(--ds-line)] bg-white px-3 py-3.5';
+  const box = 'rounded-[8px] border border-[color:var(--ds-line)] bg-white px-4 py-4';
   async function connect() {
     if (!stripe || !elements || !secret) return;
     const num = elements.getElement(CardNumberElement); if (!num) return;
@@ -230,17 +230,17 @@ function CardForm({ agreementId, onSaved }: { agreementId: string; onSaved: () =
       setMsg({ ok: true, t: 'Card connected.' }); onSaved();
     } catch (e) { setMsg({ ok: false, t: e instanceof Error ? e.message : 'Card could not be saved' }); } finally { setBusy(false); }
   }
-  const style = { style: { base: { fontSize: '14px', color: '#16132D' } } };
+  const style = { style: { base: { fontSize: '16px', color: '#16132D' } } };
   return (
-    <div className="max-w-[450px] space-y-4 rounded-[10px] bg-white p-4 shadow-sm">
-      <input className={`${box} w-full text-sm`} placeholder="Name on card" value={name} onChange={(e) => setName(e.target.value)} />
+    <div className="max-w-[640px] space-y-5 rounded-[12px] bg-white p-6 shadow-sm">
+      <input className={`${box} w-full text-base`} placeholder="Name on card" value={name} onChange={(e) => setName(e.target.value)} />
       <div className={box}><CardNumberElement options={{ ...style, placeholder: 'Card number' }} /></div>
       <div className="grid grid-cols-3 gap-3">
         <div className={box}><CardExpiryElement options={style} /></div>
         <div className={box}><CardCvcElement options={style} /></div>
-        <input className={`${box} w-full text-sm`} placeholder="Zip code" value={zip} onChange={(e) => setZip(e.target.value)} />
+        <input className={`${box} w-full text-base`} placeholder="Zip code" value={zip} onChange={(e) => setZip(e.target.value)} />
       </div>
-      <div className="flex items-center justify-between gap-3 text-[11px] text-[color:var(--ds-ink)]">
+      <div className="flex items-center justify-between gap-4 text-xs text-[color:var(--ds-ink)]">
         <span>Paying with a card is a service provided by Anchor; Fees are paid directly to Anchor.</span>
         <button type="button" className={A.primary} disabled={busy || !secret || !name.trim()} onClick={connect}>{busy ? 'Connecting…' : 'Connect card'}</button>
       </div>
@@ -271,12 +271,12 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
       </div>
       {notice && <p className="text-sm text-[color:var(--ds-body)]">{notice}</p>}
       {onFile && (
-        <div className="max-w-[450px] rounded-[10px] bg-white p-4 text-sm shadow-sm">
+        <div className="max-w-[640px] rounded-[12px] bg-white p-5 text-sm shadow-sm">
           <div className="font-medium text-[color:var(--ds-ink)]">{cap(agreement?.card_type ?? 'Card')} ending in {onFile}</div>
           <div className="text-xs text-[color:var(--ds-body)]">{agreement?.cardholder_name ?? ''}{agreement?.card_expiration ? ` · Expires ${agreement.card_expiration}` : ''}</div>
         </div>
       )}
-      <div className="grid max-w-[450px] grid-cols-2 gap-3">
+      <div className="grid max-w-[640px] grid-cols-2 gap-3">
         {([['card', 'Card', 'fee paid by client'], ['ach', 'Secure ACH', '']] as const).map(([k, l, s]) => (
           <button key={k} type="button" onClick={() => setMethod(k)} style={{ background: '#fff' }} className={`flex items-center justify-between rounded-[8px] border px-4 py-3 text-sm text-[color:var(--ds-ink)] ${method === k ? 'border-2 border-[color:var(--ds-primary)]' : 'border-transparent shadow-sm'}`}>
             <span>{l}</span><span className="text-[10px] text-[color:var(--ds-body)]">{s}</span>
@@ -285,7 +285,7 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
       </div>
       {!agreement ? <p className="text-sm text-[color:var(--ds-body)]">Add an agreement before connecting a card.</p> : method === 'card' ? (
         stripe ? <Elements stripe={stripe}><CardForm agreementId={agreement.id} onSaved={onSaved} /></Elements> : <p className="text-sm text-[color:var(--ds-body)]">Loading card form…</p>
-      ) : <p className="max-w-[450px] text-sm text-[color:var(--ds-body)]">Secure ACH is not enabled for this account yet.</p>}
+      ) : <p className="max-w-[640px] text-sm text-[color:var(--ds-body)]">Secure ACH is not enabled for this account yet.</p>}
       <p className="text-[10px] text-[color:var(--ds-body)]">Bank-level security and privacy.</p>
     </div>
   );
