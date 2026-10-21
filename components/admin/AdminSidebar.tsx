@@ -40,7 +40,7 @@ const byLabel = (a: { label: string }, b: { label: string }) =>
 // Admin Dashboard is pinned first; every other group stays alphabetical.
 const PINNED_FIRST = 'Admin Dashboard';
 const ADMIN_GROUPS: AdminNavGroup[] = ADMIN_NAV
-  .map((g) => ({ ...g, links: [...g.links].sort(byLabel) }))
+  .map((g) => ({ ...g, links: g.label === 'Beta' ? [...g.links] : [...g.links].sort(byLabel) }))
   .sort((a, b) => (a.label === PINNED_FIRST ? -1 : b.label === PINNED_FIRST ? 1 : byLabel(a, b)));
 
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
@@ -51,6 +51,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ size?: number; className
   'Admin Dashboard': LayoutDashboard,
   Sales: Users,
   'Get Paid': DollarSign,
+  Beta: DollarSign,
   'Mailing List HUB': Mail,
   'Ad Ops': Megaphone,
   Content: Newspaper,

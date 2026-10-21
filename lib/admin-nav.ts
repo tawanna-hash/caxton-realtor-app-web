@@ -54,6 +54,12 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility', parent: '/admin/crm' },
       { label: 'Referral Network', href: '/admin/referral-network', description: 'Provider applications and approvals' },
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
+      { label: 'Media Kit',    href: '/admin/ads/media-kit',   description: '2026 packages, rates & deadlines' },
+    ],
+  },
+  {
+    label: 'Beta',
+    links: [
       { label: 'Dashboard (Beta)', href: '/admin/dashboard-beta', description: 'Invoices, agreements, payouts, revenue and agreements at a glance' },
       { label: 'Agreements (Beta)', href: '/admin/agreements/renewals-v2', description: 'One-tap renewals and new-partner agreements' },
       { label: 'Clients (Beta)', href: '/admin/agreements/clients', description: 'Main contact person for each client' },
@@ -68,7 +74,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Business details (Beta)', href: '/admin/settings-beta/business-details', description: 'Business name, address, brand and billing settings' },
       { label: 'Team (Beta)', href: '/admin/settings-beta/team', description: 'Invite and manage team members', parent: '/admin/settings-beta/business-details' },
       { label: 'Notifications (Beta)', href: '/admin/settings-beta/notifications', description: 'Choose which notifications your team and clients receive', parent: '/admin/settings-beta/business-details' },
-      { label: 'Media Kit',    href: '/admin/ads/media-kit',   description: '2026 packages, rates & deadlines' },
     ],
   },
   {
