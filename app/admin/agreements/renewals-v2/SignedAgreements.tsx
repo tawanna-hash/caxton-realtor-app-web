@@ -9,7 +9,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { A, EmptyState, FilterChip, RowMenu, SearchBox } from '@/components/anchor/ui';
 import { SortTh } from '../clients/StatusFilter';
-import { day, useJson, type Inv } from '../clients/data';
+import { day, money, useJson, type Inv } from '../clients/data';
+import { AgreementDrawer } from '@/app/admin/billing/_components/AgreementDrawer';
+import NewQuoteModal from '@/app/admin/_components/NewQuoteModal';
+import type { AgreementWithAdvertiser } from '@/lib/agreements';
+import type { AdCampaignOption, AdvertiserOption } from '@/app/admin/billing/_components/types';
 
 type Agr = {
   id: string; advertiser_id: number | null; company_name: string | null; advertiser_name: string | null; status: string; type: string | null;
@@ -72,6 +76,11 @@ export default function SignedAgreements() {
   const [sel, setSel] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [imp, setImp] = useState(false);
+  const [drawer, setDrawer] = useState<null | 'new' | AgreementWithAdvertiser>(null);
+  const [quote, setQuote] = useState(false);
+  const [dErr, setDErr] = useState<string | null>(null);
+  const advs = useJson('/api/admin/advertisers', (j) => (j.advertisers ?? []) as AdvertiserOption[], [] as AdvertiserOption[]);
+  const camps = useJson('/api/admin/ads/campaigns', (j) => (j.campaigns ?? []) as AdCampaignOption[], [] as AdCampaignOption[]);
 
   const lastBilled = useMemo(() => {
     const m = new Map<string, string>();
@@ -97,6 +106,16 @@ export default function SignedAgreements() {
   }, [all, q, sts, extra, eff, bill, pay, amended, sort, lastBilled]);
 
   const th = (k: typeof sort.k, label: string) => <SortTh label={label} dir={sort.k === k ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} onClick={() => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : 1 }))} />;
+  const summary = useMemo(() => {
+    const month = today().slice(0, 7); const lim = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+    let mtd = 0, ar = 0, overdue = 0, expiring = 0;
+    for (const i of inv.data as Array<Inv & { amount_paid_cents?: number; paid_at?: string | null; is_overdue?: boolean }>) {
+      if (i.paid_at && i.paid_at.slice(0, 7) === month) mtd += i.amount_paid_cents ?? 0;
+      if (i.status !== 'paid' && i.status !== 'void' && i.status !== 'draft') { ar += i.balance_cents; if (i.is_overdue) overdue += i.balance_cents; }
+    }
+    for (const a of agr.data) { const e = a.end_date?.slice(0, 10); if (stOf(a) === 'active' && e && e >= today() && e <= lim) expiring++; }
+    return { mtd, ar, overdue, expiring };
+  }, [inv.data, agr.data]);
   const chosen = rows.filter((r) => sel.includes(r.id));
 
   function exportCsv(list: Agr[]) {
@@ -123,7 +142,7 @@ export default function SignedAgreements() {
     try { await navigator.clipboard.writeText(j.url); setNotice('Direct link copied.'); } catch { setNotice(j.url); }
   }
   const menu = (a: Agr) => [
-    { label: 'Edit agreement', href: '/admin/agreements' },
+    { label: 'Edit agreement', onClick: () => setDrawer(a as unknown as AgreementWithAdvertiser) },
     { label: 'Duplicate agreement', onClick: () => duplicate(a) },
     { label: 'Download PDF', href: `/api/admin/agreements/${a.id}/pdf` },
     { label: 'Share direct link', onClick: () => link(a) },
@@ -137,9 +156,15 @@ export default function SignedAgreements() {
 
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {[['Revenue MTD', money(summary.mtd)], ['AR outstanding', money(summary.ar)], ['Overdue', money(summary.overdue)], ['Expiring 30d', String(summary.expiring)]].map(([l, v]) => (
+          <div key={l} className="rounded-[14px] bg-white px-4 py-3"><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="text-xl font-medium text-[color:var(--ds-ink)]">{v}</div></div>
+        ))}
+      </div>
+      {dErr && <div className={A.error}>{dErr}</div>}
       <div className="flex flex-wrap items-center justify-end gap-3">
         <Menu label="More Actions" items={[{ label: 'Import agreements', onClick: () => setImp(true) }, { label: 'Export agreements', onClick: () => exportCsv(rows) }]} />
-        <Menu primary label="Create agreement" items={[{ label: 'Use a template', href: '/admin/agreements/proposals/templates' }, { label: 'Start from scratch', href: '/admin/agreements/renewals-v2/new' }, { label: 'Import with AI', disabled: true }]} />
+        <Menu primary label="Create agreement" items={[{ label: 'Use a template', href: '/admin/agreements/proposals/templates' }, { label: 'Start from scratch', onClick: () => setDrawer('new') }, { label: 'New quote', onClick: () => setQuote(true) }, { label: 'Import with AI', disabled: true }]} />
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search agreements" />
@@ -160,6 +185,19 @@ export default function SignedAgreements() {
         <div className="ml-auto"><Menu label="Bulk actions" items={[{ label: `Export selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => exportCsv(chosen) }, { label: `Terminate selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => terminate(chosen) }]} /></div>
       </div>
       {notice && <div className={A.notice}>{notice}</div>}
+      <NewQuoteModal open={quote} onClose={() => setQuote(false)} />
+      {drawer && (
+        <AgreementDrawer
+          existing={drawer === 'new' ? undefined : drawer}
+          advertisers={advs.data}
+          adCampaigns={camps.data}
+          onClose={() => setDrawer(null)}
+          onSaved={async () => { setDrawer(null); setVersion((v) => v + 1); }}
+          onRefresh={async () => { setVersion((v) => v + 1); }}
+          onError={setDErr}
+          onGenerateInvoice={() => { setDrawer(null); window.location.href = '/admin/billing-hub'; }}
+        />
+      )}
       {imp && <ImportDialog onClose={() => setImp(false)} onDone={() => { setSts(['active', 'completed', 'terminated']); setVersion((v) => v + 1); }} />}
       <div className="text-sm text-[color:var(--ds-body)]">{agr.loading ? 'Loading…' : `${rows.length} agreement${rows.length === 1 ? '' : 's'}`}</div>
       <div className="overflow-x-auto">

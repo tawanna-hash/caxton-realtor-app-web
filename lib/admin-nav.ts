@@ -54,7 +54,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility', parent: '/admin/crm' },
       { label: 'Referral Network', href: '/admin/referral-network', description: 'Provider applications and approvals' },
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
-      { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
       { label: 'Dashboard (Beta)', href: '/admin/dashboard-beta', description: 'Invoices, agreements, payouts, revenue and agreements at a glance' },
       { label: 'Agreements (Beta)', href: '/admin/agreements/renewals-v2', description: 'One-tap renewals and new-partner agreements' },
       { label: 'Agreements Sent (Beta)', href: '/admin/agreements/proposals', description: 'Sent, drafts, archived, templates and defaults', parent: '/admin/agreements/renewals-v2' },
