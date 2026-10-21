@@ -15,6 +15,8 @@ import { InvoiceDrawer } from '@/app/admin/billing/_components/InvoiceDrawer';
 import { PaymentLinkDrawer, RecordPaymentDrawer, SalesReceiptDrawer } from '@/app/admin/ar/PaymentActionDrawers';
 import { ScheduledInvoicesPanel } from '@/app/admin/getpaid/_components/ScheduledInvoicesPanel';
 import { isNative } from '@/lib/native/runtime';
+import { BETA_EMAIL_ENABLED } from '@/lib/beta-email';
+import EmailInvoiceDialog, { type EmailValues } from './EmailInvoiceDialog';
 
 export type InvoiceIntent = {
   edit?: string;
@@ -26,7 +28,7 @@ type DateFilter = 'all' | 'today' | '30-days' | '3-months' | '12-months';
 type StatusFilter = 'all' | 'scheduled' | 'draft' | 'open' | 'overdue' | 'paid' | 'void';
 type ErrorFilter = 'all' | 'missing-email' | 'past-due';
 type TypeFilter = 'all' | 'invoice' | 'receipt';
-type Batch = 'issue' | 'print' | 'void' | 'delete';
+type Batch = 'issue' | 'send' | 'remind' | 'print' | 'void' | 'delete';
 
 const PAGE_SIZES = [25, 50, 100];
 const SELECT = 'anchor-input rounded-[10px] border border-[color:var(--ds-line)] bg-white px-3 py-2 text-sm text-[color:var(--ds-ink)]';
@@ -205,6 +207,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
   const [errors, setErrors] = useState<ErrorFilter>('all');
   const [kind, setKind] = useState<TypeFilter>('all');
   const [receipt, setReceipt] = useState(false);
+  const [emailing, setEmailing] = useState<{ invoice: Inv; reminder: boolean } | null>(null);
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(25);
@@ -312,6 +315,25 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
 
   // Issuing marks a draft as sent. It never emails the client.
   const issue = (i: Inv) => run(async () => { await patch(i, { status: 'sent' }); return `${i.number ?? 'Invoice'} issued. No email was sent.`; }, 'Could not issue invoice.');
+  // Emails the invoice or a reminder with the secure payment link. Only reachable when BETA_EMAIL_ENABLED is on.
+  const sendEmail = async (i: Inv, reminder: boolean, v?: EmailValues) => {
+    if (!BETA_EMAIL_ENABLED) { fail('Client email is turned off in beta.'); return; }
+    setBusy(true); fail('');
+    try {
+      if (reminder && i.status === 'draft') throw new Error('Issue the draft invoice before sending a reminder.');
+      if (i.status === 'draft') await patch(i, { status: 'sent' });
+      const r = await fetch(`/api/admin/invoices/${i.id}/payment-link`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ send_email: true, email_mode: reminder ? 'reminder' : 'invoice', email_from: v && v.from !== 'auto' ? v.from : undefined, email_to: v?.to, email_subject: v?.subject, email_message: v?.message }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error ?? 'Could not send invoice.');
+      if (j.email_status !== 'sent') throw new Error(typeof j.email_error === 'string' && j.email_error.trim() ? j.email_error.trim() : j.email_status === 'no_email' ? 'This customer does not have an email address.' : j.email_status === 'failed' ? 'The email provider could not deliver this message.' : 'Email delivery is not configured.');
+      await reload();
+      setEmailing(null);
+      setMsg(reminder ? `Reminder sent for ${i.number}.` : `${i.number} sent.`);
+    } catch (e) { fail(e instanceof Error ? e.message : 'Could not send invoice.'); } finally { setBusy(false); }
+  };
   const voidIt = (i: Inv) => {
     if (!window.confirm(`Void ${i.number ?? 'this invoice'}? This keeps the record but removes it from open receivables.`)) return;
     void run(async () => { await patch(i, { status: 'void' }); return `${i.number} voided.`; }, 'Could not void invoice.');
@@ -347,7 +369,8 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
       if (!r.ok) throw new Error(j.error ?? 'Could not validate the selected invoices.');
       const targets = ((j.invoices ?? []) as Inv[]).filter((i) => sel.has(i.id));
       if (!targets.length) throw new Error('The selected invoices are no longer available. Select them again.');
-      const verb = { issue: 'Issue (no email)', print: 'Print', void: 'Void', delete: 'Delete selected drafts' }[action];
+      if ((action === 'send' || action === 'remind') && !BETA_EMAIL_ENABLED) throw new Error('Client email is turned off in beta.');
+      const verb = { issue: 'Issue (no email)', send: 'Email', remind: 'Send reminders for', print: 'Print', void: 'Void', delete: 'Delete selected drafts' }[action];
       if (!window.confirm(`${verb} ${targets.length} selected invoice${targets.length === 1 ? '' : 's'}?`)) return;
       if (action === 'print') { targets.forEach((i) => print(i)); return; }
       let ok = 0; const bad: string[] = [];
@@ -361,6 +384,13 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
           } else if (action === 'void') {
             if (['paid', 'void'].includes(i.status)) throw new Error(`status is ${i.status}`);
             await patch(i, { status: 'void' });
+          } else if (action === 'send' || action === 'remind') {
+            if (['paid', 'void'].includes(i.status)) throw new Error(`status is ${i.status}`);
+            if (action === 'remind' && i.status === 'draft') throw new Error('draft invoices cannot receive reminders');
+            if (action === 'send' && i.status === 'draft') await patch(i, { status: 'sent' });
+            const m = await fetch(`/api/admin/invoices/${i.id}/payment-link`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ send_email: true, email_mode: action === 'remind' ? 'reminder' : 'invoice' }) });
+            const mj = await m.json().catch(() => ({}));
+            if (!m.ok || mj.email_status !== 'sent') throw new Error(mj.email_error ?? mj.error ?? mj.email_status ?? 'email was not sent');
           } else {
             if (i.status !== 'draft') throw new Error('not a draft');
             await patch(i, { status: 'sent' });
@@ -380,7 +410,8 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
       { label: 'Duplicate', onClick: () => void duplicate(i, false) },
       { label: 'Duplicate and edit', onClick: () => void duplicate(i, true) },
       { label: 'Issue invoice (no email)', onClick: () => void issue(i), disabled: i.status !== 'draft' },
-      { label: 'Email invoice (off in beta)', disabled: true },
+      { label: BETA_EMAIL_ENABLED ? 'Send invoice' : 'Send invoice (email off in beta)', onClick: () => setEmailing({ invoice: i, reminder: false }), disabled: !BETA_EMAIL_ENABLED || closed },
+      { label: BETA_EMAIL_ENABLED ? 'Send reminder' : 'Send reminder (email off in beta)', onClick: () => setEmailing({ invoice: i, reminder: true }), disabled: !BETA_EMAIL_ENABLED || closed || i.status === 'draft' },
       { label: 'Create payment link', onClick: () => setLinking(i), disabled: closed || i.status === 'draft' },
       { label: 'Copy invoice link', onClick: () => setSharing(i), disabled: closed || i.status === 'draft' },
       { label: 'Create task', onClick: () => task(i) },
@@ -430,7 +461,9 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
         </select>
         <select aria-label="Batch actions" value="" disabled={busy || sel.size === 0} onChange={(e) => void batch(e.target.value as Batch)} className={SELECT}>
           <option value="">{sel.size ? `Batch actions (${sel.size})` : 'Batch actions'}</option>
-          <option value="issue">Issue drafts (no email)</option><option value="print">Print</option><option value="void">Void</option><option value="delete">Delete drafts</option>
+          <option value="issue">Issue drafts (no email)</option>
+          <option value="send" disabled={!BETA_EMAIL_ENABLED}>{BETA_EMAIL_ENABLED ? 'Send invoices' : 'Send invoices (email off in beta)'}</option>
+          <option value="remind" disabled={!BETA_EMAIL_ENABLED}>{BETA_EMAIL_ENABLED ? 'Send reminders' : 'Send reminders (email off in beta)'}</option><option value="print">Print</option><option value="void">Void</option><option value="delete">Delete drafts</option>
         </select>
         <div className="relative ml-auto flex">
           <button type="button" className={`${A.primary} rounded-r-none`} onClick={() => setCreating({ advertiser_id: null, agreement_id: '', amount_cents: null })}>Create invoice</button>
@@ -504,8 +537,9 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
       {creating && <InvoiceDrawer advertisers={advertisers} agreements={agreements} seed={creating} onClose={() => setCreating(null)} onSaved={async () => { await reload(); setCreating(null); setErr(''); setMsg('Invoice saved.'); }} onRecordPayment={(i) => { setCreating(null); setPaying(i); }} onError={fail} />}
       {editing && <InvoiceDrawer existing={editing} advertisers={advertisers} agreements={agreements} onClose={() => setEditing(null)} onSaved={async () => { await reload(); setEditing(null); setErr(''); setMsg('Invoice saved.'); }} onRecordPayment={(i) => { setEditing(null); setPaying(i); }} onError={fail} />}
       {paying && <RecordPaymentDrawer invoices={list} advertisers={advertisers} initialInvoiceId={paying.id} onClose={() => setPaying(null)} onSaved={reload} onError={fail} />}
-      {linking && <PaymentLinkDrawer noEmail invoices={list} advertisers={advertisers} initialInvoiceId={linking.id} onClose={() => setLinking(null)} onSaved={reload} onError={fail} />}
+      {linking && <PaymentLinkDrawer noEmail={!BETA_EMAIL_ENABLED} invoices={list} advertisers={advertisers} initialInvoiceId={linking.id} onClose={() => setLinking(null)} onSaved={reload} onError={fail} />}
       {receipt && <SalesReceiptDrawer invoices={list} advertisers={advertisers} onClose={() => setReceipt(false)} onSaved={async () => { await reload(); setReceipt(false); setMsg('Sales receipt saved.'); }} onError={fail} />}
+      {emailing && <EmailInvoiceDialog invoice={emailing.invoice} reminder={emailing.reminder} daysOver={daysOver(emailing.invoice, now)} busy={busy} onClose={() => setEmailing(null)} onSend={(v) => void sendEmail(emailing.invoice, emailing.reminder, v)} />}
       {sharing && <ShareLinkDialog invoice={sharing} onClose={() => setSharing(null)} onCreated={reload} onError={fail} />}
       {activity && <ActivityPanel invoice={activity} now={now} onClose={() => setActivity(null)} onEdit={() => { const i = activity; setActivity(null); setEditing(i); }} />}
     </div>
