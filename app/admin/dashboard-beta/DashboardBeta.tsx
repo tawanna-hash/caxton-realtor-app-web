@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { A } from '@/components/anchor/ui';
 import { computeNextRun, type RecurringFrequency } from '@/lib/recurring-invoices';
-import { agingBucketForDaysPastDue, AGING_BUCKET_LABELS, type AgingBucket } from '@/lib/invoices';
+import GetPaidSection from './GetPaidSection';
 import { money, useJson, day, type Sch } from '../agreements/clients/data';
 
 type Inv = { id: string; status: string; total_cents: number; balance_cents?: number | null; amount_paid_cents?: number | null; paid_at: string | null; due_date?: string | null; number?: string | null; advertiser_name?: string | null; bill_to_name?: string | null };
@@ -23,7 +23,7 @@ const usd0 = (c: number) => `$${Math.round(c / 100).toLocaleString('en-US')}`;
 
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: string }) {
   return (
-    <div className="rounded-[10px] bg-white px-3 py-4 text-center">
+    <div className="rounded-[14px] bg-white px-4 py-5 text-center">
       <div className={`text-sm ${tone ?? 'text-[color:var(--ds-ink)]'}`}>{label}</div>
       <div className="mt-1 text-xl font-semibold text-[color:var(--ds-ink)]">{value}</div>
       {sub && <div className="text-xs text-[color:var(--ds-body)]">{sub}</div>}
@@ -31,13 +31,13 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub?:
   );
 }
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="space-y-3"><h2 className="text-lg font-medium text-[color:var(--ds-ink)]">{title}</h2>{children}</section>;
+  return <section className="flex h-full flex-col gap-3"><h2 className="text-lg font-medium text-[color:var(--ds-ink)]">{title}</h2>{children}</section>;
 }
 function Bars({ values, color = '#8C94F5', money: isMoney, legend, labels = MONTHS }: { values: number[]; color?: string; money?: boolean; legend: string; labels?: string[] }) {
   const max = Math.max(1, ...values);
   const W = 520, H = 150, pad = 28, bw = (W - pad) / 12;
   return (
-    <div className="rounded-[10px] bg-white p-4">
+    <div className="flex-1 rounded-[14px] bg-white p-5">
       <svg viewBox={`0 0 ${W} ${H + 24}`} role="img" aria-label={legend} className="w-full">
         {[0, 0.5, 1].map((t) => <g key={t}><line x1={pad} x2={W} y1={H - H * t} y2={H - H * t} stroke="#ECECF3" /><text x={pad - 4} y={H - H * t + 3} fontSize="9" textAnchor="end" fill="#6B6A7C">{isMoney ? usd0(max * t) : Math.round(max * t * 10) / 10}</text></g>)}
         {values.map((v, i) => <g key={i}><rect x={pad + i * bw + bw * 0.2} width={bw * 0.6} y={H - (v / max) * H} height={(v / max) * H} rx="3" fill={color} /><text x={pad + i * bw + bw / 2} y={H + 14} fontSize="9" textAnchor="middle" fill="#6B6A7C">{labels[i]}</text></g>)}
@@ -99,23 +99,7 @@ export default function DashboardBeta() {
     const days = agr.data.filter((a) => a.signed_at && a.created_at).map((a) => (Date.parse(a.signed_at!) - Date.parse(a.created_at!)) / 86400000).sort((x, y) => x - y);
     const median = days.length ? Math.max(0, Math.round(days.length % 2 ? days[(days.length - 1) / 2] : (days[days.length / 2 - 1] + days[days.length / 2]) / 2)) : 0;
 
-    const ORDER: AgingBucket[] = ['current', 'd1_30', 'd31_60', 'd61_90', 'd90_plus'];
-    const aging = Object.fromEntries(ORDER.map((b) => [b, 0])) as Record<AgingBucket, number>;
-    for (const i of unpaid) aging[agingBucketForDaysPastDue(i.due_date ? age(i) : 0)] += bal(i);
-    const agingTotal = ORDER.reduce((n, b) => n + aging[b], 0);
-    const notPaidTotal = unpaid.reduce((n, i) => n + bal(i), 0);
-    const paidMonth = live.filter((i) => i.status === 'paid' && i.paid_at?.startsWith(monthKey));
-    const paidMonthTotal = paidMonth.reduce((n, i) => n + i.total_cents, 0);
-    const deposits = pay.data.filter((p) => p.batch_date.startsWith(monthKey) && p.status !== 'canceled' && p.status !== 'failed');
-    const depositedTotal = deposits.reduce((n, p) => n + p.amount_cents, 0);
-    const partnerMap = new Map<string, { name: string; count: number; total: number; over: number }>();
-    for (const i of unpaid) { const k = i.advertiser_name ?? i.bill_to_name ?? 'Unassigned'; const r = partnerMap.get(k) ?? { name: k, count: 0, total: 0, over: 0 }; r.count++; r.total += bal(i); if (overdue.includes(i)) r.over += bal(i); partnerMap.set(k, r); }
-    const partners = [...partnerMap.values()].sort((a, b) => b.over - a.over || b.total - a.total);
-    const incomeBy: number[] = []; const incomeLabels: string[] = [];
-    for (let n = 11; n >= 0; n--) { const dt = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - n, 1)); const key = dt.toISOString().slice(0, 7); incomeLabels.push(MONTHS[dt.getUTCMonth()]); incomeBy.push(live.filter((i) => i.status === 'paid' && i.paid_at?.startsWith(key)).reduce((t, i) => t + (i.amount_paid_cents ?? i.total_cents), 0)); }
-    const unpaidList = [...unpaid].sort((a, b) => String(a.due_date ?? '9999').localeCompare(String(b.due_date ?? '9999'))).slice(0, 8);
-    const paidList = live.filter((i) => i.status === 'paid').sort((a, b) => String(b.paid_at ?? '').localeCompare(String(a.paid_at ?? ''))).slice(0, 8);
-    return { ORDER, aging, agingTotal, notPaidTotal, paidMonth, paidMonthTotal, deposits, depositedTotal, partners, incomeBy, incomeLabels, unpaidList, paidList, unpaid, current, overdue, bal, age, buckets, activeA, mrr, awaiting, activeByMonth, paidOut, inTransit, earned: sum(earnedBy), expected: sum(expectedBy), expectedBy, sentThisYear, signedBy, median };
+    return { unpaid, current, overdue, bal, age, buckets, activeA, mrr, awaiting, activeByMonth, paidOut, inTransit, earned: sum(earnedBy), expected: sum(expectedBy), expectedBy, sentThisYear, signedBy, median };
   }, [inv.data, agr.data, board.data, pay.data, sch.data, today, year]);
 
   const steps: Array<{ title: string; done: boolean; body: string; href: string; cta: string }> = [
@@ -142,7 +126,7 @@ export default function DashboardBeta() {
             <h2 className="text-lg font-medium text-[color:var(--ds-ink)]">Let&rsquo;s get you up and running</h2>
             <div className="h-2 rounded-full bg-[#DAD3F7]"><div className="h-2 rounded-full bg-[color:var(--ds-primary)]" style={{ width: `${(doneCount / steps.length) * 100}%` }} /></div>
             {steps.map((s, i) => (
-              <div key={s.title} className="rounded-[10px] bg-white">
+              <div key={s.title} className="rounded-[14px] bg-white">
                 <button type="button" onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i} className="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }}>
                   <span className={`flex h-5 w-5 items-center justify-center rounded-full border-2 border-[color:var(--ds-primary)] text-[10px] ${s.done ? 'bg-[color:var(--ds-primary)] text-white' : ''}`}>{s.done ? '✓' : ''}</span>
                   <span className="flex-1">{s.title}</span>
@@ -152,20 +136,20 @@ export default function DashboardBeta() {
               </div>
             ))}
           </div>
-          <div className="h-fit space-y-1 rounded-[10px] bg-white p-4 text-sm">
+          <div className="h-fit space-y-1 rounded-[14px] bg-white p-4 text-sm">
             <p className="mb-2 font-medium text-[color:var(--ds-ink)]">Shortcuts</p>
             {([['Clients (Beta)', '/admin/agreements/clients'], ['Billing (Beta)', '/admin/billing-hub'], ['Services (Beta)', '/admin/services-beta'], ['Reports (Beta)', '/admin/reports-beta'], ['Integrations (Beta)', '/admin/integrations-beta']] as const).map(([l, h]) => <Link key={h} href={h} className="block rounded-full px-2 py-1.5 text-[color:var(--ds-primary)] hover:bg-[color:var(--ds-selected)]">{l}</Link>)}
           </div>
         </div>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid items-stretch gap-6 lg:grid-cols-2">
         <Panel title="Invoices">
           <div className="grid grid-cols-2 gap-3">
             <Stat label="Awaiting payment" tone="text-teal-700" value={usd0(d.current.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.current.length} invoice${d.current.length === 1 ? '' : 's'}`} />
             <Stat label="Require attention" value={usd0(d.overdue.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.overdue.length} invoice${d.overdue.length === 1 ? '' : 's'}`} />
           </div>
-          <div className="min-h-[200px] rounded-[10px] bg-white p-4">
+          <div className="min-h-[200px] flex-1 rounded-[14px] bg-white p-5">
             <div className="mb-3 h-3 rounded-full bg-[#BFE6F2]" />
             <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Type</th><th className="py-2 text-right font-normal">Invoices</th><th className="py-2 text-right font-normal">Amount</th></tr></thead>
               <tbody>{d.buckets.map(([label, test]) => { const rows = d.overdue.filter((i) => test(d.age(i))); return <tr key={label} className="border-t border-[color:var(--ds-line)]"><td className="py-2.5">{label}</td><td className="py-2.5 text-right">{rows.length}</td><td className="py-2.5 text-right">{money(rows.reduce((n, i) => n + d.bal(i), 0))}</td></tr>; })}</tbody></table>
@@ -186,7 +170,7 @@ export default function DashboardBeta() {
             <Stat label="Paid this month" value={usd0(d.paidOut)} />
             <Stat label="Processing" value={usd0(d.inTransit)} />
           </div>
-          <div className="min-h-[200px] rounded-[10px] bg-white p-4">
+          <div className="min-h-[200px] flex-1 rounded-[14px] bg-white p-5">
             <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Date</th><th className="py-2 text-right font-normal">Amount</th><th className="py-2 text-right font-normal">Status</th></tr></thead>
               <tbody>{pay.data.slice(0, 5).map((p) => <tr key={p.id} className="border-t border-[color:var(--ds-line)]"><td className="py-2.5">{day(p.batch_date)}</td><td className="py-2.5 text-right">{money(p.amount_cents)}</td><td className="py-2.5 text-right"><span className="rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-xs capitalize">{p.status.replaceAll('_', ' ')}</span></td></tr>)}</tbody></table>
             {pay.data.length === 0 && <p className="py-6 text-center text-sm text-[color:var(--ds-body)]">{pay.loading ? 'Loading payouts…' : 'Here you will view your payouts'}</p>}
@@ -212,56 +196,8 @@ export default function DashboardBeta() {
         </Panel>
       </div>
 
-      <Panel title="Receivables">
-        <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
-          <div className="space-y-3 rounded-[10px] bg-white p-4">
-            <div className="flex items-baseline justify-between text-sm"><span className="font-semibold text-[color:var(--ds-ink)]">{usd0(d.notPaidTotal)} outstanding</span><span className="text-xs text-[color:var(--ds-body)]">{d.unpaid.length} unpaid invoice{d.unpaid.length === 1 ? '' : 's'}</span></div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {d.ORDER.map((b) => <div key={b}><div className="text-lg font-semibold text-[color:var(--ds-ink)]">{usd0(d.aging[b])}</div><div className="text-xs text-[color:var(--ds-body)]">{AGING_BUCKET_LABELS[b]}</div></div>)}
-            </div>
-            <div className="flex h-3 overflow-hidden rounded-full bg-[#ECECF3]" aria-label="Outstanding balance by aging bucket">
-              {d.ORDER.map((b, n) => d.aging[b] > 0 && <div key={b} title={`${AGING_BUCKET_LABELS[b]}: ${usd0(d.aging[b])}`} style={{ width: `${(d.aging[b] / d.agingTotal) * 100}%`, background: ['#8C94F5', '#F2C94C', '#F2994A', '#EB5757', '#9B1C1C'][n] }} />)}
-            </div>
-          </div>
-          <div className="space-y-3 rounded-[10px] bg-white p-4">
-            <div className="text-sm font-semibold text-[color:var(--ds-ink)]">Payments this month</div>
-            <div className="grid grid-cols-3 gap-3">
-              {([[d.notPaidTotal, d.unpaid.length, 'not paid'], [d.paidMonthTotal, d.paidMonth.length, 'paid'], [d.depositedTotal, d.deposits.length, 'deposited']] as const).map(([a, c, l]) => <div key={l}><div className="text-lg font-semibold text-[color:var(--ds-ink)]">{usd0(a)}</div><div className="text-xs text-[color:var(--ds-body)]">{c} {l}</div></div>)}
-            </div>
-            <div className="flex h-3 overflow-hidden rounded-full bg-[#ECECF3]" aria-hidden="true"><div style={{ width: `${d.notPaidTotal + d.paidMonthTotal ? (d.notPaidTotal / (d.notPaidTotal + d.paidMonthTotal)) * 100 : 0}%`, background: '#8C94F5' }} /><div className="flex-1" style={{ background: '#1B7A3D' }} /></div>
-          </div>
-        </div>
-      </Panel>
+      <GetPaidSection invoices={inv.data} payouts={pay.data} loading={inv.loading} />
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Panel title="Unpaid invoices">
-          <div className="rounded-[10px] bg-white p-4">
-            <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Invoice</th><th className="py-2 font-normal">Client</th><th className="py-2 text-right font-normal">Balance</th><th className="py-2 font-normal pl-3">Due</th></tr></thead>
-              <tbody>{d.unpaidList.map((i) => <tr key={i.id} className="border-t border-[color:var(--ds-line)]"><td className="py-2.5">{i.number ?? 'Draft'}</td><td className="py-2.5">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td><td className="py-2.5 text-right">{money(d.bal(i))}</td><td className={`py-2.5 pl-3 ${i.due_date && i.due_date.slice(0, 10) < today ? 'text-[#B42318]' : ''}`}>{i.due_date ? day(i.due_date) : '—'}</td></tr>)}</tbody></table>
-            {d.unpaidList.length === 0 && <p className="py-6 text-center text-sm text-[color:var(--ds-body)]">{inv.loading ? 'Loading invoices…' : 'No unpaid invoices'}</p>}
-            <Link href="/admin/billing-hub" className="mt-3 inline-block text-xs text-[color:var(--ds-primary)]">View all invoices</Link>
-          </div>
-        </Panel>
-        <Panel title="Paid invoices">
-          <div className="rounded-[10px] bg-white p-4">
-            <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Invoice</th><th className="py-2 font-normal">Client</th><th className="py-2 text-right font-normal">Amount</th><th className="py-2 font-normal pl-3">Paid on</th></tr></thead>
-              <tbody>{d.paidList.map((i) => <tr key={i.id} className="border-t border-[color:var(--ds-line)]"><td className="py-2.5">{i.number ?? 'Draft'}</td><td className="py-2.5">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td><td className="py-2.5 text-right">{money(i.amount_paid_cents ?? i.total_cents)}</td><td className="py-2.5 pl-3">{i.paid_at ? day(i.paid_at) : '—'}</td></tr>)}</tbody></table>
-            {d.paidList.length === 0 && <p className="py-6 text-center text-sm text-[color:var(--ds-body)]">{inv.loading ? 'Loading invoices…' : 'No paid invoices yet'}</p>}
-            <Link href="/admin/billing-hub" className="mt-3 inline-block text-xs text-[color:var(--ds-primary)]">View all invoices</Link>
-          </div>
-        </Panel>
-        <Panel title="Outstanding by partner">
-          <div className="rounded-[10px] bg-white p-4">
-            <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Partner</th><th className="py-2 text-right font-normal">Invoices</th><th className="py-2 text-right font-normal">Overdue</th><th className="py-2 text-right font-normal">Outstanding</th></tr></thead>
-              <tbody>{d.partners.slice(0, 8).map((p) => <tr key={p.name} className="border-t border-[color:var(--ds-line)]"><td className="py-2.5">{p.name}</td><td className="py-2.5 text-right">{p.count}</td><td className={`py-2.5 text-right ${p.over ? 'text-[#B42318]' : ''}`}>{money(p.over)}</td><td className="py-2.5 text-right">{money(p.total)}</td></tr>)}</tbody></table>
-            {d.partners.length === 0 && <p className="py-6 text-center text-sm text-[color:var(--ds-body)]">{inv.loading ? 'Loading invoices…' : 'Nothing outstanding'}</p>}
-            <Link href="/admin/billing-hub" className="mt-3 inline-block text-xs text-[color:var(--ds-primary)]">Open Billing</Link>
-          </div>
-        </Panel>
-        <Panel title="Income over time">
-          <Bars values={d.incomeBy} labels={d.incomeLabels} color="#1B7A3D" money legend="Paid invoices, last 12 months" />
-        </Panel>
-      </div>
       {(inv.error || agr.error) && <p className={A.error}>Some dashboard numbers could not load: {inv.error || agr.error}</p>}
     </div>
   );
