@@ -3,6 +3,7 @@
 // POST — Send agreement notification email with signing link.
 // Auth: admin required.
 
+import { isAdvertiserInactive } from '@/lib/server/inactive-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
@@ -40,6 +41,9 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     const rows = await sql`SELECT * FROM agreements WHERE id = ${id}` as unknown as Agreement[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const ag = rows[0];
+    if (await isAdvertiserInactive(ag.advertiser_id)) {
+      return NextResponse.json({ error: 'This client account is inactive. No email was sent.' }, { status: 409 });
+    }
 
     // Test-mode: recipient is always the Realty News Now monitored test inbox.
     // Never touches agreement.status / sent_to_email.

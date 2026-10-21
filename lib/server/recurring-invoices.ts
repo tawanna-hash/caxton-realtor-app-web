@@ -4,6 +4,7 @@
 // (app/api/cron/recurring-invoices/route.ts) and can also be invoked
 // on-demand from the admin UI ("Generate now").
 
+import { isAdvertiserInactive } from '@/lib/server/inactive-guard';
 import type { PoolClient } from '@neondatabase/serverless';
 import { getSql } from '@/lib/db';
 import type { InvoiceLineItem } from '@/lib/invoices';
@@ -99,6 +100,7 @@ async function deliverAutoSendEmail(
 ): Promise<void> {
   if (!result.invoice_id || !schedule.auto_send) return;
   try {
+    if (await isAdvertiserInactive(schedule.advertiser_id)) { result.email_status = 'skipped'; return; }
     const publication = await publicationForAdvertiserEmail(schedule.advertiser_id);
     const outcome = await sendInvoiceEmail({
       invoiceId: result.invoice_id,

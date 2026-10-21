@@ -12,6 +12,7 @@
 //
 // Audit log entry appended on success.
 
+import { isAdvertiserInactive } from '@/lib/server/inactive-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
@@ -65,6 +66,9 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
     const ag = rows[0];
+    if (await isAdvertiserInactive(ag.advertiser_id)) {
+      return NextResponse.json({ error: 'This client account is inactive. No email was sent.' }, { status: 409 });
+    }
 
     const recipient =
       (typeof body.to === 'string' && body.to.trim()) ||

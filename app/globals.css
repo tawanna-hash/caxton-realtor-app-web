@@ -2451,3 +2451,18 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   line-height: 1.5;
 }
 textarea.anchor-input { border-radius: 14px !important; padding: 0.75rem 1rem !important; line-height: 1.5; }
+
+/* Beta mobile: tables stack as individual rows, tabs wrap, nothing slides sideways. */
+@media (max-width: 767px) {
+  [data-admin-ui='true'] :is(div, section):has(> table) { overflow-x: visible !important; }
+  [data-admin-ui='true'] table { min-width: 0 !important; width: 100% !important; display: block; border-spacing: 0 !important; }
+  [data-admin-ui='true'] table thead { display: none; }
+  [data-admin-ui='true'] table tbody { display: block; }
+  [data-admin-ui='true'] table tbody tr { display: block; background: #fff; border-radius: 10px; margin-bottom: 8px; padding: 6px 12px; }
+  [data-admin-ui='true'] table tbody td { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0 !important; border: 0 !important; text-align: right !important; width: auto !important; min-width: 0; }
+  [data-admin-ui='true'] table tbody td::before { content: attr(data-label); flex: none; max-width: 45%; text-align: left; font-size: 12px; color: #6b7280; }
+  [data-admin-ui='true'] table tbody td[data-label='']::before { content: none; }
+  [data-admin-ui='true'] table tbody td[colspan] { display: block; text-align: left !important; }
+  [data-admin-ui='true'] :is(div, nav):has(> .anchor-tab) { flex-wrap: wrap !important; overflow-x: visible !important; column-gap: 20px; }
+  [data-admin-ui='true'] .anchor-tab { white-space: nowrap; }
+}

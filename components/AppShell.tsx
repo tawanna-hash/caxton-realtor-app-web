@@ -17,6 +17,7 @@
 //
 // Replaces: SiteHeader.tsx, HamburgerMenu.tsx, admin layout inline nav.
 
+import MobileTables from '@/components/anchor/MobileTables';
 import AdminGlobalSearch from '@/components/admin/AdminGlobalSearch';
 import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -527,6 +528,7 @@ export default function AppShell({
           data-admin-ui={isAdmin ? 'true' : undefined}
         >
           {isAdmin && <AdminQuickLinks />}
+          {isAdmin && <MobileTables />}
           <SwipeBackShell area={isAdmin ? 'admin' : 'public'}>
             {isAdmin && !pathname?.includes('/hotspots') ? (
               /* Mint kit: page content sits in one rounded white panel on the lavender canvas. */
