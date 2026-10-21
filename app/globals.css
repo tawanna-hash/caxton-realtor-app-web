@@ -2385,3 +2385,20 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   color: var(--ds-ink) !important;
   font-weight: 600;
 }
+
+/* ONE pill rule for every Beta (Anchor-style) page: dropdowns, text inputs,
+   buttons and chips are fully rounded (border-radius: 9999px). Multi-line
+   textareas get a large radius instead. Checkboxes, radios, switches and
+   underline tabs are excluded. Beats the generic admin field radius. */
+[data-admin-ui='true'] [data-anchor-ui='true'] select,
+[data-admin-ui='true'] [data-anchor-ui='true'] input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']),
+[data-admin-ui='true'] [data-anchor-ui='true'] button:not([role='tab']):not([role='switch']):not([role='checkbox']):not(.anchor-toggle):not([data-no-pill]),
+[data-admin-ui='true'] [data-anchor-ui='true'] a[role='button'],
+[data-admin-ui='true'] [data-anchor-ui='true'] .anchor-input,
+[data-admin-ui='true'] [data-anchor-ui='true'] .anchor-outline,
+[data-admin-ui='true'] [data-anchor-ui='true'] .anchor-primary,
+[data-admin-ui='true'] [data-anchor-ui='true'] .anchor-chip {
+  border-radius: 9999px !important;
+}
+[data-admin-ui='true'] [data-anchor-ui='true'] textarea { border-radius: 20px !important; }
+[data-admin-ui='true'] [data-anchor-ui='true'] select { padding-left: 1.25rem; }

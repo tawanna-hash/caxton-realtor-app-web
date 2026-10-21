@@ -32,12 +32,12 @@ const NOT_DRAFT = (i: Inv) => i.status !== 'draft';
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="relative block">
-      <span className="absolute -top-2 left-3 z-10 bg-[#F3F4F7] px-1 text-[11px] text-[color:var(--ds-body)]">{label}</span>
+      <span className="absolute -top-2 left-5 z-10 bg-[#F3F4F7] px-1 text-[11px] text-[color:var(--ds-body)]">{label}</span>
       {children}
     </label>
   );
 }
-const selectCls = 'w-full appearance-none rounded-[6px] border border-[color:var(--ds-ink)]/60 bg-transparent px-3 py-3.5 pr-9 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
+const selectCls = 'w-full appearance-none rounded-full border border-[color:var(--ds-ink)]/60 bg-transparent px-5 py-3.5 pr-10 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
 const Caret = () => <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[color:var(--ds-ink)]">&#9660;</span>;
 
 export default function BillingHub() {
