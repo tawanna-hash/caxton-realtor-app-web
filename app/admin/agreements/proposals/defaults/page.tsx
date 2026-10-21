@@ -1,5 +1,5 @@
-import DefaultsPanel from '../../renewals-v2/DefaultsPanel';
+import { redirect } from 'next/navigation';
 
-export default function ProposalDefaultsPage() {
-  return <DefaultsPanel />;
+export default function Page() {
+  redirect('/admin/agreements/renewals-v2?tab=defaults');
 }

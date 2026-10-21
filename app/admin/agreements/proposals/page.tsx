@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function ProposalsIndex() {
-  redirect('/admin/agreements/proposals/sent');
+  redirect('/admin/agreements/renewals-v2?tab=sent');
 }

@@ -1,5 +1,5 @@
-import SentClient from './SentClient';
+import { redirect } from 'next/navigation';
 
-export default function SentPage() {
-  return <SentClient />;
+export default function Page() {
+  redirect('/admin/agreements/renewals-v2?tab=sent');
 }

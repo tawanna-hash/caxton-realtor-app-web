@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { A } from '@/components/anchor/ui';
 
 export const NEW_PROPOSAL = '/admin/agreements/renewals-v2/new';
-export const TEMPLATES = '/admin/agreements/proposals/templates';
+export const TEMPLATES = '/admin/agreements/renewals-v2?tab=templates';
 
 export function relTime(iso: string): string {
   const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));

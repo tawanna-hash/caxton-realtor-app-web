@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import SentClient from '../proposals/sent/SentClient';
+import BuilderList from '../proposals/BuilderList';
 import RenewalsV2Client from './RenewalsV2Client';
 import NewPartnersPanel from './NewPartnersPanel';
 import StatusBoard from './StatusBoard';
@@ -9,15 +12,21 @@ import TemplatesPanel from './TemplatesPanel';
 import DefaultsPanel from './DefaultsPanel';
 import { A } from '@/components/anchor/ui';
 
-type Tab = 'board' | 'renewals' | 'templates' | 'defaults';
+type Tab = 'board' | 'sent' | 'drafts' | 'archived' | 'renewals' | 'templates' | 'defaults';
 const TABS: Array<[Tab, string]> = [
   ['board', 'Agreements'],
+  ['sent', 'Sent'],
+  ['drafts', 'Drafts'],
+  ['archived', 'Archived'],
   ['renewals', 'Renewals'],
   ['templates', 'Templates'],
   ['defaults', 'Default settings'],
 ];
 const SUB: Record<Tab, string> = {
   board: 'Create and send new partner agreements, approve check requests, and track every agreement.',
+  sent: 'Agreements sent to partners, with where each one stands.',
+  drafts: 'Agreements you started but have not sent.',
+  archived: 'Agreements you set aside.',
   renewals: 'One-tap renewals, sent one at a time or as a monthly batch.',
   templates: 'Saved ad sizes, frequencies and rates for new agreements.',
   defaults: 'Set the default values of new agreements you create.',
@@ -43,7 +52,8 @@ function Collapsible({ title, children }: { title: string; children: React.React
 }
 
 export default function AgreementsBeta() {
-  const [tab, setTab] = useState<Tab>('board');
+  const want = useSearchParams()?.get('tab') as Tab | null;
+  const [tab, setTab] = useState<Tab>(want && TABS.some(([k]) => k === want) ? want : 'board');
   return (
     <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
       <div>
@@ -70,8 +80,16 @@ export default function AgreementsBeta() {
           <Collapsible title="Pipeline: drafts, sent and signed"><StatusBoard /></Collapsible>
         </div>
       )}
+      {tab === 'sent' && <SentClient />}
+      {tab === 'drafts' && <BuilderList kind="draft" />}
+      {tab === 'archived' && <BuilderList kind="archived" />}
       {tab === 'renewals' && <RenewalsV2Client />}
-      {tab === 'templates' && <TemplatesPanel />}
+      {tab === 'templates' && (
+        <div className="space-y-6">
+          <Collapsible title="Agreement templates"><BuilderList kind="template" /></Collapsible>
+          <Collapsible title="Saved rates"><TemplatesPanel /></Collapsible>
+        </div>
+      )}
       {tab === 'defaults' && <DefaultsPanel />}
     </div>
   );

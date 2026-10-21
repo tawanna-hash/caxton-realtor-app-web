@@ -164,7 +164,7 @@ export default function SignedAgreements() {
       {dErr && <div className={A.error}>{dErr}</div>}
       <div className="flex flex-wrap items-center justify-end gap-3">
         <Menu label="More Actions" items={[{ label: 'Import agreements', onClick: () => setImp(true) }, { label: 'Export agreements', onClick: () => exportCsv(rows) }]} />
-        <Menu primary label="Create agreement" items={[{ label: 'Use a template', href: '/admin/agreements/proposals/templates' }, { label: 'Start from scratch', onClick: () => setDrawer('new') }, { label: 'New quote', onClick: () => setQuote(true) }, { label: 'Import with AI', disabled: true }]} />
+        <Menu primary label="Create agreement" items={[{ label: 'Use a template', href: '/admin/agreements/renewals-v2?tab=templates' }, { label: 'Start from scratch', onClick: () => setDrawer('new') }, { label: 'New quote', onClick: () => setQuote(true) }, { label: 'Import with AI', disabled: true }]} />
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search agreements" />

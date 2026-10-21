@@ -1,5 +1,5 @@
-import BuilderList from '../BuilderList';
+import { redirect } from 'next/navigation';
 
 export default function Page() {
-  return <BuilderList kind="template" />;
+  redirect('/admin/agreements/renewals-v2?tab=templates');
 }

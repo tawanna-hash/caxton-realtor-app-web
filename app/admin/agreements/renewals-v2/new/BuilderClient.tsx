@@ -612,7 +612,7 @@ export default function BuilderClient() {
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Agreement sent">
           <div className="w-full max-w-4xl overflow-hidden rounded-[14px] bg-white shadow-xl">
             <div className="relative px-4 py-8 text-center sm:px-8">
-              <button type="button" aria-label="Close" onClick={() => router.push('/admin/agreements/proposals/sent')} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
+              <button type="button" aria-label="Close" onClick={() => router.push('/admin/agreements/renewals-v2?tab=sent')} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
               <svg className="mx-auto" width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true"><circle cx="32" cy="32" r="22" stroke="#047857" strokeWidth="4" opacity=".7" /><path d="M22 33l7 7 14-15" stroke="#047857" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /></svg>
               <h2 className="mt-4 text-2xl font-semibold text-[color:var(--ds-ink)]">Agreement Sent</h2>
               <p className="mt-1 text-base text-[color:var(--ds-ink)]">Your agreement was emailed to {sentInfo.to}</p>
@@ -622,7 +622,7 @@ export default function BuilderClient() {
               <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   { t: 'Share', d: 'Use a different channel to share this agreement', b: copied ? 'Link Copied' : 'Copy Link', disabled: !sentInfo.link, go: async () => { if (sentInfo.link) { await navigator.clipboard.writeText(sentInfo.link); setCopied(true); } } },
-                  { t: 'Monitor', d: 'Keep track of the approval process', b: 'Review Progress', go: () => router.push('/admin/agreements/proposals/sent') },
+                  { t: 'Monitor', d: 'Keep track of the approval process', b: 'Review Progress', go: () => router.push('/admin/agreements/renewals-v2?tab=sent') },
                   { t: 'Create Another Agreement', d: 'Ready to send another one? Go for it', b: 'Create Agreement', go: () => { window.location.href = '/admin/agreements/renewals-v2/new'; } },
                   { t: 'Back To My Dashboard', d: 'Go back to your dashboard and continue working', b: 'Go To Dashboard', go: () => router.push('/admin') },
                 ].map((c) => (
