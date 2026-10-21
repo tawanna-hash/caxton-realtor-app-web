@@ -856,6 +856,7 @@ const PREVIEW_STEPS = ['Introduction', 'Review services', 'Review terms of servi
 function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: BuilderDoc; intro: string; preparedFor: string; total: number; onClose: () => void }) {
   const [step, setStep] = useState(-1);
   const [mobile, setMobile] = useState(false);
+  const brand = doc.services[0]?.publication === 'san_antonio' ? 'Newsline San Antonio' : 'RealtyLine';
   const pay = doc.payment ?? DEFAULT_PAYMENT;
   const methods = [pay.card ? 'credit card' : null, pay.check ? 'check' : null, pay.bank_now ? 'bank (ACH) now' : null, pay.bank_invoice ? 'bank (ACH) on invoices' : null].filter(Boolean).join(' or ');
   const due = pay.due_days === 0 ? 'Payment is due upon receipt of invoice.' : pay.due_days != null ? `Payment is due ${pay.due_days} ${pay.due_days === 1 ? 'day' : 'days'} after each invoice is issued.` : 'Payment is due on the account default schedule after each invoice is issued.';
@@ -914,13 +915,13 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
               <div className="p-10">
                 <h2 className="text-3xl font-bold text-[color:var(--ds-ink)]">{doc.name || 'Agreement for review'}</h2>
                 <h3 className="mt-6 text-xl font-semibold text-[color:var(--ds-ink)]">Prepared for {preparedFor}</h3>
-                <p className="mt-2 text-sm text-[color:var(--ds-body)]">Realty News Now has sent you this agreement for your review and approval.</p>
+                <p className="mt-2 text-sm text-[color:var(--ds-body)]">{brand} has sent you this agreement for your review and approval.</p>
                 <button type="button" className={`${A.primary} mt-8`} onClick={() => setStep(0)}>Get started →</button>
               </div>
             ) : (
               <div className={`flex flex-1 ${mobile ? 'flex-col' : ''}`}>
                 <nav className={`${mobile ? 'border-b' : 'w-60 shrink-0 border-r'} border-[color:var(--ds-line)] bg-white p-5 text-sm`} aria-label="Agreement steps">
-                  <div className="mb-4 font-semibold text-[color:var(--ds-ink)]">Realty News Now</div>
+                  <div className="mb-4 font-semibold text-[color:var(--ds-ink)]">{brand}</div>
                   <ul className={mobile ? 'flex flex-wrap gap-2' : 'space-y-3'}>
                     {PREVIEW_STEPS.map((l, i) => <li key={l}><button type="button" onClick={() => setStep(i)} className={`text-left ${i === step ? 'font-semibold text-[color:var(--ds-primary)]' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0, background: 'transparent' }}>{l}</button></li>)}
                   </ul>
