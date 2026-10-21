@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export default async function ClientsLayout({ children }: { children: React.ReactNode }) {
   if (!(await getCurrentAdmin())) redirect('/admin/login');
   return (
-    <div className="mx-auto max-w-6xl space-y-5 rounded-[14px] bg-[color:var(--ds-page)] p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
+    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
       <ClientsNav />
       {children}
     </div>

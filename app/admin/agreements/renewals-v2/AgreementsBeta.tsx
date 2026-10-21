@@ -65,7 +65,7 @@ function Collapsible({ title, children }: { title: string; children: React.React
 export default function AgreementsBeta() {
   const [tab, setTab] = useState<Tab>('board');
   return (
-    <div className="mx-auto max-w-6xl space-y-5 rounded-[14px] bg-[color:var(--ds-page)] p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
+    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
       <div>
         <h1 className={A.title}>Agreements <span className="ml-1 rounded-full border border-[color:var(--ds-primary)] px-2 py-0.5 align-middle text-xs font-medium text-[color:var(--ds-primary)]">Beta</span></h1>
         <p className={A.subtitle}>{SUB[tab]}</p>
