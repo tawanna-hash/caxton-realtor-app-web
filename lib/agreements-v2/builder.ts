@@ -36,9 +36,9 @@ async function ensure(sql: Sql) {
   ready = true;
 }
 
-export type DraftRow = { id: string; kind: 'draft' | 'template'; name: string; updated_at: string };
+export type DraftRow = { id: string; kind: 'draft' | 'template' | 'archived'; name: string; updated_at: string };
 
-export async function listDrafts(kind: 'draft' | 'template', sql: Sql = getSql()): Promise<DraftRow[]> {
+export async function listDrafts(kind: 'draft' | 'template' | 'archived', sql: Sql = getSql()): Promise<DraftRow[]> {
   await ensure(sql);
   return await sql`SELECT id, kind, name, updated_at FROM agreements_v2_builder_drafts WHERE kind = ${kind} ORDER BY updated_at DESC LIMIT 100` as unknown as DraftRow[];
 }
@@ -58,6 +58,21 @@ export async function saveDraft(input: { id?: string | null; kind: 'draft' | 'te
   }
   const rows = await sql`INSERT INTO agreements_v2_builder_drafts (kind, name, doc) VALUES (${input.kind}, ${name}, ${JSON.stringify(input.doc)}::jsonb) RETURNING id` as unknown as Array<{ id: string }>;
   return rows[0].id;
+}
+
+/** Move a draft between 'draft' and 'archived'. Templates are left alone. */
+export async function setDraftKind(id: string, kind: 'draft' | 'archived', sql: Sql = getSql()): Promise<void> {
+  await ensure(sql);
+  const from = kind === 'archived' ? 'draft' : 'archived';
+  await sql`UPDATE agreements_v2_builder_drafts SET kind = ${kind}, updated_at = now() WHERE id = ${id} AND kind = ${from}`;
+}
+
+export async function duplicateDraft(id: string, sql: Sql = getSql()): Promise<string | null> {
+  await ensure(sql);
+  const rows = await sql`INSERT INTO agreements_v2_builder_drafts (kind, name, doc)
+    SELECT CASE WHEN kind = 'template' THEN 'template' ELSE 'draft' END, CASE WHEN name = '' THEN '' ELSE name || ' copy' END, doc
+    FROM agreements_v2_builder_drafts WHERE id = ${id} RETURNING id` as unknown as Array<{ id: string }>;
+  return rows[0]?.id ?? null;
 }
 
 export async function deleteDraft(id: string, sql: Sql = getSql()): Promise<void> {

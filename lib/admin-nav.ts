@@ -56,6 +56,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
       { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
       { label: 'Agreements (Beta)', href: '/admin/agreements/renewals-v2', description: 'One-tap renewals and new-partner agreements' },
+      { label: 'Proposals (Beta)', href: '/admin/agreements/proposals', description: 'Sent, drafts, archived, templates and defaults' },
       { label: 'Media Kit',    href: '/admin/ads/media-kit',   description: '2026 packages, rates & deadlines' },
     ],
   },
