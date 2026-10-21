@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import SortCaret from '@/components/anchor/SortCaret';
 
 type Val = string | number | null | undefined;
 export type SortCol<T> = { key?: string; label: React.ReactNode; className?: string; get?: (r: T) => Val };
@@ -35,7 +36,7 @@ export default function SortTable<T>({ rows, cols, className, offset = 0, limit,
               <th key={i} className={c.className} aria-sort={on ? (s!.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
                 {c.get ? (
                   <button type="button" onClick={() => setS(on ? { i, dir: s!.dir === 'asc' ? 'desc' : 'asc' } : { i, dir: 'asc' })} style={{ border: 0, background: 'transparent', padding: 0 }} className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--ds-body)]">
-                    {c.label}<span aria-hidden="true" className={on ? 'text-[color:var(--ds-ink)]' : 'opacity-40'}>{on && s!.dir === 'desc' ? '▾' : '▴'}</span>
+                    {c.label}<SortCaret dir={on ? s!.dir : undefined} />
                   </button>
                 ) : c.label}
               </th>

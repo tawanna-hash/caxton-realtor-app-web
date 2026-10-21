@@ -12,6 +12,7 @@ import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { A, FilterChip, RowMenu, SearchBox } from '@/components/anchor/ui';
 import { computeNextRun, type RecurringFrequency } from '@/lib/recurring-invoices';
 import { day, money, useJson, GROUP_LABEL, groupOf, marketsOf, type Adv, type Inv, type Sch } from '../agreements/clients/data';
+import SortCaret from '@/components/anchor/SortCaret';
 
 type AuditEntry = { event: string; timestamp: string; user_email?: string; details?: string };
 type Agr = {
@@ -304,7 +305,7 @@ function InvoicesTab({ client, invoices, agreements }: { client: Adv; invoices: 
   const info = (i: FullInv) => (i.status === 'paid' ? 'Paid in full' : i.status === 'void' ? 'Voided' : !cardOf(i) ? 'Missing payment method' : 'Awaiting payment');
   const rows = invoices.filter((i) => i.status !== 'draft' || true).filter((i) => (st.length === 0 || st.includes(i.status)) && (!q.trim() || (i.number ?? '').toLowerCase().includes(q.trim().toLowerCase())) && (!from || (i.issue_date ?? '') >= from) && (!to || (i.issue_date ?? '') <= to))
     .sort((a, b) => { const v = (i: FullInv) => (sort.k === 'number' ? i.number ?? '' : sort.k === 'issue' ? i.issue_date ?? '' : sort.k === 'due' ? i.due_date ?? '' : String(i.total_cents).padStart(12, '0')); return sort.dir * v(a).localeCompare(v(b)); });
-  const th = (k: typeof sort.k, l: string, right = false) => <th className={right ? 'text-right' : ''}><button type="button" style={{ border: 0, background: 'transparent', padding: 0 }} className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--ds-body)]" onClick={() => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : 1 }))}>{l}<span aria-hidden="true" className={sort.k === k ? 'text-[color:var(--ds-ink)]' : 'opacity-40'}>{sort.k === k && sort.dir === -1 ? '▾' : '▴'}</span></button></th>;
+  const th = (k: typeof sort.k, l: string, right = false) => <th className={right ? 'text-right' : ''}><button type="button" style={{ border: 0, background: 'transparent', padding: 0 }} className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--ds-body)]" onClick={() => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : 1 }))}>{l}<SortCaret dir={sort.k === k ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} /></button></th>;
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">

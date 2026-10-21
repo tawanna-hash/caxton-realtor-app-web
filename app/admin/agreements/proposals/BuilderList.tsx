@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { A, RowMenu, SearchBox, type MenuItem } from '@/components/anchor/ui';
 import { CreateProposal, EmptyPanel, NEW_PROPOSAL, PageHeader, checkbox, relTime, stamp } from './shared';
+import SortCaret from '@/components/anchor/SortCaret';
 
 type Row = { id: string; name: string; updated_at: string };
 export type ListKind = 'draft' | 'archived' | 'template';
@@ -118,7 +119,7 @@ export default function BuilderList({ kind }: { kind: ListKind }) {
                 <tr>
                   <th className="w-10"><input type="checkbox" className={checkbox} aria-label="Select all" checked={allOn} onChange={() => setSel(allOn ? [] : shown.map((r) => r.id))} /></th>
                   <th>{cfg.nameCol}</th>
-                  <th><button type="button" onClick={() => setDesc((d) => !d)} style={{ border: 0, background: 'transparent', padding: 0 }} className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--ds-body)]" aria-label={`Sort by ${cfg.dateCol}`}>{cfg.dateCol}<span aria-hidden="true">{desc ? '▾' : '▴'}</span></button></th>
+                  <th><button type="button" onClick={() => setDesc((d) => !d)} style={{ border: 0, background: 'transparent', padding: 0 }} className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--ds-body)]" aria-label={`Sort by ${cfg.dateCol}`}>{cfg.dateCol}<SortCaret dir={desc ? 'desc' : 'asc'} /></button></th>
                   <th />
                 </tr>
               </thead>
