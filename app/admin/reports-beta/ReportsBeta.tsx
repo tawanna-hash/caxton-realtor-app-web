@@ -21,7 +21,7 @@ export const REPORTS = [
 export function ReportsIndex() {
   return (
     <div className="space-y-4">
-      <h1 className={A.title}>All Reports</h1>
+      <div><h1 className={A.title}>All Reports</h1><p className={`${A.subtitle} mt-1`}>Run and export reports on revenue, services, invoices, proposals and credit.</p></div>
       <div className="space-y-3">
         {REPORTS.map((r) => (
           <section key={r.slug} className="flex items-center justify-between gap-6 rounded-[10px] bg-white px-5 py-4">
@@ -56,8 +56,11 @@ function csv(name: string, head: string[], rows: Array<Array<string | number | n
 function Shell({ title, onExport, filters, children }: { title: string; onExport: () => void; filters?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3"><Link href="/admin/reports-beta" aria-label="Back to reports" className="text-2xl text-[color:var(--ds-ink)]">&lsaquo;</Link><h1 className={A.title}>{title}</h1></div>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3"><Link href="/admin/reports-beta" aria-label="Back to reports" className="text-2xl leading-none text-[color:var(--ds-ink)]">&lsaquo;</Link><h1 className={A.title}>{title}</h1></div>
+          <p className={`${A.subtitle} mt-1`}>{REPORTS.find((r) => title.startsWith(r.title.split(' ')[0]))?.body ?? ''}</p>
+        </div>
         <button type="button" className={A.primary} onClick={onExport}>Export</button>
       </div>
       {filters && <div className="flex flex-wrap items-center gap-3">{filters}</div>}
