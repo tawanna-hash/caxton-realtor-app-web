@@ -1,15 +1,21 @@
 'use client';
 
-import { FILTER_LABEL, type StatusFilter } from './data';
+import { FilterChip } from '@/components/anchor/ui';
+import { GROUP_OPTIONS, type Group } from './data';
 
-export default function StatusSelect({ label, value, onChange }: { label: string; value: StatusFilter; onChange: (v: StatusFilter) => void }) {
+// Anchor-style status chip. Active is selected by default and is always the
+// starting view; Prospect and Archived are one click away.
+export default function StatusSelect({ title, value, onChange }: { title: string; value: Group[]; onChange: (v: Group[]) => void }) {
+  const names = GROUP_OPTIONS.filter((o) => value.includes(o.value)).map((o) => o.label).join(', ');
+  return <FilterChip<Group> title={title} options={GROUP_OPTIONS} value={value} onApply={onChange} summary={`${title} (${names})`} />;
+}
+
+export function SortTh({ label, dir, onClick }: { label: string; dir?: 'asc' | 'desc'; onClick: () => void }) {
   return (
-    <label className="relative inline-flex items-center">
-      <span className="sr-only">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value as StatusFilter)} aria-label={label}
-        className="anchor-input rounded-full border border-[color:var(--ds-primary)] bg-white py-2 pl-4 pr-9 text-sm text-[color:var(--ds-ink)]">
-        {(Object.keys(FILTER_LABEL) as StatusFilter[]).map((k) => <option key={k} value={k}>{label} ({FILTER_LABEL[k]})</option>)}
-      </select>
-    </label>
+    <th>
+      <button type="button" onClick={onClick} style={{ border: 0, background: 'transparent', padding: 0 }} className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--ds-body)]">
+        {label}<span aria-hidden="true" className={dir ? 'text-[color:var(--ds-ink)]' : 'opacity-40'}>{dir === 'desc' ? '▾' : '▴'}</span>
+      </button>
+    </th>
   );
 }

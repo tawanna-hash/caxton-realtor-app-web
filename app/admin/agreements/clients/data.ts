@@ -35,3 +35,5 @@ export const groupOf = (status: string | null | undefined): Group => (status ===
 export const GROUP_LABEL: Record<Group, string> = { active: 'Active', prospect: 'Prospect', archived: 'Archived' };
 export type StatusFilter = Group | 'all';
 export const FILTER_LABEL: Record<StatusFilter, string> = { active: 'Active', prospect: 'Prospects', archived: 'Archived', all: 'All' };
+
+export const GROUP_OPTIONS: Array<{ value: Group; label: string }> = [{ value: 'active', label: 'Active' }, { value: 'prospect', label: 'Prospect' }, { value: 'archived', label: 'Archived' }];
