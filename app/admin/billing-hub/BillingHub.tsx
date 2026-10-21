@@ -51,6 +51,8 @@ export default function BillingHub() {
   const [tab, setTab] = useState<Tab>('hub');
   const [bill, setBill] = useState<null | { mode: 'charge' | 'credit'; seed?: { description: string; unit_cents: number } }>(null);
   const [control, setControl] = useState(false);
+  const [noPick, setNoPick] = useState(false);
+  const [bulk, setBulk] = useState(false);
   const [version, setVersion] = useState(0);
 
   const clients = useMemo(() => [...advs.data].sort((a, b) => a.name.localeCompare(b.name)), [advs.data]);
@@ -60,7 +62,7 @@ export default function BillingHub() {
     const fromUrl = Number(p.get('clientId'));
     const wanted = p.get('agreementId') ?? '';
     const t = p.get('tab'); if (TABS.some(([k]) => k === t)) setTab(t as Tab);
-    const pick = (id?: number | null) => { const c = clients.find((x) => x.id === id) ?? clients.find((x) => groupOf(x.status) === 'active') ?? clients[0]; setClientId(c.id); };
+    const pick = (id?: number | null) => { const c = clients.find((x) => x.id === id); if (c) setClientId(c.id); else setNoPick(true); };
     if (wanted && !fromUrl) {
       // Deep link from Agreements (Beta): find the agreement's client first.
       fetch('/api/admin/agreements', { credentials: 'include' }).then((r) => r.json())
@@ -88,37 +90,43 @@ export default function BillingHub() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
+      <div className="flex flex-wrap items-start justify-between gap-4 pt-2">
+        <div className={`grid min-w-0 flex-1 grid-cols-1 gap-4 ${client ? 'sm:grid-cols-2' : 'sm:max-w-[50%]'}`}>
         <Field label="Client">
           <span className="relative block">
-            <select aria-label="Client" className={selectCls} value={clientId ?? ''} onChange={(e) => { setClientId(Number(e.target.value)); setAgreementId(''); }}>
+            <select aria-label="Client" className={selectCls} value={clientId ?? ''} onChange={(e) => { setClientId(e.target.value ? Number(e.target.value) : null); setAgreementId(''); }}>
+              {clientId == null && <option value="" disabled>Select a client</option>}
               {clients.map((c) => <option key={c.id} value={c.id}>{c.name}{marketsOf(c.publication).length ? ` (${marketsOf(c.publication).join(', ')})` : ''}{groupOf(c.status) !== 'active' ? ` · ${GROUP_LABEL[groupOf(c.status)]}` : ''}</option>)}
             </select><Caret />
           </span>
         </Field>
-        <Field label="Agreement">
+        {client && <Field label="Agreement">
           <span className="relative block">
             <select aria-label="Agreement" className={selectCls} value={agreement?.id ?? ''} onChange={(e) => setAgreementId(e.target.value)}>
               {agreements.length === 0 && <option value="">No active agreement</option>}
               {agreements.map((a) => <option key={a.id} value={a.id}>Agreement · {[a.ad_size, a.start_date ? `${day(a.start_date)}${a.end_date ? ` – ${day(a.end_date)}` : ''}` : null].filter(Boolean).join(' · ') || a.id.slice(0, 8)}</option>)}
             </select><Caret />
           </span>
-        </Field>
+        </Field>}
+              </div>
+        <button type="button" onClick={() => setBulk(true)} className={A.outline}>Bill clients in bulk</button>
       </div>
+      {!client && <p className="py-24 text-center text-sm text-[color:var(--ds-ink)]">Please choose a client to start billing</p>}
+      {bulk && <BulkDialog clients={clients} onClose={() => setBulk(false)} onDone={() => setVersion((v) => v + 1)} />}
 
-      <div role="tablist" className="flex flex-wrap gap-x-8 border-b border-[color:var(--ds-line)]">
+      {client && <div role="tablist" className="flex flex-wrap gap-x-8 border-b border-[color:var(--ds-line)]">
         {TABS.map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} style={{ border: 0, borderBottom: '2px solid', background: 'transparent', borderRadius: 0 }}
             className={`-mb-px pb-3 text-[15px] ${tab === k ? 'border-[color:var(--ds-primary)] font-medium text-[color:var(--ds-ink)]' : 'border-transparent text-[color:var(--ds-body)] hover:text-[color:var(--ds-ink)]'}`}>{l}</button>
         ))}
-      </div>
+      </div>}
 
       {client && tab === 'hub' && <HubTab schedules={schedules} loading={sch.loading} onControl={() => setControl(true)} />}
       {client && tab === 'agreement' && <AgreementTab client={client} agreement={agreement ?? agreements[0] ?? null} />}
       {client && tab === 'payment' && <PaymentTab client={client} agreement={agreement ?? agreements.find((a) => a.signed_at) ?? agreements[0] ?? null} onSaved={() => setVersion((v) => v + 1)} />}
       {client && tab === 'invoices' && <InvoicesTab client={client} invoices={invoices} agreements={agreements} />}
-      {tab === 'recurring' && <RecurringPanel />}
-      {tab === 'statements' && <StatementsPanel />}
+      {client && tab === 'recurring' && <RecurringPanel />}
+      {client && tab === 'statements' && <StatementsPanel />}
       {client && tab === 'activity' && <ActivityTab invoices={invoices} agreements={agreement ? [agreement] : agreements} />}
 
       {control && <ControlDrawer onClose={() => setControl(false)} onBill={(m, seed) => { setControl(false); setBill({ mode: m, seed }); }} />}
@@ -504,6 +512,80 @@ function BillScreen({ client, agreementId, mode, seed, onClose, onDone }: { clie
           <button type="button" onClick={() => setLines((ls) => [...ls, { description: 'Credit', qty: 1, unit: '', credit: true }])} style={{ background: 'transparent', border: 0 }} className="text-sm font-medium text-[color:var(--ds-primary)]">&#8853; Add credit</button>
           {lines.length > 0 && <div className="flex justify-end text-sm text-[color:var(--ds-ink)]">Total&nbsp;<span className="font-semibold">{money(total)}</span></div>}
           {err && <p className="text-sm text-red-700">{err}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Bill clients in bulk ---------------- */
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = []; let row: string[] = []; let cur = ''; let q = false;
+  for (let n = 0; n < text.length; n++) {
+    const ch = text[n];
+    if (q) { if (ch === '"' && text[n + 1] === '"') { cur += '"'; n++; } else if (ch === '"') q = false; else cur += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ',') { row.push(cur); cur = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[n + 1] === '\n') n++; row.push(cur); cur = ''; if (row.some((c) => c.trim())) rows.push(row); row = []; }
+    else cur += ch;
+  }
+  row.push(cur); if (row.some((c) => c.trim())) rows.push(row);
+  return rows;
+}
+
+function BulkDialog({ clients, onClose, onDone }: { clients: Adv[]; onClose: () => void; onDone: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [res, setRes] = useState<string[] | null>(null);
+  const example = 'client,description,quantity,unit_price\nExample Client,Monthly ad package,1,1500.00\n';
+  async function run() {
+    if (!file) return;
+    setBusy(true); setErr(''); setRes(null);
+    try {
+      const rows = parseCsv(await file.text());
+      const head = rows.shift()?.map((h) => h.trim().toLowerCase()) ?? [];
+      const col = (n: string) => head.indexOf(n);
+      if ([col('client'), col('description'), col('quantity'), col('unit_price')].some((c) => c < 0)) { setErr('The file needs the columns client, description, quantity and unit_price.'); return; }
+      const byClient = new Map<number, { name: string; items: Array<{ description: string; qty: number; unit_cents: number }> }>();
+      const problems: string[] = [];
+      rows.forEach((r, n) => {
+        const name = (r[col('client')] ?? '').trim();
+        const c = clients.find((x) => x.name.trim().toLowerCase() === name.toLowerCase());
+        const qty = Number(r[col('quantity')]); const unit = Number((r[col('unit_price')] ?? '').replace(/[$,]/g, ''));
+        const desc = (r[col('description')] ?? '').trim();
+        if (!c) { problems.push(`Row ${n + 2}: no client named "${name}".`); return; }
+        if (!desc || !(qty > 0) || !Number.isFinite(unit)) { problems.push(`Row ${n + 2}: description, quantity or unit price is missing or invalid.`); return; }
+        const g = byClient.get(c.id) ?? { name: c.name, items: [] };
+        g.items.push({ description: desc, qty, unit_cents: Math.round(unit * 100) }); byClient.set(c.id, g);
+      });
+      if (problems.length) { setErr('Nothing was billed. Fix these rows and upload again.'); setRes(problems); return; }
+      if (byClient.size === 0) { setErr('The file has no line items.'); return; }
+      const out: string[] = [];
+      for (const [id, g] of byClient) {
+        const r = await fetch('/api/admin/invoices', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ advertiser_id: id, status: 'sent', line_items: g.items }) });
+        const j = await r.json().catch(() => ({}));
+        out.push(r.ok ? `${g.name}: invoice created.` : `${g.name}: ${j.error || 'could not create the invoice.'}`);
+      }
+      setRes(out); onDone();
+    } finally { setBusy(false); }
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Bill clients in bulk">
+      <div className="w-full max-w-xl overflow-hidden rounded-[14px] bg-white">
+        <div className="relative bg-[#F3F4F7] px-6 py-4 text-center text-base font-medium text-[color:var(--ds-ink)]">Bill clients in bulk
+          <button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: 'transparent' }} className="absolute right-4 top-3 text-lg text-[color:var(--ds-ink)]">&times;</button>
+        </div>
+        <div className="space-y-4 p-6 text-sm text-[color:var(--ds-ink)]">
+          <p>Import a list of line items to create invoices in bulk. Invoices are issued but not emailed to clients.</p>
+          <label className="flex h-24 cursor-pointer items-center justify-center rounded-[10px] border border-[color:var(--ds-line)] text-center">
+            <input type="file" accept=".csv,text/csv" className="sr-only" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setRes(null); setErr(''); }} />
+            <span><span className="text-[color:var(--ds-primary)] underline">{file ? file.name : 'Choose a csv file'}</span>{!file && ' to upload a list of line items.'}</span>
+          </label>
+          <div className="text-right"><a className="text-[color:var(--ds-primary)] underline" href={`data:text/csv;charset=utf-8,${encodeURIComponent(example)}`} download="bulk-billing-example.csv">Download example file</a></div>
+          {err && <div className={A.error}>{err}</div>}
+          {res && <ul className="max-h-40 space-y-1 overflow-auto text-xs text-[color:var(--ds-body)]">{res.map((r, n) => <li key={n}>{r}</li>)}</ul>}
+          <div className="flex justify-center gap-3"><button type="button" className={A.outline} onClick={onClose}>Close</button><button type="button" className={A.primary} disabled={!file || busy} onClick={run}>{busy ? 'Billing…' : 'Bill clients'}</button></div>
         </div>
       </div>
     </div>
