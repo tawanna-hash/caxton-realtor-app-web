@@ -74,7 +74,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'Get Paid',
     links: [
-      { label: 'Sales Transactions', href: '/admin/getpaid/salestransactions', description: 'All customer sales activity' },
       { label: 'Recurring Invoices', href: '/admin/getpaid/reoccuringpayments', description: 'Recurring invoice schedules' },
       { label: 'Deposit Slip', href: '/admin/reports/deposits', description: 'Printable check deposit summary' },
       { label: 'Deposit Detail', href: '/admin/reports/detail', description: 'Printable check payment detail report' },

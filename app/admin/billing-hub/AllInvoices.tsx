@@ -12,7 +12,7 @@ import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents, outstandingCents } from '@/lib/invoices';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 import { InvoiceDrawer } from '@/app/admin/billing/_components/InvoiceDrawer';
-import { PaymentLinkDrawer, RecordPaymentDrawer } from '@/app/admin/ar/PaymentActionDrawers';
+import { PaymentLinkDrawer, RecordPaymentDrawer, SalesReceiptDrawer } from '@/app/admin/ar/PaymentActionDrawers';
 import { ScheduledInvoicesPanel } from '@/app/admin/getpaid/_components/ScheduledInvoicesPanel';
 import { isNative } from '@/lib/native/runtime';
 
@@ -25,6 +25,7 @@ type Inv = InvoiceWithAdvertiser;
 type DateFilter = 'all' | 'today' | '30-days' | '3-months' | '12-months';
 type StatusFilter = 'all' | 'scheduled' | 'draft' | 'open' | 'overdue' | 'paid' | 'void';
 type ErrorFilter = 'all' | 'missing-email' | 'past-due';
+type TypeFilter = 'all' | 'invoice' | 'receipt';
 type Batch = 'issue' | 'print' | 'void' | 'delete';
 
 const PAGE_SIZES = [25, 50, 100];
@@ -46,6 +47,7 @@ const receivedDate = (i: Inv) => {
 const daysOver = (i: Inv, now: number) => (i.due_date ? Math.max(1, Math.floor((now - new Date(`${iso(i.due_date)}T12:00:00`).getTime()) / 86_400_000)) : 0);
 const statusText = (i: Inv, now: number) =>
   i.is_overdue ? `Overdue ${daysOver(i, now)} days` : i.status === 'paid' ? 'Paid' : i.status === 'sent' ? 'Open' : i.status[0].toUpperCase() + i.status.slice(1);
+const isReceipt = (i: Inv) => Boolean(i.number?.startsWith('SR-'));
 const memoOf = (i: Inv) => i.line_items?.map((l) => l.description?.trim()).filter(Boolean).join('; ') || i.memo || '';
 const safeUrl = (v: unknown): v is string => { try { return typeof v === 'string' && /^https?:$/.test(new URL(v).protocol); } catch { return false; } };
 
@@ -193,6 +195,8 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
   const [status, setStatus] = useState<StatusFilter>('all');
   const [dates, setDates] = useState<DateFilter>('all');
   const [errors, setErrors] = useState<ErrorFilter>('all');
+  const [kind, setKind] = useState<TypeFilter>('all');
+  const [receipt, setReceipt] = useState(false);
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(25);
@@ -258,6 +262,8 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
   const shown = useMemo(() => {
     const term = q.trim().toLowerCase();
     return list.filter((i) => {
+      if (kind === 'invoice' && isReceipt(i)) return false;
+      if (kind === 'receipt' && !isReceipt(i)) return false;
       if (!inRange(i, dates, ref)) return false;
       if ((status === 'draft' || status === 'scheduled') && i.status !== 'draft') return false;
       if (status === 'open' && !['sent', 'overdue'].includes(i.status)) return false;
@@ -268,7 +274,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
       if (errors === 'past-due' && !i.is_overdue) return false;
       return !term || [i.number, i.advertiser_name, i.bill_to_name, i.bill_to_email, i.memo, memoOf(i)].filter(Boolean).join(' ').toLowerCase().includes(term);
     });
-  }, [list, q, status, dates, errors, ref]);
+  }, [list, q, status, dates, errors, kind, ref]);
 
   const pages = Math.max(1, Math.ceil(shown.length / size));
   const cur = Math.min(page, pages - 1);
@@ -408,6 +414,9 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
         <select aria-label="Date" value={dates} onChange={(e) => reset(() => setDates(e.target.value as DateFilter))} className={SELECT}>
           {([['all', 'All dates'], ['today', 'Today'], ['30-days', 'Last 30 days'], ['3-months', 'Last 3 months'], ['12-months', 'Last 12 months']] as const).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
+        <select aria-label="Type" value={kind} onChange={(e) => reset(() => setKind(e.target.value as TypeFilter))} className={SELECT}>
+          <option value="all">All types</option><option value="invoice">Invoices</option><option value="receipt">Sales receipts</option>
+        </select>
         <select aria-label="Errors" value={errors} onChange={(e) => reset(() => setErrors(e.target.value as ErrorFilter))} className={SELECT}>
           <option value="all">Errors</option><option value="missing-email">Missing email</option><option value="past-due">Past due</option>
         </select>
@@ -421,6 +430,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
           {createMenu && (
             <div className="absolute right-0 top-11 z-30 w-52 rounded-[12px] border border-[color:var(--ds-line)] bg-white py-1 shadow-lg">
               <button type="button" style={{ background: 'transparent', border: 0 }} className="block w-full px-4 py-2 text-left text-sm hover:bg-[color:var(--ds-page)]" onClick={() => { setCreateMenu(false); if (firstUnpaid) setLinking(firstUnpaid); else fail('No unpaid invoice is available.'); }}>Create payment link</button>
+              <button type="button" style={{ background: 'transparent', border: 0 }} className="block w-full px-4 py-2 text-left text-sm hover:bg-[color:var(--ds-page)]" onClick={() => { setCreateMenu(false); setReceipt(true); }}>Create sales receipt</button>
             </div>
           )}
         </div>
@@ -437,8 +447,10 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
               { label: 'Date', get: (r) => txDate(r) },
               { label: 'Billing date', get: (r) => r.issued_at },
               { label: 'Payment received', get: (r) => receivedDate(r) },
+              { label: 'Type', get: (r) => (isReceipt(r) ? 'Sales receipt' : 'Invoice') },
               { label: 'No.', get: (r) => r.number },
               { label: 'Client', get: (r) => r.advertiser_name ?? r.bill_to_name },
+              { label: 'Memo', get: (r) => memoOf(r) },
               { label: 'Amount', get: (r) => r.total_cents, className: 'text-right' },
               { label: 'Status', get: (r) => statusText(r, now) },
               { label: <span className="sr-only">Actions</span> },
@@ -451,8 +463,10 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
                   <td className="whitespace-nowrap">{day(txDate(i))}</td>
                   <td className="whitespace-nowrap">{day(i.issued_at)}</td>
                   <td className="whitespace-nowrap">{day(receivedDate(i))}</td>
+                  <td className="whitespace-nowrap">{isReceipt(i) ? 'Sales receipt' : 'Invoice'}</td>
                   <td className="max-w-[160px] truncate whitespace-nowrap font-medium text-[color:var(--ds-ink)]" title={i.number ?? undefined}>{i.number ?? 'Draft'}</td>
                   <td className="min-w-[180px]">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td>
+                  <td className="max-w-[220px] truncate" title={memoOf(i)}>{memoOf(i) || '—'}</td>
                   <td className="whitespace-nowrap text-right font-medium">{formatCents(i.total_cents)}</td>
                   <td><StatusChip i={i} now={now} /></td>
                   <td className="whitespace-nowrap text-right">
@@ -485,6 +499,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
       {editing && <InvoiceDrawer existing={editing} advertisers={advertisers} agreements={agreements} onClose={() => setEditing(null)} onSaved={async () => { await reload(); setEditing(null); setErr(''); setMsg('Invoice saved.'); }} onRecordPayment={(i) => { setEditing(null); setPaying(i); }} onError={fail} />}
       {paying && <RecordPaymentDrawer invoices={list} advertisers={advertisers} initialInvoiceId={paying.id} onClose={() => setPaying(null)} onSaved={reload} onError={fail} />}
       {linking && <PaymentLinkDrawer noEmail invoices={list} advertisers={advertisers} initialInvoiceId={linking.id} onClose={() => setLinking(null)} onSaved={reload} onError={fail} />}
+      {receipt && <SalesReceiptDrawer invoices={list} advertisers={advertisers} onClose={() => setReceipt(false)} onSaved={async () => { await reload(); setReceipt(false); setMsg('Sales receipt saved.'); }} onError={fail} />}
       {sharing && <ShareLinkDialog invoice={sharing} onClose={() => setSharing(null)} onCreated={reload} onError={fail} />}
       {activity && <ActivityPanel invoice={activity} now={now} onClose={() => setActivity(null)} onEdit={() => { const i = activity; setActivity(null); setEditing(i); }} />}
     </div>

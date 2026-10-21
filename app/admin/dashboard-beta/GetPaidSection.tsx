@@ -161,7 +161,7 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
         </div>
       </section>
 
-      <section id="gp-invoices" className="space-y-3">
+      <section id="gp-invoices"><Card className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <H2>Invoices</H2>
           <div role="group" aria-label="Invoice view" className="flex gap-2"><Pill on={view === 'unpaid'} onClick={() => { setView('unpaid'); setPage(0); }}>Unpaid ({d.unpaid.length})</Pill><Pill on={view === 'paid'} onClick={() => { setView('paid'); setPage(0); }}>Paid ({d.paid.length})</Pill></div>
@@ -209,7 +209,7 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
           <span>{rowsLen ? `${cur * PAGE + 1}–${Math.min((cur + 1) * PAGE, rowsLen)} of ${rowsLen}` : '0 results'} · <Link href="/admin/billing-hub" className="text-[color:var(--ds-primary)]">Open Billing</Link></span>
           <span className="flex gap-2"><button type="button" className={A.small} disabled={cur === 0} onClick={() => setPage(cur - 1)}>Previous</button><button type="button" className={A.small} disabled={cur >= pages - 1} onClick={() => setPage(cur + 1)}>Next</button></span>
         </div>
-      </section>
+      </Card></section>
 
       <div className="grid items-stretch gap-6 lg:grid-cols-[1fr_1.4fr]">
         <section className="flex flex-col gap-3">
