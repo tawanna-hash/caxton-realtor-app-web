@@ -146,7 +146,7 @@ export default function SignedAgreements() {
     { label: 'Duplicate agreement', onClick: () => duplicate(a) },
     { label: 'Download PDF', href: `/api/admin/agreements/${a.id}/pdf` },
     { label: 'Share direct link', onClick: () => link(a) },
-    { label: 'Manage billing', href: `/admin/billing-hub?agreementId=${a.id}&tab=hub` },
+    { label: 'Manage billing', href: `/admin/billing-hub?agreementId=${a.id}&tab=agreement` },
     { label: 'View invoices', href: `/admin/billing-hub?agreementId=${a.id}&tab=invoices` },
     { label: 'View activity log', href: `/admin/billing-hub?agreementId=${a.id}&tab=activity` },
     { label: 'Terminate agreement', onClick: () => terminate([a]), danger: true, disabled: stOf(a) === 'terminated' },

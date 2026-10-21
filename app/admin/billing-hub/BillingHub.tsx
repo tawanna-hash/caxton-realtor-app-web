@@ -28,7 +28,7 @@ type Agr = {
 type FullInv = Inv & { issued_at?: string | null; paid_at?: string | null; created_at?: string | null; audit_log?: AuditEntry[]; bill_to_name?: string | null };
 type Product = { id: string | number; name: string; description?: string | null; unit_price_cents?: number | null; price_cents?: number | null; active?: boolean | null; billing_type?: string | null };
 type Tab = 'hub' | 'agreement' | 'payment' | 'invoices' | 'recurring' | 'statements' | 'paymentlinks' | 'activity';
-const TABS: Array<[Tab, string]> = [['hub', 'Billing'], ['agreement', 'Agreement'], ['payment', 'Payment Methods'], ['invoices', 'Invoices'], ['recurring', 'Recurring invoices'], ['statements', 'Statements'], ['paymentlinks', 'Payment links'], ['activity', 'Activity Log']];
+const TABS: Array<[Tab, string]> = [['agreement', 'Agreement'], ['payment', 'Payment Methods'], ['invoices', 'Invoices'], ['recurring', 'Recurring invoices'], ['statements', 'Statements'], ['paymentlinks', 'Payment links'], ['activity', 'Activity Log']];
 const none: never[] = [];
 const cap = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 const dt = (v: string) => new Date(v).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -49,7 +49,7 @@ export default function BillingHub() {
   const advs = useJson('/api/admin/advertisers', (j) => (j.advertisers ?? []) as Adv[], none as Adv[]);
   const [clientId, setClientId] = useState<number | null>(null);
   const [agreementId, setAgreementId] = useState('');
-  const [tab, setTab] = useState<Tab>('hub');
+  const [tab, setTab] = useState<Tab>('agreement');
   const [bill, setBill] = useState<null | { mode: 'charge' | 'credit'; seed?: { description: string; unit_cents: number } }>(null);
   const [control, setControl] = useState(false);
   const [noPick, setNoPick] = useState(false);
@@ -126,6 +126,7 @@ export default function BillingHub() {
         </Field>}
               </div>
         <button type="button" onClick={() => setBulk(true)} className={A.outline}>Bill clients in bulk</button>
+        {client && <button type="button" onClick={() => setControl(true)} className={A.outline}>Billing Control</button>}
       </div>
       {!client && <p className="py-24 text-center text-sm text-[color:var(--ds-ink)]">Please choose a client to start billing</p>}
       {bulk && <BulkDialog clients={clients} onClose={() => setBulk(false)} onDone={() => setVersion((v) => v + 1)} />}
@@ -137,7 +138,6 @@ export default function BillingHub() {
         ))}
       </div>}
 
-      {client && tab === 'hub' && <HubTab schedules={schedules} loading={sch.loading} onControl={() => setControl(true)} />}
       {client && tab === 'agreement' && <AgreementTab client={client} agreement={agreement ?? agreements[0] ?? null} />}
       {client && tab === 'payment' && <PaymentTab client={client} agreement={agreement ?? agreements.find((a) => a.signed_at) ?? agreements[0] ?? null} onSaved={() => setVersion((v) => v + 1)} />}
       {client && tab === 'invoices' && <InvoicesTab client={client} invoices={invoices} agreements={agreements} intent={intent} onIntentDone={() => setIntent(null)} />}
@@ -148,42 +148,6 @@ export default function BillingHub() {
 
       {control && <ControlDrawer onClose={() => setControl(false)} onBill={(m, seed) => { setControl(false); setBill({ mode: m, seed }); }} />}
       {bill && client && <BillScreen client={client} agreementId={agreementId || null} mode={bill.mode} seed={bill.seed} onClose={() => setBill(null)} onDone={() => { setBill(null); setVersion((v) => v + 1); }} />}
-    </div>
-  );
-}
-
-/* ---------------- Billing Hub tab ---------------- */
-function HubTab({ schedules, loading, onControl }: { schedules: Sch[]; loading: boolean; onControl: () => void }) {
-  const rows = schedules.flatMap((s) => {
-    const total = s.max_occurrences ?? null; const done = s.occurrences_generated ?? 0;
-    const left = total != null ? Math.max(total - done, 0) : 1;
-    const out: Array<{ key: string; name: string; label: string; date: string; amount: number }> = [];
-    let when = new Date(s.next_run_at);
-    for (let n = 0; n < Math.min(left, 60); n++) {
-      out.push({ key: `${s.id}-${n}`, name: s.name, label: total != null ? `${done + n + 1} of ${total}` : cap(s.frequency), date: when.toISOString(), amount: s.amount_cents + (s.tax_cents ?? 0) });
-      when = computeNextRun(when, s.frequency as RecurringFrequency, s.interval_count ?? 1);
-    }
-    return out;
-  }).sort((a, b) => a.date.localeCompare(b.date));
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-end gap-4">
-        <button type="button" disabled className="inline-flex items-center gap-2 text-sm text-[color:var(--ds-body)] opacity-60" style={{ border: 0, background: 'transparent' }}>&#128206; Attach Files</button>
-        <button type="button" onClick={onControl} className={`${A.outline} px-5`}>Billing Control</button>
-      </div>
-      {loading ? <p className="text-center text-sm text-[color:var(--ds-body)]">Loading…</p> : rows.length === 0 ? (
-        <div className="py-6 text-center text-sm text-[color:var(--ds-ink)]">
-          <p>There are no scheduled invoices to show.</p>
-          <p>Click on &quot;Billing Control&quot; to create invoices.</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className={`${A.table} min-w-[600px]`}>
-            <thead><tr><th>Scheduled invoice</th><th>Installment</th><th>Issue date</th><th className="text-right">Total</th></tr></thead>
-            <tbody>{rows.map((r) => <tr key={r.key}><td className="font-semibold text-[color:var(--ds-ink)]">{r.name}</td><td>{r.label}</td><td className="whitespace-nowrap">{day(r.date)}</td><td className="text-right">{money(r.amount)}</td></tr>)}</tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }
