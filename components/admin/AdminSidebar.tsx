@@ -43,6 +43,7 @@ const ADMIN_GROUPS: AdminNavGroup[] = ADMIN_NAV
   .map((g) => ({ ...g, links: g.label === 'Beta' ? [...g.links] : [...g.links].sort(byLabel) }))
   .sort((a, b) => (a.label === PINNED_FIRST ? -1 : b.label === PINNED_FIRST ? 1 : byLabel(a, b)));
 
+import BetaCountChip from '@/components/admin/BetaCountChip';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 import PendingGmailBadge from '@/components/PendingGmailBadge';
@@ -239,6 +240,7 @@ export default function AdminSidebar() {
                         >
                           <span className="truncate">{link.label}</span>
                           <InlineBadge href={link.href} />
+                          {group.label === 'Beta' && <BetaCountChip href={link.href} />}
                         </Link>
                         {kids.length > 0 && (
                           <div className="ml-4 mt-1 space-y-1">
@@ -256,6 +258,7 @@ export default function AdminSidebar() {
                                 >
                                   <span aria-hidden="true" className="text-gray-300">&#8627;</span>
                                   <span className="truncate">{kid.label}</span>
+                                  {group.label === 'Beta' && <BetaCountChip href={kid.href} />}
                                 </Link>
                               );
                             })}
