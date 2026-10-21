@@ -80,7 +80,7 @@ export default function AgreementsBeta() {
             role="tab"
             aria-selected={tab === key}
             onClick={() => setTab(key)}
-            className={`anchor-tab -mb-px border-b-[3px] pb-3 text-[15px] ${tab === key ? 'border-[color:var(--ds-primary)] font-medium text-[color:var(--ds-ink)]' : 'border-transparent text-[color:var(--ds-body)] hover:text-[color:var(--ds-ink)]'}`}
+            className={`anchor-tab -mb-px border-b-2 pb-3 text-[15px] ${tab === key ? 'border-[color:var(--ds-primary)] font-medium text-[color:var(--ds-ink)]' : 'border-transparent text-[color:var(--ds-body)] hover:text-[color:var(--ds-ink)]'}`}
           >
             {label}
           </button>

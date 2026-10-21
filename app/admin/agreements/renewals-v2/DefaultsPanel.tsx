@@ -51,7 +51,10 @@ export default function DefaultsPanel() {
   return (
     <div className="max-w-4xl space-y-4">
       <div className="flex items-start justify-between gap-4">
-        <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Agreements default configuration</h2>
+        <div>
+          <h2 className="text-xl font-semibold text-[color:var(--ds-ink)]">Proposals default configuration</h2>
+          <p className="text-sm text-[color:var(--ds-body)]">Set the default values of new proposals you create</p>
+        </div>
         <button onClick={save} disabled={saving} className={A.primary}>{saving ? 'Saving…' : 'Save changes'}</button>
       </div>
       {msg && <div className={A.notice}>{msg}</div>}

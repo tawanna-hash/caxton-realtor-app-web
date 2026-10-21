@@ -11,7 +11,7 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { getSql, ensureSchema } from '@/lib/db';
 import { APP_AD_SLOTS, EBLASTS, PACKAGES, eblastPriceForPub, weeklyRateForMarkets } from '@/lib/media-kit';
-import { deleteDraft, getDraft, listDrafts, saveDraft } from '@/lib/agreements-v2/builder';
+import { deleteDraft, duplicateDraft, getDraft, listDrafts, saveDraft, setDraftKind } from '@/lib/agreements-v2/builder';
 import { docDates, docTotalCents, type BuilderDoc, type Catalog } from '@/lib/agreements-v2/builder-doc';
 import { getDefaults } from '@/lib/agreements-v2/settings';
 import { cleanBilling, cleanPayment, invoiceRows, planServiceBilling, summarize, termMonths } from '@/lib/agreements-v2/service-billing';
@@ -55,6 +55,7 @@ export async function GET(req: NextRequest) {
       catalog: buildCatalog(),
       drafts: await listDrafts('draft', sql),
       templates: await listDrafts('template', sql),
+      archived: await listDrafts('archived', sql),
       intros: { new_partner: defaults.intro_new, renewal: defaults.intro_renewal },
       expiry_days: defaults.proposal_expiry_days,
     });
@@ -74,6 +75,14 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     if (body.action === 'delete' && typeof body.id === 'string') {
       await deleteDraft(body.id, sql);
       return NextResponse.json({ ok: true });
+    }
+    if ((body.action === 'archive' || body.action === 'restore') && typeof body.id === 'string') {
+      await setDraftKind(body.id, body.action === 'archive' ? 'archived' : 'draft', sql);
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === 'duplicate' && typeof body.id === 'string') {
+      const id = await duplicateDraft(body.id, sql);
+      return id ? NextResponse.json({ id }) : NextResponse.json({ error: 'not found' }, { status: 404 });
     }
     if (body.action === 'save') {
       const doc = body.doc as BuilderDoc | undefined;
