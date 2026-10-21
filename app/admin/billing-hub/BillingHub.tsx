@@ -72,8 +72,10 @@ export default function BillingHub() {
   const agr = useJson(`/api/admin/agreements?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => (j.agreements ?? []) as Agr[], none as Agr[]);
   const inv = useJson(`/api/admin/invoices?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => (j.invoices ?? []) as FullInv[], none as FullInv[]);
   const sch = useJson(`/api/admin/recurring-invoices?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => (j.schedules ?? []) as Sch[], none as Sch[]);
-  const agreements = agr.data.filter((a) => a.advertiser_id === clientId);
-  const agreement = agreements.find((a) => a.id === agreementId) ?? null;
+  const today = new Date().toISOString().slice(0, 10);
+  const isActiveAgr = (a: Agr) => !!a.signed_at && !['expired', 'cancelled', 'canceled', 'void', 'declined', 'draft', 'terminated'].includes(String(a.status).toLowerCase()) && (!a.end_date || a.end_date.slice(0, 10) >= today);
+  const agreements = agr.data.filter((a) => a.advertiser_id === clientId && isActiveAgr(a));
+  const agreement = agreements.find((a) => a.id === agreementId) ?? agreements[0] ?? null;
   const invoices = inv.data.filter((i) => i.advertiser_id == null || i.advertiser_id === clientId).filter((i) => !agreementId || i.agreement_id === agreementId);
   const schedules = sch.data.filter((s) => s.advertiser_id === clientId && s.status !== 'ended').filter((s) => !agreementId || s.agreement_id === agreementId);
 
@@ -92,9 +94,9 @@ export default function BillingHub() {
         </Field>
         <Field label="Agreement">
           <span className="relative block">
-            <select aria-label="Agreement" className={selectCls} value={agreementId} onChange={(e) => setAgreementId(e.target.value)}>
-              <option value="">Agreement</option>
-              {agreements.map((a) => <option key={a.id} value={a.id}>Agreement · {[a.ad_size, a.start_date ? day(a.start_date) : null].filter(Boolean).join(' · ') || a.id.slice(0, 8)}</option>)}
+            <select aria-label="Agreement" className={selectCls} value={agreement?.id ?? ''} onChange={(e) => setAgreementId(e.target.value)}>
+              {agreements.length === 0 && <option value="">No active agreement</option>}
+              {agreements.map((a) => <option key={a.id} value={a.id}>Agreement · {[a.ad_size, a.start_date ? `${day(a.start_date)}${a.end_date ? ` – ${day(a.end_date)}` : ''}` : null].filter(Boolean).join(' · ') || a.id.slice(0, 8)}</option>)}
             </select><Caret />
           </span>
         </Field>
