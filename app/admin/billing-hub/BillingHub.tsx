@@ -246,7 +246,7 @@ function CardForm({ agreementId, onSaved }: { agreementId: string; onSaved: () =
   }
   const style = { style: { base: { fontSize: '16px', color: '#16132D' } } };
   return (
-    <div className="max-w-[640px] space-y-5 rounded-[12px] bg-white p-6 shadow-sm">
+    <div id="add-payment-method" className="max-w-[640px] space-y-5 rounded-[12px] bg-white p-6 shadow-sm">
       <input className={`${box} w-full text-base`} placeholder="Name on card" value={name} onChange={(e) => setName(e.target.value)} />
       <div className={box}><CardNumberElement options={{ ...style, placeholder: 'Card number' }} /></div>
       <div className="grid grid-cols-3 gap-3">
@@ -255,7 +255,7 @@ function CardForm({ agreementId, onSaved }: { agreementId: string; onSaved: () =
         <input className={`${box} w-full text-base`} placeholder="Zip code" value={zip} onChange={(e) => setZip(e.target.value)} />
       </div>
       <div className="flex items-center justify-between gap-4 text-xs text-[color:var(--ds-ink)]">
-        <span>Paying with a card is a service provided by Anchor; Fees are paid directly to Anchor.</span>
+        <span>Card payments are processed securely by Stripe.</span>
         <button type="button" className={A.primary} disabled={busy || !secret || !name.trim()} onClick={connect}>{busy ? 'Connecting…' : 'Connect card'}</button>
       </div>
       {msg && <p className={`text-sm ${msg.ok ? 'text-[#065F46]' : 'text-red-700'}`}>{msg.t}</p>}
@@ -284,7 +284,7 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-[color:var(--ds-ink)]">Add or remove payment methods. Any overdue invoices will be reprocessed when a new method is selected.</p>
-        <div className="flex gap-3"><button type="button" className={A.outline} onClick={request}>Request payment method</button></div>
+        <div className="flex gap-3"><button type="button" className={A.outline} onClick={request}>Request payment method</button><button type="button" className={A.primary} onClick={() => { setMethod('card'); document.getElementById('add-payment-method')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}>Add payment method</button></div>
       </div>
       {notice && <p className="text-sm text-[color:var(--ds-body)]">{notice}</p>}
       {onFile && (
@@ -303,7 +303,7 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
       {!agreement ? <p className="text-sm text-[color:var(--ds-body)]">Add an agreement before connecting a card.</p> : method === 'card' ? (
         stripe ? <Elements stripe={stripe}><CardForm agreementId={agreement.id} onSaved={onSaved} /></Elements> : <p className="text-sm text-[color:var(--ds-body)]">Loading card form…</p>
       ) : <p className="max-w-[640px] text-sm text-[color:var(--ds-body)]">Secure ACH is not enabled for this account yet.</p>}
-      <p className="text-[10px] text-[color:var(--ds-body)]">Bank-level security and privacy.</p>
+      <p className="flex items-center gap-4 text-[10px] text-[color:var(--ds-body)]">Bank-level security and privacy. <span className="text-xs font-semibold tracking-wide">VISA</span><span className="text-xs font-semibold tracking-wide">DISCOVER</span><span className="text-xs font-semibold tracking-wide">AMEX</span><span className="text-xs font-semibold tracking-wide">MASTERCARD</span></p>
     </div>
   );
 }
