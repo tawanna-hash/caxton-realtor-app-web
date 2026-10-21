@@ -62,7 +62,7 @@ export default function ClientsList() {
                     <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${a.group === 'active' ? 'border-[#047857] text-[#047857]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{GROUP_LABEL[a.group]}</span>
                     {a.markets.map((m) => <span key={m} className="rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[11px] text-[color:var(--ds-body)]">{m}</span>)}
                   </div>
-                  <RowMenu items={[{ label: 'View client', href: `/admin/agreements/clients/${a.id}` }]} />
+                  <div className="-mr-2 -mt-1 rotate-90 [&_button]:!min-h-8 [&_button]:!h-8 [&_button]:!w-8 [&_button]:!border-0 [&_button]:!bg-transparent [&_button]:!text-[color:var(--ds-body)]"><RowMenu items={[{ label: 'View client', href: `/admin/agreements/clients/${a.id}` }]} /></div>
                 </div>
                 <p className="mt-1 text-sm text-[color:var(--ds-body)]">{a.type === 'individual' ? 'Individual' : 'Business'}</p>
                 <p className="mt-1 text-sm text-[color:var(--ds-body)]">{who ? `${who}${more > 0 ? `, +${more} more` : ''}` : '—'}</p>
