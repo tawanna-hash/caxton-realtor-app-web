@@ -158,7 +158,7 @@ export default function StatusBoard() {
                       <button className={btn} disabled={busy !== null} onClick={() => createSchedule(i)}>{busy === `${i.id}:sched` ? '…' : 'Create draft billing'}</button>
                     )}
                     {i.stage === 'signed' && i.schedule_state && i.schedule_state !== 'none' && (
-                      <a className={btn} href="/admin/getpaid/reoccuringpayments">Review billing</a>
+                      <a className={btn} href={`/admin/billing-hub?agreementId=${i.id}`}>Review billing</a>
                     )}
                   </div>
                 </td>

@@ -1,0 +1,482 @@
+'use client';
+
+// Billing Hub (Beta): one client and one agreement at a time, with five tabs:
+// Billing Hub, Agreement, Payment Methods, Invoices, Activity Log, plus the
+// Billing Control drawer and the "Bill client" screen. Laid out like Anchor's
+// Billing Hub.
+
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { CardCvcElement, CardExpiryElement, CardNumberElement, Elements, useElements, useStripe } from '@stripe/react-stripe-js';
+import { loadStripe, type Stripe } from '@stripe/stripe-js';
+import { A, FilterChip, RowMenu, SearchBox } from '@/components/anchor/ui';
+import { computeNextRun, type RecurringFrequency } from '@/lib/recurring-invoices';
+import { day, money, useJson, GROUP_LABEL, groupOf, MARKET, type Adv, type Inv, type Sch } from '../agreements/clients/data';
+
+type AuditEntry = { event: string; timestamp: string; user_email?: string; details?: string };
+type Agr = {
+  id: string; advertiser_id: number | null; status: string; type: string | null; ad_size: string | null; frequency: string | null;
+  ad_rate_cents: number | null; amount_cents: number | null; total_monthly_rate_cents: number | null; start_date: string | null; end_date: string | null;
+  signed_at: string | null; created_at: string | null; eblast_packages: string[] | null; audit_log: AuditEntry[] | null;
+  card_type: string | null; card_number_last4: string | null; card_expiration: string | null; cardholder_name: string | null; sent_to_email: string | null;
+};
+type FullInv = Inv & { issued_at?: string | null; paid_at?: string | null; created_at?: string | null; audit_log?: AuditEntry[]; bill_to_name?: string | null };
+type Product = { id: string | number; name: string; description?: string | null; unit_price_cents?: number | null; price_cents?: number | null; active?: boolean | null; billing_type?: string | null };
+type Tab = 'hub' | 'agreement' | 'payment' | 'invoices' | 'activity';
+const TABS: Array<[Tab, string]> = [['hub', 'Billing Hub'], ['agreement', 'Agreement'], ['payment', 'Payment Methods'], ['invoices', 'Invoices'], ['activity', 'Activity Log']];
+const none: never[] = [];
+const cap = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+const dt = (v: string) => new Date(v).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+const NOT_DRAFT = (i: Inv) => i.status !== 'draft';
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="relative block">
+      <span className="absolute -top-2 left-3 z-10 bg-[#F3F4F7] px-1 text-[11px] text-[color:var(--ds-body)]">{label}</span>
+      {children}
+    </label>
+  );
+}
+const selectCls = 'w-full appearance-none rounded-[6px] border border-[color:var(--ds-ink)]/60 bg-transparent px-3 py-3.5 pr-9 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
+const Caret = () => <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[color:var(--ds-ink)]">&#9660;</span>;
+
+export default function BillingHub() {
+  const advs = useJson('/api/admin/advertisers', (j) => (j.advertisers ?? []) as Adv[], none as Adv[]);
+  const [clientId, setClientId] = useState<number | null>(null);
+  const [agreementId, setAgreementId] = useState('');
+  const [tab, setTab] = useState<Tab>('hub');
+  const [bill, setBill] = useState<null | { mode: 'charge' | 'credit'; seed?: { description: string; unit_cents: number } }>(null);
+  const [control, setControl] = useState(false);
+  const [version, setVersion] = useState(0);
+
+  const clients = useMemo(() => [...advs.data].sort((a, b) => a.name.localeCompare(b.name)), [advs.data]);
+  useEffect(() => {
+    if (clientId != null || clients.length === 0) return;
+    const p = new URLSearchParams(window.location.search);
+    const fromUrl = Number(p.get('clientId'));
+    const wanted = p.get('agreementId') ?? '';
+    const t = p.get('tab'); if (TABS.some(([k]) => k === t)) setTab(t as Tab);
+    const pick = (id?: number | null) => { const c = clients.find((x) => x.id === id) ?? clients.find((x) => groupOf(x.status) === 'active') ?? clients[0]; setClientId(c.id); };
+    if (wanted && !fromUrl) {
+      // Deep link from Agreements (Beta): find the agreement's client first.
+      fetch('/api/admin/agreements', { credentials: 'include' }).then((r) => r.json())
+        .then((j) => { const a = ((j.agreements ?? []) as Agr[]).find((x) => x.id === wanted); setAgreementId(a ? wanted : ''); pick(a?.advertiser_id); })
+        .catch(() => pick(null));
+      return;
+    }
+    pick(fromUrl);
+    setAgreementId(wanted);
+  }, [clients, clientId]);
+
+  const client = clients.find((c) => c.id === clientId) ?? null;
+  const agr = useJson(`/api/admin/agreements?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => (j.agreements ?? []) as Agr[], none as Agr[]);
+  const inv = useJson(`/api/admin/invoices?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => (j.invoices ?? []) as FullInv[], none as FullInv[]);
+  const sch = useJson(`/api/admin/recurring-invoices?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => (j.schedules ?? []) as Sch[], none as Sch[]);
+  const agreements = agr.data.filter((a) => a.advertiser_id === clientId);
+  const agreement = agreements.find((a) => a.id === agreementId) ?? null;
+  const invoices = inv.data.filter((i) => i.advertiser_id == null || i.advertiser_id === clientId).filter((i) => !agreementId || i.agreement_id === agreementId);
+  const schedules = sch.data.filter((s) => s.advertiser_id === clientId && s.status !== 'ended').filter((s) => !agreementId || s.agreement_id === agreementId);
+
+  if (advs.loading) return <p className="text-sm text-[color:var(--ds-body)]">Loading…</p>;
+  if (advs.error) return <div className={A.error}>{advs.error}</div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
+        <Field label="Client">
+          <span className="relative block">
+            <select aria-label="Client" className={selectCls} value={clientId ?? ''} onChange={(e) => { setClientId(Number(e.target.value)); setAgreementId(''); }}>
+              {clients.map((c) => <option key={c.id} value={c.id}>{c.name}{c.publication && MARKET[c.publication] ? ` (${MARKET[c.publication]})` : ''}{groupOf(c.status) !== 'active' ? ` · ${GROUP_LABEL[groupOf(c.status)]}` : ''}</option>)}
+            </select><Caret />
+          </span>
+        </Field>
+        <Field label="Agreement">
+          <span className="relative block">
+            <select aria-label="Agreement" className={selectCls} value={agreementId} onChange={(e) => setAgreementId(e.target.value)}>
+              <option value="">Agreement</option>
+              {agreements.map((a) => <option key={a.id} value={a.id}>Agreement · {[a.ad_size, a.start_date ? day(a.start_date) : null].filter(Boolean).join(' · ') || a.id.slice(0, 8)}</option>)}
+            </select><Caret />
+          </span>
+        </Field>
+      </div>
+
+      <div role="tablist" className="flex flex-wrap gap-x-8 border-b border-[color:var(--ds-line)]">
+        {TABS.map(([k, l]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} style={{ border: 0, borderBottom: '2px solid', background: 'transparent', borderRadius: 0 }}
+            className={`-mb-px pb-3 text-[15px] ${tab === k ? 'border-[color:var(--ds-primary)] font-medium text-[color:var(--ds-ink)]' : 'border-transparent text-[color:var(--ds-body)] hover:text-[color:var(--ds-ink)]'}`}>{l}</button>
+        ))}
+      </div>
+
+      {client && tab === 'hub' && <HubTab schedules={schedules} loading={sch.loading} onControl={() => setControl(true)} />}
+      {client && tab === 'agreement' && <AgreementTab client={client} agreement={agreement ?? agreements[0] ?? null} />}
+      {client && tab === 'payment' && <PaymentTab client={client} agreement={agreement ?? agreements.find((a) => a.signed_at) ?? agreements[0] ?? null} onSaved={() => setVersion((v) => v + 1)} />}
+      {client && tab === 'invoices' && <InvoicesTab client={client} invoices={invoices} agreements={agreements} />}
+      {client && tab === 'activity' && <ActivityTab invoices={invoices} agreements={agreement ? [agreement] : agreements} />}
+
+      {control && <ControlDrawer onClose={() => setControl(false)} onBill={(m, seed) => { setControl(false); setBill({ mode: m, seed }); }} />}
+      {bill && client && <BillScreen client={client} agreementId={agreementId || null} mode={bill.mode} seed={bill.seed} onClose={() => setBill(null)} onDone={() => { setBill(null); setVersion((v) => v + 1); }} />}
+    </div>
+  );
+}
+
+/* ---------------- Billing Hub tab ---------------- */
+function HubTab({ schedules, loading, onControl }: { schedules: Sch[]; loading: boolean; onControl: () => void }) {
+  const rows = schedules.flatMap((s) => {
+    const total = s.max_occurrences ?? null; const done = s.occurrences_generated ?? 0;
+    const left = total != null ? Math.max(total - done, 0) : 1;
+    const out: Array<{ key: string; name: string; label: string; date: string; amount: number }> = [];
+    let when = new Date(s.next_run_at);
+    for (let n = 0; n < Math.min(left, 60); n++) {
+      out.push({ key: `${s.id}-${n}`, name: s.name, label: total != null ? `${done + n + 1} of ${total}` : cap(s.frequency), date: when.toISOString(), amount: s.amount_cents + (s.tax_cents ?? 0) });
+      when = computeNextRun(when, s.frequency as RecurringFrequency, s.interval_count ?? 1);
+    }
+    return out;
+  }).sort((a, b) => a.date.localeCompare(b.date));
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-end gap-4">
+        <button type="button" disabled className="inline-flex items-center gap-2 text-sm text-[color:var(--ds-body)] opacity-60" style={{ border: 0, background: 'transparent' }}>&#128206; Attach Files</button>
+        <button type="button" onClick={onControl} className={`${A.outline} px-5`}>Billing Control</button>
+      </div>
+      {loading ? <p className="text-center text-sm text-[color:var(--ds-body)]">Loading…</p> : rows.length === 0 ? (
+        <div className="py-6 text-center text-sm text-[color:var(--ds-ink)]">
+          <p>There are no scheduled invoices to show.</p>
+          <p>Click on &quot;Billing Control&quot; to create invoices.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className={`${A.table} min-w-[600px]`}>
+            <thead><tr><th>Scheduled invoice</th><th>Installment</th><th>Issue date</th><th className="text-right">Total</th></tr></thead>
+            <tbody>{rows.map((r) => <tr key={r.key}><td className="font-semibold text-[color:var(--ds-ink)]">{r.name}</td><td>{r.label}</td><td className="whitespace-nowrap">{day(r.date)}</td><td className="text-right">{money(r.amount)}</td></tr>)}</tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- Agreement tab ---------------- */
+function AgreementTab({ client, agreement }: { client: Adv; agreement: Agr | null }) {
+  if (!agreement) return <p className="py-10 text-center text-sm text-[color:var(--ds-ink)]">This client has no agreement yet.</p>;
+  const approved = (agreement.audit_log ?? []).find((e) => /sign|approv|upload/i.test(e.event)) ?? null;
+  const main = [client.first_name, client.last_name].filter(Boolean).join(' ');
+  const services: Array<{ name: string; desc: string; price: number | null; note: string }> = [];
+  if (agreement.ad_size) services.push({ name: `${agreement.ad_size} advertising`, desc: [agreement.type ? cap(agreement.type) : null, agreement.frequency ? cap(agreement.frequency) : null].filter(Boolean).join(' · '), price: agreement.ad_rate_cents ?? agreement.total_monthly_rate_cents, note: agreement.frequency?.toLowerCase().includes('month') ? 'Billed monthly' : 'Can be billed once' });
+  for (const p of agreement.eblast_packages ?? []) services.push({ name: p, desc: 'E-blast package', price: null, note: 'Can be billed once' });
+  if (services.length === 0 && agreement.amount_cents) services.push({ name: 'Agreement total', desc: '', price: agreement.amount_cents, note: 'Can be billed once' });
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-end gap-3">
+        <Link href={`/admin/billing?agreement=${agreement.id}`} className={`${A.primary} px-7`}>Edit</Link>
+        <RowMenu items={[{ label: 'Open in Get Paid', href: `/admin/billing?agreement=${agreement.id}` }]} />
+      </div>
+      <div className="mx-auto max-w-[620px] space-y-4">
+        <div className="relative overflow-hidden rounded-[10px] bg-white shadow-sm">
+          <div className="h-6 bg-[color:var(--ds-primary)]" />
+          <div className="absolute left-1/2 top-0 h-[84px] w-[84px] -translate-x-1/2 overflow-hidden rounded-full border-4 border-white bg-white shadow">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/rnn-logo.jpg" alt="" className="h-full w-full object-cover" />
+          </div>
+          <div className="px-6 pb-6 pt-[62px]">
+            <h2 className="text-center text-base font-semibold text-[color:var(--ds-ink)]">Agreement between</h2>
+            <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[color:var(--ds-line)] pt-4 text-xs text-[color:var(--ds-ink)]">
+              <div className="space-y-1"><div>Tawanna Verock</div><div>Caxton Publications Inc</div><div>tawanna@myrealtyline.com</div></div>
+              <div className="space-y-1 text-right"><div>{main || client.name}</div><div>{client.name}</div><div>{client.contact_email ?? agreement.sent_to_email ?? ''}</div></div>
+            </div>
+            {approved && <p className="mt-4 border-t border-[color:var(--ds-line)] pt-3 text-[11px] text-[color:var(--ds-body)]">Agreement {approved.event.replace(/_/g, ' ')} {approved.user_email ? `by ${approved.user_email} ` : ''}on {dt(approved.timestamp)}</p>}
+          </div>
+        </div>
+        <div className="rounded-[10px] bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-[color:var(--ds-ink)]">Services Provided</h3>
+          <div className="mt-4 space-y-3">
+            {services.map((s, i) => (
+              <div key={i} className="rounded-[10px] border border-[color:var(--ds-line)] p-4">
+                <div className="text-base text-[color:var(--ds-ink)]">{s.name}</div>
+                {s.desc && <div className="mt-1 text-xs text-[color:var(--ds-body)]">{s.desc}</div>}
+                {s.price != null && <div className="mt-2 text-xl text-[color:var(--ds-ink)]">{money(s.price)}</div>}
+                <ul className="mt-3 border-t border-[color:var(--ds-line)] pt-2 text-xs text-[color:var(--ds-ink)]"><li className="ml-4 list-disc">{s.note}</li></ul>
+              </div>
+            ))}
+            {services.length === 0 && <p className="text-sm text-[color:var(--ds-body)]">No services on this agreement.</p>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Payment Methods tab ---------------- */
+function CardForm({ agreementId, onSaved }: { agreementId: string; onSaved: () => void }) {
+  const stripe = useStripe(); const elements = useElements();
+  const [name, setName] = useState(''); const [zip, setZip] = useState('');
+  const [secret, setSecret] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
+  useEffect(() => {
+    fetch(`/api/admin/agreements/${agreementId}/setup-intent`, { method: 'POST' }).then((r) => r.json()).then((j) => setSecret(j.clientSecret ?? null)).catch(() => setSecret(null));
+  }, [agreementId]);
+  const box = 'rounded-[6px] border border-[color:var(--ds-line)] bg-white px-3 py-3.5';
+  async function connect() {
+    if (!stripe || !elements || !secret) return;
+    const num = elements.getElement(CardNumberElement); if (!num) return;
+    setBusy(true); setMsg(null);
+    try {
+      const r = await stripe.confirmCardSetup(secret, { payment_method: { card: num, billing_details: { name, address: { postal_code: zip } } } });
+      if (r.error) throw new Error(r.error.message ?? 'Card could not be saved');
+      const res = await fetch(`/api/admin/agreements/${agreementId}/setup-intent/confirm`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ setupIntentId: r.setupIntent.id }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.detail ?? j.error ?? 'Could not save card');
+      setMsg({ ok: true, t: 'Card connected.' }); onSaved();
+    } catch (e) { setMsg({ ok: false, t: e instanceof Error ? e.message : 'Card could not be saved' }); } finally { setBusy(false); }
+  }
+  const style = { style: { base: { fontSize: '14px', color: '#16132D' } } };
+  return (
+    <div className="max-w-[450px] space-y-4 rounded-[10px] bg-white p-4 shadow-sm">
+      <input className={`${box} w-full text-sm`} placeholder="Name on card" value={name} onChange={(e) => setName(e.target.value)} />
+      <div className={box}><CardNumberElement options={{ ...style, placeholder: 'Card number' }} /></div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className={box}><CardExpiryElement options={style} /></div>
+        <div className={box}><CardCvcElement options={style} /></div>
+        <input className={`${box} w-full text-sm`} placeholder="Zip code" value={zip} onChange={(e) => setZip(e.target.value)} />
+      </div>
+      <div className="flex items-center justify-between gap-3 text-[11px] text-[color:var(--ds-ink)]">
+        <span>Paying with a card is a service provided by Anchor; Fees are paid directly to Anchor.</span>
+        <button type="button" className={A.primary} disabled={busy || !secret || !name.trim()} onClick={connect}>{busy ? 'Connecting…' : 'Connect card'}</button>
+      </div>
+      {msg && <p className={`text-sm ${msg.ok ? 'text-[#065F46]' : 'text-red-700'}`}>{msg.t}</p>}
+    </div>
+  );
+}
+
+function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Agr | null; onSaved: () => void }) {
+  const [method, setMethod] = useState<'card' | 'ach'>('card');
+  const [stripe, setStripe] = useState<Promise<Stripe | null> | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (!agreement) return;
+    fetch(`/api/admin/agreements/${agreement.id}/setup-intent`, { method: 'POST' }).then((r) => r.json()).then((j) => { if (j.publishableKey) setStripe(loadStripe(j.publishableKey)); }).catch(() => {});
+  }, [agreement]);
+  async function request() {
+    setNotice(null);
+    const r = await fetch('/api/admin/portal-links', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ advertiser_id: client.id, purpose: 'login', send_email: true }) });
+    setNotice(r.ok ? `Request sent to ${client.contact_email ?? 'the client'}.` : 'Could not send the request.');
+  }
+  const onFile = agreement?.card_number_last4;
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-[color:var(--ds-ink)]">Add or remove payment methods. Any overdue invoices will be reprocessed when a new method is selected.</p>
+        <div className="flex gap-3"><button type="button" className={A.outline} onClick={request}>Request payment method</button></div>
+      </div>
+      {notice && <p className="text-sm text-[color:var(--ds-body)]">{notice}</p>}
+      {onFile && (
+        <div className="max-w-[450px] rounded-[10px] bg-white p-4 text-sm shadow-sm">
+          <div className="font-medium text-[color:var(--ds-ink)]">{cap(agreement?.card_type ?? 'Card')} ending in {onFile}</div>
+          <div className="text-xs text-[color:var(--ds-body)]">{agreement?.cardholder_name ?? ''}{agreement?.card_expiration ? ` · Expires ${agreement.card_expiration}` : ''}</div>
+        </div>
+      )}
+      <div className="grid max-w-[450px] grid-cols-2 gap-3">
+        {([['card', 'Card', 'fee paid by client'], ['ach', 'Secure ACH', '']] as const).map(([k, l, s]) => (
+          <button key={k} type="button" onClick={() => setMethod(k)} style={{ background: '#fff' }} className={`flex items-center justify-between rounded-[8px] border px-4 py-3 text-sm text-[color:var(--ds-ink)] ${method === k ? 'border-2 border-[color:var(--ds-primary)]' : 'border-transparent shadow-sm'}`}>
+            <span>{l}</span><span className="text-[10px] text-[color:var(--ds-body)]">{s}</span>
+          </button>
+        ))}
+      </div>
+      {!agreement ? <p className="text-sm text-[color:var(--ds-body)]">Add an agreement before connecting a card.</p> : method === 'card' ? (
+        stripe ? <Elements stripe={stripe}><CardForm agreementId={agreement.id} onSaved={onSaved} /></Elements> : <p className="text-sm text-[color:var(--ds-body)]">Loading card form…</p>
+      ) : <p className="max-w-[450px] text-sm text-[color:var(--ds-body)]">Secure ACH is not enabled for this account yet.</p>}
+      <p className="text-[10px] text-[color:var(--ds-body)]">Bank-level security and privacy.</p>
+    </div>
+  );
+}
+
+/* ---------------- Invoices tab ---------------- */
+function InvoicesTab({ client, invoices, agreements }: { client: Adv; invoices: FullInv[]; agreements: Agr[] }) {
+  const [q, setQ] = useState(''); const [st, setSt] = useState<string[]>([]);
+  const [from, setFrom] = useState(''); const [to, setTo] = useState(''); const [addOpen, setAddOpen] = useState(false);
+  const [sort, setSort] = useState<{ k: 'number' | 'issue' | 'due' | 'total'; dir: 1 | -1 }>({ k: 'number', dir: -1 });
+  const statuses = [...new Set(invoices.map((i) => i.status))].map((s) => ({ value: s, label: cap(s) }));
+  const cardOf = (i: FullInv) => { const a = agreements.find((x) => x.id === i.agreement_id) ?? agreements.find((x) => x.card_number_last4); return a?.card_number_last4 ? `${cap(a.card_type ?? 'Card')} ••${a.card_number_last4}` : null; };
+  const info = (i: FullInv) => (i.status === 'paid' ? 'Paid in full' : i.status === 'void' ? 'Voided' : !cardOf(i) ? 'Missing payment method' : 'Awaiting payment');
+  const rows = invoices.filter((i) => i.status !== 'draft' || true).filter((i) => (st.length === 0 || st.includes(i.status)) && (!q.trim() || (i.number ?? '').toLowerCase().includes(q.trim().toLowerCase())) && (!from || (i.issue_date ?? '') >= from) && (!to || (i.issue_date ?? '') <= to))
+    .sort((a, b) => { const v = (i: FullInv) => (sort.k === 'number' ? i.number ?? '' : sort.k === 'issue' ? i.issue_date ?? '' : sort.k === 'due' ? i.due_date ?? '' : String(i.total_cents).padStart(12, '0')); return sort.dir * v(a).localeCompare(v(b)); });
+  const th = (k: typeof sort.k, l: string, right = false) => <th className={right ? 'text-right' : ''}><button type="button" style={{ border: 0, background: 'transparent', padding: 0 }} className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--ds-body)]" onClick={() => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : 1 }))}>{l}<span aria-hidden="true" className={sort.k === k ? 'text-[color:var(--ds-ink)]' : 'opacity-40'}>{sort.k === k && sort.dir === -1 ? '▾' : '▴'}</span></button></th>;
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchBox value={q} onChange={setQ} label="Search invoices" />
+        <FilterChip<string> title="Invoice status" options={statuses} value={st} onApply={setSt} summary="Invoice status" />
+        <div className="relative">
+          <button type="button" onClick={() => setAddOpen((o) => !o)} style={{ background: 'transparent' }} className="rounded-full border border-dashed border-[color:var(--ds-body)] px-4 py-2 text-sm text-[color:var(--ds-body)]">Add filter &#8853;</button>
+          {addOpen && (
+            <div className="absolute z-20 mt-2 w-64 space-y-2 rounded-[12px] border border-[color:var(--ds-line)] bg-white p-3 shadow-lg">
+              <div className="text-xs font-medium text-[color:var(--ds-ink)]">Invoice issue date</div>
+              <input type="date" className={A.input} value={from} onChange={(e) => setFrom(e.target.value)} aria-label="From" />
+              <input type="date" className={A.input} value={to} onChange={(e) => setTo(e.target.value)} aria-label="To" />
+              <button type="button" className={A.small} onClick={() => { setFrom(''); setTo(''); setAddOpen(false); }}>Clear</button>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className={`${A.table} min-w-[820px]`}>
+          <thead><tr>{th('number', 'Invoice ID')}<th>Client name</th><th>Invoice status</th><th>Additional information</th><th>Payment method</th>{th('issue', 'Issue date')}{th('due', 'Due date')}{th('total', 'Total', true)}<th /></tr></thead>
+          <tbody>
+            {rows.map((i) => (
+              <tr key={i.id}>
+                <td><Link href={`/admin/invoices/${i.id}/preview`} className="font-semibold text-[color:var(--ds-ink)] hover:underline">{i.number ?? '—'}</Link></td>
+                <td className="text-[color:var(--ds-ink)]">{client.name}</td>
+                <td><span className="rounded-full border border-[color:var(--ds-body)] px-2 py-0.5 text-[11px] text-[color:var(--ds-body)]">{cap(i.status === 'sent' ? 'issued' : i.status)}</span></td>
+                <td className="text-[color:var(--ds-ink)]">{info(i)}</td>
+                <td className="text-[color:var(--ds-ink)]">{cardOf(i) ?? '—'}</td>
+                <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(i.issue_date)}</td>
+                <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(i.due_date)}</td>
+                <td className="text-right text-[color:var(--ds-ink)]">{money(i.total_cents)}</td>
+                <td className="text-right"><RowMenu items={[{ label: 'View invoice', href: `/admin/invoices/${i.id}/preview` }]} /></td>
+              </tr>
+            ))}
+            {rows.length === 0 && <tr><td colSpan={9} className="py-10 text-center text-[color:var(--ds-body)]">No invoices to show.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Activity Log tab ---------------- */
+function ActivityTab({ invoices, agreements }: { invoices: FullInv[]; agreements: Agr[] }) {
+  const [q, setQ] = useState(''); const [types, setTypes] = useState<string[]>([]); const [notif, setNotif] = useState(true); const [open, setOpen] = useState<string | null>(null);
+  type Ev = { key: string; at: string; kind: 'agreement' | 'invoice' | 'notification'; text: string; link?: { label: string; href: string }; detail?: string };
+  const events = useMemo<Ev[]>(() => {
+    const out: Ev[] = [];
+    for (const a of agreements) for (const [n, e] of (a.audit_log ?? []).entries()) {
+      const label = e.event.replace(/_/g, ' ');
+      out.push({ key: `a-${a.id}-${n}`, at: e.timestamp, kind: /email|sent|remind/i.test(e.event) ? 'notification' : 'agreement', text: `Agreement ${label}${e.user_email ? ` by ${e.user_email}` : ''}.`, detail: e.details });
+    }
+    for (const i of invoices) {
+      const link = { label: i.number ?? 'invoice', href: `/admin/invoices/${i.id}/preview` };
+      if (i.issued_at || i.issue_date) out.push({ key: `i-${i.id}`, at: i.issued_at ?? `${i.issue_date}T12:00:00`, kind: 'invoice', text: 'Invoice {link} was issued.', link });
+      if (i.paid_at) out.push({ key: `p-${i.id}`, at: i.paid_at, kind: 'invoice', text: 'Invoice {link} was paid in full.', link });
+      for (const [n, e] of (i.audit_log ?? []).entries()) {
+        if (/email|sent|remind/i.test(e.event)) out.push({ key: `n-${i.id}-${n}`, at: e.timestamp, kind: 'notification', text: `An invoice notification was emailed for {link}.`, link, detail: e.details });
+      }
+    }
+    return out.sort((a, b) => b.at.localeCompare(a.at));
+  }, [invoices, agreements]);
+  const shown = events.filter((e) => (notif || e.kind !== 'notification') && (types.length === 0 || types.includes(e.kind)) && (!q.trim() || e.text.toLowerCase().includes(q.trim().toLowerCase())));
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="min-w-[240px] flex-1"><SearchBox value={q} onChange={setQ} label="Search activity" /></div>
+        <FilterChip<string> title="Activity type" options={[{ value: 'agreement', label: 'Agreement' }, { value: 'invoice', label: 'Invoice' }, { value: 'notification', label: 'Notification' }]} value={types} onApply={setTypes} summary="Activity type" />
+        <label className="inline-flex items-center gap-3 text-sm text-[color:var(--ds-ink)]">Show sent notifications
+          <button type="button" role="switch" aria-checked={notif} onClick={() => setNotif((n) => !n)} style={{ border: 0, padding: 0 }} className={`relative h-6 w-11 rounded-full ${notif ? 'bg-[color:var(--ds-primary)]' : 'bg-[color:var(--ds-line)]'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${notif ? 'left-[22px]' : 'left-0.5'}`} /></button>
+        </label>
+      </div>
+      <ol className="space-y-3">
+        {shown.map((e) => {
+          const [pre, post] = e.text.split('{link}');
+          return (
+            <li key={e.key} className="grid grid-cols-[150px_1fr] items-start gap-4">
+              <div className="pt-3 text-right text-xs text-[color:var(--ds-ink)]">{dt(e.at)}</div>
+              <div className="rounded-[10px] bg-white px-4 py-3 text-sm text-[color:var(--ds-ink)] shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span>{pre}{e.link && <Link href={e.link.href} className="text-[color:var(--ds-primary)]">{e.link.label}</Link>}{post}</span>
+                  {e.detail && <button type="button" aria-label="Show details" style={{ border: 0, background: 'transparent' }} onClick={() => setOpen(open === e.key ? null : e.key)}>{open === e.key ? '⌃' : '⌄'}</button>}
+                </div>
+                {open === e.key && e.detail && <p className="mt-2 text-xs text-[color:var(--ds-body)]">{e.detail}</p>}
+              </div>
+            </li>
+          );
+        })}
+        {shown.length === 0 && <li className="py-10 text-center text-sm text-[color:var(--ds-body)]">No activity to show.</li>}
+      </ol>
+    </div>
+  );
+}
+
+/* ---------------- Billing Control drawer ---------------- */
+function ControlDrawer({ onClose, onBill }: { onClose: () => void; onBill: (mode: 'charge' | 'credit', seed?: { description: string; unit_cents: number }) => void }) {
+  const prods = useJson('/api/admin/products-services', (j) => ((j.products ?? j.items ?? j.services ?? []) as Product[]), none as Product[]);
+  const [open, setOpen] = useState(true);
+  const list = prods.data.filter((p) => p.active !== false);
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
+      <aside role="dialog" aria-label="Billing Control" className="flex h-full w-full max-w-[360px] flex-col bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-[color:var(--ds-line)] px-4 py-4"><h2 className="text-base font-semibold text-[color:var(--ds-ink)]">Billing Control</h2><button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: 'transparent' }}>&#10005;</button></div>
+        <div className="flex-1 overflow-y-auto">
+          <div className="px-4 py-3 text-sm font-semibold text-[color:var(--ds-ink)]">Manual services</div>
+          <button type="button" onClick={() => setOpen((o) => !o)} style={{ border: 0, borderRadius: 0, background: '#F3F4F7' }} className="flex w-full items-center justify-between px-4 py-2 text-sm text-[color:var(--ds-ink)]">One time<span>{open ? '⌃' : '⌄'}</span></button>
+          {open && (prods.loading ? <p className="px-4 py-3 text-sm text-[color:var(--ds-body)]">Loading…</p> : list.length === 0 ? <p className="px-4 py-3 text-sm text-[color:var(--ds-body)]">No services yet.</p> : list.map((p) => {
+            const cents = p.unit_price_cents ?? p.price_cents ?? 0;
+            return (
+              <div key={String(p.id)} className="flex items-center justify-between gap-3 border-b border-[color:var(--ds-line)] px-4 py-3">
+                <div><div className="text-sm text-[color:var(--ds-ink)]">{p.name}</div><div className="text-xs text-[color:var(--ds-body)]">{money(cents)}</div></div>
+                <button type="button" className={`${A.primary} !px-5 !py-1.5 !text-xs`} onClick={() => onBill('charge', { description: p.name, unit_cents: cents })}>Bill</button>
+              </div>
+            );
+          }))}
+        </div>
+        <div className="grid grid-cols-2 gap-3 border-t border-[color:var(--ds-line)] p-4">
+          <button type="button" className={A.outline} onClick={() => onBill('charge')}>Add Charge</button>
+          <button type="button" className={A.outline} onClick={() => onBill('credit')}>Add Credit</button>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+/* ---------------- Bill client screen ---------------- */
+type Line = { description: string; qty: number; unit: string; credit: boolean };
+function BillScreen({ client, agreementId, mode, seed, onClose, onDone }: { client: Adv; agreementId: string | null; mode: 'charge' | 'credit'; seed?: { description: string; unit_cents: number }; onClose: () => void; onDone: () => void }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [how, setHow] = useState('date'); const [issue, setIssue] = useState(today);
+  const [lines, setLines] = useState<Line[]>(seed ? [{ description: seed.description, qty: 1, unit: (seed.unit_cents / 100).toFixed(2), credit: false }] : mode === 'credit' ? [{ description: 'Credit', qty: 1, unit: '', credit: true }] : []);
+  const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
+  const cents = (l: Line) => Math.round(Number(l.unit || 0) * 100) * l.qty * (l.credit ? -1 : 1);
+  const total = lines.reduce((n, l) => n + cents(l), 0);
+  const valid = lines.length > 0 && lines.every((l) => l.description.trim() && Number(l.unit) > 0 && l.qty > 0) && total > 0;
+  const setLine = (i: number, p: Partial<Line>) => setLines((ls) => ls.map((l, n) => (n === i ? { ...l, ...p } : l)));
+  async function submit() {
+    setBusy(true); setErr(null);
+    try {
+      const line_items = lines.map((l) => ({ description: l.description.trim(), qty: l.qty, unit_cents: Math.round(Number(l.unit) * 100) * (l.credit ? -1 : 1) }));
+      const future = issue > today;
+      const r = future
+        ? await fetch('/api/admin/recurring-invoices', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ advertiser_id: client.id, agreement_id: agreementId, name: lines[0].description.trim(), frequency: 'monthly', max_occurrences: 1, start_date: issue, line_items, amount_cents: total }) })
+        : await fetch('/api/admin/invoices', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ advertiser_id: client.id, agreement_id: agreementId, status: 'sent', line_items }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+      onDone();
+    } catch (e) { setErr(e instanceof Error ? e.message : 'Could not bill the client.'); } finally { setBusy(false); }
+  }
+  return (
+    <div className="fixed inset-0 z-[60] overflow-y-auto bg-[#E9EAF0]">
+      <div className="flex items-center justify-between bg-white px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-4"><button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: 'transparent' }}>&#10005;</button><span className="h-6 w-px bg-[color:var(--ds-line)]" /><h2 className="text-base font-semibold text-[color:var(--ds-ink)]">Bill client - {client.name}</h2></div>
+        <div className="flex items-center gap-3"><span className="text-sm text-[color:var(--ds-body)]">&#128206; Attach Files</span><button type="button" className={A.primary} disabled={!valid || busy} onClick={submit}>{busy ? 'Billing…' : 'Bill now →'}</button></div>
+      </div>
+      <div className="p-5">
+        <div className="space-y-4 rounded-[10px] bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap gap-4">
+            <label className="relative block w-72"><span className="absolute -top-2 left-3 bg-white px-1 text-[11px] text-[color:var(--ds-body)]">Choose how to bill</span>
+              <select className={selectCls} value={how} onChange={(e) => setHow(e.target.value)}><option value="date">Bill on date</option></select><Caret /></label>
+            <label className="relative block w-72"><span className="absolute -top-2 left-3 bg-white px-1 text-[11px] text-[color:var(--ds-body)]">Issue date</span>
+              <input type="date" min={today} className={selectCls} value={issue} onChange={(e) => setIssue(e.target.value)} /></label>
+          </div>
+          {lines.map((l, i) => (
+            <div key={i} className="grid grid-cols-[1fr_90px_140px_auto] items-center gap-3 rounded-[8px] border border-[color:var(--ds-line)] p-3">
+              <input className={A.input} placeholder={l.credit ? 'Credit description' : 'Charge description'} value={l.description} onChange={(e) => setLine(i, { description: e.target.value })} />
+              <input className={A.input} type="number" min={1} aria-label="Quantity" value={l.qty} onChange={(e) => setLine(i, { qty: Math.max(1, Number(e.target.value) || 1) })} />
+              <input className={A.input} type="number" min={0} step="0.01" aria-label={l.credit ? 'Credit amount' : 'Price'} placeholder={l.credit ? 'Credit $' : 'Price $'} value={l.unit} onChange={(e) => setLine(i, { unit: e.target.value })} />
+              <button type="button" aria-label="Remove" onClick={() => setLines((ls) => ls.filter((_, n) => n !== i))} style={{ border: 0, background: 'transparent' }}>&#10005;</button>
+            </div>
+          ))}
+          <button type="button" onClick={() => setLines((ls) => [...ls, { description: '', qty: 1, unit: '', credit: false }])} style={{ background: 'transparent' }} className="flex w-full items-center gap-2 rounded-[8px] border border-dashed border-[color:var(--ds-line)] px-4 py-3 text-sm font-medium text-[color:var(--ds-primary)]">&#8853; Add charge</button>
+          <button type="button" onClick={() => setLines((ls) => [...ls, { description: 'Credit', qty: 1, unit: '', credit: true }])} style={{ background: 'transparent', border: 0 }} className="text-sm font-medium text-[color:var(--ds-primary)]">&#8853; Add credit</button>
+          {lines.length > 0 && <div className="flex justify-end text-sm text-[color:var(--ds-ink)]">Total&nbsp;<span className="font-semibold">{money(total)}</span></div>}
+          {err && <p className="text-sm text-red-700">{err}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
