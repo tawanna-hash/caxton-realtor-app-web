@@ -47,7 +47,7 @@ function Field({ label, children, isSelect }: { label: string; children: React.R
     <label className="relative block">
       <span className="pointer-events-none absolute -top-2 left-3 z-10 bg-white px-1 text-xs text-[color:var(--ds-primary)]">{label}</span>
       {children}
-      {isSelect && <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--ds-ink)]" width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+      
     </label>
   );
 }

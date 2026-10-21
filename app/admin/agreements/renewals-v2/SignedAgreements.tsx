@@ -46,7 +46,7 @@ function Menu({ label, items, primary }: { label: string; items: Array<{ label: 
   }, [open]);
   return (
     <div className="relative" ref={ref}>
-      <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={primary ? A.primary : A.outline}>{label} <span aria-hidden="true" className="ml-2 text-xs">▾</span></button>
+      <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={primary ? A.primary : A.outline}>{label} <span aria-hidden="true" className="ml-2 text-[10px] leading-none">&#9660;</span></button>
       {open && (
         <div role="menu" className="absolute right-0 z-30 mt-2 min-w-[200px] rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
           {items.map((i) => i.href && !i.disabled

@@ -38,7 +38,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 const selectCls = 'w-full appearance-none rounded-full border border-[color:var(--ds-ink)]/60 bg-transparent px-5 py-3.5 pr-10 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
-const Caret = () => <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[color:var(--ds-ink)]">&#9660;</span>;
+const Caret = () => null; // caret is now drawn globally on every select (app/globals.css)
 
 export default function BillingHub() {
   const advs = useJson('/api/admin/advertisers', (j) => (j.advertisers ?? []) as Adv[], none as Adv[]);

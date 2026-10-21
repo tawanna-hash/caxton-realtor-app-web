@@ -37,7 +37,7 @@ export function CreateProposal({ label = 'Create proposal' }: { label?: string }
     <div ref={ref} className="relative inline-flex">
       <a href={NEW_PROPOSAL} className={A.primary} style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0 }}>{label}</a>
       <button type="button" aria-label="More ways to create a proposal" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={`${A.primary} px-3`} style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, marginLeft: 1 }}>
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        <span aria-hidden="true" className="inline-block text-[10px] leading-none">&#9660;</span>
       </button>
       {open && (
         <div role="menu" className="absolute right-0 top-full z-40 mt-1.5 w-56 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">

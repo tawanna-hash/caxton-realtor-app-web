@@ -29,7 +29,7 @@ function BulkMenu({ items, disabled }: { items: MenuItem[]; disabled: boolean })
     <div ref={ref} className="relative">
       <button type="button" disabled={disabled} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={`${A.outline} gap-2`}>
         Bulk actions
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        <span aria-hidden="true" className="inline-block text-[10px] leading-none">&#9660;</span>
       </button>
       {open && (
         <div role="menu" className="absolute right-0 top-full z-40 mt-1.5 w-48 rounded-[14px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">

@@ -50,7 +50,7 @@ function Collapsible({ title, children }: { title: string; children: React.React
         style={{ borderTop: 0, borderLeft: 0, borderRight: 0, background: 'transparent', borderRadius: 0 }}
       >
         <span className="text-base font-semibold text-[color:var(--ds-ink)]">{title}</span>
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true" className={`shrink-0 text-[color:var(--ds-body)] transition-transform ${open ? 'rotate-180' : ''}`}><path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        <span aria-hidden="true" className="inline-block text-[10px] leading-none">&#9660;</span>
       </button>
       <div className={open ? 'pt-4' : 'hidden'}>{children}</div>
     </section>

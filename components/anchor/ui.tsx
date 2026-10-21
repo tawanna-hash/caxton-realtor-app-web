@@ -35,9 +35,7 @@ export const A = {
 
 function Chevron({ up }: { up?: boolean }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true" className={up ? 'rotate-180' : ''}>
-      <path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <span aria-hidden="true" className={`inline-block text-[10px] leading-none ${up ? 'rotate-180' : ''}`}>&#9660;</span>
   );
 }
 
