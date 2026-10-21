@@ -19,14 +19,22 @@ export const day = (v: string | null | undefined) => (v ? new Date(v.length === 
 
 export function useJson<T>(url: string, pick: (j: Record<string, unknown>) => T, empty: T): { data: T; loading: boolean; error: string | null } {
   const [state, set] = useState<{ data: T; loading: boolean; error: string | null }>({ data: empty, loading: true, error: null });
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    // Partners edits happen in another tab; reload when this one is focused again.
+    const again = () => { if (document.visibilityState === 'visible') setTick((t) => t + 1); };
+    document.addEventListener('visibilitychange', again);
+    window.addEventListener('focus', again);
+    return () => { document.removeEventListener('visibilitychange', again); window.removeEventListener('focus', again); };
+  }, []);
   useEffect(() => {
     let alive = true;
-    fetch(url, { credentials: 'include' })
+    fetch(url, { credentials: 'include', cache: 'no-store' })
       .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`); if (alive) set({ data: pick(j), loading: false, error: null }); })
       .catch((e) => { if (alive) set({ data: empty, loading: false, error: e instanceof Error ? e.message : 'Could not load.' }); });
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url]);
+  }, [url, tick]);
   return state;
 }
 
@@ -40,7 +48,14 @@ export const GROUP_OPTIONS: Array<{ value: Group; label: string }> = [{ value: '
 
 // Each market (Austin, San Antonio) keeps its own client record because the
 // contacts and billing details differ. The market shows as a chip.
-export const MARKET: Record<string, string> = { austin: 'Austin', san_antonio: 'San Antonio' };
+export const MARKET: Record<string, string> = { austin: 'Austin', san_antonio: 'San Antonio', houston: 'Houston', dallas: 'Dallas/FTW' };
+export function marketsOf(raw: string | null | undefined): string[] {
+  const keys = new Set<string>();
+  for (const t of String(raw ?? '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean)) {
+    if (t === 'both') { keys.add('austin'); keys.add('san_antonio'); } else if (MARKET[t]) keys.add(t);
+  }
+  return [...keys].map((k) => MARKET[k]);
+}
 export type Client = Adv & { records: Adv[]; markets: string[]; group: Group };
 export const mainName = (a: Adv) => [a.first_name, a.last_name].filter(Boolean).join(' ');
 
@@ -48,7 +63,7 @@ export function mergeClients(list: Adv[]): Client[] {
   return list.map((a) => ({
     ...a,
     records: [a],
-    markets: a.publication === 'both' ? ['Austin', 'San Antonio'] : a.publication ? [MARKET[a.publication] ?? a.publication] : [],
+    markets: marketsOf(a.publication),
     group: groupOf(a.status),
   }));
 }

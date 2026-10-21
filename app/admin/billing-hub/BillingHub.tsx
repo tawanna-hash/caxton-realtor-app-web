@@ -11,7 +11,7 @@ import { CardCvcElement, CardExpiryElement, CardNumberElement, Elements, useElem
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { A, FilterChip, RowMenu, SearchBox } from '@/components/anchor/ui';
 import { computeNextRun, type RecurringFrequency } from '@/lib/recurring-invoices';
-import { day, money, useJson, GROUP_LABEL, groupOf, MARKET, type Adv, type Inv, type Sch } from '../agreements/clients/data';
+import { day, money, useJson, GROUP_LABEL, groupOf, marketsOf, type Adv, type Inv, type Sch } from '../agreements/clients/data';
 
 type AuditEntry = { event: string; timestamp: string; user_email?: string; details?: string };
 type Agr = {
@@ -86,7 +86,7 @@ export default function BillingHub() {
         <Field label="Client">
           <span className="relative block">
             <select aria-label="Client" className={selectCls} value={clientId ?? ''} onChange={(e) => { setClientId(Number(e.target.value)); setAgreementId(''); }}>
-              {clients.map((c) => <option key={c.id} value={c.id}>{c.name}{c.publication && MARKET[c.publication] ? ` (${MARKET[c.publication]})` : ''}{groupOf(c.status) !== 'active' ? ` · ${GROUP_LABEL[groupOf(c.status)]}` : ''}</option>)}
+              {clients.map((c) => <option key={c.id} value={c.id}>{c.name}{marketsOf(c.publication).length ? ` (${marketsOf(c.publication).join(', ')})` : ''}{groupOf(c.status) !== 'active' ? ` · ${GROUP_LABEL[groupOf(c.status)]}` : ''}</option>)}
             </select><Caret />
           </span>
         </Field>
