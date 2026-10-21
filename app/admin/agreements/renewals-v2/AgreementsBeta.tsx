@@ -84,12 +84,7 @@ export default function AgreementsBeta() {
       {tab === 'drafts' && <BuilderList kind="draft" />}
       {tab === 'archived' && <BuilderList kind="archived" />}
       {tab === 'renewals' && <RenewalsV2Client />}
-      {tab === 'templates' && (
-        <div className="space-y-6">
-          <Collapsible title="Agreement templates"><BuilderList kind="template" /></Collapsible>
-          <Collapsible title="Saved rates"><TemplatesPanel /></Collapsible>
-        </div>
-      )}
+      {tab === 'templates' && <TemplatesPanel />}
       {tab === 'defaults' && <DefaultsPanel />}
     </div>
   );

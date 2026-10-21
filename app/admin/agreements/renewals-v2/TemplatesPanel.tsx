@@ -47,7 +47,15 @@ export default function TemplatesPanel() {
     reload();
   }
 
-  const list = useMemo(() => (rows ?? []).filter((t) => t.name.toLowerCase().includes(q.trim().toLowerCase())), [rows, q]);
+  type Row = { id: string; kind: 'builder' | 'quick'; name: string; ad_size: string | null; frequency: string | null; ad_rate_cents: number | null; updated_at: string };
+  const combined = useMemo<Row[]>(() => {
+    const n = q.trim().toLowerCase();
+    const all: Row[] = [
+      ...builderTpls.map((t) => ({ id: t.id, kind: 'builder' as const, name: t.name, ad_size: null, frequency: null, ad_rate_cents: null, updated_at: t.updated_at })),
+      ...(rows ?? []).map((t) => ({ id: t.id, kind: 'quick' as const, name: t.name, ad_size: t.ad_size, frequency: t.frequency, ad_rate_cents: t.ad_rate_cents, updated_at: t.updated_at })),
+    ];
+    return all.filter((t) => t.name.toLowerCase().includes(n));
+  }, [rows, builderTpls, q]);
 
   async function create() {
     setMsg(null);
@@ -86,44 +94,26 @@ export default function TemplatesPanel() {
           </div>
         </div>
       )}
-      <div>
-        <h2 className="mb-1 text-base font-semibold text-[color:var(--ds-ink)]">Agreement templates</h2>
-        <p className="mb-2 text-xs text-[color:var(--ds-body)]">Saved from the agreement builder with Save as template. They keep the services, message, note and reference fields.</p>
-        {builderTpls.filter((t) => t.name.toLowerCase().includes(q.trim().toLowerCase())).length === 0 ? (
-          <p className="text-sm text-[color:var(--ds-body)]">None yet. Open the builder and choose Save as template.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <SortTable rows={builderTpls.filter((t) => t.name.toLowerCase().includes(q.trim().toLowerCase()))} cols={[{ label: 'Template name', get: (r) => r.name }, { label: 'Updated', get: (r) => r.updated_at }, { label: '' }]} className={A.table}>
-{(rws) => (<>
-                {rws.map((t) => (
-                  <tr key={t.id}>
-                    <td className="font-medium text-[color:var(--ds-ink)]">{t.name}</td>
-                    <td className="whitespace-nowrap text-[color:var(--ds-body)]">{new Date(t.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                    <td className="whitespace-nowrap text-right"><span className="inline-flex items-center gap-2"><a href={`/admin/agreements/renewals-v2/new?template=${t.id}`} className={A.small}>Use template</a><RowMenu items={[{ label: 'Delete template', onClick: () => removeBuilder(t), danger: true }]} /></span></td>
-                  </tr>
-                ))}
-              </>)}
-</SortTable>
-          </div>
-        )}
-        <h2 className="mb-1 mt-6 text-base font-semibold text-[color:var(--ds-ink)]">Quick templates</h2>
-      </div>
       <div className="overflow-x-auto">
-        <SortTable rows={list} cols={[{ label: 'Template name', get: (r) => r.name }, { label: 'Ad size', get: (r) => r.ad_size }, { label: 'Frequency', get: (r) => r.frequency }, { label: 'Monthly rate', get: (r) => r.ad_rate_cents }, { label: '' }]} className={A.table}>
-{(rws) => (<>
-            {rows === null && <tr><td colSpan={5} className="text-center text-[color:var(--ds-body)]">Loading…</td></tr>}
-            {rows !== null && list.length === 0 && <tr><td colSpan={5}><EmptyState title="No templates" body="Create a template to prefill new agreements." /></td></tr>}
+        <SortTable rows={combined} cols={[{ label: 'Template name', get: (r) => r.name }, { label: 'Ad size', get: (r) => r.ad_size }, { label: 'Frequency', get: (r) => r.frequency }, { label: 'Monthly rate', get: (r) => r.ad_rate_cents }, { label: 'Last updated', get: (r) => r.updated_at }, { label: '' }]} className={`${A.table} min-w-[720px]`}>
+          {(rws) => (<>
+            {rows === null && <tr><td colSpan={6} className="text-center text-[color:var(--ds-body)]">Loading…</td></tr>}
+            {rows !== null && combined.length === 0 && <tr><td colSpan={6}><EmptyState title="No templates" body="Create a template, or open the builder and choose Save as template." /></td></tr>}
             {rws.map((t) => (
-              <tr key={t.id}>
+              <tr key={`${t.kind}-${t.id}`}>
                 <td className="font-medium text-[color:var(--ds-ink)]">{t.name}</td>
                 <td className="text-[color:var(--ds-ink)]">{t.ad_size ?? '—'}</td>
                 <td className="text-[color:var(--ds-ink)]">{t.frequency ?? '—'}</td>
                 <td className="text-[color:var(--ds-ink)]">{t.ad_rate_cents == null ? '—' : `$${(t.ad_rate_cents / 100).toLocaleString('en-US')}`}</td>
-                <td className="text-right"><RowMenu items={[{ label: 'Delete template', onClick: () => remove(t), danger: true }]} /></td>
+                <td className="whitespace-nowrap text-[color:var(--ds-body)]">{new Date(t.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                <td className="whitespace-nowrap text-right"><span className="inline-flex items-center gap-2">
+                  {t.kind === 'builder' && <a href={`/admin/agreements/renewals-v2/new?template=${t.id}`} className={A.small}>Use template</a>}
+                  <RowMenu items={[{ label: 'Delete template', danger: true, onClick: () => (t.kind === 'builder' ? removeBuilder(t) : remove(t as unknown as Template)) }]} />
+                </span></td>
               </tr>
             ))}
           </>)}
-</SortTable>
+        </SortTable>
       </div>
     </div>
   );
