@@ -419,6 +419,10 @@ export default function AgreeClient({ token }: { token: string }) {
                 </label>
                 {pay === 'card' && (
                   <div className="rounded-[10px] border border-[color:var(--ds-line)] p-4">
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-[color:var(--ds-ink)]">Connect your bank</p>
+                      <p className="mt-1 text-xs text-[color:var(--ds-body)]">Securely connect your bank account. Connect instantly with your online banking login, or enter your routing and account numbers. Your login is never shared with us.</p>
+                    </div>
                     <p className="mb-3 rounded-[10px] bg-[#FEF8CC] p-3 text-xs text-[#645600]">
                       A 3% credit card surcharge is added. Your card will be charged {money(data.card_charge_cents)} today{data.lines.length > 0 ? ' for the items due now' : ' for the first issue'}.
                     </p>
