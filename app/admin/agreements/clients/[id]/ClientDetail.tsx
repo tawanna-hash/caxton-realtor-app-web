@@ -7,6 +7,7 @@ import { computeNextRun, type RecurringFrequency } from '@/lib/recurring-invoice
 import StatementDialog from './StatementDialog';
 import { mainOf, othersOf } from '../contacts/ContactsList';
 import { GROUP_LABEL, mergeClients, day, money, useJson, type Adv, type Agr, type Inv, type Sch } from '../data';
+import { ContactModal, EditClientModal, targetFor, type ContactTarget } from '../ClientEditors';
 import SortTable from '@/components/anchor/SortTable';
 
 const noAdv: Adv[] = [];
@@ -44,6 +45,8 @@ export default function ClientDetail({ id }: { id: number }) {
   const [q, setQ] = useState('');
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [stmtOpen, setStmtOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [contactEdit, setContactEdit] = useState<{ target: ContactTarget; current?: { name: string; email: string | null; phone: string | null }; rec: Adv } | null>(null);
 
   const a = useMemo(() => mergeClients(adv.data).find((c) => c.records.some((r) => r.id === id)), [adv.data, id]);
   const ids = useMemo(() => new Set(a?.records.map((r) => r.id) ?? [id]), [a, id]);
@@ -138,18 +141,18 @@ export default function ClientDetail({ id }: { id: number }) {
             </Card>
           </div>
           <div className="space-y-5">
-            <Card title="Client details" action={<Link href="/admin/crm" className={link}>Edit client</Link>}>
+            <Card title="Client details" action={<button type="button" className={link} style={{ border: 0, background: 'transparent' }} onClick={() => setEditing(true)}>Edit client</button>}>
               <div className="space-y-1 text-sm text-[color:var(--ds-ink)]">
-                {address ? <p>{address}</p> : <Link href="/admin/crm" className={`${link} inline-flex items-center gap-2`}><span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-current leading-none">+</span>Add address</Link>}
+                {address ? <p>{address}</p> : <button type="button" onClick={() => setEditing(true)} style={{ border: 0, background: 'transparent' }} className={`${link} inline-flex items-center gap-2`}><span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-current leading-none">+</span>Add address</button>}
               </div>
             </Card>
-            <Card title="Contacts" action={<Link href="/admin/crm" className={link}>Add contact</Link>}>
+            <Card title="Contacts" action={<button type="button" className={link} style={{ border: 0, background: 'transparent' }} onClick={() => setContactEdit({ target: { kind: 'new' }, rec: a })}>Add contact</button>}>
               <ul className="space-y-2">
                 {allContacts.map((c, i) => (
                   <li key={i} className="rounded-[10px] border border-[color:var(--ds-line)] p-3 text-sm">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2 font-medium text-[color:var(--ds-ink)]">{c.name}{i === 0 && !a.portal_activated_at && <span className={pill}>No portal access</span>}</div>
-                      <RowMenu items={[{ label: 'Edit in Partners', href: '/admin/crm' }]} />
+                      <RowMenu items={[{ label: 'Edit contact', onClick: () => { const hit = a.records.map((r) => ({ r, t: targetFor(r, c) })).find((x) => x.t.kind !== 'new'); const rec = hit?.r ?? a.records.find((r) => r.id === id) ?? a; setContactEdit({ target: hit?.t ?? { kind: 'new' }, current: c, rec }); } }]} />
                     </div>
                     {c.email && <div className="mt-1 flex items-center gap-2 text-xs text-[color:var(--ds-body)]"><span aria-hidden="true">&#9993;</span>{c.email}</div>}
                     {c.phone && <div className="mt-1 flex items-center gap-2 text-xs text-[color:var(--ds-body)]"><span aria-hidden="true">&#9990;</span>{c.phone}</div>}
@@ -158,7 +161,7 @@ export default function ClientDetail({ id }: { id: number }) {
                 {allContacts.length === 0 && <li className="text-sm text-[color:var(--ds-body)]">No contacts on file.</li>}
               </ul>
             </Card>
-            <Card title="Payment methods" action={<Link href="/admin/crm" className={link}>Add a payment method</Link>}>
+            <Card title="Payment methods" action={<Link href={`/admin/billing-hub?tab=payment&clientId=${id}`} className={link}>Add a payment method</Link>}>
               {a.card_last4 ? <p className="text-sm">Card ending {a.card_last4}</p> : <p className="text-sm text-[color:var(--ds-body)]">There are no payment methods to display.</p>}
             </Card>
           </div>
@@ -228,6 +231,8 @@ export default function ClientDetail({ id }: { id: number }) {
         </div>
       )}
       {stmtOpen && <StatementDialog client={a} invoices={chosen.length ? chosen : payable} onClose={() => setStmtOpen(false)} />}
+      {editing && <EditClientModal client={a.records.find((r) => r.id === id) ?? a} onClose={() => setEditing(false)} />}
+      {contactEdit && <ContactModal client={contactEdit.rec} target={contactEdit.target} current={contactEdit.current} onClose={() => setContactEdit(null)} />}
     </div>
   );
 }

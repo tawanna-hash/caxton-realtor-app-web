@@ -95,6 +95,10 @@ function getLastFrontendRoute(): string {
     return '/';
 }
 
+// Beta pages run without the Quick Links strip.
+const BETA_PREFIXES = ['/admin/dashboard-beta', '/admin/billing-hub', '/admin/agreements', '/admin/payouts-beta', '/admin/services-beta', '/admin/reports-beta', '/admin/integrations-beta', '/admin/settings-beta', '/admin/bundles-beta'];
+function isBetaPath(p: string | null) { return !!p && BETA_PREFIXES.some((x) => p === x || p.startsWith(x + '/')); }
+
 export default function AppShell({
   children,
   variant = 'public',
@@ -527,7 +531,7 @@ export default function AppShell({
           data-admin-density={useCompactAdminDensity ? 'compact' : undefined}
           data-admin-ui={isAdmin ? 'true' : undefined}
         >
-          {isAdmin && <AdminQuickLinks />}
+          {isAdmin && !isBetaPath(pathname) && <AdminQuickLinks />}
           {isAdmin && <MobileTables />}
           <SwipeBackShell area={isAdmin ? 'admin' : 'public'}>
             {isAdmin && !pathname?.includes('/hotspots') ? (
