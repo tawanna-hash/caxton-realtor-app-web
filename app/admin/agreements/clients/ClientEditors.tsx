@@ -13,51 +13,87 @@ async function patch(id: number, body: Record<string, unknown>) {
   window.dispatchEvent(new Event('focus')); // reloads the client lists
 }
 
+// Mobile slide-up drawer (matches the Anchor "Edit client" sheet): grab handle, close X,
+// centered title, full-width Save. Becomes a centered dialog from the sm breakpoint up.
 function Modal({ title, onClose, onSave, saving, error, children, saveLabel = 'Save' }: { title: string; onClose: () => void; onSave: () => void; saving: boolean; error: string | null; children: React.ReactNode; saveLabel?: string }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 sm:items-center" onClick={onClose}>
-      <div className="flex max-h-[92dvh] w-full max-w-lg flex-col rounded-t-[14px] bg-white sm:rounded-[14px]" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4"><h3 className="text-lg font-semibold text-[color:var(--ds-ink)]">{title}</h3><button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: 'transparent' }} className="text-2xl leading-none text-[color:var(--ds-body)]">×</button></div>
-        <div className="space-y-3 overflow-y-auto px-5 pb-4">{error && <div className={A.error}>{error}</div>}{children}</div>
-        <div className="flex justify-end gap-2 border-t border-[color:var(--ds-line)] px-5 py-3"><button type="button" className={A.outline} onClick={onClose}>Cancel</button><button type="button" className={A.primary} disabled={saving} onClick={onSave}>{saving ? 'Saving…' : saveLabel}</button></div>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#1b1830]/25 sm:items-center" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={title} className="relative flex max-h-[92dvh] w-full max-w-lg flex-col rounded-t-[28px] bg-white sm:rounded-[20px]" onClick={(e) => e.stopPropagation()}>
+        <div aria-hidden className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-[#C9C7D1] sm:hidden" />
+        <button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: 'transparent' }} className="absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center text-[color:var(--ds-body)]">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden><path d="M5 5l14 14M19 5L5 19" /></svg>
+        </button>
+        <h3 className="px-5 pb-5 pt-9 text-center text-xl font-semibold text-[color:var(--ds-ink)]">{title}</h3>
+        <div className="flex-1 overflow-y-auto px-5">{error && <div className={`${A.error} mb-3`}>{error}</div>}{children}</div>
+        <div className="shrink-0 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
+          <button type="button" disabled={saving} onClick={onSave} className="h-12 w-full rounded-[10px] border-0 bg-[#6240ED] text-base font-medium text-white hover:bg-[#5233d6] disabled:opacity-60">{saving ? 'Saving…' : saveLabel}</button>
+        </div>
       </div>
     </div>
   );
 }
-const Field = ({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; type?: string }) => (
-  <label className="block text-xs text-[color:var(--ds-body)]">{label}<input type={type} className={`${A.input} mt-1`} value={value} onChange={(e) => onChange(e.target.value)} /></label>
+
+// Outlined input with the label sitting on the top border.
+const Field = ({ label, value, onChange, type = 'text', className = '' }: { label: string; value: string; onChange: (v: string) => void; type?: string; className?: string }) => (
+  <label className={`relative mb-5 block ${className}`}>
+    <span className="absolute -top-2 left-3 bg-[#fcfcfc] px-1 text-xs leading-4 text-[color:var(--ds-body)]">{label}</span>
+    <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className="h-12 w-full rounded-md border border-[#C9C7D1] bg-[#fcfcfc] px-4 text-base text-[color:var(--ds-body)] focus:border-[#6240ED] focus:outline-none" />
+  </label>
+);
+
+const AddLink = ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => (
+  <button type="button" onClick={onClick} style={{ border: 0, background: 'transparent' }} className="mb-5 flex min-h-11 items-center gap-3 p-0 text-sm font-semibold text-[#6240ED]">
+    <span aria-hidden className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] border-[#6240ED]">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+    </span>
+    {children}
+  </button>
 );
 
 export function EditClientModal({ client, onClose }: { client: Adv; onClose: () => void }) {
   const [f, setF] = useState({
-    company: client.company || client.name || '', type: client.type === 'individual' ? 'individual' : 'business',
+    company: client.company || client.name || '',
     status: client.status === 'prospect' ? 'prospect' : client.status === 'archived' || client.status === 'inactive' ? 'archived' : 'advertiser',
-    first_name: client.first_name ?? '', last_name: client.last_name ?? '', contact_email: client.contact_email ?? '', phone: client.phone ?? '',
     address: client.address ?? '', address_2: client.address_2 ?? '', city: client.city ?? '', state: client.state ?? '', zip: client.zip ?? '',
   });
+  const [kind, setKind] = useState<'business' | 'individual'>(client.type === 'individual' ? 'individual' : 'business');
+  const [showAddress, setShowAddress] = useState(Boolean(client.address || client.city || client.zip));
   const [saving, setSaving] = useState(false); const [error, setError] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (v: string) => setF((p) => ({ ...p, [k]: v }));
   const save = async () => {
     if (!f.company.trim()) { setError('Client name is required.'); return; }
     setSaving(true); setError(null);
     try {
-      // `type` on the record is the Partners category; only status and the details change here.
-      const { type: _t, ...rest } = f; void _t;
-      await patch(client.id, rest); onClose();
+      // `type` on the record is the Partners category, so the Business/Individual toggle is not written to it.
+      await patch(client.id, f); onClose();
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not save.'); setSaving(false); }
   };
   return (
     <Modal title="Edit client" onClose={onClose} onSave={save} saving={saving} error={error}>
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <span className="text-base font-semibold text-[color:var(--ds-ink)]">Client type</span>
+        <div role="radiogroup" aria-label="Client type" className="flex w-[246px] max-w-[62%] rounded-full bg-[#ECECF1] p-[3px]">
+          {(['business', 'individual'] as const).map((k) => (
+            <button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => setKind(k)} style={{ border: kind === k ? '1px solid #D5D3DE' : '1px solid transparent' }} className={`h-10 flex-1 rounded-full text-sm ${kind === k ? 'bg-white font-semibold text-[color:var(--ds-ink)] shadow-sm' : 'bg-transparent font-medium text-[color:var(--ds-body)]'}`}>{k === 'business' ? 'Business' : 'Individual'}</button>
+          ))}
+        </div>
+      </div>
       <Field label="Client name" value={f.company} onChange={set('company')} />
-      <label className="block text-xs text-[color:var(--ds-body)]">Status<select className={`${A.input} mt-1 appearance-none`} value={f.status} onChange={(e) => set('status')(e.target.value)}><option value="advertiser">Active</option><option value="prospect">Prospect</option><option value="archived">Archived</option></select></label>
-      <p className="pt-1 text-xs font-medium text-[color:var(--ds-ink)]">Main contact</p>
-      <div className="grid grid-cols-2 gap-3"><Field label="First name" value={f.first_name} onChange={set('first_name')} /><Field label="Last name" value={f.last_name} onChange={set('last_name')} /></div>
-      <Field label="Email" type="email" value={f.contact_email} onChange={set('contact_email')} />
-      <Field label="Phone" value={f.phone} onChange={set('phone')} />
-      <p className="pt-1 text-xs font-medium text-[color:var(--ds-ink)]">Address</p>
-      <Field label="Address" value={f.address} onChange={set('address')} />
-      <Field label="Address line 2" value={f.address_2} onChange={set('address_2')} />
-      <div className="grid grid-cols-3 gap-3"><Field label="City" value={f.city} onChange={set('city')} /><Field label="State" value={f.state} onChange={set('state')} /><Field label="ZIP" value={f.zip} onChange={set('zip')} /></div>
+      <label className="relative mb-5 block">
+        <span className="absolute -top-2 left-3 bg-[#fcfcfc] px-1 text-xs leading-4 text-[color:var(--ds-body)]">Status</span>
+        <select value={f.status} onChange={(e) => set('status')(e.target.value)} className="h-12 w-full appearance-none rounded-md border border-[#C9C7D1] bg-[#fcfcfc] px-4 text-base text-[color:var(--ds-body)] focus:border-[#6240ED] focus:outline-none"><option value="advertiser">Active</option><option value="prospect">Prospect</option><option value="archived">Archived</option></select>
+      </label>
+      {showAddress ? (
+        <>
+          <Field label="Address" value={f.address} onChange={set('address')} />
+          <Field label="Address line 2" value={f.address_2} onChange={set('address_2')} />
+          <Field label="City" value={f.city} onChange={set('city')} />
+          <div className="grid grid-cols-2 gap-3"><Field label="State" value={f.state} onChange={set('state')} /><Field label="ZIP" value={f.zip} onChange={set('zip')} /></div>
+        </>
+      ) : <AddLink onClick={() => setShowAddress(true)}>Add address</AddLink>}
+      <hr className="my-3 border-0 border-t border-[#DEDCE6]" />
+      <h4 className="mb-3 mt-6 text-base font-semibold text-[color:var(--ds-ink)]">Reference fields</h4>
+      <AddLink onClick={() => { /* reference fields are not stored on advertiser records yet */ }}>Add reference field</AddLink>
     </Modal>
   );
 }
