@@ -418,7 +418,6 @@ export default function AppShell({
                   onClick={() => setMarketSheetOpen(true)}
                   aria-haspopup="dialog"
                   aria-expanded={marketSheetOpen}
-                  aria-label={`${meta.label} Realty News Now switch publication`}
                   className="flex flex-col items-center leading-tight px-2 py-0.5 rounded-md hover:bg-gray-50 active:bg-gray-100 transition"
                 >
                   <span className="flex items-center gap-1 text-sm sm:text-base font-semibold tracking-tight text-gray-900">
@@ -430,6 +429,7 @@ export default function AppShell({
                   <span className="text-[11px] uppercase tracking-[0.15em] text-gray-500 font-medium">
                     Realty News Now
                   </span>
+                  <span className="sr-only">, switch publication</span>
                 </button>
               );
             })()}
