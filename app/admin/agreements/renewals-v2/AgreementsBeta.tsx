@@ -7,25 +7,19 @@ import StatusBoard from './StatusBoard';
 import SignedAgreements from './SignedAgreements';
 import TemplatesPanel from './TemplatesPanel';
 import DefaultsPanel from './DefaultsPanel';
-import RecurringPanel from './RecurringPanel';
-import StatementsPanel from './StatementsPanel';
 import { A } from '@/components/anchor/ui';
 
-type Tab = 'board' | 'renewals' | 'templates' | 'recurring' | 'statements' | 'defaults';
+type Tab = 'board' | 'renewals' | 'templates' | 'defaults';
 const TABS: Array<[Tab, string]> = [
   ['board', 'Agreements'],
   ['renewals', 'Renewals'],
   ['templates', 'Templates'],
-  ['recurring', 'Recurring invoices'],
-  ['statements', 'Statements'],
   ['defaults', 'Default settings'],
 ];
 const SUB: Record<Tab, string> = {
   board: 'Create and send new partner agreements, approve check requests, and track every agreement.',
   renewals: 'One-tap renewals, sent one at a time or as a monthly batch.',
   templates: 'Saved ad sizes, frequencies and rates for new agreements.',
-  recurring: 'Every recurring invoice schedule from Get Paid, including drafts made when agreements are signed.',
-  statements: 'Partners with an open balance and their statement of account.',
   defaults: 'Set the default values of new agreements you create.',
 };
 
@@ -78,8 +72,6 @@ export default function AgreementsBeta() {
       )}
       {tab === 'renewals' && <RenewalsV2Client />}
       {tab === 'templates' && <TemplatesPanel />}
-      {tab === 'recurring' && <RecurringPanel />}
-      {tab === 'statements' && <StatementsPanel />}
       {tab === 'defaults' && <DefaultsPanel />}
     </div>
   );
