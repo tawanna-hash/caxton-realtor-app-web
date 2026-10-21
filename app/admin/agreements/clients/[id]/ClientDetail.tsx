@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { A, RowMenu } from '@/components/anchor/ui';
 import { contactsOf } from '../contacts/ContactsList';
-import { day, money, useJson, type Adv, type Agr, type Inv, type Sch } from '../data';
+import { GROUP_LABEL, groupOf, day, money, useJson, type Adv, type Agr, type Inv, type Sch } from '../data';
 
 const noAdv: Adv[] = [];
 const noAgr: Agr[] = [];
 const noInv: Inv[] = [];
 const noSch: Sch[] = [];
-const TABS = [['summary', 'Summary'], ['upcoming', 'Upcoming Invoices'], ['issued', 'Issued Invoices']] as const;
+const TABS = [['summary', 'Summary'], ['upcoming', 'Upcoming invoices'], ['issued', 'Issued invoices']] as const;
 type Tab = (typeof TABS)[number][0];
 
 function Card({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
@@ -68,7 +68,7 @@ export default function ClientDetail({ id }: { id: number }) {
         <div className="flex items-start gap-3">
           <Link href="/admin/agreements/clients" aria-label="Back to clients" className="mt-1 text-xl text-[color:var(--ds-ink)]">&lsaquo;</Link>
           <div>
-            <h2 className="flex flex-wrap items-center gap-2 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[color:var(--ds-ink)]">{a.name}<span className="rounded-full border border-[#047857] bg-[#E6F6EF] px-2.5 py-0.5 text-xs font-medium text-[#065F46]">{a.status === 'inactive' ? 'Inactive' : 'Active'}</span></h2>
+            <h2 className="flex flex-wrap items-center gap-2 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[color:var(--ds-ink)]">{a.name}<span className="rounded-full border border-[#047857] bg-[#E6F6EF] px-2.5 py-0.5 text-xs font-medium text-[#065F46]">{GROUP_LABEL[groupOf(a.status)]}</span></h2>
             <p className="text-xs text-[color:var(--ds-body)]">{a.type === 'individual' ? 'Individual' : 'Business'} · Created on {day(a.created_at)}</p>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function ClientDetail({ id }: { id: number }) {
       {tab === 'summary' && (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <div className="space-y-5">
-            <Card title="Billing Overview" action={<button type="button" className={link} style={{ border: 0, background: 'transparent' }} onClick={() => setTab('upcoming')}>Manage Billing</button>}>
+            <Card title="Billing overview" action={<span className="flex items-center gap-3"><button type="button" className={link} style={{ border: 0, background: 'transparent' }} onClick={() => setTab('upcoming')}>Manage billing</button><span className="h-4 w-px bg-[color:var(--ds-line)]" /><Link href="/admin/getpaid/invoices" className={link}>Bill client</Link></span>}>
               <p className="text-xs text-[color:var(--ds-body)]">Upcoming invoice</p>
               <div className="mt-1 rounded-[10px] border border-[color:var(--ds-line)] p-3">
                 {next ? (<><div className="flex justify-between text-sm"><span>To be issued on {day(next.next_run_at)}</span><span className="font-semibold">{money(nextTotal)}</span></div><button type="button" className={link} style={{ border: 0, background: 'transparent', padding: 0 }} onClick={() => setTab('upcoming')}>View Details</button></>) : <p className="text-sm text-[color:var(--ds-body)]">No invoice is scheduled.</p>}
@@ -92,7 +92,7 @@ export default function ClientDetail({ id }: { id: number }) {
               <p className="mt-4 text-xs text-[color:var(--ds-body)]">Latest invoice</p>
               <div className="mt-1 rounded-[10px] border border-[color:var(--ds-line)] p-3">
                 {latest ? (<>
-                  <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2"><span className="font-medium text-[color:var(--ds-primary)]">{latest.number ?? 'Invoice'}</span><span className={pill}>{invStatus(latest)}</span></span></div>
+                  <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2"><span className="font-medium text-[color:var(--ds-primary)]">{latest.number ?? 'Invoice'}</span><span className={pill}>{invStatus(latest)}</span></span><RowMenu items={[{ label: 'Open in Get Paid', href: '/admin/getpaid/invoices' }]} /></div>
                   <p className="mt-1 text-xs text-[color:var(--ds-body)]">Issue date: {day(latest.issue_date)}</p>
                   <div className="mt-2 flex justify-between border-t border-[color:var(--ds-line)] pt-2 text-sm font-semibold"><span>Total</span><span>{money(latest.total_cents)}</span></div>
                 </>) : <p className="text-sm text-[color:var(--ds-body)]">No invoices have been issued.</p>}
@@ -100,12 +100,12 @@ export default function ClientDetail({ id }: { id: number }) {
               <p className="mt-4 text-xs text-[color:var(--ds-body)]">Overdue invoices</p>
               {overdue.length === 0 ? <p className="mt-1 text-sm text-[color:var(--ds-body)]">There are no overdue invoices to display.</p> : overdue.map((i) => <div key={i.id} className="mt-1 flex justify-between rounded-[10px] border border-[#C8102E] bg-[#FDECEF] p-3 text-sm text-[#9B0C23]"><span>{i.number} · due {day(i.due_date)}</span><span className="font-semibold">{money(i.balance_cents)}</span></div>)}
             </Card>
-            <Card title="Recent Agreements" action={<Link href="/admin/agreements/renewals-v2/new" className={link}>Create Proposal</Link>}>
+            <Card title="Recent agreements" action={<Link href="/admin/agreements/renewals-v2/new" className={link}>Create proposal</Link>}>
               {myAgr.length === 0 ? <p className="text-sm text-[color:var(--ds-body)]">No agreements yet.</p> : (
                 <ul className="space-y-2">
                   {myAgr.slice(0, 5).map((g) => (
                     <li key={g.id} className="rounded-[10px] border border-[color:var(--ds-line)] p-3">
-                      <span className="flex items-center gap-2 text-sm"><span className="font-medium text-[color:var(--ds-primary)]">Agreement</span><span className={pill}>{g.signed_at ? 'Active' : 'Awaiting approval'}</span></span>
+                      <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm"><span className="font-medium text-[color:var(--ds-primary)]">Agreement</span><span className={g.signed_at ? 'rounded-full border border-[#047857] px-2 py-0.5 text-xs text-[#065F46]' : pill}>{g.signed_at ? 'Active' : 'Awaiting approval'}</span></span><RowMenu items={[{ label: 'View agreements', href: '/admin/agreements/renewals-v2' }]} /></div>
                       <p className="mt-1 text-xs text-[color:var(--ds-body)]">Effective date · {day(g.start_date ?? g.signed_at ?? g.created_at)}</p>
                     </li>
                   ))}
@@ -114,25 +114,27 @@ export default function ClientDetail({ id }: { id: number }) {
             </Card>
           </div>
           <div className="space-y-5">
-            <Card title="Client Details">
+            <Card title="Client details" action={<Link href="/admin/crm" className={link}>Edit client</Link>}>
               <div className="space-y-1 text-sm text-[color:var(--ds-ink)]">
-                <p>{address || <span className="text-[color:var(--ds-body)]">No address on file.</span>}</p>
+                {address ? <p>{address}</p> : <Link href="/admin/crm" className={`${link} inline-flex items-center gap-2`}><span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-current leading-none">+</span>Add address</Link>}
               </div>
             </Card>
-            <Card title="Contacts">
+            <Card title="Contacts" action={<Link href="/admin/crm" className={link}>Add contact</Link>}>
               <ul className="space-y-2">
                 {contactsOf(a).map((c, i) => (
                   <li key={i} className="rounded-[10px] border border-[color:var(--ds-line)] p-3 text-sm">
-                    <div className="font-medium text-[color:var(--ds-ink)]">{c.name}</div>
-                    {c.email && <div className="text-xs text-[color:var(--ds-body)]">{c.email}</div>}
-                    {c.phone && <div className="text-xs text-[color:var(--ds-body)]">{c.phone}</div>}
-                    {i === 0 && !a.portal_activated_at && <span className={`${pill} mt-1 inline-block`}>No portal access</span>}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2 font-medium text-[color:var(--ds-ink)]">{c.name}{i === 0 && !a.portal_activated_at && <span className={pill}>No portal access</span>}</div>
+                      <RowMenu items={[{ label: 'Edit in Partners', href: '/admin/crm' }]} />
+                    </div>
+                    {c.email && <div className="mt-1 flex items-center gap-2 text-xs text-[color:var(--ds-body)]"><span aria-hidden="true">&#9993;</span>{c.email}</div>}
+                    {c.phone && <div className="mt-1 flex items-center gap-2 text-xs text-[color:var(--ds-body)]"><span aria-hidden="true">&#9990;</span>{c.phone}</div>}
                   </li>
                 ))}
                 {contactsOf(a).length === 0 && <li className="text-sm text-[color:var(--ds-body)]">No contacts on file.</li>}
               </ul>
             </Card>
-            <Card title="Payment Methods">
+            <Card title="Payment methods" action={<Link href="/admin/crm" className={link}>Add a payment method</Link>}>
               {a.card_last4 ? <p className="text-sm">Card ending {a.card_last4}</p> : <p className="text-sm text-[color:var(--ds-body)]">There are no payment methods to display.</p>}
             </Card>
           </div>
