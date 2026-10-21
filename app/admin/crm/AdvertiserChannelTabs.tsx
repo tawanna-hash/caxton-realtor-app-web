@@ -402,7 +402,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                 Campaigns ({bucket.campaigns.length})
               </h4>
               {bucket.campaigns.length === 0 ? (
-                <div className="text-sm text-gray-400 italic py-1">
+                <div className="text-sm text-gray-500 italic py-1">
                   No campaigns in this channel.
                 </div>
               ) : (
@@ -464,11 +464,11 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                           <div className="ml-4 pl-3 border-l-2 border-[#B9ADD6] space-y-1">
                             {rowTs.map((t) => (
                               <div key={t.id} className="flex items-center gap-2 text-xs text-gray-600">
-                                <span className="text-gray-400">Tearsheet:</span>
+                                <span className="text-gray-500">Tearsheet:</span>
                                 <span className="flex-1 truncate">
                                   {t.issue_label ?? '—'}
                                   {t.issue_date && (
-                                    <span className="text-gray-400 ml-2">
+                                    <span className="text-gray-500 ml-2">
                                       {new Date(t.issue_date).toLocaleDateString()}
                                     </span>
                                   )}
@@ -507,7 +507,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                 Agreements ({bucket.agreements.length})
               </h4>
               {bucket.agreements.length === 0 ? (
-                <div className="text-sm text-gray-400 italic py-1">
+                <div className="text-sm text-gray-500 italic py-1">
                   No agreements in this channel.
                 </div>
               ) : (
@@ -550,7 +550,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                 Inquiries ({bucket.inquiries.length})
               </h4>
               {bucket.inquiries.length === 0 ? (
-                <div className="text-sm text-gray-400 italic py-1">
+                <div className="text-sm text-gray-500 italic py-1">
                   No inquiries in this channel.
                 </div>
               ) : (

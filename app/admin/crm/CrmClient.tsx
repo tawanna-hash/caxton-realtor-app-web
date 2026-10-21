@@ -624,7 +624,7 @@ function CrmRow({
         {[row.contact_email, formatPhone(row.phone)].filter(Boolean).join(' - ') || row.slug}
       </div>
       {row.billing_email && row.billing_email !== row.contact_email ? (
-        <div className="text-[11px] text-gray-400 truncate">
+        <div className="text-[11px] text-gray-500 truncate">
           Billing: {row.billing_email}
         </div>
       ) : null}
@@ -633,10 +633,10 @@ function CrmRow({
 
   const hotspotCell = (
     <div className="text-sm text-gray-700">
-      {row.hotspot_count} <span className="text-gray-400">/</span>{' '}
+      {row.hotspot_count} <span className="text-gray-500">/</span>{' '}
       <span className="text-gray-500">{row.clicks_30d} clicks</span>
       {row.last_click_at && (
-        <div className="text-xs text-gray-400">
+        <div className="text-xs text-gray-500">
           last touch {relativeTime(row.last_click_at, renderedAt)}
         </div>
       )}
@@ -659,7 +659,7 @@ function CrmRow({
       <span className="text-gray-500 text-xs">{formatShortDate(row.last_opened_at)}</span>
     </div>
   ) : (
-    <span className="text-gray-400 text-xs">No opens</span>
+    <span className="text-gray-500 text-xs">No opens</span>
   );
 
   const actionsCell = (
@@ -1635,7 +1635,7 @@ function EditDrawer({
                           <div className="min-w-0 text-gray-600">
                             <span className="font-medium text-gray-800 capitalize">{link.purpose.replace('_', ' ')}</span>
                             {link.sent_to_email ? <span className="truncate"> · {link.sent_to_email}</span> : null}
-                            <span className="text-gray-400"> · {link.revoked_at ? 'revoked' : link.consumed_at ? 'used' : active ? 'active' : 'expired'}</span>
+                            <span className="text-gray-500"> · {link.revoked_at ? 'revoked' : link.consumed_at ? 'used' : active ? 'active' : 'expired'}</span>
                           </div>
                           {active && (
                             <button

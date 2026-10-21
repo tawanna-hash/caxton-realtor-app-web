@@ -452,7 +452,7 @@ export default function AdminAnalyticsPage() {
         {/* Phase 6b: cross-system at-a-glance KPIs. Self-contained fetch —
             renders instantly, independent of the slow PostHog report below. */}
         <div>
-          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">At a Glance</h2>
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2">At a Glance</h2>
           <KpiStrip />
         </div>
 
@@ -539,7 +539,7 @@ export default function AdminAnalyticsPage() {
                     <p className="mt-0.5 text-xl font-semibold tracking-tight text-gray-900">{item.value}</p>
                     <div className="flex items-center justify-between mt-1">
                       <span className={`text-[10px] font-mono ${changeColor}`}>{item.change}</span>
-                      <span className="text-[9px] text-gray-400 uppercase">{item.sub}</span>
+                      <span className="text-[9px] text-gray-500 uppercase">{item.sub}</span>
                     </div>
                     <svg viewBox="0 0 100 20" className="mt-1 h-5 w-full" preserveAspectRatio="none">
                       <path d={`${path} L100,20 L0,20 Z`} fill="rgba(234, 88, 12, 0.08)" />
@@ -564,7 +564,7 @@ export default function AdminAnalyticsPage() {
                     <PageRowCard key={row.url} row={row} isActive={pageFilter === row.url} onSelect={() => togglePage(row.url)} />
                   ))}
                   {!report?.topPages?.length ? (
-                    <div className="py-4 text-center text-gray-400 text-xs">No data in window</div>
+                    <div className="py-4 text-center text-gray-500 text-xs">No data in window</div>
                   ) : null}
                 </div>
                 <div className="hidden overflow-x-auto md:block">
@@ -592,7 +592,7 @@ export default function AdminAnalyticsPage() {
                         );
                       })}
                       {!report?.topPages?.length ? (
-                        <tr><td colSpan={3} className="py-4 text-center text-gray-400 text-xs">No data in window</td></tr>
+                        <tr><td colSpan={3} className="py-4 text-center text-gray-500 text-xs">No data in window</td></tr>
                       ) : null}
                     </tbody>
                   </table>
@@ -611,7 +611,7 @@ export default function AdminAnalyticsPage() {
                     <EventRowCard key={row.name} row={row} isActive={eventFilter === row.name} onSelect={() => toggleEvent(row.name)} />
                   ))}
                   {!report?.topEvents?.length ? (
-                    <div className="py-4 text-center text-gray-400 text-xs">No data in window</div>
+                    <div className="py-4 text-center text-gray-500 text-xs">No data in window</div>
                   ) : null}
                 </div>
                 <div className="hidden overflow-x-auto md:block">
@@ -639,7 +639,7 @@ export default function AdminAnalyticsPage() {
                         );
                       })}
                       {!report?.topEvents?.length ? (
-                        <tr><td colSpan={3} className="py-4 text-center text-gray-400 text-xs">No data in window</td></tr>
+                        <tr><td colSpan={3} className="py-4 text-center text-gray-500 text-xs">No data in window</td></tr>
                       ) : null}
                     </tbody>
                   </table>
@@ -665,7 +665,7 @@ export default function AdminAnalyticsPage() {
                   <SourceRowCard key={row.source} row={row} isActive={sourceFilter === row.source} onSelect={() => toggleSource(row.source)} />
                 ))}
                 {!report?.trafficSources?.length ? (
-                  <div className="py-4 text-center text-gray-400 text-xs">No data in window</div>
+                  <div className="py-4 text-center text-gray-500 text-xs">No data in window</div>
                 ) : null}
               </div>
               <div className="hidden overflow-x-auto md:block">
@@ -695,7 +695,7 @@ export default function AdminAnalyticsPage() {
                       );
                     })}
                     {!report?.trafficSources?.length ? (
-                      <tr><td colSpan={4} className="py-4 text-center text-gray-400 text-xs">No data in window</td></tr>
+                      <tr><td colSpan={4} className="py-4 text-center text-gray-500 text-xs">No data in window</td></tr>
                     ) : null}
                   </tbody>
                 </table>
@@ -768,7 +768,7 @@ export default function AdminAnalyticsPage() {
             value={promptText}
             className="h-[560px] w-full resize-none rounded border border-gray-200 bg-gray-50 p-3 font-mono text-xs leading-relaxed text-gray-700 outline-none focus:border-[#7059A8] select-all"
           />
-          <p className="text-[10px] text-gray-400 mt-3">
+          <p className="text-[10px] text-gray-500 mt-3">
             Every clickable element + filter on this page updates this prompt with real PostHog data.
           </p>
         </div>
@@ -872,15 +872,15 @@ function SourceRowCard({ row, isActive, onSelect }: { row: SourceRow; isActive: 
       <div className="truncate font-mono text-xs">{row.source}</div>
       <div className="grid grid-cols-3 gap-2 text-xs text-gray-500">
         <div>
-          <div className="text-gray-400">Visits</div>
+          <div className="text-gray-500">Visits</div>
           <div className="font-mono text-gray-700">{row.visits}</div>
         </div>
         <div>
-          <div className="text-gray-400">Users</div>
+          <div className="text-gray-500">Users</div>
           <div className="font-mono text-gray-700">{row.users}</div>
         </div>
         <div>
-          <div className="text-gray-400">New</div>
+          <div className="text-gray-500">New</div>
           <div className="font-mono text-gray-700">{row.newUsers}</div>
         </div>
       </div>

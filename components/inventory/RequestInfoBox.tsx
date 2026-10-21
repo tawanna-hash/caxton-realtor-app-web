@@ -31,7 +31,7 @@ type Props = {
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
 const INPUT_CLS =
-  'w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#301D5D] focus:outline-none focus:ring-1 focus:ring-[#301D5D]';
+  'w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-[#301D5D] focus:outline-none focus:ring-1 focus:ring-[#301D5D]';
 const LABEL_CLS = 'block text-xs font-medium uppercase tracking-[0.08em] text-gray-600 mb-1';
 
 export default function RequestInfoBox({
@@ -84,7 +84,7 @@ export default function RequestInfoBox({
             Request more information
             <span aria-hidden="true" className="text-base leading-none">↗</span>
           </a>
-          <p className="mt-2 text-center text-[11px] text-gray-400">
+          <p className="mt-2 text-center text-[11px] text-gray-500">
             Opens {builderName}&apos;s contact page in a new tab.
           </p>
         </div>
@@ -222,7 +222,7 @@ export default function RequestInfoBox({
 
           <div>
             <label htmlFor="ri-phone" className={LABEL_CLS}>
-              Phone <span className="font-normal normal-case text-gray-400">(optional)</span>
+              Phone <span className="font-normal normal-case text-gray-500">(optional)</span>
             </label>
             <input
               id="ri-phone"
@@ -235,7 +235,7 @@ export default function RequestInfoBox({
 
           <div>
             <label htmlFor="ri-message" className={LABEL_CLS}>
-              Message <span className="font-normal normal-case text-gray-400">(optional)</span>
+              Message <span className="font-normal normal-case text-gray-500">(optional)</span>
             </label>
             <textarea
               id="ri-message"
@@ -269,7 +269,7 @@ export default function RequestInfoBox({
           >
             {status === 'submitting' ? 'Sending…' : 'Submit'}
           </button>
-          <p className="text-center text-[11px] text-gray-400">
+          <p className="text-center text-[11px] text-gray-500">
             Protected against spam. We&apos;ll never share your info.
           </p>
         </form>

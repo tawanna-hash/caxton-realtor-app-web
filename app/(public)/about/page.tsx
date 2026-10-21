@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
@@ -156,6 +156,6 @@ export default function AboutPage() {
         </p>
       </footer>
         </div>
-    </main>
+    </div>
   );
 }

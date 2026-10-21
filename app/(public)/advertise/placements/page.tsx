@@ -115,7 +115,7 @@ function BundleSavingsSection() {
               {MARKET_LABELS[row.markets].comingSoon && (
                 <>
                   {' '}
-                  <span className="normal-case tracking-normal text-gray-400">(coming soon)</span>
+                  <span className="normal-case tracking-normal text-gray-500">(coming soon)</span>
                 </>
               )}
             </p>
@@ -127,13 +127,13 @@ function BundleSavingsSection() {
               {row.savingsPct > 0 ? (
                 <>
                   <span className="font-semibold text-[#005A00]">{row.savingsPct}% off</span>
-                  <span className="text-gray-400"> vs ${row.separately.toLocaleString()}</span>
+                  <span className="text-gray-500"> vs ${row.separately.toLocaleString()}</span>
                 </>
               ) : (
-                <span className="text-gray-400">Base rate</span>
+                <span className="text-gray-500">Base rate</span>
               )}
             </p>
-            <p className="mt-1 text-[10px] uppercase tracking-wider text-gray-400">
+            <p className="mt-1 text-[10px] uppercase tracking-wider text-gray-500">
               {MARKET_MULTIPLIERS[row.markets].toFixed(1)}{'\u00d7'} base
             </p>
           </div>
@@ -233,7 +233,7 @@ export default function PublicAdvertisePlacementsPage() {
   return (
     <>
       <TrackPageView event="advertise_placements_page_viewed" />
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
@@ -289,7 +289,7 @@ export default function PublicAdvertisePlacementsPage() {
         </p>
       </footer>
         </div>
-    </main>
+    </div>
     </>
   );
 }

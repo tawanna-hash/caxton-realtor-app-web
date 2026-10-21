@@ -1118,7 +1118,7 @@ function VerifyCell({
   onVerify: () => void;
   label: string;
 }) {
-  if (!hasData) return <span className="text-xs text-gray-400">—</span>;
+  if (!hasData) return <span className="text-xs text-gray-500">—</span>;
   const pill =
     status === 'Valid'   ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00]">✓ Valid</span> :
     status === 'Invalid' ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#FFEAE6] text-[#661102]">✗ Invalid</span> :
@@ -1240,7 +1240,7 @@ function ProximityBadges({ row }: { row: MailingContactRow }) {
   const d = row.distance_sabor_mi;
   const has = d !== null && d !== undefined;
   if (!has) {
-    return <span className="text-[11px] text-gray-400">—</span>;
+    return <span className="text-[11px] text-gray-500">—</span>;
   }
   const near = d! <= NEAR_RADIUS_MI;
   if (!near) {

@@ -265,7 +265,7 @@ export default function SubscribersSection() {
                     <td className="px-4 py-3 text-gray-700 text-xs">
                       {deviceLabel(sub.userAgent)}
                       {sub.endpointHost && (
-                        <div className="text-gray-400">{sub.endpointHost}</div>
+                        <div className="text-gray-500">{sub.endpointHost}</div>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -313,7 +313,7 @@ export default function SubscribersSection() {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400">Revoked</span>
+                        <span className="text-xs text-gray-500">Revoked</span>
                       )}
                     </td>
                   </tr>
@@ -341,7 +341,7 @@ export default function SubscribersSection() {
                   <dd className="text-gray-800 text-right break-words">
                     {deviceLabel(sub.userAgent)}
                     {sub.endpointHost && (
-                      <div className="text-gray-400">{sub.endpointHost}</div>
+                      <div className="text-gray-500">{sub.endpointHost}</div>
                     )}
                   </dd>
                   <dt className="text-gray-500 uppercase tracking-wider">Subscribed</dt>
@@ -382,7 +382,7 @@ export default function SubscribersSection() {
                       </button>
                     </div>
                   ) : (
-                    <span className="text-xs text-gray-400">Revoked</span>
+                    <span className="text-xs text-gray-500">Revoked</span>
                   )}
                 </div>
               </li>

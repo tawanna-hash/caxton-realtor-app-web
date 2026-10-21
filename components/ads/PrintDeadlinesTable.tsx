@@ -42,11 +42,11 @@ export default function PrintDeadlinesTable() {
               <div className="font-medium">{d.month}</div>
               <div className="mt-1 grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <div className="text-gray-400">Materials deadline</div>
+                  <div className="text-gray-500">Materials deadline</div>
                   <div className="text-gray-700">{d.deadline}</div>
                 </div>
                 <div>
-                  <div className="text-gray-400">Mails on</div>
+                  <div className="text-gray-500">Mails on</div>
                   <div className="text-gray-700">{d.mail}</div>
                 </div>
               </div>

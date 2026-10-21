@@ -54,7 +54,7 @@ export default function InventoryGallery({ galleryUrls, thumbnailUrl, alt }: Pro
 
   if (images.length === 0) {
     return (
-      <div className="relative aspect-[3/2] w-full max-w-3xl bg-gray-50 flex flex-col items-center justify-center gap-3 text-gray-400 rounded-md border border-gray-200">
+      <div className="relative aspect-[3/2] w-full max-w-3xl bg-gray-50 flex flex-col items-center justify-center gap-3 text-gray-500 rounded-md border border-gray-200">
         <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path
             strokeLinecap="round"

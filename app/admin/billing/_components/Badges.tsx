@@ -41,7 +41,7 @@ export function StatusPill({
 }
 
 export function DaysBadge({ days }: { days: number | null }) {
-  if (days == null) return <span className="text-gray-400 text-xs">—</span>;
+  if (days == null) return <span className="text-gray-500 text-xs">—</span>;
   const cls = days < 0
     ? 'bg-[#FFEAE6] text-[#661102] border-[#FF2A04]/50'
     : days <= 14

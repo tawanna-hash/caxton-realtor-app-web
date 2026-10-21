@@ -421,7 +421,7 @@ export default function AgreementsClient({
               }`}
             >
               {label}
-              <span className={`ml-2 text-xs ${tab === t ? 'text-[#301D5D]' : 'text-gray-400'}`}>
+              <span className={`ml-2 text-xs ${tab === t ? 'text-[#301D5D]' : 'text-gray-500'}`}>
                 ({count})
               </span>
             </button>

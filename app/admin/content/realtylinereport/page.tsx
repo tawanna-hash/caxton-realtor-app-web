@@ -516,7 +516,7 @@ export default function RealtyLineMlsAdminPage() {
             </div>
             <p className="text-xs text-gray-500 mb-4">ABoR usually rolls these into the indicator grid above. Leave empty unless the monthly infographic splits them out.</p>
             {form.listing_counts.length === 0 ? (
-              <p className="text-xs text-gray-400 italic">No listing-count rows.</p>
+              <p className="text-xs text-gray-500 italic">No listing-count rows.</p>
             ) : (
               <div className="space-y-3">
                 {form.listing_counts.map((s, i) => (
@@ -552,7 +552,7 @@ export default function RealtyLineMlsAdminPage() {
             </div>
             <p className="text-xs text-gray-500 mb-4">Share of closed sales by price tier. ABoR publishes this quarterly; leave empty during off months.</p>
             {form.price_bands.length === 0 ? (
-              <p className="text-xs text-gray-400 italic">No price bands.</p>
+              <p className="text-xs text-gray-500 italic">No price bands.</p>
             ) : (
               <div className="space-y-3">
                 {form.price_bands.map((b, i) => (

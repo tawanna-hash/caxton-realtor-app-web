@@ -22,7 +22,7 @@ const PUBLICATION_OPTIONS: { value: Publication; label: string }[] = [
 ];
 
 const fieldStyle =
-  'w-full border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded-md';
+  'w-full border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 transition-colors disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed rounded-md';
 const labelStyle = 'block text-sm font-medium text-gray-900 mb-2';
 const helpStyle = 'mt-1 text-xs text-gray-500 font-light';
 

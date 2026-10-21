@@ -1234,7 +1234,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             <div className="mt-3 flex-1 overflow-y-auto rounded-md border border-gray-200 bg-white">
               <div className="divide-y divide-gray-100 md:hidden">
                 {sampleForDisplay.length === 0 && !previewLoading && (
-                  <div className="px-2 py-4 text-center text-xs text-gray-400">No recipients match this filter.</div>
+                  <div className="px-2 py-4 text-center text-xs text-gray-500">No recipients match this filter.</div>
                 )}
                 {sampleForDisplay.map((r) => (
                   <RecipientCard
@@ -1259,7 +1259,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                   </thead>
                   <tbody>
                     {sampleForDisplay.length === 0 && !previewLoading && (
-                      <tr><td colSpan={4} className="px-2 py-4 text-center text-gray-400">No recipients match this filter.</td></tr>
+                      <tr><td colSpan={4} className="px-2 py-4 text-center text-gray-500">No recipients match this filter.</td></tr>
                     )}
                     {sampleForDisplay.map((r) => (
                       <tr key={r.id} className="border-t border-gray-100">

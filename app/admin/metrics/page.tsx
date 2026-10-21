@@ -10,7 +10,7 @@ import dynamic from 'next/dynamic';
 const TimeSeriesChart = dynamic(() => import('./_components/TimeSeriesChart'), {
   ssr: false,
   loading: () => (
-    <div className="bg-white border border-gray-200 rounded-md p-8 text-center text-sm text-gray-400">
+    <div className="bg-white border border-gray-200 rounded-md p-8 text-center text-sm text-gray-500">
       Loading chart…
     </div>
   ),
@@ -275,7 +275,7 @@ export default function AdminMetricsPage() {
 
           <NewsletterMetrics days={days} />
 
-          <p className="text-xs text-gray-400 pt-4">
+          <p className="text-xs text-gray-500 pt-4">
             Source: PostHog (click metrics) + Neon (email subscribers) · refreshes on page load
           </p>
         </div>

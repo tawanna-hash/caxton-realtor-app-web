@@ -77,7 +77,7 @@ export default async function AdvertiseDigitalPage() {
   return (
     <>
       <TrackPageView event="advertise_digital_page_viewed" />
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
@@ -160,7 +160,7 @@ export default async function AdvertiseDigitalPage() {
                 {slot.name}
               </h3>
 
-              <p className={`text-sm mb-2 ${soldOut ? 'text-gray-400' : 'text-gray-700'}`}>
+              <p className={`text-sm mb-2 ${soldOut ? 'text-gray-500' : 'text-gray-700'}`}>
                 {rateLine(slot)}
               </p>
 
@@ -170,10 +170,10 @@ export default async function AdvertiseDigitalPage() {
                   : `${inv.available} available · ${inv.sold} sold`}
               </p>
 
-              <p className={`text-xs mb-1 ${soldOut ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p className={`text-xs mb-1 ${soldOut ? 'text-gray-500' : 'text-gray-600'}`}>
                 <strong>Specs:</strong> {slot.sizes}
               </p>
-              <p className={`text-xs mb-4 ${soldOut ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p className={`text-xs mb-4 ${soldOut ? 'text-gray-500' : 'text-gray-600'}`}>
                 {slot.notes}
               </p>
 
@@ -209,7 +209,7 @@ export default async function AdvertiseDigitalPage() {
         </p>
       </footer>
         </div>
-    </main>
+    </div>
     </>
   );
 }

@@ -116,7 +116,7 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
           {featuredAdvertiser && renderArticleCard(featuredAdvertiser, "Featured Partner", "text-xl md:text-2xl", "line-clamp-2")}
           {!editorsChoice && !featuredAdvertiser && (
             <div className="border-l-2 pl-6 py-4" style={{ borderColor: brandColor }}>
-              <p className="text-[10px] uppercase tracking-[0.25em] font-semibold mb-3 text-gray-400">
+              <p className="text-[10px] uppercase tracking-[0.25em] font-semibold mb-3 text-gray-500">
                 Featured Articles
               </p>
               <p className="text-base text-gray-500 italic">No featured articles yet.</p>

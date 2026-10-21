@@ -247,7 +247,7 @@ export default function NewsletterClient() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search email..."
-            className="h-9 flex-1 rounded border border-gray-300 px-3 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#301D5D]"
+            className="h-9 flex-1 rounded border border-gray-300 px-3 text-xs text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-[#301D5D]"
           />
           {q && (
             <button
@@ -356,7 +356,7 @@ export default function NewsletterClient() {
               <label htmlFor="newsletter-select-all-mobile" className="text-xs font-medium text-gray-700">Select all on this page</label>
             </li>
             {data.subscribers.length === 0 ? (
-              <li className="px-3 py-8 text-center text-sm text-gray-400">No email subscribers found.</li>
+              <li className="px-3 py-8 text-center text-sm text-gray-500">No email subscribers found.</li>
             ) : (
               data.subscribers.map((s) => (
                 <li key={`m-${s.id}`} className="p-3">
@@ -435,7 +435,7 @@ export default function NewsletterClient() {
               <tbody>
                 {data.subscribers.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                       <div className="font-medium text-gray-700">No subscribers found</div>
                       <div className="mt-1 text-xs text-gray-500">Try clearing search or changing the publication, status, or verification filter.</div>
                     </td>
@@ -536,7 +536,7 @@ function SortableTh<C extends string>({
         className={'inline-flex items-center gap-1 hover:text-gray-900 ' + (active ? 'text-gray-900' : '')}
       >
         {label}
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-500">
           {active ? (dir === 'asc' ? '▲' : '▼') : '↕'}
         </span>
       </button>

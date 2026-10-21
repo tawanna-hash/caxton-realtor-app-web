@@ -230,7 +230,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
                           </button>
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400">—</span>
+                        <span className="text-xs text-gray-500">—</span>
                       )}
                     </td>
                   </tr>

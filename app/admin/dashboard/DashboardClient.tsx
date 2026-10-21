@@ -222,7 +222,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
                         <span className="block truncate text-sm font-medium text-gray-800">{item.title}</span>
                         <span className="block truncate text-xs text-gray-500">{item.detail}</span>
                       </span>
-                      <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+                      <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-gray-500" aria-hidden="true" />
                     </Link>
                   </li>
                 ))}
@@ -249,7 +249,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
         </div>
       </div>
 
-      <p className="text-[11px] text-gray-400">Snapshot generated {new Date(data.generatedAt).toLocaleString()}</p>
+      <p className="text-[11px] text-gray-500">Snapshot generated {new Date(data.generatedAt).toLocaleString()}</p>
     </div>
   );
 }

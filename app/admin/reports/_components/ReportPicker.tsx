@@ -108,7 +108,7 @@ export default function ReportPicker({
         <svg
           aria-hidden="true"
           viewBox="0 0 20 20"
-          className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+          className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
         >
           <path
             fill="currentColor"
@@ -123,7 +123,7 @@ export default function ReportPicker({
               setActiveIdx(0);
             }}
             aria-label="Clear search"
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600"
           >
             <svg viewBox="0 0 20 20" className="w-4 h-4" aria-hidden="true">
               <path

@@ -125,7 +125,7 @@ export default function FloaterPill({
     >
       <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1 shadow-lg">
         {actions.map((action) => {
-          const aria = action.ariaLabel ?? action.label;
+          const aria = action.ariaLabel && !action.ariaLabel.toLowerCase().includes(String(action.label ?? '').toLowerCase()) ? `${action.label}, ${action.ariaLabel}` : (action.ariaLabel ?? action.label);
           if (action.href) {
             const isAbsolute = /^https?:\/\//i.test(action.href);
             const external = action.external ?? isAbsolute;

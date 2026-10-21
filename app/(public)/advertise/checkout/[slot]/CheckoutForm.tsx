@@ -404,7 +404,7 @@ export default function CheckoutForm({
                         ? 'bg-gray-900 text-white border-gray-900'
                         : allowed
                           ? 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
-                          : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                          : 'bg-gray-50 text-gray-500 border-gray-200 cursor-not-allowed'
                     }`}
                   >
                     {label}

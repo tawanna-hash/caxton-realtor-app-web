@@ -809,7 +809,7 @@ export function EventForm({
   };
 
   const fieldClass =
-    'w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700';
+    'w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-700/20 focus:border-brand-700';
   const labelClass = 'block text-xs font-medium text-gray-700 mb-1';
   const sectionClass = 'bg-white border border-gray-200 rounded-md p-4 sm:p-6';
   const sectionTitleClass = 'text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide';
@@ -1686,7 +1686,7 @@ function PartnerMultiPicker({
         <span className="truncate text-gray-500">
           {selected.length > 0 ? 'Add another partner...' : 'Select partners...'}
         </span>
-        <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+        <ChevronDown size={14} className="text-gray-500 flex-shrink-0" />
       </button>
       {open && (
         <div className="absolute z-20 mt-1 w-full min-w-56 bg-white border border-gray-200 rounded-md shadow-lg">
@@ -1717,7 +1717,7 @@ function PartnerMultiPicker({
               );
             })}
             {filtered.length === 0 && (
-              <li className="px-3 py-2 text-xs text-gray-400">
+              <li className="px-3 py-2 text-xs text-gray-500">
                 {partners.length === 0 ? 'No partners available' : 'No matches'}
               </li>
             )}

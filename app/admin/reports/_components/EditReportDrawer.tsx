@@ -120,7 +120,7 @@ export default function EditReportDrawer({
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {kind === 'article' ? 'Article title' : 'Event title'}{' '}
-              <span className="text-gray-400 font-normal">(override)</span>
+              <span className="text-gray-500 font-normal">(override)</span>
             </label>
             <input
               type="text"
@@ -137,7 +137,7 @@ export default function EditReportDrawer({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Publication <span className="text-gray-400 font-normal">(override)</span>
+              Publication <span className="text-gray-500 font-normal">(override)</span>
             </label>
             <select
               value={overrides.pub_display}
@@ -153,7 +153,7 @@ export default function EditReportDrawer({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Editorial note <span className="text-gray-400 font-normal">(optional)</span>
+              Editorial note <span className="text-gray-500 font-normal">(optional)</span>
             </label>
             <textarea
               value={overrides.editorial_note}

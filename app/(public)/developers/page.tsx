@@ -25,7 +25,7 @@ function Code({ children }: { children: string }) {
 
 export default function DevelopersPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12 text-[#1B1726]">
+    <div className="mx-auto max-w-3xl px-6 py-12 text-[#1B1726]">
       <h1 className="font-serif text-3xl text-[#301D5D]">API Documentation</h1>
       <p className="mt-3 text-[15px] text-[#4A4757]">Read your deals, and get a message when a deal changes. Everything uses HTTPS and JSON. Documents and private notes are never included.</p>
 
@@ -68,6 +68,6 @@ DELETE /api/closing-time/v1/hooks/{id}
       <Code>{`expected = HMAC_SHA256(secret, timestamp + "." + rawBody)  // hex
 compare to the value after "sha256=" in constant time`}</Code>
       <p className="mt-2 text-[14px] text-[#4A4757]">Delivery is attempted once with a 5 second timeout. Respond with any 2xx status.</p>
-    </main>
+    </div>
   );
 }

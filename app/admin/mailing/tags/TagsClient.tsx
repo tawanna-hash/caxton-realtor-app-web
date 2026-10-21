@@ -245,7 +245,7 @@ export default function TagsClient() {
                 ) : (
                   <div className="flex flex-wrap items-center gap-2">
                     <TagChip tag={r.tag} />
-                    <span className="font-mono text-xs text-gray-400 break-all">{r.tag}</span>
+                    <span className="font-mono text-xs text-gray-500 break-all">{r.tag}</span>
                   </div>
                 )}
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
@@ -333,7 +333,7 @@ export default function TagsClient() {
                       ) : (
                         <div className="flex items-center gap-2">
                           <TagChip tag={r.tag} />
-                          <span className="font-mono text-xs text-gray-400">{r.tag}</span>
+                          <span className="font-mono text-xs text-gray-500">{r.tag}</span>
                         </div>
                       )}
                     </td>

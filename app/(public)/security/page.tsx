@@ -23,7 +23,7 @@ const NOT_YET = [
 
 export default function SecurityPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12 text-[#1B1726]">
+    <div className="mx-auto max-w-3xl px-6 py-12 text-[#1B1726]">
       <h1 className="font-serif text-3xl text-[#301D5D]">Security</h1>
       <p className="mt-3 text-[15px] text-[#4A4757]">Closing Time handles contracts, dates and client contact details. This page lists what protects them today and what we do not claim yet.</p>
 
@@ -44,6 +44,6 @@ export default function SecurityPage() {
 
       <h2 className="mt-8 text-[14px] font-semibold">Report A Concern</h2>
       <p className="mt-2 text-[14px] text-[#4A4757]">Email <a className="underline text-[#301D5D]" href="mailto:tawanna@myrealtyline.com">tawanna@myrealtyline.com</a>. Please include steps to reproduce.</p>
-    </main>
+    </div>
   );
 }

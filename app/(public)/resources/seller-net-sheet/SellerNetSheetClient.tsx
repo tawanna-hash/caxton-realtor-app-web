@@ -171,7 +171,7 @@ export default function SellerNetSheetClient() {
   });
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
+    <div className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle size="md">Seller Net Sheet</PageTitle>
@@ -374,7 +374,7 @@ export default function SellerNetSheetClient() {
               <div className="mb-4 pb-4 border-b border-gray-100 text-xs text-gray-600 space-y-0.5">
                 {sellerName.trim() && (
                   <p>
-                    <span className="uppercase tracking-[0.15em] text-gray-400 mr-1">
+                    <span className="uppercase tracking-[0.15em] text-gray-500 mr-1">
                       Seller:
                     </span>
                     <span className="font-medium text-gray-800">{sellerName.trim()}</span>
@@ -382,14 +382,14 @@ export default function SellerNetSheetClient() {
                 )}
                 {propertyAddress.trim() && (
                   <p>
-                    <span className="uppercase tracking-[0.15em] text-gray-400 mr-1">
+                    <span className="uppercase tracking-[0.15em] text-gray-500 mr-1">
                       Property:
                     </span>
                     <span className="font-medium text-gray-800">{propertyAddress.trim()}</span>
                   </p>
                 )}
                 <p>
-                  <span className="uppercase tracking-[0.15em] text-gray-400 mr-1">
+                  <span className="uppercase tracking-[0.15em] text-gray-500 mr-1">
                     Closing:
                   </span>
                   <span className="font-medium text-gray-800">
@@ -398,7 +398,7 @@ export default function SellerNetSheetClient() {
                 </p>
                 {agentName.trim() && (
                   <p>
-                    <span className="uppercase tracking-[0.15em] text-gray-400 mr-1">
+                    <span className="uppercase tracking-[0.15em] text-gray-500 mr-1">
                       Prepared by:
                     </span>
                     <span className="font-medium text-gray-800">{agentName.trim()}</span>
@@ -465,7 +465,7 @@ export default function SellerNetSheetClient() {
         shareText="Texas-standard seller net sheet — printable for listing appointments."
         buildReport={buildReport}
       />
-    </main>
+    </div>
   );
 }
 

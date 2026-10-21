@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function AccountDeletePage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12 prose prose-neutral">
+    <div className="mx-auto max-w-3xl px-6 py-12 prose prose-neutral">
       <h1>Delete Your Account</h1>
       <p>
         This page explains how to request deletion of your <strong>Realty News Now</strong>{' '}
@@ -75,6 +75,6 @@ export default function AccountDeletePage() {
         Contact <a href="mailto:tawanna@realtynewsnow.app">tawanna@realtynewsnow.app</a> with any
         questions.
       </p>
-    </main>
+    </div>
   );
 }

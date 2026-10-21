@@ -156,7 +156,7 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
         {/* Coming soon */}
         {PUBLIC_PUB_COMING_SOON.length > 0 && (
         <div className="border-t border-gray-100 pt-2">
-          <p className="px-4 text-[11px] uppercase tracking-[0.15em] text-gray-400 font-medium pb-1">
+          <p className="px-4 text-[11px] uppercase tracking-[0.15em] text-gray-500 font-medium pb-1">
             Coming soon
           </p>
           <ul className="pb-1">
@@ -167,14 +167,14 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
                   onClick={() => handleNotify(p.id)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100 transition"
                 >
-                  <span className="w-9 h-9 rounded-full bg-gray-50 border border-dashed border-gray-300 text-gray-400 flex items-center justify-center text-xs font-semibold">
+                  <span className="w-9 h-9 rounded-full bg-gray-50 border border-dashed border-gray-300 text-gray-500 flex items-center justify-center text-xs font-semibold">
                     {p.monogram}
                   </span>
                   <span className="flex-1">
                     <span className="block text-base font-medium text-gray-500">
                       {p.label}
                     </span>
-                    <span className="block text-xs text-gray-400">
+                    <span className="block text-xs text-gray-500">
                       Tap to get notified when it launches
                     </span>
                   </span>

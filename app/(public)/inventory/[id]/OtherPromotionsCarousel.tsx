@@ -105,7 +105,7 @@ function FlyerThumb({
   }
   if (status === 'error' || !src) {
     return (
-      <div className="aspect-[3/4] w-full rounded-md bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+      <div className="aspect-[3/4] w-full rounded-md bg-gray-100 flex items-center justify-center text-gray-500 text-xs">
         Flyer unavailable
       </div>
     );

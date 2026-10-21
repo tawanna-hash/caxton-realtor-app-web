@@ -35,7 +35,7 @@ const STATUS_BUTTONS: { value: Status; label: string }[] = [
 ];
 
 const fieldStyle =
-  'w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-900 transition-colors disabled:bg-gray-50 disabled:text-gray-400';
+  'w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-gray-900 transition-colors disabled:bg-gray-50 disabled:text-gray-500';
 const labelStyle = 'block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1';
 
 function formatDateTime(iso: string | null): string {
@@ -364,7 +364,7 @@ export default function AdminInventoryDetail({
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">
                   Thumbnail not yet generated
                 </div>
               )}

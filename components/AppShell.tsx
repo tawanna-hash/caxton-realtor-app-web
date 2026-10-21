@@ -362,6 +362,13 @@ export default function AppShell({
 
   return (
     <div className={`min-h-screen ${isAdmin ? 'bg-[#F6F5FB]' : 'bg-white'}`} data-admin-shell={isAdmin ? 'true' : undefined}>
+      {/* WCAG 2.4.1 — bypass repeated header/nav blocks */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[#301D5D] focus:shadow-lg focus:ring-2 focus:ring-[#301D5D]"
+      >
+        Skip to main content
+      </a>
       {/* ======== TOP BAR ======== */}
       {!chromeless && <header className={`sticky top-0 z-40 ${isAdmin ? 'bg-white text-gray-900 border-b border-[#ECE8F5] lg:bg-[#F6F5FB] lg:border-b-0' : 'bg-white text-gray-900 border-b border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
@@ -411,7 +418,7 @@ export default function AppShell({
                   onClick={() => setMarketSheetOpen(true)}
                   aria-haspopup="dialog"
                   aria-expanded={marketSheetOpen}
-                  aria-label={`Switch publication. Current: ${meta.label}`}
+                  aria-label={`${meta.label} Realty News Now, switch publication`}
                   className="flex flex-col items-center leading-tight px-2 py-0.5 rounded-md hover:bg-gray-50 active:bg-gray-100 transition"
                 >
                   <span className="flex items-center gap-1 text-sm sm:text-base font-semibold tracking-tight text-gray-900">
@@ -432,7 +439,7 @@ export default function AppShell({
               sidebar now, see AdminSidebar.tsx) + logout */}
           <div className="flex items-center gap-1">
             {!isAdmin && (
-              <nav className="hidden lg:flex items-center gap-1 mr-2">
+              <nav aria-label="Primary" className="hidden lg:flex items-center gap-1 mr-2">
                 {PUBLIC_DESKTOP_LINKS.map((link) => {
                   const active = isPublicLinkActive(pathname, link.href);
                   return (
@@ -527,7 +534,9 @@ export default function AppShell({
       <div className={isAdmin ? 'flex' : undefined}>
         {isAdmin && <AdminSidebar />}
         <main
-          className={`flex-1 min-w-0 ${isAdmin || chromeless ? 'pb-0' : 'pb-20'}`}
+          id="main-content"
+          tabIndex={-1}
+          className={`outline-none flex-1 min-w-0 ${isAdmin || chromeless ? 'pb-0' : 'pb-20'}`}
           data-admin-density={useCompactAdminDensity ? 'compact' : undefined}
           data-admin-ui={isAdmin ? 'true' : undefined}
         >
@@ -548,11 +557,11 @@ export default function AppShell({
       {!isAdmin && !chromeless ? (
         <>
           {/* The dashboard feed already includes its own signup form. */}
-          {pathname !== '/dashboard' && pathname !== '/subscribe' && <NewsletterCTA source="public_footer" variant="flush" />}
+          {pathname !== '/dashboard' && pathname !== '/subscribe' && <section aria-label="Newsletter signup"><NewsletterCTA source="public_footer" variant="flush" /></section>}
           {/* Inline footer banner (paid placement) — scrolls with the page,
               sits above the site footer. Previously fixed at bottom-16, but
               overlapped sticky page UI (calc floater, etc). */}
-          <div className="px-3 py-4">
+          <div className="px-3 py-4" role="complementary" aria-label="Sponsored">
             <div className="max-w-3xl mx-auto">
               <AdSlot slug="feed_sticky_bottom" variant="bare" />
             </div>

@@ -222,14 +222,14 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                           <div className="font-medium text-gray-900 truncate">{s.name}</div>
                           <button
                             onClick={() => navigator.clipboard.writeText(`/api/cron/${s.path}`)}
-                            className="text-[11px] text-gray-400 hover:text-gray-600 truncate block max-w-full text-left"
+                            className="text-[11px] text-gray-500 hover:text-gray-600 truncate block max-w-full text-left"
                             title="Copy path"
                           >
                             /api/cron/{s.path}
                           </button>
                         </div>
                         {s.external ? (
-                          <span className="shrink-0 text-xs text-gray-400">external</span>
+                          <span className="shrink-0 text-xs text-gray-500">external</span>
                         ) : (
                           <button
                             type="button"
@@ -291,7 +291,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                             <div className="font-medium text-gray-900">{s.name}</div>
                             <button
                               onClick={() => navigator.clipboard.writeText(`/api/cron/${s.path}`)}
-                              className="text-xs text-gray-400 hover:text-gray-600"
+                              className="text-xs text-gray-500 hover:text-gray-600"
                               title="Copy cron path"
                             >
                               /api/cron/{s.path}
@@ -318,7 +318,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
                           <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{s.schedule}</td>
                           <td className="px-4 py-3 text-right">
                             {s.external ? (
-                              <span className="text-xs text-gray-400">external</span>
+                              <span className="text-xs text-gray-500">external</span>
                             ) : (
                               <button
                                 type="button"

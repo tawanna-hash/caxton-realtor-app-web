@@ -369,7 +369,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
             htmlFor="quote-due"
             className="block text-xs text-gray-700 font-medium mb-1"
           >
-            Due date <span className="text-gray-400">(optional)</span>
+            Due date <span className="text-gray-500">(optional)</span>
           </label>
           <input
             id="quote-due"
@@ -393,7 +393,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
           htmlFor="quote-memo"
           className="block text-xs text-gray-700 font-medium mb-1"
         >
-          Memo <span className="text-gray-400">(optional, appears on invoice)</span>
+          Memo <span className="text-gray-500">(optional, appears on invoice)</span>
         </label>
         <textarea
           id="quote-memo"

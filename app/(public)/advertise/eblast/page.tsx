@@ -39,7 +39,7 @@ export default async function EblastOrderPage({ searchParams }: PageProps) {
   return (
     <>
       <TrackPageView event="advertise_eblast_order_page_viewed" />
-      <main className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
         <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
           <header className="mb-7">
             <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">
@@ -64,7 +64,7 @@ export default async function EblastOrderPage({ searchParams }: PageProps) {
             initialPublication={initialPublication}
           />
         </div>
-      </main>
+      </div>
     </>
   );
 }

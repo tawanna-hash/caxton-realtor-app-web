@@ -19,7 +19,7 @@ function NewPageInner() {
         <Link href={backHref} className="hover:text-gray-900 transition-colors">
           ← {backLabel}
         </Link>
-        <span className="text-gray-400">/</span>
+        <span className="text-gray-500">/</span>
         <span className="text-gray-900">New</span>
       </div>
       <div className="mb-8">

@@ -160,7 +160,7 @@ export default function AdminTestimonialsPage() {
         <form onSubmit={(event) => { event.preventDefault(); setSearch(query.trim()); }} className="flex min-w-0 gap-2">
           <label className="relative min-w-0 flex-1">
             <span className="sr-only">Search testimonials</span>
-            <Search size={16} className="pointer-events-none absolute left-3 top-3.5 text-gray-400" />
+            <Search size={16} className="pointer-events-none absolute left-3 top-3.5 text-gray-500" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search client, subscriber, or quote" className="h-9 w-full rounded border border-gray-300 pl-8 pr-3 text-sm" />
           </label>
           <button className="h-9 rounded bg-[#301D5D] px-4 text-sm font-semibold text-white">Search</button>
@@ -214,7 +214,7 @@ export default function AdminTestimonialsPage() {
                   </div>
                 </div>
                 <aside className="border-t border-gray-100 pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
-                  <div className="text-xs font-medium uppercase tracking-wide text-gray-400">Subscriber</div>
+                  <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Subscriber</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">{item.owner_name}</div>
                   <div className="mt-0.5 break-all text-xs text-gray-500">{item.owner_email}</div>
                   <Link href={`/testimonials/${item.owner_slug}`} target="_blank" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[#301D5D]"><ExternalLink size={15} /> Open showcase</Link>

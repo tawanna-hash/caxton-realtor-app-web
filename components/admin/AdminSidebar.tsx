@@ -145,7 +145,7 @@ export default function AdminSidebar() {
           type="button"
           onClick={toggleCollapsed}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className={`p-2 rounded-lg text-gray-400 hover:text-brand-700 hover:bg-brand-50 transition ${collapsed ? 'mx-auto' : ''}`}
+          className={`p-2 rounded-lg text-gray-500 hover:text-brand-700 hover:bg-brand-50 transition ${collapsed ? 'mx-auto' : ''}`}
         >
           {collapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
         </button>

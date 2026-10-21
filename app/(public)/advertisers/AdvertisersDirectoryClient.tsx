@@ -149,7 +149,7 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
                 height="16"
                 viewBox="0 0 16 16"
                 fill="none"
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
               >
                 <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M10.5 10.5L13.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -223,7 +223,7 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
                     rel="noopener noreferrer"
                     aria-label={`${a.name} website (opens in new tab)`}
                     title="Visit company website"
-                    className="shrink-0 inline-flex items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors"
+                    className="shrink-0 inline-flex items-center justify-center min-w-[44px] min-h-[44px] text-gray-500 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors"
                   >
                     <svg
                       width="16"

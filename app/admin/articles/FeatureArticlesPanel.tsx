@@ -295,15 +295,15 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
                       )}
                       {adv && (
                         <a href={`/advertisers/${adv.slug}`} target="_blank" rel="noopener"
-                          className="text-gray-400 hover:text-gray-700" title="View partner page">
+                          className="text-gray-500 hover:text-gray-700" title="View partner page">
                           <ExternalLink size={15} />
                         </a>
                       )}
-                      <button onClick={() => openEdit(a)} className="text-gray-400 hover:text-brand-700" title="Edit">
+                      <button onClick={() => openEdit(a)} className="text-gray-500 hover:text-brand-700" title="Edit">
                         <Pencil size={15} />
                       </button>
                       <button onClick={() => handleDelete(a.id)} disabled={deleting === a.id}
-                        className="text-gray-400 hover:text-[#661102] disabled:opacity-40" title="Delete">
+                        className="text-gray-500 hover:text-[#661102] disabled:opacity-40" title="Delete">
                         <Trash2 size={15} />
                       </button>
                     </div>
@@ -333,7 +333,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
               <h2 className="text-base font-semibold text-gray-900">
                 {editingId ? 'Edit Feature Article' : 'Add Feature Article'}
               </h2>
-              <button type="button" onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-700">
+              <button type="button" onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-700">
                 <X size={18} />
               </button>
             </div>
@@ -353,7 +353,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Excerpt <span className="text-gray-400">(optional)</span>
+                  Excerpt <span className="text-gray-500">(optional)</span>
                 </label>
                 <textarea value={form.excerpt} rows={2}
                   onChange={(e) => setForm((f) => ({ ...f, excerpt: e.target.value }))}
@@ -361,7 +361,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Content <span className="text-gray-400">(optional — markdown)</span>
+                  Content <span className="text-gray-500">(optional — markdown)</span>
                 </label>
                 <textarea value={form.content} rows={6}
                   onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
@@ -369,7 +369,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Hero Image URL <span className="text-gray-400">(optional)</span>
+                  Hero Image URL <span className="text-gray-500">(optional)</span>
                 </label>
                 <input type="url" value={form.imageUrl}
                   onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
@@ -377,7 +377,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Article URL <span className="text-gray-400">(optional)</span>
+                  Article URL <span className="text-gray-500">(optional)</span>
                 </label>
                 <input type="url" value={form.articleUrl}
                   onChange={(e) => setForm((f) => ({ ...f, articleUrl: e.target.value }))}
@@ -385,7 +385,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Author <span className="text-gray-400">(optional)</span>
+                  Author <span className="text-gray-500">(optional)</span>
                 </label>
                 <AuthorPicker name={form.author} avatar={form.authorAvatar} seedAuthors={seedAuthors}
                   onChange={(author) => setForm((f) => ({ ...f, author: author.name, authorAvatar: author.avatar || '' }))} />
@@ -464,10 +464,10 @@ function AdvertiserPicker({
     <div ref={wrapRef} className="relative">
       <button type="button" onClick={() => { setOpen(!open); setQuery(''); }}
         className="w-full flex items-center justify-between gap-2 border border-gray-300 rounded-md bg-white text-left text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-        <span className={`truncate ${selected ? 'text-gray-900' : 'text-gray-400'}`}>
+        <span className={`truncate ${selected ? 'text-gray-900' : 'text-gray-500'}`}>
           {selected ? selected.name : placeholder}
         </span>
-        <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+        <ChevronDown size={14} className="text-gray-500 flex-shrink-0" />
       </button>
       {open && (
         <div className="absolute z-20 mt-1 w-full min-w-56 bg-white border border-gray-200 rounded-md shadow-lg">
@@ -490,7 +490,7 @@ function AdvertiserPicker({
               </li>
             ))}
             {filtered.length === 0 && (
-              <li className="px-3 py-2 text-xs text-gray-400">
+              <li className="px-3 py-2 text-xs text-gray-500">
                 {advertisers.length === 0 ? 'No partners available' : 'No matches'}
               </li>
             )}

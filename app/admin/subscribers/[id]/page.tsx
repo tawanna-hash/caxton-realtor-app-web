@@ -166,7 +166,7 @@ function EditableField({
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
         placeholder={placeholder}
-        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-700 focus:border-brand-700"
+        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-700 focus:border-brand-700"
       />
     </div>
   );
@@ -400,7 +400,7 @@ return (
               {fmtVal(sub.first_name)} {fmtVal(sub.last_name)}
             </PageTitle>
             <p className="text-sm text-gray-500 mt-1">{fmtVal(sub.email)}</p>
-            <p className="text-xs text-gray-400 mt-1 font-mono">{sub.id}</p>
+            <p className="text-xs text-gray-500 mt-1 font-mono">{sub.id}</p>
             {sub.status === 'inactive' && (
               <span className="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-md bg-[#FEF8CC] text-[#645600] border border-[#FAD800]/30">
                 INACTIVE
@@ -594,7 +594,7 @@ return (
                     </div>
                   </div>
                   {sub.status === 'inactive' ? (
-                    <span className="text-xs text-gray-400">Already inactive</span>
+                    <span className="text-xs text-gray-500">Already inactive</span>
                   ) : deactivateConfirm ? (
                     <div className="flex gap-2">
                       <button
@@ -661,7 +661,7 @@ return (
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder={sub.email}
               autoFocus
-              className="mt-2 block w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#661102] focus:border-[#661102]"
+              className="mt-2 block w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#661102] focus:border-[#661102]"
             />
             <div className="mt-4 flex justify-end gap-2">
               <button

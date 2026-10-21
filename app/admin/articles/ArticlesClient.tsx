@@ -554,7 +554,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-700">{a.cat}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-700">
-                      <span className="flex items-center gap-2"><AuthorPhoto name={a.author?.name || 'Staff'} src={a.author?.avatar || null} />{a.author?.name || <span className="text-gray-400">Staff</span>}</span>
+                      <span className="flex items-center gap-2"><AuthorPhoto name={a.author?.name || 'Staff'} src={a.author?.avatar || null} />{a.author?.name || <span className="text-gray-500">Staff</span>}</span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">
                       {formatDate(a.dateIso || a.publishedAt)}
@@ -727,7 +727,7 @@ function EditModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 text-xl leading-none min-h-[44px] min-w-[44px]"
+            className="text-gray-500 hover:text-gray-700 text-xl leading-none min-h-[44px] min-w-[44px]"
             aria-label="Close"
           >
             ×
@@ -953,7 +953,7 @@ function CreateModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 text-xl leading-none min-h-[44px] min-w-[44px]"
+            className="text-gray-500 hover:text-gray-700 text-xl leading-none min-h-[44px] min-w-[44px]"
             aria-label="Close"
           >
             ×
@@ -1162,7 +1162,7 @@ function ImageUpload({
           />
         ) : (
           <div
-            className={`${previewClassName} bg-gray-100 border border-dashed border-gray-300 flex-shrink-0 flex items-center justify-center text-[10px] text-gray-400 uppercase tracking-wide`}
+            className={`${previewClassName} bg-gray-100 border border-dashed border-gray-300 flex-shrink-0 flex items-center justify-center text-[10px] text-gray-500 uppercase tracking-wide`}
             aria-hidden="true"
           >
             No image

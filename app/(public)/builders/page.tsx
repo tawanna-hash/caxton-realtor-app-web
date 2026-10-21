@@ -82,7 +82,7 @@ async function BuildersContent() {
                       unoptimized={!canOptimizeImage(b.thumbnailUrl)}
                     />
                   ) : (
-                    <Building2 strokeWidth={1.5} size={20} className="text-gray-400" />
+                    <Building2 strokeWidth={1.5} size={20} className="text-gray-500" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -103,7 +103,7 @@ async function BuildersContent() {
                 <ChevronRight
                   strokeWidth={1.75}
                   size={18}
-                  className="flex-shrink-0 text-gray-400 group-hover:text-gray-700 transition-colors"
+                  className="flex-shrink-0 text-gray-500 group-hover:text-gray-700 transition-colors"
                 />
               </Link>
             </li>
@@ -137,7 +137,7 @@ async function BuildersContent() {
 
 export default function BuildersHubPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-8 sm:py-12">
         <header className="mb-8">
           <Link
@@ -179,6 +179,6 @@ export default function BuildersHubPage() {
         page="builders"
         shareTitle="Builders & Developers — Realty News Now"
       />
-    </main>
+    </div>
   );
 }

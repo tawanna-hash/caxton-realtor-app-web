@@ -126,7 +126,7 @@ export default function PromotionGuideContent() {
                   </h3>
                   <div className="flex gap-2">
                     <div className="w-28 sm:w-32 aspect-[3/4] rounded-md border border-gray-200 bg-gray-100 flex flex-col items-center justify-center relative shadow-sm">
-                      <div className="flex-1 flex items-center justify-center text-gray-400">
+                      <div className="flex-1 flex items-center justify-center text-gray-500">
                         <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                           <path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" />
                           <path d="M14 2v6h6" />
@@ -137,7 +137,7 @@ export default function PromotionGuideContent() {
                         Drees-Custom-Homes.pdf
                       </div>
                     </div>
-                    <div className="w-28 sm:w-32 aspect-[3/4] rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center text-[10px] text-gray-400">
+                    <div className="w-28 sm:w-32 aspect-[3/4] rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center text-[10px] text-gray-500">
                       page 2…
                     </div>
                   </div>
@@ -167,7 +167,7 @@ export default function PromotionGuideContent() {
                   <div className="flex gap-3 overflow-x-auto pb-2">
                     {[1, 2].map((n) => (
                       <div key={n} className="shrink-0 w-24">
-                        <div className="w-24 aspect-[3/4] rounded-md border border-gray-200 bg-gray-100 flex items-center justify-center text-[10px] text-gray-400">
+                        <div className="w-24 aspect-[3/4] rounded-md border border-gray-200 bg-gray-100 flex items-center justify-center text-[10px] text-gray-500">
                           flyer p.1
                         </div>
                         <p className="mt-1 text-[11px] text-brand-700 underline">

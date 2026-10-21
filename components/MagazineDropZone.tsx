@@ -255,7 +255,7 @@ export default function MagazineDropZone({
         ) : (
           <div>
             <svg
-              className="w-10 h-10 mx-auto mb-3 text-gray-400"
+              className="w-10 h-10 mx-auto mb-3 text-gray-500"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -273,7 +273,7 @@ export default function MagazineDropZone({
             <p className="text-xs text-gray-500">
               or <span className="text-[#301D5D] underline">click to choose a file</span>
             </p>
-            <p className="text-[10px] text-gray-400 mt-3">
+            <p className="text-[10px] text-gray-500 mt-3">
               We&apos;ll read the cover from page 1 and fill in the issue label automatically.
             </p>
           </div>

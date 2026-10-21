@@ -126,7 +126,7 @@ function Tile({
           >
             {value}
           </p>
-          <p className="text-[10px] text-gray-400 mt-1 truncate" title={sub}>{sub}</p>
+          <p className="text-[10px] text-gray-500 mt-1 truncate" title={sub}>{sub}</p>
         </>
       )}
     </div>

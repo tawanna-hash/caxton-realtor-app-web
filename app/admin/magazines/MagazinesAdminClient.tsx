@@ -317,7 +317,7 @@ function Column({
   return (
     <div>
       <h2 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">
-        {label} <span className="text-gray-400">({magazines.length.toLocaleString()})</span>
+        {label} <span className="text-gray-500">({magazines.length.toLocaleString()})</span>
       </h2>
       {magazines.length === 0 ? (
         <div className="content-admin-empty">

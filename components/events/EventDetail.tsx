@@ -128,7 +128,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
           </button>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-900 font-medium ml-2">Events</p>
         </div>
-        <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
+        <span className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">{info.city}</span>
       </div>
 
       {/* Featured image */}

@@ -40,7 +40,7 @@ const VIEW_COPY: Record<ResourcesView, { eyebrow: string; title: string; descrip
 export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesView }) {
   const copy = VIEW_COPY[view];
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
       {/* ── Page header ─────────────────────────────────────────────── */}
       <header className="mb-8 sm:mb-10">
@@ -186,7 +186,7 @@ export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesVi
         and client.
       </p>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -246,7 +246,7 @@ function GuideCard({ guide }: { guide: ResourceGuide }) {
             {guide.category}
           </span>
         )}
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-500">
           {isPlaceholder ? 'Coming soon' : 'PDF'}
         </span>
       </div>

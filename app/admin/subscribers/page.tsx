@@ -190,7 +190,7 @@ function SubscribersInner() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search email or name..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700"
           />
           {q && (
             <button
@@ -280,7 +280,7 @@ function SubscribersInner() {
               </thead>
               <tbody>
                 {data.subscribers.length === 0 && (
-                  <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400">No subscribers found.</td></tr>
+                  <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-500">No subscribers found.</td></tr>
                 )}
                 {data.subscribers.map((s) => (
                   <tr key={s.id} onClick={() => router.push(`/admin/subscribers/${s.id}`)} className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
@@ -321,7 +321,7 @@ function SubscribersInner() {
           {/* Mobile card list. */}
           <ul className="sm:hidden bg-white border border-gray-200 rounded-md divide-y divide-gray-100">
             {data.subscribers.length === 0 && (
-              <li className="px-4 py-8 text-center text-gray-400 text-sm">
+              <li className="px-4 py-8 text-center text-gray-500 text-sm">
                 No subscribers found.
               </li>
             )}
@@ -413,7 +413,7 @@ function SortableTh<C extends string>({
         className={'inline-flex items-center gap-1 hover:text-gray-900 ' + (active ? 'text-gray-900' : '')}
       >
         {label}
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-500">
           {active ? (dir === 'asc' ? '▲' : '▼') : '↕'}
         </span>
       </button>

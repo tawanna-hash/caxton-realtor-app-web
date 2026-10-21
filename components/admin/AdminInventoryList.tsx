@@ -338,7 +338,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
               >
                 {TAB_LABELS[t]}
                 {count != null && (
-                  <span className="ml-2 text-xs text-gray-400">{count}</span>
+                  <span className="ml-2 text-xs text-gray-500">{count}</span>
                 )}
                 {t === 'pending' && !active && count != null && count > 0 && (
                   <span
@@ -657,7 +657,7 @@ function Pager({
         </button>
         {pages.map((pn, i) =>
           pn === 'ellipsis' ? (
-            <span key={`e${i}`} className="px-2 text-gray-400" aria-hidden="true">
+            <span key={`e${i}`} className="px-2 text-gray-500" aria-hidden="true">
               …
             </span>
           ) : (

@@ -137,7 +137,7 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="mt-2 block min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 shadow-sm outline-none placeholder:text-gray-400 focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]"
+        className="mt-2 block min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 shadow-sm outline-none placeholder:text-gray-500 focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]"
       />
       {hint && <span className="mt-1 block text-xs leading-5 text-gray-500">{hint}</span>}
     </label>
@@ -161,7 +161,7 @@ function Textarea({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={4}
-        className="mt-2 block w-full rounded-md border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 shadow-sm outline-none placeholder:text-gray-400 focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]"
+        className="mt-2 block w-full rounded-md border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 shadow-sm outline-none placeholder:text-gray-500 focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]"
       />
       {hint && <span className="mt-1 block text-xs leading-5 text-gray-500">{hint}</span>}
     </label>

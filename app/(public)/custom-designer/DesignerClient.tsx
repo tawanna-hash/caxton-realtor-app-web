@@ -737,7 +737,7 @@ export default function DesignerClient() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-64px)] bg-[#eee8f4]">
+    <div className="min-h-[calc(100vh-64px)] bg-[#eee8f4]">
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link rel="stylesheet" href={GOOGLE_FONTS_URL} />
@@ -1215,7 +1215,7 @@ export default function DesignerClient() {
           }
         }
       `}</style>
-    </main>
+    </div>
   );
 }
 

@@ -717,7 +717,7 @@ export default function MagazineUploadForm() {
                   <StatusDot status={s.status} />
                   <span className={s.status === 'error' ? 'text-[#661102]' : 'text-gray-700'}>{s.label}</span>
                   {s.detail && (
-                    <span className={`text-xs ${s.status === 'error' ? 'text-[#661102]' : 'text-gray-400'}`}>
+                    <span className={`text-xs ${s.status === 'error' ? 'text-[#661102]' : 'text-gray-500'}`}>
                       · {s.detail}
                     </span>
                   )}

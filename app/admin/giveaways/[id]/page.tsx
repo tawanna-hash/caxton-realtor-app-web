@@ -221,7 +221,7 @@ export default function GiveawayDetailPage() {
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
             />
           </FieldRow>
           <FieldRow label="Description">
@@ -229,7 +229,7 @@ export default function GiveawayDetailPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
             />
           </FieldRow>
           <FieldRow label="Prize" required>
@@ -238,7 +238,7 @@ export default function GiveawayDetailPage() {
               required
               value={prize}
               onChange={(e) => setPrize(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
             />
           </FieldRow>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -275,7 +275,7 @@ export default function GiveawayDetailPage() {
                 type="datetime-local"
                 value={startsAt}
                 onChange={(e) => setStartsAt(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
               />
             </FieldRow>
             <FieldRow label="Ends At">
@@ -283,7 +283,7 @@ export default function GiveawayDetailPage() {
                 type="datetime-local"
                 value={endsAt}
                 onChange={(e) => setEndsAt(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
               />
             </FieldRow>
             <FieldRow label="Draw At">
@@ -291,7 +291,7 @@ export default function GiveawayDetailPage() {
                 type="datetime-local"
                 value={drawAt}
                 onChange={(e) => setDrawAt(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
               />
             </FieldRow>
           </div>
@@ -478,7 +478,7 @@ function RulesSection({
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 placeholder="e.g. Follow @myrealtyline"
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
               />
             </div>
           </div>
@@ -490,7 +490,7 @@ function RulesSection({
                 value={targetUrl}
                 onChange={(e) => setTargetUrl(e.target.value)}
                 placeholder="https://"
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
               />
             </div>
             <div>
@@ -500,7 +500,7 @@ function RulesSection({
                 min={1}
                 value={tickets}
                 onChange={(e) => setTickets(parseInt(e.target.value) || 1)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
               />
             </div>
           </div>
@@ -521,7 +521,7 @@ function RulesSection({
               onChange={(e) => setDeadlineAt(e.target.value)}
               className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-brand-700 rounded-md"
             />
-            <p className="text-xs text-gray-400 mt-1">When set, this rule only grants entries to signups before this moment (early-bird bonus).</p>
+            <p className="text-xs text-gray-500 mt-1">When set, this rule only grants entries to signups before this moment (early-bird bonus).</p>
           </div>
           <div className="flex items-center gap-3 pt-2">
             <button
@@ -643,7 +643,7 @@ function EntriesSection({
               placeholder="realtor@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
             />
           </div>
           <div className="min-w-[180px]">

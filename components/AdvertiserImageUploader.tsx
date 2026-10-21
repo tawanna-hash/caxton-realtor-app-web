@@ -216,7 +216,7 @@ export default function AdvertiserImageUploader({
             </a>
           )
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-[10px] uppercase tracking-[0.1em] text-gray-400">
+          <div className="w-full h-full flex items-center justify-center text-[10px] uppercase tracking-[0.1em] text-gray-500">
             No {emptyLabel}
           </div>
         )}
@@ -235,7 +235,7 @@ export default function AdvertiserImageUploader({
             disabled={uploading}
             className={`px-3 py-1 rounded-md text-xs font-medium border transition-colors ${
               uploading
-                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
+                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-wait'
                 : 'bg-[#301D5D] text-white border-[#42277C] hover:bg-[#42277C]'
             }`}
           >
@@ -256,7 +256,7 @@ export default function AdvertiserImageUploader({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="…or paste an image URL (https://)"
-          className="w-full text-xs border border-gray-300 rounded-md px-2 py-1 placeholder:text-gray-400"
+          className="w-full text-xs border border-gray-300 rounded-md px-2 py-1 placeholder:text-gray-500"
         />
       </div>
     </div>

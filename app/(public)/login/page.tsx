@@ -104,7 +104,7 @@ function LoginInner() {
               <button
                 type="button"
                 onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400"
+                aria-pressed={showPw} aria-label={showPw ? "Hide password" : "Show password"} className="absolute right-2 top-2.5 inline-flex min-h-[32px] min-w-[44px] items-center justify-center text-xs uppercase tracking-wider text-gray-600"
               >
                 {showPw ? 'Hide' : 'Show'}
               </button>
@@ -148,7 +148,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center text-gray-400">
+        <div className="min-h-screen flex items-center justify-center text-gray-500">
           Loading…
         </div>
       }

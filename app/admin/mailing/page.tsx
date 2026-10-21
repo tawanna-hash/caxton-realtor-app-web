@@ -206,7 +206,7 @@ export default async function MailingHubPage() {
                 <div className="truncate text-sm text-gray-800">{t.label}</div>
                 <div className="truncate text-xs text-gray-500">{t.caption}</div>
               </div>
-              <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+              <ChevronRight className="h-4 w-4 shrink-0 text-gray-500" aria-hidden />
             </Link>
           </li>
         ))}

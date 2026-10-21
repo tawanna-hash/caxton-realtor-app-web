@@ -24,7 +24,7 @@ export default function ContractsShell({
   children: ReactNode;
 }) {
   return (
-    <main id="agent-desk" className="ct-lite min-h-screen overflow-x-hidden bg-white pb-28 text-[#1B1726] sm:pb-16">
+    <div id="agent-desk" className="ct-lite min-h-screen overflow-x-hidden bg-white pb-28 text-[#1B1726] sm:pb-16">
       {title && (
         <section className="border-b border-[#E6E5EC] bg-white">
           <div className={`mx-auto max-w-7xl px-4 py-8 sm:px-8 ${hero ? 'grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-start' : ''}`}>
@@ -57,6 +57,6 @@ export default function ContractsShell({
         <ContractsNav active={active} />
         <div className="mt-6">{children}</div>
       </div>
-    </main>
+    </div>
   );
 }

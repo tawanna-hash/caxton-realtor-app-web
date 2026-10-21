@@ -11,9 +11,9 @@ export default function AdvertisePage() {
   return (
     <>
       <TrackPageView event="advertise_page_viewed" />
-      <main className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
         <MediaKit mode="public" />
-      </main>
+      </div>
     </>
   );
 }

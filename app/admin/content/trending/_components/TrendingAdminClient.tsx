@@ -249,13 +249,13 @@ export default function TrendingAdminClient() {
                     type="button"
                     onClick={() => void move(it, -1)}
                     aria-label="Move up"
-                    className="w-5 h-5 text-xs text-gray-400 hover:text-gray-900 border border-gray-200 rounded"
+                    className="w-5 h-5 text-xs text-gray-500 hover:text-gray-900 border border-gray-200 rounded"
                   >↑</button>
                   <button
                     type="button"
                     onClick={() => void move(it, 1)}
                     aria-label="Move down"
-                    className="w-5 h-5 text-xs text-gray-400 hover:text-gray-900 border border-gray-200 rounded"
+                    className="w-5 h-5 text-xs text-gray-500 hover:text-gray-900 border border-gray-200 rounded"
                   >↓</button>
                 </div>
 

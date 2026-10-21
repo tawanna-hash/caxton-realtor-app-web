@@ -321,17 +321,17 @@ export default function TestimonialHubClient({ eyebrow }: { eyebrow?: string } =
 
   if (loading) {
     return (
-      <main className="w-full px-4 py-8 sm:px-6 lg:px-8">
+      <div className="w-full px-4 py-8 sm:px-6 lg:px-8">
         <div className="h-8 w-56 animate-pulse rounded bg-gray-200" />
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {[0, 1, 2].map((item) => <div key={item} className="h-28 animate-pulse rounded-xl bg-[#EFEAF8]" />)}
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!profile) {
-    return <main className="mx-auto max-w-4xl px-6 py-16 text-center text-[#4A4757]">{error || 'Unable to open Testimonial Hub.'}</main>;
+    return <div className="mx-auto max-w-4xl px-6 py-16 text-center text-[#4A4757]">{error || 'Unable to open Testimonial Hub.'}</div>;
   }
 
   const libraryBlock = (

@@ -275,7 +275,7 @@ export default function AvailabilityCalendar() {
         <label className="min-w-56 flex-1 space-y-1">
           <span className="block text-xs text-gray-500">Search bookings</span>
           <span className="relative block">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
+            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-500" aria-hidden="true" />
             <input
               type="search"
               value={query}

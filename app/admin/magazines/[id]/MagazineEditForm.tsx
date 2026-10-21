@@ -544,7 +544,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
           </div>
           {busy === 'pages' && <p className="text-xs text-[#301D5D] mb-2">Working…</p>}
           {pageUrls.length === 0 ? (
-            <p className="text-sm text-gray-400 italic">No pages uploaded yet.</p>
+            <p className="text-sm text-gray-500 italic">No pages uploaded yet.</p>
           ) : (
             <ul className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {pageUrls.map((url, idx) => (
@@ -557,7 +557,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
                       <button
                         onClick={() => handleMovePage(idx, -1)}
                         disabled={idx === 0 || busy !== null}
-                        className="px-2 py-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                        className="px-2 py-0.5 text-gray-500 hover:text-gray-700 disabled:opacity-30"
                         title="Move up"
                       >
                         ↑
@@ -565,7 +565,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
                       <button
                         onClick={() => handleMovePage(idx, 1)}
                         disabled={idx === pageUrls.length - 1 || busy !== null}
-                        className="px-2 py-0.5 text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                        className="px-2 py-0.5 text-gray-500 hover:text-gray-700 disabled:opacity-30"
                         title="Move down"
                       >
                         ↓

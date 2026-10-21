@@ -366,7 +366,7 @@ function FilterSelect({
       <svg
         aria-hidden="true"
         viewBox="0 0 12 12"
-        className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400"
+        className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.5"

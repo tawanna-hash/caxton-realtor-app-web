@@ -67,7 +67,7 @@ export default function CalendarDetailClient() {
       <div
         className="fixed inset-0 bg-white z-30 flex items-center justify-center"
       >
-        <p className="text-sm text-gray-400 font-light">Loading event…</p>
+        <p className="text-sm text-gray-500 font-light">Loading event…</p>
       </div>
     );
   }

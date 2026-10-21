@@ -37,7 +37,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
           </p>
 
           {id && (
-            <p className="text-xs text-gray-400">Agreement #{id}</p>
+            <p className="text-xs text-gray-500">Agreement #{id}</p>
           )}
 
           <div className="bg-[#E0FBE0] rounded-md border border-[#00E200]/30 p-4 text-sm text-[#005A00]">
@@ -59,7 +59,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
             Download Signed Agreement PDF
           </a>
 
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500">
             Questions? Contact{' '}
             <a href="mailto:tawanna@realtynewsnow.app" className="text-[#301D5D] hover:underline">
               tawanna@realtynewsnow.app
@@ -82,7 +82,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
 
         {/* Token for debugging — visible only in dev */}
         {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 text-xs text-gray-400 text-center font-mono break-all">
+          <div className="mt-4 text-xs text-gray-500 text-center font-mono break-all">
             token: {token}
           </div>
         )}

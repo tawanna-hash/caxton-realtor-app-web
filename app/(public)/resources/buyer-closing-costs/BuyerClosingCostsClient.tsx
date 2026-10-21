@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs -- pre-existing: callbacks read refs only in event handlers (compiler false positive) */
 'use client';
 
 // app/(public)/resources/buyer-closing-costs/BuyerClosingCostsClient.tsx
@@ -181,7 +182,7 @@ export default function BuyerClosingCostsClient({ onSaveToDeal, dealLabel }: { o
   }, [reportKey]);
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
+    <div className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle size="md">Buyer Closing Costs</PageTitle>
@@ -380,7 +381,7 @@ export default function BuyerClosingCostsClient({ onSaveToDeal, dealLabel }: { o
         shareText="Cash-to-close estimator with Texas CD line items."
         buildReport={buildReport}
       />
-    </main>
+    </div>
   );
 }
 

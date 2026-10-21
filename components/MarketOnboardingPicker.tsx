@@ -110,7 +110,7 @@ export default function MarketOnboardingPicker() {
     >
       <div className="flex-1 overflow-y-auto px-6 pt-[calc(env(safe-area-inset-top)+32px)] pb-8">
         <div className="max-w-md mx-auto">
-          <p className="text-xs uppercase tracking-[0.25em] text-gray-400 font-medium text-center mb-3">
+          <p className="text-xs uppercase tracking-[0.25em] text-gray-500 font-medium text-center mb-3">
             Welcome to
           </p>
           <h1 className="text-2xl font-semibold text-gray-900 text-center mb-2">
@@ -161,7 +161,7 @@ export default function MarketOnboardingPicker() {
 
           {PUBLIC_PUB_COMING_SOON.length > 0 && (
           <>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400 font-medium text-center mt-8 mb-3">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-gray-500 font-medium text-center mt-8 mb-3">
             Coming soon
           </p>
           <ul className="space-y-2">
@@ -172,14 +172,14 @@ export default function MarketOnboardingPicker() {
                   onClick={() => handleNotify(p.id)}
                   className="w-full flex items-center gap-4 px-4 py-3 rounded-xl border border-dashed border-gray-200 hover:bg-gray-50 active:bg-gray-100 transition text-left"
                 >
-                  <span className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 text-gray-400 flex items-center justify-center text-xs font-semibold">
+                  <span className="w-10 h-10 rounded-full bg-gray-50 border border-gray-200 text-gray-500 flex items-center justify-center text-xs font-semibold">
                     {p.monogram}
                   </span>
                   <span className="flex-1">
                     <span className="block text-sm font-medium text-gray-600">
                       {p.label}
                     </span>
-                    <span className="block text-[11px] text-gray-400">
+                    <span className="block text-[11px] text-gray-500">
                       Notify me when it launches
                     </span>
                   </span>

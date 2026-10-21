@@ -15,7 +15,7 @@ import type { PublicationTheme } from '@/lib/publication-theme';
 const DailyClicksAreaChart = dynamic(() => import('./DailyClicksAreaChart'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+    <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
       Loading chart…
     </div>
   ),

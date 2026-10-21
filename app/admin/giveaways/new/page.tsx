@@ -67,7 +67,7 @@ export default function NewGiveawayPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Q3 Gas Card Giveaway"
-            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
           />
         </Field>
 
@@ -76,7 +76,7 @@ export default function NewGiveawayPage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
           />
         </Field>
 
@@ -87,7 +87,7 @@ export default function NewGiveawayPage() {
             value={prize}
             onChange={(e) => setPrize(e.target.value)}
             placeholder="e.g. $200 H-E-B Gas Card"
-            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
           />
         </Field>
 
@@ -113,7 +113,7 @@ export default function NewGiveawayPage() {
               required
               value={startsAt}
               onChange={(e) => setStartsAt(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
             />
           </Field>
           <Field label="Ends At" required>
@@ -122,7 +122,7 @@ export default function NewGiveawayPage() {
               required
               value={endsAt}
               onChange={(e) => setEndsAt(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
             />
           </Field>
           <Field label="Draw At" hint="Optional">
@@ -130,7 +130,7 @@ export default function NewGiveawayPage() {
               type="datetime-local"
               value={drawAt}
               onChange={(e) => setDrawAt(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700 rounded-md"
             />
           </Field>
         </div>
@@ -171,7 +171,7 @@ function Field({
     <div>
       <label className="block text-xs uppercase tracking-wider text-gray-500 mb-2">
         {label} {required && <span className="text-[#661102]">*</span>}
-        {hint && <span className="ml-2 normal-case tracking-normal text-gray-400">{hint}</span>}
+        {hint && <span className="ml-2 normal-case tracking-normal text-gray-500">{hint}</span>}
       </label>
       {children}
     </div>

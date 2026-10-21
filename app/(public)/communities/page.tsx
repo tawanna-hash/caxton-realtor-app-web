@@ -57,7 +57,7 @@ export default async function Page({ searchParams }: PageProps) {
     return (
       <>
         <BuildersBreadcrumb />
-        <main className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white">
           <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
             <header className="mb-6">
               <div className="text-xs uppercase tracking-[0.18em] text-[#301D5D] font-medium">
@@ -98,7 +98,7 @@ export default async function Page({ searchParams }: PageProps) {
             page="communities"
             shareTitle={`${builder} Communities — Realty News Now`}
           />
-        </main>
+        </div>
       </>
     );
   }
@@ -114,7 +114,7 @@ export default async function Page({ searchParams }: PageProps) {
   return (
     <>
       <BuildersBreadcrumb />
-      <main className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white">
         <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
           <header className="mb-8">
             <PageTitle size="md">New Home Communities</PageTitle>
@@ -176,7 +176,7 @@ export default async function Page({ searchParams }: PageProps) {
                             <Building2
                               strokeWidth={1.5}
                               size={20}
-                              className="text-gray-400"
+                              className="text-gray-500"
                             />
                           )}
                         </div>
@@ -198,7 +198,7 @@ export default async function Page({ searchParams }: PageProps) {
                         <ChevronRight
                           strokeWidth={1.75}
                           size={18}
-                          className="flex-shrink-0 text-gray-400 group-hover:text-gray-700 transition-colors"
+                          className="flex-shrink-0 text-gray-500 group-hover:text-gray-700 transition-colors"
                         />
                       </Link>
                     </li>
@@ -214,7 +214,7 @@ export default async function Page({ searchParams }: PageProps) {
           page="communities"
           shareTitle="New Home Communities — Realty News Now"
         />
-      </main>
+      </div>
     </>
   );
 }

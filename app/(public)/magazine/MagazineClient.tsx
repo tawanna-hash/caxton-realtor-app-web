@@ -225,7 +225,7 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
             the smallest tap target on the page — dropped in favor of
             the global control. Show the city as a passive label so
             users still see which market they're viewing. */}
-        <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
+        <span className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">{info.city}</span>
       </div>
       {/* Quick-jump pill: scrolls to the issues archive below the current
           issue spotlight. Hidden until currentMag has loaded so the page
@@ -243,7 +243,7 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
             aria-label="Jump to issues archive"
           >
             <span>Browse Issues Archive</span>
-            <span className="text-gray-400">{'\u2193'}</span>
+            <span className="text-gray-500">{'\u2193'}</span>
           </button>
         </div>
       )}

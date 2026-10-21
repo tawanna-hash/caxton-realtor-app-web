@@ -223,7 +223,7 @@ export default function AdminBuilderPagesPage() {
                         <button
                           type="button"
                           onClick={() => toggleCollapse(dev.builder_name)}
-                          className="mt-0.5 text-gray-400 hover:text-gray-700 shrink-0"
+                          className="mt-0.5 text-gray-500 hover:text-gray-700 shrink-0"
                           aria-label={isCollapsed ? 'Expand' : 'Collapse'}
                         >
                           {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
@@ -232,7 +232,7 @@ export default function AdminBuilderPagesPage() {
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold text-gray-900 truncate">
                           {dev.builder_name}
-                          <span className="ml-2 text-xs text-gray-400 font-normal">developer</span>
+                          <span className="ml-2 text-xs text-gray-500 font-normal">developer</span>
                           {dev.is_advertising_partner && (
                             <span className="ml-2 text-xs text-brand-700 font-normal">advertising partner</span>
                           )}
@@ -328,7 +328,7 @@ export default function AdminBuilderPagesPage() {
                             <button
                               type="button"
                               onClick={() => toggleCollapse(dev.builder_name)}
-                              className="inline-flex items-center mr-1 text-gray-400 hover:text-gray-700"
+                              className="inline-flex items-center mr-1 text-gray-500 hover:text-gray-700"
                             >
                               {isCollapsed
                                 ? <ChevronRight size={14} />
@@ -336,7 +336,7 @@ export default function AdminBuilderPagesPage() {
                             </button>
                           )}
                           {dev.builder_name}
-                          <span className="ml-2 text-xs text-gray-400 font-normal">
+                          <span className="ml-2 text-xs text-gray-500 font-normal">
                             developer
                           </span>
                           {dev.is_advertising_partner && (

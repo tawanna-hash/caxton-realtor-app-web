@@ -506,7 +506,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             >
               All Magazines
             </Link>
-            <span className="text-gray-400" aria-hidden>
+            <span className="text-gray-500" aria-hidden>
               /
             </span>
             <Link
@@ -670,7 +670,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
           >
             Front ⇥
           </button>
-          <span className="text-gray-400">·</span>
+          <span className="text-gray-500">·</span>
           <span className="text-gray-500">{isMac ? 'Option-click' : 'Alt-click'} to cycle overlapping hotspots</span>
         </div>
       )}
@@ -1412,7 +1412,7 @@ function SpreadSidebar({
         <button
           type="button"
           onClick={() => setCollapsed(true)}
-          className="text-gray-400 hover:text-gray-700 text-xs"
+          className="text-gray-500 hover:text-gray-700 text-xs"
           aria-label="Collapse hotspots list"
         >
           ◀
@@ -1506,7 +1506,7 @@ function SidebarRow({
               {hotspot.label || <span className="italic text-gray-500">Unlabeled</span>}
             </span>
           </span>
-          <span className="text-[10px] text-gray-400 shrink-0">
+          <span className="text-[10px] text-gray-500 shrink-0">
             p{hotspot.page_idx + 1}
             {isPdfImport && ' · PDF'}
             {isEditedImport && ' · edited'}

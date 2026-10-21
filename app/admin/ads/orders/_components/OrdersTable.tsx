@@ -395,7 +395,7 @@ export default function OrdersTable() {
                         Stripe link ↗
                       </a>
                     ) : (
-                      <span className="text-gray-400">—</span>
+                      <span className="text-gray-500">—</span>
                     )}
                   </dd>
                 </dl>
@@ -488,7 +488,7 @@ export default function OrdersTable() {
                           Stripe link ↗
                         </a>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-gray-500">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">

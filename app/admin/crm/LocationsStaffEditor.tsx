@@ -437,7 +437,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
             aria-hidden="true"
           >
             <circle cx="11" cy="11" r="7" />
@@ -453,7 +453,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             <button
               type="button"
               onClick={() => setSearch('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-lg leading-none px-1"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 text-lg leading-none px-1"
               aria-label="Clear search"
               title="Clear search"
             >
@@ -483,7 +483,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             disabled={syncing}
             className={`px-3 py-2 rounded-md text-sm font-medium border transition-colors ${
               syncing
-                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
+                ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-wait'
                 : 'bg-[#301D5D] text-white border-[#42277C] hover:bg-[#42277C]'
             }`}
           >
@@ -546,7 +546,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className={importing ? 'text-gray-400' : dragOver ? 'text-[#301D5D]' : 'text-gray-500'}
+            className={importing ? 'text-gray-500' : dragOver ? 'text-[#301D5D]' : 'text-gray-500'}
             aria-hidden="true"
           >
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />

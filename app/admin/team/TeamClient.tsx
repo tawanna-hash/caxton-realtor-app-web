@@ -292,7 +292,7 @@ export default function TeamClient({ initialAdmins }: Props) {
                         <td className="px-4 py-3 text-gray-700">{formatDate(a.createdAt)}</td>
                         <td className="px-4 py-3 text-right">
                           {a.isOwner ? (
-                            <span className="text-xs text-gray-400">—</span>
+                            <span className="text-xs text-gray-500">—</span>
                           ) : (
                             <div className="inline-flex items-center gap-3">
                               <button

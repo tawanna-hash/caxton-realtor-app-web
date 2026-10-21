@@ -76,7 +76,7 @@ export default function CommissionCalculatorClient() {
   });
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
+    <div className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
       <header className="mb-10">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle size="md">Commission Calculator</PageTitle>
@@ -226,7 +226,7 @@ export default function CommissionCalculatorClient() {
         shareText="Sale price to take-home — model side split, referral, and broker fees."
         buildReport={buildReport}
       />
-    </main>
+    </div>
   );
 }
 

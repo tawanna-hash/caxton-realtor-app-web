@@ -29,7 +29,7 @@ import {
 const AdvertiserDashboardPane = dynamic(() => import('./AdvertiserDashboardPane'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center py-12 text-sm text-gray-400">
+    <div className="flex items-center justify-center py-12 text-sm text-gray-500">
       Loading dashboard…
     </div>
   ),
@@ -232,7 +232,7 @@ export default function AdvertisersReportTab() {
                 type="button"
                 onClick={selectAllSendable}
                 disabled={loading || sendable.length === 0}
-                className="text-xs text-[#42277C] hover:underline disabled:text-gray-400 disabled:no-underline"
+                className="text-xs text-[#42277C] hover:underline disabled:text-gray-500 disabled:no-underline"
               >
                 Select all sendable
               </button>
@@ -256,7 +256,7 @@ export default function AdvertisersReportTab() {
                 ))}
               </div>
             ) : advertisers.length === 0 ? (
-              <p className="p-4 text-sm text-gray-400">No partners yet.</p>
+              <p className="p-4 text-sm text-gray-500">No partners yet.</p>
             ) : (
               <ul className="divide-y divide-gray-100">
                 {pageAdvertisers.map((a) => {
@@ -282,9 +282,9 @@ export default function AdvertisersReportTab() {
                         className="h-4 w-4 disabled:opacity-40"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium ${canSend ? 'text-gray-900' : 'text-gray-400'}`}>
+                        <p className={`text-sm font-medium ${canSend ? 'text-gray-900' : 'text-gray-500'}`}>
                           {a.name}
-                          <span className="ml-2 text-[10px] font-normal uppercase tracking-wider text-gray-400">
+                          <span className="ml-2 text-[10px] font-normal uppercase tracking-wider text-gray-500">
                             {publicationLabel(a.publication)}
                           </span>
                         </p>

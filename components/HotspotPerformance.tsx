@@ -102,7 +102,7 @@ export default function HotspotPerformance() {
                     </tr>
                   ))}
                   {!data?.topAdvertisers.length ? (
-                    <tr><td colSpan={3} className="py-4 text-center text-gray-400 text-xs">No clicks in window</td></tr>
+                    <tr><td colSpan={3} className="py-4 text-center text-gray-500 text-xs">No clicks in window</td></tr>
                   ) : null}
                 </tbody>
               </table>
@@ -130,14 +130,14 @@ export default function HotspotPerformance() {
                       <tr key={h.id} className="hover:bg-[#F6F3FB]/40">
                         <td className="py-3 pl-2">
                           <div className="truncate max-w-[220px]" title={primary}>{primary}</div>
-                          <div className="text-[10px] text-gray-400 truncate max-w-[220px]" title={context}>{context}</div>
+                          <div className="text-[10px] text-gray-500 truncate max-w-[220px]" title={context}>{context}</div>
                         </td>
                         <td className="py-3 text-right font-mono pr-2 align-top">{h.clicks.toLocaleString('en-US')}</td>
                       </tr>
                     );
                   })}
                   {!data?.topHotspots.length ? (
-                    <tr><td colSpan={2} className="py-4 text-center text-gray-400 text-xs">No clicks in window</td></tr>
+                    <tr><td colSpan={2} className="py-4 text-center text-gray-500 text-xs">No clicks in window</td></tr>
                   ) : null}
                 </tbody>
               </table>

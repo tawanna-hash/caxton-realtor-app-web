@@ -254,7 +254,7 @@ export default function MoveInReadyGuideContent() {
                 </h3>
                 <span className="text-xs text-[#301D5D]">Open full screen →</span>
               </div>
-              <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-400">
+              <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-500">
                 floorplan viewer — image URL → zoomable; ml3ds-icon.com → iframe
               </div>
             </div>
@@ -266,7 +266,7 @@ export default function MoveInReadyGuideContent() {
                 </h3>
                 <span className="text-xs text-[#301D5D]">Get directions →</span>
               </div>
-              <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-400">
+              <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-500">
                 Google Maps embed (q=lat,lng) — renders when both _latitude &amp; _longitude are set
               </div>
             </div>
@@ -275,11 +275,11 @@ export default function MoveInReadyGuideContent() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
                   3D Tour <FieldBadge name="extraDetails._virtualTourUrl" />{' '}
-                  <span className="text-gray-400 normal-case tracking-normal font-normal">(optional)</span>
+                  <span className="text-gray-500 normal-case tracking-normal font-normal">(optional)</span>
                 </h3>
                 <span className="text-xs text-[#301D5D]">Open in new tab →</span>
               </div>
-              <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-400">
+              <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-500">
                 3D tour iframe — renders only when _virtualTourUrl is set
               </div>
             </div>

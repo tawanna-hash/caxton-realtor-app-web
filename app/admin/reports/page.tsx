@@ -443,7 +443,7 @@ function AdminReportsPageInner() {
                 </div>
                 <div className="min-w-0">
                   <dt className="text-xs uppercase tracking-wider text-gray-500">Editorial note</dt>
-                  <dd className={hasNote ? 'text-gray-900 line-clamp-2' : 'text-gray-400'}>
+                  <dd className={hasNote ? 'text-gray-900 line-clamp-2' : 'text-gray-500'}>
                     {hasNote ? noteOverride : 'None'}
                   </dd>
                 </div>
@@ -630,7 +630,7 @@ function AdminReportsPageInner() {
                 </div>
                 <div className="min-w-0">
                   <dt className="text-xs uppercase tracking-wider text-gray-500">Editorial note</dt>
-                  <dd className={hasNote ? 'text-gray-900 line-clamp-2' : 'text-gray-400'}>
+                  <dd className={hasNote ? 'text-gray-900 line-clamp-2' : 'text-gray-500'}>
                     {hasNote ? eventNoteOverride : 'None'}
                   </dd>
                 </div>

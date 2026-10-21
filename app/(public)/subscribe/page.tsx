@@ -41,7 +41,7 @@ export default function SubscribePage() {
   }, [market]);
 
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-8 sm:py-12">
       <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
@@ -164,7 +164,7 @@ export default function SubscribePage() {
         </p>
       </footer>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -258,7 +258,7 @@ const US_STATES = [
 ];
 
 const fieldStyle =
-  'w-full border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed';
+  'w-full border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder:text-gray-500 focus:outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed';
 
 function SubscribeForm({
   publication,

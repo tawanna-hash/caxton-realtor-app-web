@@ -46,7 +46,7 @@ export default function EditionSignup() {
             aria-disabled="true"
             className="border-2 border-dashed border-gray-200 px-4 py-3 rounded-md bg-gray-50 flex items-center justify-between gap-2"
           >
-            <p className="text-base font-semibold text-gray-400">{city}</p>
+            <p className="text-base font-semibold text-gray-500">{city}</p>
             <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 border border-gray-300 rounded-full px-2 py-0.5 whitespace-nowrap">
               Coming soon
             </span>

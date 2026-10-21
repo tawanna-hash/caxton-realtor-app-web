@@ -123,7 +123,7 @@ export function Pager({
         </button>
         {pages.map((p, i) =>
           p === 'ellipsis' ? (
-            <span key={`e-${i}`} className="px-2 text-gray-400 select-none">
+            <span key={`e-${i}`} className="px-2 text-gray-500 select-none">
               …
             </span>
           ) : (

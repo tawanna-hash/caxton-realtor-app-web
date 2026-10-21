@@ -1091,7 +1091,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   <button
                     type="button"
                     onClick={() => setShowReview(false)}
-                    className="text-gray-400 hover:text-gray-700 text-xl leading-none"
+                    className="text-gray-500 hover:text-gray-700 text-xl leading-none"
                     aria-label="Close review"
                   >×</button>
                 </div>
@@ -1487,7 +1487,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       placeholder="0.00" min="0" step="0.01"
                     />
                     {!ioRateUserEdited && ioAdRate && (
-                      <div className="text-[10px] text-gray-400 mt-1">
+                      <div className="text-[10px] text-gray-500 mt-1">
                         ✨ Auto-filled from {FREQ_PKG_AG[ioFrequency] ?? ioFrequency}
                       </div>
                     )}
@@ -1504,7 +1504,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     {ioPosPremActive ? (
                       <>
                         <input value={ioAdPremium} className="w-full px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-600 cursor-not-allowed" readOnly />
-                        <div className="text-[10px] text-gray-400 mt-1">20% page position premium applied</div>
+                        <div className="text-[10px] text-gray-500 mt-1">20% page position premium applied</div>
                       </>
                     ) : (
                       <input type="number" value={ioAdPremium}
@@ -1518,7 +1518,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm font-bold text-gray-900">
                       ${((parseFloat(ioAdRate) || 0) - (parseFloat(ioDiscount) || 0) + (parseFloat(ioAdPremium) || 0)).toFixed(2)}
                     </div>
-                    <div className="text-[10px] text-gray-400 mt-1">Rate − Discount + Premium</div>
+                    <div className="text-[10px] text-gray-500 mt-1">Rate − Discount + Premium</div>
                   </div>
                 </div>
 
@@ -1561,7 +1561,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                           disabled={!ioTimingMonths[m.k]}
                           maxLength={4}
                           onChange={(e) => setIoTimingYears({ ...ioTimingYears, [m.k]: e.target.value })}
-                          className="w-14 px-2 py-1 text-xs rounded-md border border-gray-300 disabled:bg-gray-100 disabled:text-gray-400"
+                          className="w-14 px-2 py-1 text-xs rounded-md border border-gray-300 disabled:bg-gray-100 disabled:text-gray-500"
                           placeholder="Year"
                         />
                       </div>
@@ -2002,7 +2002,7 @@ function ModalShell({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 text-xl leading-none"
+            className="text-gray-500 hover:text-gray-700 text-xl leading-none"
             aria-label="Close"
           >
             ×

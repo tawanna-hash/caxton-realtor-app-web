@@ -83,7 +83,7 @@ export default function ProfilePanel({ user, accentColor = '#301D5D', onClose }:
               web — web push has its own banner CTA elsewhere. */}
           <NativePushToggle accentColor={accentColor} />
 
-          <p className="text-xs text-gray-400 font-light text-center">
+          <p className="text-xs text-gray-500 font-light text-center">
             More profile settings coming soon.
           </p>
         </div>

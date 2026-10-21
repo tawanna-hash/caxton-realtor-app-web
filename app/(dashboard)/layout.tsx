@@ -2,7 +2,7 @@ import AppShell from '@/components/AppShell';
 import { PublicationProvider } from '@/lib/publication-provider';
 import { getServerPub } from '@/lib/publication';
 
-// Previously this layout rendered only <main>, which left /dashboard (the
+// Previously this layout rendered only <div>, which left /dashboard (the
 // destination of the root `/` redirect) without any site navigation. A
 // logged-out first-time visitor would land on the PubSelector dropdown
 // with no header, hamburger, footer, BottomNav, or login link — a hard

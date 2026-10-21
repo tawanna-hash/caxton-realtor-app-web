@@ -97,7 +97,7 @@ export default function FloaterOverflowSheet({
         {/* Rows */}
         <ul className="py-1">
           {actions.map((action) => {
-            const aria = action.ariaLabel ?? action.label;
+            const aria = action.ariaLabel && !action.ariaLabel.toLowerCase().includes(String(action.label ?? '').toLowerCase()) ? `${action.label}, ${action.ariaLabel}` : (action.ariaLabel ?? action.label);
             const rowClass =
               'w-full flex items-center gap-3 px-4 py-4 text-left text-gray-900 hover:bg-gray-50 active:bg-gray-100 transition';
             const glyph = (

@@ -205,7 +205,7 @@ export default function PushOptInButton({ realtorId, market, className, hideWhen
         disabled
         className={
           className ||
-          'inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed'
+          'inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-500 cursor-not-allowed'
         }
       >
         Notifications not supported

@@ -146,7 +146,7 @@ function PubTabs({ active, onChange }: { active: PubTab['id']; onChange: (id: Pu
               (isActive
                 ? 'border-[#301D5D] text-[#42277C] font-semibold'
                 : soon
-                  ? 'border-transparent text-gray-400 cursor-not-allowed'
+                  ? 'border-transparent text-gray-500 cursor-not-allowed'
                   : 'border-transparent text-gray-700 hover:text-gray-900 hover:border-gray-300')
             }
             title={soon ? `${t.label} is launching soon` : undefined}
@@ -240,7 +240,7 @@ function RateMatrixSection() {
     <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900">Print Rate Matrix</h2>
       <p className="text-sm text-gray-700 mt-1">Monthly print rates by size and frequency commitment. Rates locked when an agreement is signed in advance.</p>
-      <div className="overflow-x-auto mt-4">
+      <div className="overflow-x-auto mt-4" tabIndex={0} role="region" aria-label="Scrollable table">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-left text-gray-700">
@@ -372,7 +372,7 @@ function DigitalSlotsSection({
       {slots.length === 0 ? (
         <div className="mt-4 rounded-md bg-[#FEF8CC] ring-1 ring-[#FAD800]/30 p-4 text-sm text-[#645600]">No digital placements are configured for {activePub.label} yet.</div>
       ) : (
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="text-left text-gray-700">
@@ -541,7 +541,7 @@ function DeadlinesSection() {
         )}
       </div>
       <p className="text-sm text-gray-700 mt-1">Camera-ready artwork due by the deadline; issues mail on the listed date.</p>
-      <div className="mt-4 overflow-x-auto">
+      <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-left text-gray-700">

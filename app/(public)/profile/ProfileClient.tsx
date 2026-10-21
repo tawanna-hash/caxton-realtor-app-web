@@ -96,7 +96,7 @@ export default function ProfileClient() {
   if (loading) {
     return (
       <div className="px-4 py-8 max-w-md mx-auto">
-        <p className="text-sm text-gray-400 font-light text-center">Loading your profile&hellip;</p>
+        <p className="text-sm text-gray-500 font-light text-center">Loading your profile&hellip;</p>
       </div>
     );
   }

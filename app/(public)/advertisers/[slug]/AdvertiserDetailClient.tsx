@@ -168,7 +168,7 @@ export default function AdvertiserDetailClient({
     .sort((x, y) => (x.sort_order ?? 0) - (y.sort_order ?? 0));
 
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
         <Link
           href={backHref}
@@ -359,7 +359,7 @@ export default function AdvertiserDetailClient({
                           className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover object-top flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xl sm:text-2xl font-semibold flex-shrink-0">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-xl sm:text-2xl font-semibold flex-shrink-0">
                           {s.name
                             .split(' ')
                             .map((p) => p[0])
@@ -534,7 +534,7 @@ export default function AdvertiserDetailClient({
           </p>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -718,7 +718,7 @@ function EventPhotosSection({ months }: { months: EventPhotoMonth[] }) {
                 </span>
                 <span
                   aria-hidden="true"
-                  className={`text-gray-400 text-xs transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                  className={`text-gray-500 text-xs transition-transform ${isOpen ? 'rotate-180' : ''}`}
                 >
                   ▼
                 </span>

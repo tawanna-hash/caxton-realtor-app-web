@@ -37,7 +37,7 @@ export default function StatementHistory({ advertiserId, initial }: { advertiser
             <tbody className="divide-y divide-gray-100">
               {rows.map((e) => (
                 <tr key={e.id}>
-                  <td className="whitespace-nowrap px-4 py-3 text-gray-700">{when(e.sent_at)}{e.sent_by && <div className="text-[11px] text-gray-400">by {e.sent_by}</div>}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-gray-700">{when(e.sent_at)}{e.sent_by && <div className="text-[11px] text-gray-500">by {e.sent_by}</div>}</td>
                   <td className="px-3 py-3 text-gray-700" title={e.subject}>{e.recipient_email}</td>
                   <td className="px-3 py-3 text-gray-600">{e.sender_email}</td>
                   <td className="px-3 py-3 text-right text-gray-700">{e.invoice_count}</td>

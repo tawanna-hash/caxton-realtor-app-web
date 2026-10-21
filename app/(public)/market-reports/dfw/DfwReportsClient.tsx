@@ -41,15 +41,15 @@ export default function DfwReportsClient() {
 
   if (state === 'forbidden') {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-16 text-center">
+      <div className="mx-auto max-w-3xl px-4 py-16 text-center">
         <h1 className="text-2xl font-semibold text-gray-900">Dallas/Ft. Worth market reports</h1>
         <p className="mt-2 text-gray-600">This market is coming soon.</p>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-semibold text-gray-900">Dallas/Ft. Worth Market Reports (Preview)</h1>
       <p className="mt-1 text-sm text-gray-600">Monthly housing numbers by board, county and zip code.</p>
 
@@ -126,6 +126,6 @@ export default function DfwReportsClient() {
           </p>
         </>
       )}
-    </main>
+    </div>
   );
 }

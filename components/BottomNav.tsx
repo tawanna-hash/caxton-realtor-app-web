@@ -127,6 +127,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
 
   return (
     <nav
+      aria-label="Mobile tabs"
       className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 z-40"
       // Extend the white background through the iOS home-indicator strip so
       // it doesn't show through to the underlying page. The tab row inside

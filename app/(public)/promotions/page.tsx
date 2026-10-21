@@ -64,7 +64,7 @@ export default async function Page({ searchParams }: PageProps) {
   return (
     <>
       <BuildersBreadcrumb />
-      <main className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white">
         <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
           <AdSlot slug="featured_builder_strip" className="mb-4" />
           <Suspense fallback={<InventoryListSkeleton />}>
@@ -77,7 +77,7 @@ export default async function Page({ searchParams }: PageProps) {
           page="promotions"
           shareTitle="Promotions — Realty News Now"
         />
-      </main>
+      </div>
     </>
   );
 }

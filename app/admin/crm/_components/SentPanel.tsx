@@ -232,7 +232,7 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="font-medium text-gray-900 truncate">
-                    {row.subject || <em className="text-gray-400">no subject</em>}
+                    {row.subject || <em className="text-gray-500">no subject</em>}
                   </div>
                   {row.from_name && <div className="text-xs text-gray-500 truncate">from {row.from_name}</div>}
                   {row.preview_text && <div className="mt-0.5 line-clamp-1 text-xs text-gray-500">{row.preview_text}</div>}
@@ -325,7 +325,7 @@ export default function SentPanel({ limit: initialLimit = 50, showFilters = true
               return (
                 <tr key={row.id} className="align-top">
                   <td className="px-3 py-2">
-                    <div className="font-medium text-gray-900">{row.subject || <em className="text-gray-400">no subject</em>}</div>
+                    <div className="font-medium text-gray-900">{row.subject || <em className="text-gray-500">no subject</em>}</div>
                     {row.from_name && <div className="text-xs text-gray-500">from {row.from_name}</div>}
                     {row.preview_text && <div className="mt-1 line-clamp-1 text-xs text-gray-500">{row.preview_text}</div>}
                   </td>

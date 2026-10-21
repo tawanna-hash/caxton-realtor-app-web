@@ -63,7 +63,7 @@ export default function AgentCommandCenterClient({
   };
 
   return (
-    <main id="agent-desk" className="min-h-screen bg-white pb-16">
+    <div id="agent-desk" className="min-h-screen bg-white pb-16">
       <section className="border-b border-[#E6E5EC] bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-8 sm:py-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-start">
           <div>
@@ -192,6 +192,6 @@ export default function AgentCommandCenterClient({
       />
 
 
-    </main>
+    </div>
   );
 }

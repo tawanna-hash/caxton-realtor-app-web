@@ -44,7 +44,7 @@ export default async function Page() {
   const giveaways = await listPublicGiveaways(market);
 
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <TrackPageView event="giveaway_page_viewed" />
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
         <header className="mb-8 sm:mb-10">
@@ -81,7 +81,7 @@ export default async function Page() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -152,7 +152,7 @@ function HowToEnter({ rules }: { rules: PublicGiveawayRule[] }) {
                   +{rule.tickets} {rule.tickets === 1 ? 'entry' : 'entries'}
                 </span>
                 {rule.required && (
-                  <span className="ml-2 text-[10px] uppercase tracking-wider text-gray-400">
+                  <span className="ml-2 text-[10px] uppercase tracking-wider text-gray-500">
                     Required
                   </span>
                 )}

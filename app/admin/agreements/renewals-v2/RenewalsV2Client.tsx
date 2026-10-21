@@ -63,7 +63,7 @@ function when(iso: string | null) {
 }
 
 function DaysPill({ days }: { days: number | null }) {
-  if (days == null) return <span className="text-gray-400">—</span>;
+  if (days == null) return <span className="text-gray-500">—</span>;
   const tone = days < 0 ? 'bg-red-50 text-red-700' : days <= 14 ? 'bg-amber-50 text-amber-800' : 'bg-gray-100 text-gray-700';
   return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tone}`}>{days < 0 ? `${-days}d ago` : `${days}d`}</span>;
 }

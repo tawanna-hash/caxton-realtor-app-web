@@ -477,7 +477,7 @@ export default function AdminEventImagesPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Partner <span className="text-gray-400">(optional)</span>
+              Partner <span className="text-gray-500">(optional)</span>
             </label>
             <AdvertiserPicker advertisers={advertisers} value={newFolderAdvertiser} onChange={setNewFolderAdvertiser} />
           </div>
@@ -487,7 +487,7 @@ export default function AdminEventImagesPage() {
             className="inline-flex items-center gap-2 bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#42277C] rounded-md transition-colors">
             <Plus size={16} /> Create Folder &amp; Upload
           </button>
-          <p className="mt-2 text-xs text-gray-400">Creates a folder for the selected month and scrolls to the upload section.</p>
+          <p className="mt-2 text-xs text-gray-500">Creates a folder for the selected month and scrolls to the upload section.</p>
         </div>
       </form>
 
@@ -507,7 +507,7 @@ export default function AdminEventImagesPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Event Title <span className="text-gray-400">(optional — filenames used if blank)</span>
+                  Event Title <span className="text-gray-500">(optional — filenames used if blank)</span>
                 </label>
                 <input type="text" value={bulkTitle} onChange={(e) => setBulkTitle(e.target.value)}
                   placeholder="e.g., ABREP Monthly Luncheon"
@@ -522,10 +522,10 @@ export default function AdminEventImagesPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Partner <span className="text-gray-400">(optional)</span>
+                  Partner <span className="text-gray-500">(optional)</span>
                 </label>
                 <AdvertiserPicker advertisers={advertisers} value={bulkAdvertiser} onChange={setBulkAdvertiser} />
-                <p className="mt-1 text-xs text-gray-400">Shown on that partner&apos;s public page.</p>
+                <p className="mt-1 text-xs text-gray-500">Shown on that partner&apos;s public page.</p>
               </div>
             </div>
 
@@ -561,7 +561,7 @@ export default function AdminEventImagesPage() {
               </div>
             )}
 
-            <p className="mt-3 text-xs text-gray-400">
+            <p className="mt-3 text-xs text-gray-500">
               Images are compressed (max 2400px, JPEG 92% quality) then uploaded. Max 10MB per image before compression.
             </p>
           </div>
@@ -596,16 +596,16 @@ export default function AdminEventImagesPage() {
                   <div className="flex items-center gap-3 px-4 py-3 bg-gray-50">
                     <button onClick={() => toggleMonth(group.key)}
                       className="flex items-center gap-3 text-left flex-1">
-                      <Folder size={18} className="text-gray-400 flex-shrink-0" />
+                      <Folder size={18} className="text-gray-500 flex-shrink-0" />
                       <span className="text-sm font-medium text-gray-900">{group.label}</span>
                       <span className="text-xs text-gray-500 bg-white border border-gray-200 rounded-full px-2 py-0.5">
                         {group.photos.length} {group.photos.length === 1 ? 'photo' : 'photos'}
                       </span>
-                      <ChevronDown size={16} className={`text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={16} className={`text-gray-500 transition-transform ${expanded ? 'rotate-180' : ''}`} />
                     </button>
                     {/* Select all in folder */}
                     <button onClick={() => toggleSelectAllInFolder(folderPhotoIds)}
-                      className="text-gray-400 hover:text-brand-600 p-1" title={allSelected ? 'Deselect all' : 'Select all'}>
+                      className="text-gray-500 hover:text-brand-600 p-1" title={allSelected ? 'Deselect all' : 'Select all'}>
                       {allSelected
                         ? <CheckSquare size={16} className="text-brand-600" />
                         : someSelected
@@ -658,7 +658,7 @@ export default function AdminEventImagesPage() {
                                 className="absolute top-2 left-2 z-10 bg-white/90 rounded p-1 shadow-sm hover:bg-white">
                                 {isSelected
                                   ? <CheckSquare size={16} className="text-brand-600" />
-                                  : <Square size={16} className="text-gray-400" />}
+                                  : <Square size={16} className="text-gray-500" />}
                               </button>
                               <div className="aspect-square relative">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -703,7 +703,7 @@ export default function AdminEventImagesPage() {
                                     className="w-full text-xs border border-brand-400 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-brand-500 resize-none" />
                                 ) : (
                                   <button onClick={() => { setEditingDesc(p.id); setEditDescValue(p.description ?? ''); }}
-                                    className="text-xs text-gray-400 hover:text-brand-600 block w-full text-left truncate"
+                                    className="text-xs text-gray-500 hover:text-brand-600 block w-full text-left truncate"
                                     title="Click to edit description">
                                     {p.description || 'Add description...'}
                                   </button>
@@ -798,10 +798,10 @@ function AdvertiserPicker({
     <div ref={wrapRef} className="relative">
       <button type="button" onClick={() => { setOpen(!open); setQuery(''); }}
         className={`w-full flex items-center justify-between gap-2 border border-gray-300 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-brand-500 ${sizing}`}>
-        <span className={`truncate ${selected ? 'text-gray-900' : 'text-gray-400'}`}>
+        <span className={`truncate ${selected ? 'text-gray-900' : 'text-gray-500'}`}>
           {selected ? selected.name : placeholder}
         </span>
-        <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+        <ChevronDown size={14} className="text-gray-500 flex-shrink-0" />
       </button>
       {open && (
         <div className="absolute z-20 mt-1 w-full min-w-56 bg-white border border-gray-200 rounded-md shadow-lg">
@@ -824,7 +824,7 @@ function AdvertiserPicker({
               </li>
             ))}
             {filtered.length === 0 && (
-              <li className="px-3 py-2 text-xs text-gray-400">
+              <li className="px-3 py-2 text-xs text-gray-500">
                 {advertisers.length === 0 ? 'No partners available' : 'No matches'}
               </li>
             )}

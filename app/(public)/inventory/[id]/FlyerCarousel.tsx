@@ -205,7 +205,7 @@ export default function FlyerCarousel({ flyerPdfUrl, title }: Props) {
               alt={`${title} flyer page ${i + 1}`}
               className="aspect-[3/4] w-full rounded-md object-contain bg-white border border-gray-200 group-hover:border-gray-400 transition-colors"
             />
-            <span className="block mt-1 text-center text-[10px] text-gray-400">
+            <span className="block mt-1 text-center text-[10px] text-gray-500">
               {i + 1} / {pageImages.length}
             </span>
           </button>

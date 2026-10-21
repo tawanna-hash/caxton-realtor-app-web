@@ -160,7 +160,7 @@ export default async function Page({ params }: PageProps) {
   const websiteUrl = pickBuilderWebsiteUrl(finalRows);
 
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <header className="mb-8">
           <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
@@ -214,7 +214,7 @@ export default async function Page({ params }: PageProps) {
                     <span className="text-base font-medium text-gray-900">{b.name}</span>
                     <span className="flex items-center gap-2">
                       <span className="text-sm text-gray-500">{b.count} homes</span>
-                      <ArrowRight strokeWidth={1.75} size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
+                      <ArrowRight strokeWidth={1.75} size={14} className="text-gray-500 group-hover:text-gray-700 transition-colors" />
                     </span>
                   </Link>
                 </li>
@@ -243,7 +243,7 @@ export default async function Page({ params }: PageProps) {
       </div>
 
       <BuilderDetailFloater builderName={builderName} slug={slug} websiteUrl={websiteUrl} />
-    </main>
+    </div>
   );
 }
 

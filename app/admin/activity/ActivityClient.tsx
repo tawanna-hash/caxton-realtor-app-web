@@ -336,7 +336,7 @@ export default function ActivityClient() {
             ))}
           </select>
           <label className="relative min-w-[210px] flex-1">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" aria-hidden="true" />
+            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-500" aria-hidden="true" />
             <span className="sr-only">Filter by path</span>
             <input value={pathFilter} onChange={(e) => { setPathFilter(e.target.value); setPage(1); }} placeholder="Filter by path" className="h-9 w-full rounded border border-gray-300 bg-white pl-8 pr-3 text-sm outline-none focus:border-[#7059A8] focus:ring-1 focus:ring-[#7059A8]" />
           </label>

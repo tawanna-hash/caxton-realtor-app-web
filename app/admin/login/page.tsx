@@ -98,7 +98,7 @@ function AdminLoginForm() {
               inputMode="email"
               aria-invalid={emailError ? true : undefined}
               aria-describedby={emailError ? 'admin-email-error' : undefined}
-              className={`w-full border rounded-xl bg-[#F4F3F8] px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none ${
+              className={`w-full border rounded-xl bg-[#F4F3F8] px-4 py-3 text-base text-gray-900 placeholder:text-gray-500 focus:outline-none ${
                 emailError
                   ? 'border-[#FF2A04] focus:border-[#FF2A04]'
                   : 'border-gray-300 focus:border-brand-700'
@@ -119,7 +119,7 @@ function AdminLoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                className="w-full border border-gray-300 rounded-xl bg-[#F4F3F8] px-4 py-3 pr-16 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700"
+                className="w-full border border-gray-300 rounded-xl bg-[#F4F3F8] px-4 py-3 pr-16 text-base text-gray-900 placeholder:text-gray-500 focus:outline-none focus:border-brand-700"
               />
               <button
                 type="button"

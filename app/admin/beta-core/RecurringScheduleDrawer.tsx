@@ -662,7 +662,7 @@ export function RecurringScheduleDrawer({
                 <button
                   type="button"
                   onClick={() => removeLine(i)}
-                  className="col-span-1 text-gray-400 hover:text-[#661102] text-lg leading-none"
+                  className="col-span-1 text-gray-500 hover:text-[#661102] text-lg leading-none"
                 >
                   ×
                 </button>

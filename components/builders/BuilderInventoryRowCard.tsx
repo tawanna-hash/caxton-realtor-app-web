@@ -122,7 +122,7 @@ export default function BuilderInventoryRowCard({
             unoptimized={!canOptimizeImage(row.thumbnailUrl)}
           />
         ) : (
-          <Icon strokeWidth={1.5} size={22} className="text-gray-400" />
+          <Icon strokeWidth={1.5} size={22} className="text-gray-500" />
         )}
         {row.featured ? (
           <span className="absolute top-1 left-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-sm bg-brand-700 text-white">

@@ -203,7 +203,7 @@ export default function TearsheetsTable() {
                     {t.file_url ? (
                       <a href={t.file_url} target="_blank" rel="noreferrer" className="text-[#301D5D] hover:underline">View</a>
                     ) : (
-                      <span className="text-gray-400">No file</span>
+                      <span className="text-gray-500">No file</span>
                     )}
                   </dd>
                   {t.sent_to && (
@@ -266,7 +266,7 @@ export default function TearsheetsTable() {
                           View
                         </a>
                       ) : (
-                        <span className="text-gray-400 text-xs">No file</span>
+                        <span className="text-gray-500 text-xs">No file</span>
                       )}
                     </td>
                     <td className="px-3 py-2">

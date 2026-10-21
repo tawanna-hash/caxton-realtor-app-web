@@ -61,7 +61,7 @@ export function RenewalsPanel({
               activeTab === t.key ? 'border-[#301D5D] text-[#42277C]' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            {t.label} <span className="ml-1 text-xs text-gray-400">({t.count})</span>
+            {t.label} <span className="ml-1 text-xs text-gray-500">({t.count})</span>
           </button>
         ))}
       </div>

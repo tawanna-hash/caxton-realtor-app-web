@@ -176,7 +176,7 @@ export function CampaignForm({ initial }: Props) {
           type="text"
           value={advertiserName}
           onChange={(e) => setAdvertiserName(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-500"
           placeholder="e.g. Champions School"
           required
         />
@@ -270,7 +270,7 @@ export function CampaignForm({ initial }: Props) {
                   type="url"
                   value={clickUrl}
                   onChange={(e) => setClickUrl(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-500"
                   placeholder="https://www.advertiser.com/landing"
                 />
               </Field>
@@ -279,7 +279,7 @@ export function CampaignForm({ initial }: Props) {
                   type="text"
                   value={altText}
                   onChange={(e) => setAltText(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-500"
                   placeholder="e.g. Champions School logo and CE class promo"
                 />
               </Field>
@@ -343,7 +343,7 @@ export function CampaignForm({ initial }: Props) {
             min="0"
             value={priceTotal}
             onChange={(e) => setPriceTotal(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-500"
             placeholder="e.g. 1200.00"
           />
         </Field>
@@ -353,7 +353,7 @@ export function CampaignForm({ initial }: Props) {
               type="text"
               value={priceNotes}
               onChange={(e) => setPriceNotes(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-500"
               placeholder="e.g. Paid quarterly, or trade for sponsorship"
             />
           </Field>
@@ -366,7 +366,7 @@ export function CampaignForm({ initial }: Props) {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-500"
           placeholder="Anything to remember about this campaign..."
         />
       </Field>

@@ -255,7 +255,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
               <button
                 onClick={onClose}
                 aria-label="Close"
-                className="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-2 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
+                className="text-gray-500 hover:text-gray-600 text-2xl leading-none ml-2 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
               >
                 &times;
               </button>
@@ -330,13 +330,13 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
       }}
     >
       <div className="w-full max-w-md px-8">
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium mb-2 text-center">Realty News Now</p>
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2 text-center">Realty News Now</p>
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-3">Select a Publication</h2>
-        <p className="text-lg text-gray-400 font-light text-center mb-8">Welcome, we are happy you are here!</p>
+        <p className="text-lg text-gray-500 font-light text-center mb-8">Welcome, we are happy you are here!</p>
         <div className="relative">
           <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-4 border border-gray-300 bg-white text-left rounded-md">
             <span className="text-lg text-gray-500 font-light">Choose your market...</span>
-            <span className="text-gray-400 text-base">{open ? '\u25B2' : '\u25BC'}</span>
+            <span className="text-gray-500 text-base">{open ? '\u25B2' : '\u25BC'}</span>
           </button>
           {open && (
             // BUG-pub-selector-clip: the dropdown previously rendered at
@@ -359,7 +359,7 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
                     </div>
                     <div>
                       <p className="text-lg font-semibold text-gray-900">{pub.name}</p>
-                      <p className="text-base text-gray-400 font-light">{pub.city} - {pub.tagline}</p>
+                      <p className="text-base text-gray-500 font-light">{pub.city} - {pub.tagline}</p>
                     </div>
                   </div>
                 </button>
@@ -384,7 +384,7 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
                         <p className="text-lg font-semibold text-gray-700">{pub.name}</p>
                         <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-[#FEF8CC] text-[#645600]">Coming Soon</span>
                       </div>
-                      <p className="text-base text-gray-400 font-light">{pub.city} - {pub.tagline}</p>
+                      <p className="text-base text-gray-500 font-light">{pub.city} - {pub.tagline}</p>
                     </div>
                   </div>
                 </button>
@@ -672,7 +672,7 @@ function AuthGate({
           <h2 className="text-2xl text-gray-900 font-semibold mb-3">Check Your Email</h2>
           <p className="text-lg text-gray-500 font-light mb-2">We sent a magic link to</p>
           <p className="text-lg text-brand-700 font-semibold mb-6">{email}</p>
-          <p className="text-base text-gray-400 font-light mb-8">Click the link in your email to sign in. It expires in 15 minutes.</p>
+          <p className="text-base text-gray-500 font-light mb-8">Click the link in your email to sign in. It expires in 15 minutes.</p>
           <p className="text-sm text-gray-300 font-light">Check your spam folder if you do not see it.</p>
         </div>
       </div>
@@ -715,17 +715,17 @@ function AuthGate({
               <div>
                 <div className="flex items-center my-3" aria-hidden="true">
                   <div className="flex-1 h-px bg-gray-200" />
-                  <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
+                  <span className="px-3 text-xs uppercase tracking-wider text-gray-500">or</span>
                   <div className="flex-1 h-px bg-gray-200" />
                 </div>
-                <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">License Number <span className="text-gray-300 normal-case tracking-normal">(optional)</span></p>
+                <p className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">License Number <span className="text-gray-300 normal-case tracking-normal">(optional)</span></p>
                 <div className="flex gap-2 mb-3">
                   {LICENSE_TYPES.map((lt) => (
                     <button key={lt} onClick={() => setLicenseType(lt)} className={licenseType === lt ? 'flex-1 py-3 text-base font-medium text-center border-2 border-brand-700 text-brand-700' : 'flex-1 py-3 text-base font-light text-center border border-gray-300 text-gray-500'}>{lt}</button>
                   ))}
                 </div>
                 <input type="text" placeholder={licenseType === 'TREC #' ? 'TREC License Number (optional)' : 'NMLS ID Number (optional)'} value={licenseNum} onChange={(e) => setLicenseNum(e.target.value)} className={ic} autoComplete="off" autoCapitalize="characters" inputMode={licenseType === 'TREC #' ? 'numeric' : 'text'} />
-<p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3 mt-6">Your Information</p>
+<p className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3 mt-6">Your Information</p>
                 <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} className={ic} autoComplete="name" autoCapitalize="words" />
                 <select value={title} onChange={(e) => setTitle(e.target.value)} className={sc + (!title ? ' text-[#D9CFF0]' : ' text-gray-900')}>
                   <option value="">Select Title / Role</option>
@@ -733,31 +733,31 @@ function AuthGate({
                 </select>
 
                 <button onClick={() => { void haptics.light(); setStep(2); }} disabled={!fullName} className="w-full text-center py-4 text-base font-medium uppercase tracking-wider text-white mt-4 disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
-                <button onClick={() => setMode('login')} className="w-full text-center py-2 text-base text-gray-400 font-light mt-2">Back to sign in</button>
+                <button onClick={() => setMode('login')} className="w-full text-center py-2 text-base text-gray-500 font-light mt-2">Back to sign in</button>
               </div>
             )}
 
             {/* Step 2: Contact Info */}
             {step === 2 && (
               <div>
-                <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">Contact Information</p>
+                <p className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">Contact Information</p>
                 <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} />
                 <input type="tel" placeholder="Mobile Phone" value={mobile} onChange={(e) => setMobile(e.target.value)} className={ic} />
 
-                <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3 mt-4">Create a Password</p>
+                <p className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3 mt-4">Create a Password</p>
                 <div className="relative mb-3">
                   <input type={showPassword ? 'text' : 'password'} placeholder="Password (at least 8 characters)" value={password} onChange={(e) => setPassword(e.target.value)} className={ic + ' pr-16'} autoComplete="new-password" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-500">{showPassword ? 'Hide' : 'Show'}</button>
                 </div>
                 <input type={showPassword ? 'text' : 'password'} placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={ic} autoComplete="new-password" />
-                <p className="text-xs text-gray-400 font-light mb-2">Used for sign-in.</p>
+                <p className="text-xs text-gray-500 font-light mb-2">Used for sign-in.</p>
 
-                <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3 mt-4">Mailing Address</p>
+                <p className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3 mt-4">Mailing Address</p>
                 <input type="text" placeholder="Street Address" value={addr1} onChange={(e) => setAddr1(e.target.value)} className={ic} autoComplete="address-line1" />
                 <input type="text" placeholder="Suite / Unit (optional)" value={addr2} onChange={(e) => setAddr2(e.target.value)} className={ic} autoComplete="address-line2" />
                 <div className="flex gap-2">
                   <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className={ic + ' flex-1'} autoComplete="address-level2" />
-                  <input type="text" value="TX" disabled className="w-16 px-4 py-4 border border-gray-200 text-base font-light bg-gray-50 text-gray-400 mb-3 text-center rounded-md" />
+                  <input type="text" value="TX" disabled className="w-16 px-4 py-4 border border-gray-200 text-base font-light bg-gray-50 text-gray-500 mb-3 text-center rounded-md" />
                   <input type="text" placeholder="Zip" value={zip} onChange={(e) => setZip(e.target.value)} className="w-24 px-4 py-4 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3" autoComplete="postal-code" inputMode="numeric" />
                 </div>
 
@@ -779,8 +779,8 @@ function AuthGate({
             {/* Step 3: Subscriptions + Birthday + Review */}
             {step === 3 && (
               <div>
-                <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">Email Subscriptions</p>
-                <p className="text-sm text-gray-400 font-light mb-3">Choose which lists you want to receive. You can change these anytime.</p>
+                <p className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">Email Subscriptions</p>
+                <p className="text-sm text-gray-500 font-light mb-3">Choose which lists you want to receive. You can change these anytime.</p>
                 <div className="space-y-2 mb-6">
                   {SUBS.map((s) => (
                     <label key={s.id} className="flex items-start gap-3 p-3 border border-gray-200 cursor-pointer rounded-md">
@@ -795,14 +795,14 @@ function AuthGate({
                       />
                       <div className="flex-1">
                         <p className="text-base text-gray-900 font-medium">{s.label}</p>
-                        <p className="text-sm text-gray-400 font-light">{s.desc}</p>
+                        <p className="text-sm text-gray-500 font-light">{s.desc}</p>
                       </div>
                     </label>
                   ))}
                 </div>
 
-                <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">Birthday (optional)</p>
-                <p className="text-sm text-gray-400 font-light mb-3">So we can wish you a happy birthday!</p>
+                <p className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">Birthday (optional)</p>
+                <p className="text-sm text-gray-500 font-light mb-3">So we can wish you a happy birthday!</p>
                 <div className="flex gap-2 mb-6 items-stretch">
                   <select
                     value={bdayMonth}
@@ -822,14 +822,14 @@ function AuthGate({
                   </select>
                 </div>
 
-                <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">Social Handles (optional)</p>
+                <p className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">Social Handles (optional)</p>
                 <div className="space-y-2 mb-6">
                   <input type="text" placeholder="Facebook handle (e.g. @yourname)" value={fbHandle} onChange={(e) => setFbHandle(e.target.value)} className={ic + ' mb-0'} />
                   <input type="text" placeholder="Instagram handle (e.g. @yourname)" value={igHandle} onChange={(e) => setIgHandle(e.target.value)} className={ic + ' mb-0'} />
                   <input type="text" placeholder="LinkedIn name or profile URL" value={liHandle} onChange={(e) => setLiHandle(e.target.value)} className={ic + ' mb-0'} />
                 </div>
 
-                <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">Review Your Info</p>
+                <p className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-3">Review Your Info</p>
                 <div className="bg-gray-50 border border-gray-200 p-4 mb-4 space-y-2 rounded-md">
                   <p className="text-base text-gray-900 font-medium">{fullName}</p>
                   <p className="text-sm text-gray-500 font-light">{title || 'No title selected'}</p>
@@ -847,7 +847,7 @@ function AuthGate({
                 </div>
 
                 <p className="text-xs text-gray-500 font-light mb-3">Your license number is used only to avoid duplicate records and for RealtyLine&apos;s use only. It is never shared, sold or displayed publicly. Providing a license number is optional.</p>
-                <p className="text-xs text-gray-400 font-light mb-4">By creating an account, you agree to receive communications from Caxton Publications, Inc. Your password lets you sign in anytime — no email link needed.</p>
+                <p className="text-xs text-gray-500 font-light mb-4">By creating an account, you agree to receive communications from Caxton Publications, Inc. Your password lets you sign in anytime — no email link needed.</p>
 
                 <div className="flex gap-2">
                   <button onClick={() => { void haptics.light(); setStep(2); }} className="flex-1 text-center py-4 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
@@ -934,7 +934,7 @@ function AuthGate({
                     if (e.key === 'Enter') void handlePasswordLogin();
                   }}
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <button type="button" onClick={() => setShowPassword(!showPassword)} aria-pressed={showPassword} aria-label={showPassword ? "Hide password" : "Show password"} className="absolute right-2 top-2 inline-flex min-h-[32px] min-w-[44px] items-center justify-center text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {showPassword ? 'Hide' : 'Show'}
                 </button>
               </div>
@@ -962,7 +962,7 @@ function AuthGate({
 
               <div className="my-4 flex items-center" aria-hidden="true">
                 <div className="h-px flex-1 bg-gray-200" />
-                <span className="px-3 text-xs uppercase tracking-[0.18em] text-gray-400">or</span>
+                <span className="px-3 text-xs uppercase tracking-[0.18em] text-gray-500">or</span>
                 <div className="h-px flex-1 bg-gray-200" />
               </div>
 
@@ -975,7 +975,7 @@ function AuthGate({
               >
                 Continue as a guest
               </button>
-              <p className="mt-2 text-center text-xs font-light text-gray-400">
+              <p className="mt-2 text-center text-xs font-light text-gray-500">
                 No account is required to browse news, events, builders, partners, and resources.
               </p>
             </div>
@@ -1012,7 +1012,7 @@ function AuthGate({
         <button onClick={() => setMode('login')} className="w-full text-center py-4 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-3 rounded-md">I Already Have an Account</button>
         <div className="flex items-center my-4" aria-hidden="true">
           <div className="flex-1 h-px bg-gray-200" />
-          <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
+          <span className="px-3 text-xs uppercase tracking-wider text-gray-500">or</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
         <button
@@ -1794,7 +1794,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
       {tab === 'e' && !showPreLaunch && !isDallasPreview && (
         <div>
           <div className="px-4 py-4 border-b border-gray-200">
-            <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium">Upcoming in {info.city}</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">Upcoming in {info.city}</p>
           </div>
           {EVTS.map((ev) => {
             const mo = ev.date.split(' ')[0];
@@ -1859,7 +1859,7 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
           </div>
           <span className="text-sm uppercase tracking-[0.2em] font-semibold text-[#42277C]">Sponsored</span>
           <span className="flex-1" />
-          <span className="text-sm text-gray-400 italic font-light">{ad.page}</span>
+          <span className="text-sm text-gray-500 italic font-light">{ad.page}</span>
         </div>
         <p className="text-base text-brand-700 font-medium mb-1">{ad.biz}</p>
         <h3 className="text-xl text-gray-900 leading-snug mb-2 font-semibold">{ad.tag}</h3>
@@ -2545,7 +2545,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       {/* Header */}
       <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
         <div className="flex items-center justify-end px-4 py-4">
-          <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.name}</span>
+          <span className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">{info.name}</span>
         </div>
       </div>
 
@@ -2582,7 +2582,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
           articles and the "Read on website" link (BUG-18). */}
       <div className="px-4 pt-6 pb-52">
         <div className="mx-auto flex max-w-[1040px] items-start justify-center gap-8">
-          <main className="w-full min-w-0 max-w-2xl">
+          <div className="w-full min-w-0 max-w-2xl">
             {/* Eyebrow */}
             {(article.cat || article.category) && (
               <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>
@@ -2677,7 +2677,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
 
             {/* Article bottom ad slot (renders only when a campaign is active) */}
             <AdSlotComponent slug="article_bottom" className="mt-10" />
-          </main>
+          </div>
 
           {/* Desktop article-sidebar inventory. The bare variant preserves the
               uploaded creative's natural aspect ratio instead of stretching it

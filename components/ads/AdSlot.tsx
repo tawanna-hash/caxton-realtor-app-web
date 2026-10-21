@@ -193,7 +193,7 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
   const partnerLabel = (
     <p
       aria-label="Advertising partner"
-      className="mb-2 text-center text-[10px] font-medium uppercase tracking-[0.3em] text-gray-400"
+      className="mb-2 text-center text-[10px] font-medium uppercase tracking-[0.3em] text-gray-500"
     >
       <span aria-hidden="true">{'Advertising'}</span>
       <span aria-hidden="true">{'\u00a0Partner'}</span>

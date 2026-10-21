@@ -6,7 +6,7 @@ import { BUILDER_CLIENTS } from '@/lib/builder-clients';
 type Kind = 'listing' | 'promotion';
 type Publication = 'realtyline' | 'newsline' | 'both';
 const fieldStyle =
-  'w-full border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed';
+  'w-full border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder:text-gray-500 focus:outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed';
 const labelStyle = 'block text-sm font-medium text-gray-900 mb-2';
 const helpStyle = 'mt-1 text-xs text-gray-500 font-light';
 
@@ -321,7 +321,7 @@ export default function SubmissionForm() {
       {kind === 'listing' && (
         <div className="border-t border-gray-200 pt-6 space-y-4">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">
-            Listing details <span className="text-gray-400 normal-case tracking-normal">(optional)</span>
+            Listing details <span className="text-gray-500 normal-case tracking-normal">(optional)</span>
           </p>
 
           <div className="grid grid-cols-2 gap-3">

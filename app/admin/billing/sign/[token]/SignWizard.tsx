@@ -1321,7 +1321,7 @@ export default function SignWizard({
               the terms and conditions in this insertion order, which becomes a binding advertising agreement when signed.
             </p>
           </div>
-          <p className="text-xs text-gray-400">This wizard takes approximately 2 minutes to complete.</p>
+          <p className="text-xs text-gray-500">This wizard takes approximately 2 minutes to complete.</p>
         </div>
       </Shell>
     );
@@ -1702,13 +1702,13 @@ export default function SignWizard({
                           [m.k]: { ...prev[m.k]!, checked: prev[m.k]?.checked ?? false, year: yr },
                         }));
                       }}
-                      className="w-16 px-2 py-1 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-[#7059A8] disabled:bg-gray-100 disabled:text-gray-400"
+                      className="w-16 px-2 py-1 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-[#7059A8] disabled:bg-gray-100 disabled:text-gray-500"
                     />
                   </div>
                 );
               })}
             </div>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-gray-500 mt-2">
               {hasAnyMonth
                 ? `Agreement expires on ${humanDate(expDate)}`
                 : 'Pick at least one month to set expiration'}

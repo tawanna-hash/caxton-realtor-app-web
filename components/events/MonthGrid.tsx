@@ -93,7 +93,7 @@ export function MonthGrid({ month, pub, eventsByDate, selectedDay, onSelectDay, 
       {/* Day-of-week row */}
       <div className="grid grid-cols-7 mb-1">
         {DOW_LABELS.map((d) => (
-          <div key={d} className="text-center text-xs uppercase tracking-wider text-gray-400 font-medium py-2">
+          <div key={d} className="text-center text-xs uppercase tracking-wider text-gray-500 font-medium py-2">
             {d}
           </div>
         ))}

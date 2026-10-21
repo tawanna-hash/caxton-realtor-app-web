@@ -497,7 +497,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
                         <button type="button" onClick={() => void deleteRow(r)} className="px-2 py-1 rounded border border-[#FF2A04]/50 text-[11px] font-medium text-[#661102] hover:bg-[#FFEAE6]">Delete</button>
                       </div>
                     ) : (
-                      <span className="text-[11px] text-gray-400">—</span>
+                      <span className="text-[11px] text-gray-500">—</span>
                     )}
                   </td>
                 </tr>

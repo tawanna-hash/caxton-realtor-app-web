@@ -215,7 +215,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
             type="button"
             onClick={onClose}
             disabled={sending}
-            className="text-gray-400 hover:text-gray-700 text-2xl leading-none p-1"
+            className="text-gray-500 hover:text-gray-700 text-2xl leading-none p-1"
             aria-label="Close"
           >
             ×
@@ -380,7 +380,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
                       <div className="text-xs font-semibold text-gray-900 uppercase tracking-wide truncate">
                         Realty News Now
                       </div>
-                      <div className="text-[10px] text-gray-400">now</div>
+                      <div className="text-[10px] text-gray-500">now</div>
                     </div>
                     <div className="text-sm font-semibold text-gray-900 line-clamp-2 mt-0.5">
                       {title || 'Notification title appears here'}

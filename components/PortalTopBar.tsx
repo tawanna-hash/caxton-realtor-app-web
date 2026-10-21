@@ -74,7 +74,7 @@ export default function PortalTopBar({ signedIn }: { signedIn: boolean }) {
               onBlur={() => setTimeout(() => setOpen(false), 120)}
               placeholder="Search anything here..."
               aria-label="Search the portal"
-              className="w-full rounded-full border border-[#ECE8F5] bg-white py-3 pl-5 pr-12 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#6D3FD6] focus:outline-none"
+              className="w-full rounded-full border border-[#ECE8F5] bg-white py-3 pl-5 pr-12 text-sm text-gray-800 placeholder:text-gray-500 focus:border-[#6D3FD6] focus:outline-none"
             />
             <Search className="pointer-events-none absolute right-5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" aria-hidden />
           </form>

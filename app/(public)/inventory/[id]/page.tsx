@@ -205,7 +205,7 @@ function DetailView({
   if (row.planName) stats.push({ label: 'Plan', value: row.planName });
 
   return (
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-40">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-40">
       {/* Use minmax(0,1fr) for the gallery column so the column can shrink
           below its content's intrinsic width. Without this, the gallery's
           high-resolution image (1500px+ natural width) pushes the
@@ -443,7 +443,7 @@ function DetailView({
         flyerPdfUrl={row.flyerPdfUrl}
         shareTitle={`${row.builderName} — ${row.title}`}
       />
-    </main>
+    </div>
   );
 }
 

@@ -813,7 +813,7 @@ function PaymentHistoryRow({
           {payment.memo && <div className="mt-2 text-xs text-gray-600">{payment.memo}</div>}
           <div className="mt-1 text-xs text-gray-500">
             {historyDate(payment.payment_date)}{payment.created_by ? ` · ${payment.created_by}` : ''}
-            {saving && <span className="ml-1 text-gray-400">· saving…</span>}
+            {saving && <span className="ml-1 text-gray-500">· saving…</span>}
             {saved && !saving && <span className="ml-1 text-[#005A00]">· saved</span>}
           </div>
           {error && <div className="mt-1 text-xs text-[#661102]">{error}</div>}

@@ -266,7 +266,7 @@ export default function InquireForm({
             htmlFor="slot"
             className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2"
           >
-            Placement <span className="text-gray-400">(optional)</span>
+            Placement <span className="text-gray-500">(optional)</span>
           </label>
           <select
             id="slot"
@@ -296,7 +296,7 @@ export default function InquireForm({
             htmlFor="package"
             className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2"
           >
-            Brand package <span className="text-gray-400">(optional)</span>
+            Brand package <span className="text-gray-500">(optional)</span>
           </label>
           <select
             id="package"
@@ -322,7 +322,7 @@ export default function InquireForm({
             htmlFor="package"
             className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-2"
           >
-            e-Blast package <span className="text-gray-400">(optional)</span>
+            e-Blast package <span className="text-gray-500">(optional)</span>
           </label>
           <select
             id="package"

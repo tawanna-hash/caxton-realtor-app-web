@@ -78,7 +78,7 @@ export default function DallasPreviewHome({ surface }: { surface: 'news' | 'even
     return (
       <div>
         <div className="px-4 py-4 border-b border-gray-200">
-          <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium">Upcoming in Dallas/Ft. Worth</p>
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">Upcoming in Dallas/Ft. Worth</p>
         </div>
         {events === null ? (
           Array.from({ length: 4 }).map((_, i) => (

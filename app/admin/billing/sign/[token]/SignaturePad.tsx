@@ -166,7 +166,7 @@ function DrawCanvas({
           onPointerLeave={onPointerUp}
         />
         {!hasInk && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-gray-400 text-xs">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-gray-500 text-xs">
             Sign here
           </div>
         )}
@@ -241,7 +241,7 @@ function UploadField({
           ) : (
             <>
               <div className="text-sm text-gray-700">Click to choose a file</div>
-              <div className="text-xs text-gray-400 mt-1">PDF, PNG, JPEG, or WEBP · up to 10 MB</div>
+              <div className="text-xs text-gray-500 mt-1">PDF, PNG, JPEG, or WEBP · up to 10 MB</div>
             </>
           )}
         </div>
@@ -303,7 +303,7 @@ export default function SignaturePad({ initialSignerName, enabled, onChange }: P
           onChange={(e) => setSignerName(e.target.value)}
           disabled={!enabled}
           placeholder="Full legal name"
-          className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A04] disabled:bg-gray-100 disabled:text-gray-400"
+          className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF2A04] disabled:bg-gray-100 disabled:text-gray-500"
         />
       </div>
 

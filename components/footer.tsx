@@ -16,19 +16,19 @@ export function Footer({ showAustinPartners = false }: { showAustinPartners?: bo
         </div>}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">RealtyLine Austin</h3>
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">RealtyLine Austin</h2>
             <p className="text-xs text-gray-600 mb-2">Putting A Face on Real Estate since 1995</p>
             <p className="text-xs text-gray-600 mb-3">Austin, Texas</p>
             <SocialLinks pub="realtyline" variant="footer" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Newsline San Antonio</h3>
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">Newsline San Antonio</h2>
             <p className="text-xs text-gray-600 mb-2">Founded 1982, Relaunched 2025</p>
             <p className="text-xs text-gray-600 mb-3">San Antonio, Texas</p>
             <SocialLinks pub="newsline" variant="footer" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Content</h3>
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">Content</h2>
             <ul className="space-y-2 text-xs text-gray-600">
               <li><Link href="/magazine" className="hover:text-gray-900 transition-colors">Issues</Link></li>
               <li><Link href="/calendar" className="hover:text-gray-900 transition-colors">Calendar</Link></li>
@@ -40,7 +40,7 @@ export function Footer({ showAustinPartners = false }: { showAustinPartners?: bo
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Company</h3>
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">Company</h2>
             <ul className="space-y-2 text-xs text-gray-600">
               <li><Link href="/about" className="hover:text-gray-900 transition-colors">About Us</Link></li>
               <li><Link href="/advertise" className="hover:text-gray-900 transition-colors">Advertise</Link></li>

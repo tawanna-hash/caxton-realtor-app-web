@@ -149,7 +149,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
                 loading={featured ? 'eager' : 'lazy'}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-wider text-gray-400">
+              <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-wider text-gray-500">
                 No cover
               </div>
             )}
@@ -181,13 +181,13 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
       <div className="flex items-center justify-center gap-8 mb-8 text-xs uppercase tracking-[0.2em] font-medium">
         <button
           onClick={() => setTab('current')}
-          className={tab === 'current' ? 'text-gray-900 border-b-2 border-gray-900 pb-2' : 'text-gray-400 pb-2'}
+          className={tab === 'current' ? 'text-gray-900 border-b-2 border-gray-900 pb-2' : 'text-gray-500 pb-2'}
         >
           Current Issue
         </button>
         <button
           onClick={() => setTab('all')}
-          className={tab === 'all' ? 'text-gray-900 border-b-2 border-gray-900 pb-2' : 'text-gray-400 pb-2'}
+          className={tab === 'all' ? 'text-gray-900 border-b-2 border-gray-900 pb-2' : 'text-gray-500 pb-2'}
         >
           All Issues
         </button>
@@ -202,7 +202,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
               <span className="sr-only">Search issues</span>
               <svg
                 aria-hidden="true"
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500"
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"
@@ -220,7 +220,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search issues by month or year"
-                className="min-h-12 w-full rounded-md border border-gray-300 bg-white py-3 pl-12 pr-4 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+                className="min-h-12 w-full rounded-md border border-gray-300 bg-white py-3 pl-12 pr-4 text-base text-gray-900 outline-none transition placeholder:text-gray-500 focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
               />
             </label>
             <label className="relative block">
@@ -306,7 +306,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
                       {group.year}
                     </h2>
                     <div className="h-px flex-1 bg-gray-200" />
-                    <span className="shrink-0 text-xs text-gray-400">
+                    <span className="shrink-0 text-xs text-gray-500">
                       {group.issues.length} {group.issues.length === 1 ? 'issue' : 'issues'}
                     </span>
                   </div>

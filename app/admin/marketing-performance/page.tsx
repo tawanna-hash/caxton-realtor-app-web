@@ -111,14 +111,14 @@ function monthLabel(key: string, long = false): string {
 
 function Delta({ cur, prev, goodWhen }: { cur: number; prev: number | null; goodWhen: 'up' | 'down' }) {
   if (prev == null || !Number.isFinite(cur) || !Number.isFinite(prev) || prev === 0) {
-    return <span className="text-xs text-gray-400">No prior data</span>;
+    return <span className="text-xs text-gray-500">No prior data</span>;
   }
   const ch = (cur - prev) / Math.abs(prev);
-  if (Math.abs(ch) < 0.005) return <span className="text-xs font-medium text-gray-500">→ 0% <span className="font-normal text-gray-400">vs prior</span></span>;
+  if (Math.abs(ch) < 0.005) return <span className="text-xs font-medium text-gray-500">→ 0% <span className="font-normal text-gray-500">vs prior</span></span>;
   const good = (ch > 0) === (goodWhen === 'up');
   return (
     <span className={`text-xs font-medium ${good ? 'text-[#005A00]' : 'text-[#661102]'}`}>
-      {ch > 0 ? '↑' : '↓'} {Math.abs(ch * 100).toFixed(1)}% <span className="font-normal text-gray-400">vs prior</span>
+      {ch > 0 ? '↑' : '↓'} {Math.abs(ch * 100).toFixed(1)}% <span className="font-normal text-gray-500">vs prior</span>
     </span>
   );
 }
@@ -313,7 +313,7 @@ export default function MarketingPerformancePage() {
           {/* Filters */}
           <section aria-label="Filters" className="sticky top-0 z-20 flex flex-wrap items-end gap-x-6 gap-y-3 rounded-md border border-gray-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
             <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Date range</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Date range</p>
               <div className="flex flex-wrap items-center gap-2">
                 <Seg label="Date range" value={range} onChange={(v) => {
                   if (v === 'custom' && !customFrom) {
@@ -329,7 +329,7 @@ export default function MarketingPerformancePage() {
                     <select aria-label="From month" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="rounded border border-gray-300 bg-white px-2 py-1 text-sm">
                       {data.months.map((m) => <option key={m} value={m}>{monthLabel(m, true)}</option>)}
                     </select>
-                    <span className="text-gray-400">to</span>
+                    <span className="text-gray-500">to</span>
                     <select aria-label="To month" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="rounded border border-gray-300 bg-white px-2 py-1 text-sm">
                       {data.months.map((m) => <option key={m} value={m}>{monthLabel(m, true)}</option>)}
                     </select>
@@ -338,13 +338,13 @@ export default function MarketingPerformancePage() {
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Channels</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Channels</p>
               <div className="flex flex-wrap gap-2">
                 {CHANNELS.map((c) => {
                   const on = channels.has(c.id);
                   return (
                     <button key={c.id} type="button" onClick={() => toggleChannel(c.id)} aria-pressed={on} title={c.hint}
-                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${on ? 'border-gray-300 bg-gray-50 text-gray-900' : 'border-gray-200 bg-white text-gray-400'}`}>
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${on ? 'border-gray-300 bg-gray-50 text-gray-900' : 'border-gray-200 bg-white text-gray-500'}`}>
                       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: on ? c.color : '#D9CFF0' }} />
                       {c.label}
                     </button>
@@ -357,7 +357,7 @@ export default function MarketingPerformancePage() {
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Traffic source</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Traffic source</p>
               {ga4Ready ? (
                 <Seg label="Traffic source" value={src} onChange={setTrafficSource} options={[{ v: 'posthog', l: 'PostHog' }, { v: 'ga4', l: 'GA4' }]} />
               ) : (
@@ -366,7 +366,7 @@ export default function MarketingPerformancePage() {
             </div>
             <div className="ml-auto text-right text-xs text-gray-500">
               <p>{monthLabel(data.months[view.start], true)} – {monthLabel(data.months[view.end], true)}</p>
-              <p className="text-gray-400">
+              <p className="text-gray-500">
                 Updated {new Date(data.asOf).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                 {' · '}<button type="button" onClick={reload} className="underline hover:text-gray-700">Refresh</button>
               </p>
@@ -425,7 +425,7 @@ export default function MarketingPerformancePage() {
                         <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: CH[c].color }} />
                         <span className="text-gray-700">{CH[c].label}</span>
                         <span className="font-medium tabular-nums text-gray-900">{fmtMetric(attrMetric, t[attrMetric])}</span>
-                        <span className="text-right tabular-nums text-gray-400">{fmtPct(div(t[attrMetric], total))}</span>
+                        <span className="text-right tabular-nums text-gray-500">{fmtPct(div(t[attrMetric], total))}</span>
                       </li>
                     );
                   })}
@@ -440,7 +440,7 @@ export default function MarketingPerformancePage() {
             <div className="mt-3 overflow-x-auto rounded-md border border-gray-200 bg-white shadow-sm">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                  <tr className="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                     <th className="px-4 py-3">Channel</th>
                     {['Impr.', 'Sessions', 'MQLs', 'SQLs', 'Conv.', 'Revenue', 'Spend', 'ROAS', 'CPL'].map((h) => <th key={h} className="px-4 py-3 text-right">{h}</th>)}
                   </tr>
@@ -516,7 +516,7 @@ export default function MarketingPerformancePage() {
                       <Lines height={140} legend={false} fmt={e.f}
                         series={[{ key: 'v', label: e.label, color: BRAND }]}
                         data={view.perMonth(view.sel).map((t, i) => ({ label: monthLabel(view.monthsSel[i]), v: Number.isFinite(e.s(t)) ? e.s(t) : null }))} />
-                      <p className="mt-1 text-xs text-gray-400">{e.hint}</p>
+                      <p className="mt-1 text-xs text-gray-500">{e.hint}</p>
                     </Card>
                   ))}
                 </div>
@@ -623,7 +623,7 @@ function FunnelBars({ t }: { t: Totals }) {
         return (
           <div key={s.k}>
             {i > 0 && (
-              <p className="pl-[108px] text-xs text-gray-400">↳ <b className="font-semibold text-gray-600">{fmtPct(div(v, prevV))}</b> from {stages[i - 1].l}</p>
+              <p className="pl-[108px] text-xs text-gray-500">↳ <b className="font-semibold text-gray-600">{fmtPct(div(v, prevV))}</b> from {stages[i - 1].l}</p>
             )}
             <div className="grid grid-cols-[100px_1fr] items-center gap-2">
               <span className="text-sm font-medium text-gray-700">{s.l}</span>
@@ -634,14 +634,14 @@ function FunnelBars({ t }: { t: Totals }) {
                     {fmtInt(v)}
                   </div>
                 ) : (
-                  <div className="flex h-full items-center text-sm text-gray-400">0</div>
+                  <div className="flex h-full items-center text-sm text-gray-500">0</div>
                 )}
               </div>
             </div>
           </div>
         );
       })}
-      <p className="pt-2 text-xs text-gray-400">Bar length log-scaled · {fmtPct(div(t.conversions, t.sessions))} session-to-conversion</p>
+      <p className="pt-2 text-xs text-gray-500">Bar length log-scaled · {fmtPct(div(t.conversions, t.sessions))} session-to-conversion</p>
     </div>
   );
 }
@@ -715,7 +715,7 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
               className="w-full rounded-md bg-[#301D5D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#42277C] disabled:cursor-not-allowed disabled:opacity-50">
               {busy ? 'Saving…' : 'Save spend'}
             </button>
-            <p className="text-xs text-gray-400">Saving the same month and channel replaces the earlier amount.</p>
+            <p className="text-xs text-gray-500">Saving the same month and channel replaces the earlier amount.</p>
             {msg && <p className={`text-xs ${msg.kind === 'ok' ? 'text-[#005A00]' : 'text-[#661102]'}`}>{msg.text}</p>}
           </div>
         </Card>
@@ -726,7 +726,7 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
             <div className="max-h-[360px] overflow-y-auto overscroll-contain">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-white">
-                  <tr className="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                  <tr className="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                     <th className="py-2 pr-3">Month</th><th className="py-2 pr-3">Channel</th><th className="py-2 pr-3 text-right">Amount</th><th className="py-2 pr-3">Notes</th><th className="py-2" />
                   </tr>
                 </thead>
@@ -786,6 +786,7 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
   // dashboard reload brings back the saved value.
   const savedIds = sources.ga4.propertyId ?? '';
   const [selectedIds, setSelectedIds] = useState<string[]>(() => savedIds.split(',').filter(Boolean));
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- pre-existing: sync prop to state
   useEffect(() => { setSelectedIds(savedIds.split(',').filter(Boolean)); }, [savedIds]);
   const toggle = async (id: string) => {
     const next = selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id];
@@ -846,13 +847,13 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
               <p className="text-gray-600">Signed in as <b className="font-medium text-gray-900">{sources.ga4.email}</b></p>
               <fieldset>
                 <legend className="text-xs font-medium text-gray-500">Properties (summed)</legend>
-                {!props ? <p className="mt-1 text-xs text-gray-400">Loading…</p> : props.length === 0 ? <p className="mt-1 text-xs text-gray-500">No properties found for this account.</p> : (
+                {!props ? <p className="mt-1 text-xs text-gray-500">Loading…</p> : props.length === 0 ? <p className="mt-1 text-xs text-gray-500">No properties found for this account.</p> : (
                   <ul className="mt-1 space-y-1">
                     {props.map((p) => (
                       <li key={p.id}>
                         <label className="flex items-center gap-2">
                           <input type="checkbox" disabled={busy} checked={selectedIds.includes(p.id)} onChange={() => void toggle(p.id)} className="h-4 w-4 accent-[#301D5D]" />
-                          <span>{p.name} <span className="text-xs text-gray-400">({p.id})</span></span>
+                          <span>{p.name} <span className="text-xs text-gray-500">({p.id})</span></span>
                         </label>
                       </li>
                     ))}
@@ -875,7 +876,7 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
                 <div><p className="text-xs text-gray-500">Open rate</p><p className="font-semibold">{fmtPct(div(mcTotals.opens, mcTotals.delivered))}</p></div>
                 <div><p className="text-xs text-gray-500">Click rate</p><p className="font-semibold">{fmtPct(div(mcTotals.clicks, mcTotals.delivered))}</p></div>
               </div>
-              <p className="text-xs text-gray-400">Selected range · delivered emails count toward Email impressions.</p>
+              <p className="text-xs text-gray-500">Selected range · delivered emails count toward Email impressions.</p>
             </div>
           ) : (
             <div className="space-y-1 text-sm text-gray-600">
@@ -890,7 +891,7 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
         <div className="mt-3 overflow-x-auto rounded-md border border-gray-200 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+              <tr className="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                 <th className="px-4 py-3">Mailchimp month</th>
                 {['Campaigns', 'Sent', 'Delivered', 'Unique opens', 'Open rate', 'Unique clicks', 'Click rate', 'Unsubs'].map((h) => <th key={h} className="px-4 py-3 text-right">{h}</th>)}
               </tr>

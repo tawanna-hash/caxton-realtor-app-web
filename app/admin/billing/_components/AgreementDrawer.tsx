@@ -1174,7 +1174,7 @@ export function AgreementDrawer({
                 {formatCents(existing?.amount_cents ?? null)}
               </span>
             </div>
-            <p className="text-[11px] text-gray-400">
+            <p className="text-[11px] text-gray-500">
               Bundle pricing is set per line item; single-line rate fields are
               hidden for bundles.
             </p>
@@ -1275,7 +1275,7 @@ export function AgreementDrawer({
                 ) : (
                   !form.rate_user_edited &&
                   form.ad_rate && (
-                    <div className="text-[10px] text-gray-400 mt-1">
+                    <div className="text-[10px] text-gray-500 mt-1">
                       ✨ Auto-filled from{" "}
                       {FREQ_PKG_AG[form.frequency] ?? form.frequency}
                     </div>
@@ -1302,7 +1302,7 @@ export function AgreementDrawer({
                       className={INPUT_READONLY}
                       readOnly
                     />
-                    <div className="text-[10px] text-gray-400 mt-1">
+                    <div className="text-[10px] text-gray-500 mt-1">
                       20% page position premium applied
                     </div>
                   </>
@@ -1325,7 +1325,7 @@ export function AgreementDrawer({
                 <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm font-bold text-gray-900">
                   ${totalMonthly.toFixed(2)}
                 </div>
-                <div className="text-[10px] text-gray-400 mt-1">
+                <div className="text-[10px] text-gray-500 mt-1">
                   Rate − Discount + Premium
                 </div>
               </div>
@@ -1391,7 +1391,7 @@ export function AgreementDrawer({
                       [m.k]: e.target.value,
                     })
                   }
-                  className="w-14 px-2 py-1 text-xs rounded-md border border-gray-300 disabled:bg-gray-100 disabled:text-gray-400"
+                  className="w-14 px-2 py-1 text-xs rounded-md border border-gray-300 disabled:bg-gray-100 disabled:text-gray-500"
                   placeholder="Year"
                 />
               </div>
@@ -1711,7 +1711,7 @@ export function AgreementDrawer({
                   className="flex items-center gap-2 text-xs text-gray-700"
                 >
                   <svg
-                    className="w-3 h-3 text-gray-400"
+                    className="w-3 h-3 text-gray-500"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -1729,7 +1729,7 @@ export function AgreementDrawer({
                   >
                     {f.name}
                   </a>
-                  <span className="text-gray-400">
+                  <span className="text-gray-500">
                     ({Math.round(f.size / 1024)}KB)
                   </span>
                 </div>
@@ -1769,7 +1769,7 @@ export function AgreementDrawer({
                     </button>
                   </>
                 ) : (
-                  <span className="text-gray-400 inline-flex items-center gap-1">
+                  <span className="text-gray-500 inline-flex items-center gap-1">
                     <svg
                       className="w-3 h-3 animate-spin text-[#7059A8]"
                       viewBox="0 0 20 20"
@@ -1817,7 +1817,7 @@ export function AgreementDrawer({
                   />
                 </svg>
                 <span>{f.name}</span>
-                <span className="text-gray-400">— will upload on save</span>
+                <span className="text-gray-500">— will upload on save</span>
                 <button
                   className="text-[#661102] hover:underline"
                   onClick={() =>
@@ -2033,7 +2033,7 @@ export function AgreementDrawer({
                 onChange={(e) => setCustomMessage(e.target.value)}
                 rows={4}
                 placeholder="Leave blank to use the standard pitch. When filled in, this replaces the body paragraph of the signing email."
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-normal text-gray-800 placeholder:text-gray-400 focus:border-[#7059A8] focus:outline-none focus:ring-1 focus:ring-[#B9ADD6]"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-normal text-gray-800 placeholder:text-gray-500 focus:border-[#7059A8] focus:outline-none focus:ring-1 focus:ring-[#B9ADD6]"
               />
               <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
                 <span>

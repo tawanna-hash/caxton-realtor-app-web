@@ -77,7 +77,7 @@ function FeedWireframe({ active }: { active: string }) {
           </div>
         </Highlight>
       </div>
-      <div className="h-5 bg-white border-t border-gray-200 flex items-center justify-around text-gray-400">
+      <div className="h-5 bg-white border-t border-gray-200 flex items-center justify-around text-gray-500">
         <span>Feed</span><span>Mag</span><span>Cal</span><span>Build</span><span>More</span>
       </div>
     </div>

@@ -34,7 +34,7 @@ export default async function TestimonialShowcasePage({ params }: Ctx) {
   ].filter((item): item is { label: string; url: string } => Boolean(item.url));
 
   return (
-    <main className="bg-[#faf8f4]">
+    <div className="bg-[#faf8f4]">
       <section className="border-b border-stone-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
@@ -114,6 +114,6 @@ export default async function TestimonialShowcasePage({ params }: Ctx) {
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

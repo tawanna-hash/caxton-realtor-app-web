@@ -153,7 +153,7 @@ function FeedScreen() {
         </div>
       </div>
       <div className="px-3">
-        <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Top stories</p>
+        <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-gray-500">Top stories</p>
         <div className="grid grid-cols-[1.35fr_.9fr] gap-2">
           <div className="border border-gray-200 bg-white p-3">
             <span className="text-[9px] font-semibold uppercase tracking-wider text-[#42277C]">Market News</span>
@@ -219,7 +219,7 @@ function CalendarScreen() {
     <div className="px-3 py-4" data-tour-screen="calendar">
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Industry calendar</p>
+          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-500">Industry calendar</p>
           <h3 className="mt-1 text-lg font-semibold text-gray-900">Upcoming in Austin</h3>
         </div>
         <span className="border border-gray-200 px-3 py-2 text-[10px] font-semibold text-gray-600">Live calendar</span>
@@ -261,7 +261,7 @@ function CalendarScreen() {
 function BuildersScreen() {
   return (
     <div className="px-3 py-4" data-tour-screen="builders">
-      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Local opportunity</p>
+      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-500">Local opportunity</p>
       <h3 className="mt-1 text-lg font-semibold text-gray-900">Builders & Communities</h3>
       <div className="mt-3 flex gap-2 overflow-hidden">
         {['All areas', 'Quick move-in', 'Promotions'].map((label, index) => (
@@ -312,7 +312,7 @@ function IssuesScreen() {
 
   return (
     <div className="px-3 py-4" data-tour-screen="issues">
-      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Digital editions</p>
+      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-500">Digital editions</p>
       <h3 className="mt-1 text-lg font-semibold text-gray-900">Latest Issues</h3>
       <div className="mt-4 grid grid-cols-2 gap-3">
         {publications.map((publication) => (
@@ -350,11 +350,11 @@ function PartnersScreen() {
 
   return (
     <div className="px-3 py-4" data-tour-screen="partners">
-      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Professional directory</p>
+      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-500">Professional directory</p>
       <h3 className="mt-1 text-lg font-semibold text-gray-900">Local Partners</h3>
       <div className="mt-3 flex items-center gap-2 border border-gray-200 bg-gray-50 px-3 py-2">
-        <LayoutGrid size={14} className="text-gray-400" aria-hidden />
-        <span className="text-[10px] text-gray-400">Search builders, lenders, title companies...</span>
+        <LayoutGrid size={14} className="text-gray-500" aria-hidden />
+        <span className="text-[10px] text-gray-500">Search builders, lenders, title companies...</span>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2">
         {partners.map(([name, category, logo]) => (
@@ -412,7 +412,7 @@ function AdvertisingScreen() {
         ))}
       </div>
       <div className="mt-3">
-        <p className="mb-2 text-[8px] font-bold uppercase tracking-[0.14em] text-gray-400">
+        <p className="mb-2 text-[8px] font-bold uppercase tracking-[0.14em] text-gray-500">
           Download Realty News Now
         </p>
         <div className="flex flex-wrap items-center gap-2">
@@ -530,7 +530,7 @@ function AppPreview({
           </button>
           <button type="button" onClick={() => onSelectTab('feed')} className="flex items-center gap-1 leading-none">
             <BrandMark compact />
-            <ChevronDown size={10} className="text-gray-400" aria-hidden />
+            <ChevronDown size={10} className="text-gray-500" aria-hidden />
           </button>
           <span className="h-6 w-6" aria-hidden />
         </div>
@@ -550,7 +550,7 @@ function AppPreview({
                 onClick={() => onSelectTab(id)}
                 aria-current={active ? 'page' : undefined}
                 className={`flex min-h-11 flex-col items-center justify-center gap-0.5 text-[7px] font-semibold uppercase tracking-tight transition-colors ${
-                  active ? 'text-brand-700' : 'text-gray-400 hover:text-gray-700'
+                  active ? 'text-brand-700' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 <Icon size={16} strokeWidth={active ? 2.2 : 1.7} aria-hidden />
@@ -960,7 +960,7 @@ export default function ProductTourClient() {
                 <ArrowRight size={16} aria-hidden />
               </button>
             )}
-            <span className="ml-auto hidden text-[10px] uppercase tracking-[0.14em] text-gray-400 sm:block">
+            <span className="ml-auto hidden text-[10px] uppercase tracking-[0.14em] text-gray-500 sm:block">
               Use ← → keys
             </span>
           </div>
