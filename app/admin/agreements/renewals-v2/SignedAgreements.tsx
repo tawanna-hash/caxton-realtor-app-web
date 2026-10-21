@@ -71,6 +71,7 @@ export default function SignedAgreements() {
   const [sort, setSort] = useState<{ k: 'name' | 'status' | 'assignee' | 'eff' | 'pay' | 'billed'; dir: 1 | -1 }>({ k: 'eff', dir: -1 });
   const [sel, setSel] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
+  const [imp, setImp] = useState(false);
 
   const lastBilled = useMemo(() => {
     const m = new Map<string, string>();
@@ -137,7 +138,7 @@ export default function SignedAgreements() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <Menu label="More Actions" items={[{ label: 'Import agreements', href: '/admin/agreements' }, { label: 'Export agreements', onClick: () => exportCsv(rows) }]} />
+        <Menu label="More Actions" items={[{ label: 'Import agreements', onClick: () => setImp(true) }, { label: 'Export agreements', onClick: () => exportCsv(rows) }]} />
         <Menu primary label="Create agreement" items={[{ label: 'Use a template', href: '/admin/agreements/proposals/templates' }, { label: 'Start from scratch', href: '/admin/agreements/renewals-v2/new' }, { label: 'Import with AI', disabled: true }]} />
       </div>
       <div className="flex flex-wrap items-center gap-3">
@@ -159,6 +160,7 @@ export default function SignedAgreements() {
         <div className="ml-auto"><Menu label="Bulk actions" items={[{ label: `Export selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => exportCsv(chosen) }, { label: `Terminate selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => terminate(chosen) }]} /></div>
       </div>
       {notice && <div className={A.notice}>{notice}</div>}
+      {imp && <ImportDialog onClose={() => setImp(false)} onDone={() => { setSts(['active', 'completed', 'terminated']); setVersion((v) => v + 1); }} />}
       <div className="text-sm text-[color:var(--ds-body)]">{agr.loading ? 'Loading…' : `${rows.length} agreement${rows.length === 1 ? '' : 's'}`}</div>
       <div className="overflow-x-auto">
         <table className={`${A.table} min-w-[820px]`}>
@@ -182,6 +184,72 @@ export default function SignedAgreements() {
             ); })}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+type Done = { id: string; name: string; start: string; end: string; saved: boolean; error?: string };
+
+function ImportDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+  const [files, setFiles] = useState<File[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<Done[]>([]);
+  const [err, setErr] = useState('');
+  async function upload() {
+    setBusy(true); setErr('');
+    const out: Done[] = [];
+    for (const file of files) {
+      const fd = new FormData(); fd.append('file', file);
+      const r = await fetch('/api/admin/agreements/upload', { method: 'POST', body: fd, credentials: 'include' });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.agreement) { out.push({ id: '', name: file.name, start: '', end: '', saved: false, error: j.detail || j.error || 'Upload failed.' }); continue; }
+      const a = j.agreement as Agr;
+      out.push({ id: a.id, name: nameOf(a), start: (a.start_date ?? '').slice(0, 10), end: (a.end_date ?? '').slice(0, 10), saved: true });
+    }
+    setDone(out); setFiles([]); setBusy(false); onDone();
+  }
+  async function saveDates(n: number) {
+    const d = done[n];
+    const r = await fetch(`/api/admin/agreements/${d.id}`, { method: 'PATCH', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ start_date: d.start || null, end_date: d.end || null }) });
+    setDone((x) => x.map((y, i) => (i === n ? { ...y, saved: r.ok, error: r.ok ? undefined : 'Could not save the dates.' } : y)));
+    if (r.ok) onDone(); else setErr('Could not save the dates.');
+  }
+  const upd = (n: number, p: Partial<Done>) => setDone((x) => x.map((y, i) => (i === n ? { ...y, ...p, saved: false } : y)));
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Import agreements">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-[14px] bg-white">
+        <div className="relative bg-[#F3F4F7] px-6 py-4 text-center text-base font-medium text-[color:var(--ds-ink)]">Import agreements
+          <button type="button" aria-label="Close" onClick={onClose} style={{ border: 0, background: 'transparent' }} className="absolute right-4 top-3 text-lg">&times;</button>
+        </div>
+        <div className="space-y-4 p-6 text-sm text-[color:var(--ds-ink)]">
+          {done.length === 0 ? (<>
+            <p>Upload existing signed agreements, including past ones. Client, dates and rates are read from each file where possible. Past agreements appear as Completed once their end date has passed.</p>
+            <label className="flex h-24 cursor-pointer items-center justify-center rounded-[10px] border border-[color:var(--ds-line)] text-center">
+              <input type="file" multiple accept=".pdf,.jpg,.jpeg,image/jpeg,application/pdf" className="sr-only" onChange={(e) => setFiles(Array.from(e.target.files ?? []))} />
+              <span className="text-[color:var(--ds-primary)] underline">{files.length ? `${files.length} file${files.length === 1 ? '' : 's'} selected` : 'Choose PDF or JPEG files'}</span>
+            </label>
+            {files.length > 0 && <ul className="text-xs text-[color:var(--ds-body)]">{files.map((f) => <li key={f.name}>{f.name}</li>)}</ul>}
+            {err && <div className={A.error}>{err}</div>}
+            <div className="flex justify-center gap-3"><button type="button" className={A.outline} onClick={onClose}>Close</button><button type="button" className={A.primary} disabled={!files.length || busy} onClick={upload}>{busy ? 'Importing…' : 'Import'}</button></div>
+          </>) : (<>
+            <p>Imported. Check the dates for each agreement and save any change.</p>
+            {err && <div className={A.error}>{err}</div>}
+            <ul className="space-y-3">{done.map((d, n) => (
+              <li key={n} className="rounded-[10px] border border-[color:var(--ds-line)] p-3">
+                <div className="font-medium">{d.name}</div>
+                {d.error && !d.id ? <div className="text-xs text-red-700">{d.error}</div> : (
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[color:var(--ds-body)]">
+                    Start <input type="date" className={`${A.input} w-[150px]`} value={d.start} onChange={(e) => upd(n, { start: e.target.value })} />
+                    End <input type="date" className={`${A.input} w-[150px]`} value={d.end} onChange={(e) => upd(n, { end: e.target.value })} />
+                    <button type="button" className={A.small} disabled={d.saved} onClick={() => saveDates(n)}>{d.saved ? 'Saved' : 'Save dates'}</button>
+                  </div>
+                )}
+              </li>
+            ))}</ul>
+            <div className="flex justify-center"><button type="button" className={A.primary} onClick={onClose}>Done</button></div>
+          </>)}
+        </div>
       </div>
     </div>
   );
