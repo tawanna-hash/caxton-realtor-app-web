@@ -57,7 +57,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
       { label: 'Dashboard (Beta)', href: '/admin/dashboard-beta', description: 'Invoices, agreements, payouts, revenue and agreements at a glance' },
       { label: 'Agreements (Beta)', href: '/admin/agreements/renewals-v2', description: 'One-tap renewals and new-partner agreements' },
-      { label: 'Agreements Sent (Beta)', href: '/admin/agreements/proposals', description: 'Sent, drafts, archived, templates and defaults' },
+      { label: 'Agreements Sent (Beta)', href: '/admin/agreements/proposals', description: 'Sent, drafts, archived, templates and defaults', parent: '/admin/agreements/renewals-v2' },
       { label: 'Clients (Beta)', href: '/admin/agreements/clients', description: 'Main contact person for each client' },
       { label: 'Contacts (Beta)', href: '/admin/agreements/clients/contacts', description: 'Other people inside each client organization', parent: '/admin/agreements/clients' },
       { label: 'Billing (Beta)', href: '/admin/billing-hub', description: 'Agreement, payment methods, invoices and activity for one client' },
