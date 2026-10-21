@@ -11,7 +11,7 @@ export default async function AgreePage({ params }: { params: Promise<{ token: s
   const { token } = await params;
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-[color:var(--ds-page)] px-4 py-8">
-      <div className="mx-auto w-full max-w-lg">
+      <div className="mx-auto w-full max-w-5xl">
         <AgreeClient token={token} />
       </div>
     </div>

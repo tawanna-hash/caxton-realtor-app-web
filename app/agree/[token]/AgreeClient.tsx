@@ -37,6 +37,7 @@ type Summary = {
   needs_option?: boolean;
   options?: Array<{ name: string; total_cents: number; lines: Array<{ line_no: number; package_label: string; description: string | null; amount_cents: number; optional: boolean; discount_note: string | null }> }> | null;
   expired: boolean;
+  intro?: string;
   details: { name: string | null; note: string | null; ask_address: boolean; refs: Array<{ name: string; value: string }>; expires_at: string | null } | null;
   placement: { lines: PlacementNeed[]; single: PlacementNeed | null };
   schedule_view?: 'timeline' | 'occurrence';
@@ -47,7 +48,7 @@ type Summary = {
   terms: string;
 };
 
-const STEPS = ['Review', 'Pay', 'Sign'] as const;
+const RAIL = ['Introduction', 'Review Services', 'Terms of Service', 'Additional Terms', 'Payment', 'Sign & Approve'] as const;
 
 function money(c: number | null) {
   return c == null ? '—' : `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -70,6 +71,9 @@ export default function AgreeClient({ token }: { token: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  // Anchor-style flow: landing page, introduction, then the steps. 'terms' and 'additional' sit between review and payment.
+  const [phase, setPhase] = useState<'landing' | 'intro' | 'flow'>('landing');
+  const [inter, setInter] = useState<null | 'terms' | 'additional'>(null);
   const stripeRef = useRef<StripePaymentHandle>(null);
   const [cardReady, setCardReady] = useState(false);
   const [cardPaid, setCardPaid] = useState(false);
@@ -158,7 +162,7 @@ export default function AgreeClient({ token }: { token: string }) {
     for (const n of needs) {
       if (!dates[n.line_no]?.[0]) return setError(n.channel === 'email' ? `Please choose a preferred send date for ${n.label}.` : `Please choose a start date for ${n.label}.`);
     }
-    setStep(1);
+    setInter('terms');
   }
 
   async function nextFromPay() {
@@ -236,20 +240,28 @@ export default function AgreeClient({ token }: { token: string }) {
 
   if (loadError) {
     return (
-      <div className={card}>
+      <div className={`${card} mx-auto max-w-lg`}>
         <h1 className="text-xl font-semibold text-[color:var(--ds-ink)]">This link is not available</h1>
         <p className="mt-2 text-sm text-[color:var(--ds-body)]">{loadError} Please reply to your agreement email and we will send a fresh one.</p>
       </div>
     );
   }
-  if (!data) return <div className={card}><p className="text-sm text-[color:var(--ds-body)]">Loading your agreement…</p></div>;
+  if (!data) return <div className={`${card} mx-auto max-w-lg`}><p className="text-sm text-[color:var(--ds-body)]">Loading your agreement…</p></div>;
 
   if (done || data.signed) {
     return (
-      <div className={card}>
-        <h1 className="text-2xl font-semibold text-[color:var(--ds-ink)]">You are all set</h1>
+      <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-16 text-center">
+        <svg width="120" height="110" viewBox="0 0 120 110" fill="none" aria-hidden="true">
+          <rect x="22" y="14" width="66" height="76" rx="12" fill="#CDBFF9" />
+          <rect x="34" y="30" width="26" height="5" rx="2.5" fill="#582BE7" />
+          <rect x="34" y="42" width="38" height="5" rx="2.5" fill="#582BE7" />
+          <path d="M38 72c6-12 10-12 12-4s6 4 16-6" stroke="#4B1FB8" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="92" cy="82" r="18" fill="#047857" />
+          <path d="M83 82l7 7 12-14" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <h1 className="mt-6 text-2xl font-semibold text-[color:var(--ds-ink)]">Thanks for signing</h1>
         <p className="mt-2 text-sm leading-relaxed text-[color:var(--ds-body)]">
-          Thank you. Your advertising agreement with {data.brand} is signed. A copy of the signed agreement will be emailed to you.
+          Your agreement with {data.brand} has been approved. A copy of the signed agreement will be emailed to you.
         </p>
       </div>
     );
@@ -275,7 +287,7 @@ export default function AgreeClient({ token }: { token: string }) {
 
   if (data.expired) {
     return (
-      <div className={card}>
+      <div className={`${card} mx-auto max-w-lg`}>
         <h1 className="text-2xl font-semibold text-[color:var(--ds-ink)]">This agreement has expired</h1>
         <p className="mt-2 text-sm text-[color:var(--ds-body)]">Please contact {data.brand} and we will send you a new one.</p>
       </div>
@@ -284,7 +296,7 @@ export default function AgreeClient({ token }: { token: string }) {
 
   if (data.needs_full_form) {
     return (
-      <div className="space-y-4">
+      <div className="mx-auto max-w-lg space-y-4">
         <div className={card}>
           <p className="text-xs font-semibold text-[color:var(--ds-body)]">{data.brand}</p>
           <h1 className="mt-1 text-2xl font-semibold text-[color:var(--ds-ink)]">Your advertising agreement</h1>
@@ -295,21 +307,84 @@ export default function AgreeClient({ token }: { token: string }) {
     );
   }
 
+  const company = fields.company_name || data.details?.name || data.brand;
+  if (phase === 'landing') {
+    return (
+      <div className="mx-auto max-w-2xl px-2 py-10" data-anchor-ui="true">
+        <h1 className="text-3xl font-semibold tracking-[-0.02em] text-[color:var(--ds-ink)]">Proposal for review</h1>
+        <p className="mt-3 text-xl font-semibold text-[color:var(--ds-ink)]">Prepared for {company}</p>
+        <p className="mt-1 text-sm text-[color:var(--ds-body)]">{data.brand} has sent you this proposal for your review and approval.</p>
+        <hr className="my-6 border-[color:var(--ds-line)]" />
+        <p className="text-xs text-[color:var(--ds-body)]">Recipients</p>
+        <p className="mt-1 flex items-center gap-2 text-sm text-[color:var(--ds-ink)]">{fields.rep_name || 'You'}<span className="rounded-full border border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)] px-2.5 py-0.5 text-xs font-medium text-[color:var(--ds-primary-press)]">Required to sign</span></p>
+        <button type="button" onClick={() => setPhase('intro')} className={`${pill} mt-8 !w-auto`}>Get Started<span aria-hidden="true" className="ml-2">&rarr;</span></button>
+      </div>
+    );
+  }
+
+  const railIndex = phase === 'intro' ? 0 : inter === 'terms' ? 2 : inter === 'additional' ? 3 : step === 0 ? 1 : step === 1 ? 4 : 5;
+  const goRail = (i: number) => {
+    // Only go back to places already visited.
+    if (i >= railIndex || cardPaid || bankPi) return;
+    if (i === 0) { setPhase('intro'); setInter(null); setStep(0); }
+    else if (i === 1) { setPhase('flow'); setInter(null); setStep(0); }
+    else if (i === 2) { setPhase('flow'); setInter('terms'); setStep(0); }
+    else if (i === 3) { setPhase('flow'); setInter('additional'); setStep(0); }
+  };
+  const nextBtn = 'inline-flex w-full items-center justify-center rounded-[10px] bg-[color:var(--ds-primary)] px-6 py-3 text-sm font-medium text-white hover:bg-[color:var(--ds-primary-press)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-72';
+  const stepTitle = (t: string, back?: () => void) => (
+    <div className="flex items-center gap-3">
+      {back && <button type="button" aria-label="Back" onClick={back} className="text-xl text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }}>&lsaquo;</button>}
+      <h1 className="text-xl font-semibold text-[color:var(--ds-ink)]">{t}</h1>
+    </div>
+  );
+
   return (
-    <div className="space-y-4" data-anchor-ui="true">
-      <div className={card}>
-        <p className="text-xs font-semibold text-[color:var(--ds-body)]">{data.brand}</p>
-        <h1 className="mt-1 text-2xl font-semibold text-[color:var(--ds-ink)]">Your advertising agreement</h1>
-        <ol className="mt-4 flex gap-2" aria-label="Progress">
-          {STEPS.map((label, i) => (
-            <li key={label} className={`flex-1 rounded-full px-3 py-1.5 text-center text-xs font-semibold ${i === step ? 'bg-[color:var(--ds-primary)] text-white' : i < step ? 'bg-[color:var(--ds-selected)] text-[color:var(--ds-primary-press)]' : 'bg-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>
-              {i + 1}. {label}
+    <div className="grid gap-6 lg:grid-cols-[220px_1fr]" data-anchor-ui="true">
+      <aside className="lg:sticky lg:top-8 lg:self-start">
+        <p className="text-lg font-semibold leading-snug text-[color:var(--ds-ink)]">{data.brand}</p>
+        <p className="mt-2 text-xs text-[color:var(--ds-body)] lg:hidden">Step {railIndex + 1} of {RAIL.length}: {RAIL[railIndex]}</p>
+        <ol className="mt-6 hidden space-y-1 lg:block" aria-label="Progress">
+          {RAIL.map((label, i) => (
+            <li key={label}>
+              <button type="button" onClick={() => goRail(i)} disabled={i >= railIndex} aria-current={i === railIndex ? 'step' : undefined}
+                className={`block w-full border-l-2 px-3 py-2 text-left text-sm ${i === railIndex ? 'border-[color:var(--ds-primary)] font-semibold text-[color:var(--ds-primary)]' : i < railIndex ? 'border-transparent text-[color:var(--ds-ink)] hover:text-[color:var(--ds-primary)]' : 'border-transparent text-[color:var(--ds-placeholder)]'}`}
+                style={{ background: 'transparent', borderTop: 0, borderRight: 0, borderBottom: 0, borderRadius: 0 }}>{label}</button>
             </li>
           ))}
         </ol>
-      </div>
+      </aside>
+      <div className="mx-auto w-full max-w-2xl space-y-4">
+      {phase === 'intro' && (
+        <>
+          {stepTitle('Introduction', () => setPhase('landing'))}
+          <div className={card}><p className="whitespace-pre-line text-sm leading-relaxed text-[color:var(--ds-ink)]">{data.intro || 'Your advertising agreement is ready. Review the details, choose how to pay, and sign.'}</p></div>
+          <div className="flex justify-end"><button type="button" onClick={() => setPhase('flow')} className={nextBtn}>Next</button></div>
+        </>
+      )}
 
-      {step === 0 && !data.expired && (data.needs_option || data.lines.some((l) => l.optional)) && (
+      {phase === 'flow' && inter === 'terms' && (
+        <>
+          {stepTitle('Review Terms of Service', () => setInter(null))}
+          <div className={card}><pre className="max-h-[28rem] overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-[color:var(--ds-ink)]" style={{ fontFamily: 'inherit' }}>{data.terms}</pre></div>
+          <div className="flex justify-end"><button type="button" onClick={() => setInter('additional')} className={nextBtn}>Next</button></div>
+        </>
+      )}
+
+      {phase === 'flow' && inter === 'additional' && (
+        <>
+          {stepTitle('Review Additional Terms', () => setInter('terms'))}
+          <div className={`${card} space-y-4`}>
+            <div><p className="text-sm font-semibold text-[color:var(--ds-ink)]">Effective Date of Agreement</p><p className="text-xs text-[color:var(--ds-body)]">On acceptance</p></div>
+            <div><p className="text-sm font-semibold text-[color:var(--ds-ink)]">Payment Terms</p><p className="text-xs text-[color:var(--ds-body)]">{data.prepay_required ? (data.prepay_note || 'Payment is due before services begin.') : 'Payment is due as shown on each invoice.'}</p></div>
+            {(data.annual_increase_pct ?? 0) > 0 && <div><p className="text-sm font-semibold text-[color:var(--ds-ink)]">Annual Pricing</p><p className="text-xs text-[color:var(--ds-body)]">Pricing increases by {data.annual_increase_pct}% each contract year after the first. Renewals are capped at a 2% increase.</p></div>}
+            <div><p className="text-sm font-semibold text-[color:var(--ds-ink)]">Amendments</p><p className="text-xs text-[color:var(--ds-body)]">Any change to the agreement will require your approval.</p></div>
+          </div>
+          <div className="flex justify-end"><button type="button" onClick={() => { setInter(null); setStep(1); }} className={nextBtn}>Next</button></div>
+        </>
+      )}
+
+      {phase === 'flow' && !inter && step === 0 && !data.expired && (data.needs_option || data.lines.some((l) => l.optional)) && (
         <div className={card}>
           <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">{data.needs_option ? 'Choose your package' : 'Choose your services'}</h2>
           <p className="mt-1 text-sm text-[color:var(--ds-body)]">{data.needs_option ? 'Pick the option that fits you best. You can still review everything before you pay.' : 'Untick anything you do not want.'}</p>
@@ -348,7 +423,7 @@ export default function AgreeClient({ token }: { token: string }) {
         </div>
       )}
 
-      {step === 0 && !(data.needs_option || data.lines.some((l) => l.optional)) && (
+      {phase === 'flow' && !inter && step === 0 && !(data.needs_option || data.lines.some((l) => l.optional)) && (
         <div className={card}>
           <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Review your details</h2>
           <p className="mt-1 text-sm text-[color:var(--ds-body)]">We filled in what we have. Fix anything that is out of date.</p>
@@ -398,7 +473,7 @@ export default function AgreeClient({ token }: { token: string }) {
         </div>
       )}
 
-      {step === 1 && (
+      {phase === 'flow' && !inter && step === 1 && (
         <div className={card}>
           <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">How would you like to pay?</h2>
           {data.prepay_note && <p className="mt-2 rounded-[10px] bg-[#FEF8CC] p-3 text-sm text-[#645600]">{data.prepay_note}</p>}
@@ -485,13 +560,13 @@ export default function AgreeClient({ token }: { token: string }) {
           </div>
           {error && <p className="mt-3 rounded-[10px] bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <div className="mt-5 flex gap-3">
-            <button type="button" onClick={() => setStep(0)} className={ghost}>Back</button>
+            <button type="button" onClick={() => { setStep(0); setInter('additional'); }} className={ghost}>Back</button>
             <button type="button" onClick={nextFromPay} disabled={submitting || (pay === 'card' && !cardPaid && !cardReady) || (pay === 'bank_now' && !bankPi && !bankReady)} className={pill}>{submitting ? 'Processing…' : pay === 'card' && !cardPaid ? `Pay ${money(data.card_charge_cents)} and continue` : pay === 'bank_now' && !bankPi ? `Pay ${money(data.bank_charge_cents ?? null)} by bank and continue` : 'Continue to sign'}</button>
           </div>
         </div>
       )}
 
-      {step === 2 && (
+      {phase === 'flow' && !inter && step === 2 && (
         <div className={card}>
           <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Review and sign</h2>
           <div className="mt-3">{summary}</div>
@@ -519,6 +594,7 @@ export default function AgreeClient({ token }: { token: string }) {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
