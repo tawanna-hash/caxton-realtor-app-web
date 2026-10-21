@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { A, ColumnStyle, EditColumns, EmptyState, FilterChip, SearchBox, useColumns, type ColumnDef } from '@/components/anchor/ui';
+import SortTable from '@/components/anchor/SortTable';
 
 type Item = {
   id: string;
@@ -120,16 +121,13 @@ export default function StatusBoard() {
       {error && <div className={A.error}>{error}</div>}
       <div className="overflow-x-auto">
         <ColumnStyle tableClass="cols-board" cols={COLS} visible={cols.visible} />
-        <table className={`${A.table} cols-board min-w-[760px]`}>
-          <thead>
-            <tr><th>Client</th><th>Type</th><th>Status</th><th>Monthly</th><th>Billing</th><th /></tr>
-          </thead>
-          <tbody>
+        <SortTable rows={rows} cols={[{ label: 'Client', get: (r) => r.company_name }, { label: 'Type', get: (r) => r.kind }, { label: 'Status', get: (r) => r.stage }, { label: 'Monthly', get: (r) => r.rate_cents }, { label: 'Billing', get: (r) => r.schedule_state }, { label: '' }]} className={`${A.table} cols-board min-w-[760px]`}>
+{(rws) => (<>
             {items === null && !error && <tr><td colSpan={6} className="text-center text-[color:var(--ds-body)]">Loading…</td></tr>}
             {items !== null && rows.length === 0 && (
               <tr><td colSpan={6}><EmptyState title="No agreements" body="No agreements match your current filters." action={{ label: 'Clear filters', onClick: () => { setQ(''); setStages(['draft', 'sent', 'opened', 'signed']); setKinds(['new', 'renewal']); } }} /></td></tr>
             )}
-            {rows.map((i) => (
+            {rws.map((i) => (
               <tr key={i.id}>
                 <td>
                   <div className="font-medium text-[color:var(--ds-ink)]">{i.company_name ?? '—'}</div>
@@ -164,8 +162,8 @@ export default function StatusBoard() {
                 </td>
               </tr>
             ))}
-          </tbody>
-        </table>
+          </>)}
+</SortTable>
       </div>
     </div>
   );

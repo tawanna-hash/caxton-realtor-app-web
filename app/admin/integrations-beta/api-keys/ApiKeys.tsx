@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { A } from '@/components/anchor/ui';
+import SortTable from '@/components/anchor/SortTable';
 
 type Key = { id: string; name: string; key_prefix: string; created_by: string | null; created_at: string; last_used_at: string | null };
 const fmt = (s: string | null) => (s ? new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never');
@@ -51,12 +52,11 @@ export default function ApiKeys() {
         </div>
       )}
       {keys && keys.length > 0 && (
-        <table className={A.table}>
-          <thead><tr><th>Name</th><th>Key</th><th>Created</th><th>Created by</th><th>Last used</th><th /></tr></thead>
-          <tbody>{keys.map((k) => (
+        <SortTable rows={keys} cols={[{ label: 'Name', get: (r) => r.name }, { label: 'Key', get: (r) => r.key_prefix }, { label: 'Created', get: (r) => r.created_at }, { label: 'Created by', get: (r) => r.created_by }, { label: 'Last used', get: (r) => r.last_used_at }, { label: '' }]} className={A.table}>
+{(rws) => (<>{rws.map((k) => (
             <tr key={k.id}><td className="font-medium">{k.name}</td><td className="font-mono text-xs">{k.key_prefix}…</td><td>{fmt(k.created_at)}</td><td>{k.created_by ?? ''}</td><td>{fmt(k.last_used_at)}</td><td className="text-right"><button className={A.small} onClick={() => revoke(k)}>Revoke</button></td></tr>
-          ))}</tbody>
-        </table>
+          ))}</>)}
+</SortTable>
       )}
 
       {open && (

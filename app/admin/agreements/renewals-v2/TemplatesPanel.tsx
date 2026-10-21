@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { A, RowMenu, EmptyState, SearchBox } from '@/components/anchor/ui';
+import SortTable from '@/components/anchor/SortTable';
 
 export type Template = { id: string; name: string; ad_size: string | null; frequency: string | null; ad_rate_cents: number | null; updated_at: string };
 
@@ -92,29 +93,27 @@ export default function TemplatesPanel() {
           <p className="text-sm text-[color:var(--ds-body)]">None yet. Open the builder and choose Save as template.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className={A.table}>
-              <thead><tr><th>Template name</th><th>Updated</th><th /></tr></thead>
-              <tbody>
-                {builderTpls.filter((t) => t.name.toLowerCase().includes(q.trim().toLowerCase())).map((t) => (
+            <SortTable rows={builderTpls.filter((t) => t.name.toLowerCase().includes(q.trim().toLowerCase()))} cols={[{ label: 'Template name', get: (r) => r.name }, { label: 'Updated', get: (r) => r.updated_at }, { label: '' }]} className={A.table}>
+{(rws) => (<>
+                {rws.map((t) => (
                   <tr key={t.id}>
                     <td className="font-medium text-[color:var(--ds-ink)]">{t.name}</td>
                     <td className="whitespace-nowrap text-[color:var(--ds-body)]">{new Date(t.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                     <td className="whitespace-nowrap text-right"><span className="inline-flex items-center gap-2"><a href={`/admin/agreements/renewals-v2/new?template=${t.id}`} className={A.small}>Use template</a><RowMenu items={[{ label: 'Delete template', onClick: () => removeBuilder(t), danger: true }]} /></span></td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
+              </>)}
+</SortTable>
           </div>
         )}
         <h2 className="mb-1 mt-6 text-base font-semibold text-[color:var(--ds-ink)]">Quick templates</h2>
       </div>
       <div className="overflow-x-auto">
-        <table className={A.table}>
-          <thead><tr><th>Template name</th><th>Ad size</th><th>Frequency</th><th>Monthly rate</th><th /></tr></thead>
-          <tbody>
+        <SortTable rows={list} cols={[{ label: 'Template name', get: (r) => r.name }, { label: 'Ad size', get: (r) => r.ad_size }, { label: 'Frequency', get: (r) => r.frequency }, { label: 'Monthly rate', get: (r) => r.ad_rate_cents }, { label: '' }]} className={A.table}>
+{(rws) => (<>
             {rows === null && <tr><td colSpan={5} className="text-center text-[color:var(--ds-body)]">Loading…</td></tr>}
             {rows !== null && list.length === 0 && <tr><td colSpan={5}><EmptyState title="No templates" body="Create a template to prefill new agreements." /></td></tr>}
-            {list.map((t) => (
+            {rws.map((t) => (
               <tr key={t.id}>
                 <td className="font-medium text-[color:var(--ds-ink)]">{t.name}</td>
                 <td className="text-[color:var(--ds-ink)]">{t.ad_size ?? '—'}</td>
@@ -123,8 +122,8 @@ export default function TemplatesPanel() {
                 <td className="text-right"><RowMenu items={[{ label: 'Delete template', onClick: () => remove(t), danger: true }]} /></td>
               </tr>
             ))}
-          </tbody>
-        </table>
+          </>)}
+</SortTable>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { computeNextRun, type RecurringFrequency } from '@/lib/recurring-invoice
 import StatementDialog from './StatementDialog';
 import { mainOf, othersOf } from '../contacts/ContactsList';
 import { GROUP_LABEL, mergeClients, day, money, useJson, type Adv, type Agr, type Inv, type Sch } from '../data';
+import SortTable from '@/components/anchor/SortTable';
 
 const noAdv: Adv[] = [];
 const noAgr: Agr[] = [];
@@ -179,10 +180,9 @@ export default function ClientDetail({ id }: { id: number }) {
             <p className="py-8 text-center text-sm text-[color:var(--ds-ink)]">There are no scheduled invoices to show.<br />Open Billing Control to review how this client is billed.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className={`${A.table} min-w-[560px]`}>
-                <thead><tr><th>Service</th><th>Installment</th><th>Issue date</th><th>Status</th><th className="text-right">Total</th></tr></thead>
-                <tbody>
-                  {upcomingRows.map((r) => (
+              <SortTable rows={upcomingRows} cols={[{ label: 'Service', get: (r) => r.name }, { label: 'Installment', get: (r) => r.label }, { label: 'Issue date', get: (r) => r.date }, { label: 'Status', get: (r) => r.status }, { label: 'Total', get: (r) => r.amount, className: 'text-right' }]} className={`${A.table} min-w-[560px]`}>
+{(rws) => (<>
+                  {rws.map((r) => (
                     <tr key={r.key}>
                       <td className="font-medium text-[color:var(--ds-ink)]">{r.name}</td>
                       <td className="capitalize">{r.label}</td>
@@ -191,8 +191,8 @@ export default function ClientDetail({ id }: { id: number }) {
                       <td className="text-right">{money(r.amount)}</td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
+                </>)}
+</SortTable>
             </div>
           )}
         </div>
@@ -207,10 +207,9 @@ export default function ClientDetail({ id }: { id: number }) {
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table className={`${A.table} min-w-[680px]`}>
-              <thead><tr><th><input type="checkbox" aria-label="Select all unpaid invoices" checked={payable.length > 0 && chosen.length === payable.length} onChange={(e) => setPicked(e.target.checked ? new Set(payable.map((x) => x.id)) : new Set())} /></th><th>Invoice ID</th><th>Invoice Status</th><th>Additional Information</th><th>Issue Date</th><th>Due Date</th><th className="text-right">Total</th><th className="text-right">Balance</th></tr></thead>
-              <tbody>
-                {issuedShown.map((i) => (
+            <SortTable rows={issuedShown} cols={[{ label: (<input type="checkbox" aria-label="Select all unpaid invoices" checked={payable.length > 0 && chosen.length === payable.length} onChange={(e) => setPicked(e.target.checked ? new Set(payable.map((x) => x.id)) : new Set())} />) }, { label: 'Invoice ID', get: (r) => r.number }, { label: 'Invoice Status', get: (r) => invStatus(r) }, { label: 'Additional Information', get: (r) => String(info(r) ?? '') }, { label: 'Issue Date', get: (r) => r.issue_date }, { label: 'Due Date', get: (r) => r.due_date }, { label: 'Total', get: (r) => r.total_cents, className: 'text-right' }, { label: 'Balance', get: (r) => r.balance_cents, className: 'text-right' }]} className={`${A.table} min-w-[680px]`}>
+{(rws) => (<>
+                {rws.map((i) => (
                   <tr key={i.id}>
                     <td>{payable.some((x) => x.id === i.id) && <input type="checkbox" aria-label={`Select ${i.number ?? 'invoice'}`} checked={picked.has(i.id)} onChange={(e) => setPicked((p) => { const n = new Set(p); if (e.target.checked) n.add(i.id); else n.delete(i.id); return n; })} />}</td>
                     <td className="font-medium text-[color:var(--ds-ink)]">{i.number ?? '—'}</td>
@@ -223,8 +222,8 @@ export default function ClientDetail({ id }: { id: number }) {
                   </tr>
                 ))}
                 {issuedShown.length === 0 && <tr><td colSpan={8} className="py-10 text-center text-[color:var(--ds-body)]">No invoices have been issued.</td></tr>}
-              </tbody>
-            </table>
+              </>)}
+</SortTable>
           </div>
         </div>
       )}

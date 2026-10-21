@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { A, Toggle } from '@/components/anchor/ui';
+import SortTable from '@/components/anchor/SortTable';
 
 type EventDef = { key: string; audience: 'client' | 'team'; label: string; recipients: string };
 
@@ -49,9 +50,8 @@ export default function NotificationsPanel() {
       {saved && <div className={A.notice}>Saved.</div>}
       <p className="text-sm text-[color:var(--ds-body)]">{who === 'client' ? 'Emails the Agreements (Beta) flow sends to partners. Turning one off stops it from sending.' : 'Alerts your team receives.'}</p>
       <div className="overflow-x-auto">
-        <table className={`${A.table} min-w-[640px]`}>
-          <thead><tr><th>Event name</th><th>Recipients</th><th className="text-right">Status</th></tr></thead>
-          <tbody>
+        <SortTable rows={rows} cols={[{ label: 'Event name', get: (r) => r.label }, { label: 'Recipients', get: (r) => r.recipients }, { label: 'Status', get: (r) => (settings[r.key] !== false ? 1 : 0), className: 'text-right' }]} className={`${A.table} min-w-[640px]`}>
+{(rws) => (<>
             {who === 'team' && (
               <tr>
                 <td className="font-semibold text-[color:var(--ds-ink)]">Agreement signed</td>
@@ -59,15 +59,15 @@ export default function NotificationsPanel() {
                 <td className="text-right"><div className="flex justify-end"><Toggle on label="Agreement signed" disabled onChange={() => undefined} /></div><div className="mt-1 text-xs text-[color:var(--ds-body)]">Always on</div></td>
               </tr>
             )}
-            {rows.map((e) => (
+            {rws.map((e) => (
               <tr key={e.key}>
                 <td className="font-semibold text-[color:var(--ds-ink)]">{e.label}</td>
                 <td className="text-[color:var(--ds-ink)]">{e.recipients}</td>
                 <td><div className="flex justify-end"><Toggle on={settings[e.key] !== false} label={e.label} onChange={(v) => change(e.key, v)} /></div></td>
               </tr>
             ))}
-          </tbody>
-        </table>
+          </>)}
+</SortTable>
       </div>
     </div>
   );

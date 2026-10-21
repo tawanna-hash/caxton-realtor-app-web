@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
+import SortTable from '@/components/anchor/SortTable';
 
 type Sch = {
   id: string; name: string; advertiser_name: string | null; status: string; frequency: string; interval_count: number | null;
@@ -56,10 +57,9 @@ export default function RecurringPanel() {
       </div>
       {shown.length === 0 ? <EmptyState title="No recurring invoices found" body="Try a different search or status." /> : (
         <div className="overflow-x-auto">
-          <table className={A.table}>
-            <thead><tr><th>Schedule</th><th>Client</th><th>Status</th><th>Repeats</th><th className="text-right">Amount</th><th>Next invoice</th><th>Sent</th><th>Ends</th></tr></thead>
-            <tbody>
-              {shown.map((s) => (
+          <SortTable rows={shown} cols={[{ label: 'Schedule', get: (r) => r.name }, { label: 'Client', get: (r) => r.advertiser_name }, { label: 'Status', get: (r) => r.status }, { label: 'Repeats', get: (r) => every(r) }, { label: 'Amount', get: (r) => r.amount_cents + (r.tax_cents ?? 0), className: 'text-right' }, { label: 'Next invoice', get: (r) => r.next_run_at }, { label: 'Sent', get: (r) => r.occurrences_generated ?? 0 }, { label: 'Ends', get: (r) => r.end_date }]} className={A.table}>
+{(rws) => (<>
+              {rws.map((s) => (
                 <tr key={s.id}>
                   <td className="max-w-[260px] truncate" title={s.name}>{s.name}{s.source === 'agreement' && <span className="ml-2 rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[10px] text-[color:var(--ds-body)]">From agreement</span>}</td>
                   <td>{s.advertiser_name ?? '—'}</td>
@@ -71,8 +71,8 @@ export default function RecurringPanel() {
                   <td className="whitespace-nowrap">{day(s.end_date)}</td>
                 </tr>
               ))}
-            </tbody>
-          </table>
+            </>)}
+</SortTable>
         </div>
       )}
     </div>

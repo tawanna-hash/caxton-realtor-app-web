@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Template } from './TemplatesPanel';
 import BillingTimeline, { type TimelineView } from '@/components/anchor/TimelineView';
 import { A, RowMenu, EmptyState, SearchBox } from '@/components/anchor/ui';
+import SortTable from '@/components/anchor/SortTable';
 
 type Candidate = {
   id: string;
@@ -148,12 +149,11 @@ export default function NewPartnersPanel() {
       {notice && <div className={A.notice}>{notice}</div>}
       {error && <div className={A.error}>{error}</div>}
       <div className="overflow-x-auto">
-        <table className={`${A.table} min-w-[820px]`}>
-          <thead><tr><th>Partner</th><th>Order</th><th>Total</th><th>Status</th><th /></tr></thead>
-          <tbody>
+        <SortTable rows={list} cols={[{ label: 'Partner', get: (r) => r.company_name }, { label: 'Order', get: (r) => [r.ad_size, r.frequency].filter(Boolean).join(' · ') || r.channel }, { label: 'Total', get: (r) => r.total_cents }, { label: 'Status', get: (r) => r.state }, { label: '' }]} className={`${A.table} min-w-[820px]`}>
+{(rws) => (<>
             {rows === null && !error && <tr><td colSpan={5} className="text-center text-[color:var(--ds-body)]">Loading…</td></tr>}
             {rows !== null && list.length === 0 && <tr><td colSpan={5}><EmptyState title="No agreements" body="No unsigned agreements are waiting." /></td></tr>}
-            {list.map((r) => (
+            {rws.map((r) => (
               <tr key={r.id}>
                 <td>
                   <div className="font-medium text-[color:var(--ds-ink)]">{r.company_name ?? '—'}</div>
@@ -188,8 +188,8 @@ export default function NewPartnersPanel() {
                 </td>
               </tr>
             ))}
-          </tbody>
-        </table>
+          </>)}
+</SortTable>
       </div>
 
       {tl && (

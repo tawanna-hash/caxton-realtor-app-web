@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { A } from '@/components/anchor/ui';
 import { day, money, type Adv, type Inv } from '../data';
+import SortTable from '@/components/anchor/SortTable';
 
 // Statement summary for the selected issued invoices. Sending creates one
 // payment link per invoice plus a Pay Balance in Full link, then emails the
@@ -22,14 +23,13 @@ export default function StatementDialog({ client, invoices, onClose }: { client:
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[12px] bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Statement summary</h2>
         <p className="mt-1 text-sm text-[color:var(--ds-body)]">{client.name}</p>
-        <table className={`${A.table} mt-4`}>
-          <thead><tr><th>Invoice</th><th>Due</th><th className="text-right">Total</th><th className="text-right">Balance</th></tr></thead>
-          <tbody>
-            {invoices.map((i) => (
+        <SortTable rows={invoices} cols={[{ label: 'Invoice', get: (r) => r.number }, { label: 'Due', get: (r) => r.due_date }, { label: 'Total', get: (r) => r.total_cents, className: 'text-right' }, { label: 'Balance', get: (r) => r.balance_cents, className: 'text-right' }]} className={`${A.table} mt-4`}>
+{(rws) => (<>
+            {rws.map((i) => (
               <tr key={i.id}><td className="font-medium text-[color:var(--ds-ink)]">{i.number ?? '—'}</td><td className="whitespace-nowrap">{day(i.due_date)}</td><td className="text-right">{money(i.total_cents)}</td><td className="text-right">{money(i.balance_cents)}</td></tr>
             ))}
-          </tbody>
-        </table>
+          </>)}
+</SortTable>
         <div className="mt-3 flex items-center justify-between rounded-[10px] bg-[color:var(--ds-page,#f6f6fa)] px-4 py-3 text-sm">
           <span className="font-medium text-[color:var(--ds-ink)]">Balance in full</span>
           <span className="text-base font-semibold text-[color:var(--ds-ink)]">{money(total)}</span>

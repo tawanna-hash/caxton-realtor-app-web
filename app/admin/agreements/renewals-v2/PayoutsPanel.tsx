@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
+import SortTable from '@/components/anchor/SortTable';
 
 type Payout = { id: string; batch_date: string; amount_cents: number; fees_cents: number; transactions: number; status: string };
 
@@ -50,10 +51,9 @@ export default function PayoutsPanel() {
       </div>
       {!rows ? <p className="text-sm text-[color:var(--ds-body)]">Loading payouts from Stripe…</p> : shown.length === 0 ? <EmptyState title="No payouts found" body="Try a longer date range." /> : (
         <div className="overflow-x-auto">
-          <table className={A.table}>
-            <thead><tr><th>Arrival date</th><th>Payout</th><th>Status</th><th className="text-right">Transactions</th><th className="text-right">Fees</th><th className="text-right">Amount</th></tr></thead>
-            <tbody>
-              {shown.map((p) => (
+          <SortTable rows={shown} cols={[{ label: 'Arrival date', get: (r) => r.batch_date }, { label: 'Payout', get: (r) => r.id }, { label: 'Status', get: (r) => r.status }, { label: 'Transactions', get: (r) => r.transactions, className: 'text-right' }, { label: 'Fees', get: (r) => r.fees_cents, className: 'text-right' }, { label: 'Amount', get: (r) => r.amount_cents, className: 'text-right' }]} className={A.table}>
+{(rws) => (<>
+              {rws.map((p) => (
                 <tr key={p.id}>
                   <td className="whitespace-nowrap">{day(p.batch_date)}</td>
                   <td className="max-w-[200px] truncate font-mono text-xs" title={p.id}>{p.id}</td>
@@ -63,8 +63,8 @@ export default function PayoutsPanel() {
                   <td className="whitespace-nowrap text-right font-medium">{money(p.amount_cents)}</td>
                 </tr>
               ))}
-            </tbody>
-          </table>
+            </>)}
+</SortTable>
         </div>
       )}
     </div>

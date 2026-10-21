@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { A, SearchBox } from '@/components/anchor/ui';
 import { CreateProposal, EmptyPanel, PageHeader, relTime } from '../shared';
+import SortTable from '@/components/anchor/SortTable';
 
 type Item = { id: string; kind: 'new' | 'renewal'; company_name: string | null; email: string | null; stage: 'draft' | 'sent' | 'opened' | 'signed'; rate_cents: number | null; last_activity_at: string | null; resend_id: string };
 const money = (c: number | null) => (c == null ? '—' : `$${(c / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}`);
@@ -53,10 +54,9 @@ export default function SentClient() {
         <>
           <SearchBox value={q} onChange={setQ} label="Search sent proposals" />
           <div className="overflow-x-auto">
-            <table className={`${A.table} min-w-[640px]`}>
-              <thead><tr><th>Client name</th><th>Type</th><th>Status</th><th>Monthly</th><th>Last activity</th><th /></tr></thead>
-              <tbody>
-                {rows.map((i) => (
+            <SortTable rows={rows} cols={[{ label: 'Client name', get: (r) => r.company_name }, { label: 'Type', get: (r) => r.kind }, { label: 'Status', get: (r) => r.stage }, { label: 'Monthly', get: (r) => r.rate_cents }, { label: 'Last activity', get: (r) => r.last_activity_at }, { label: '' }]} className={`${A.table} min-w-[640px]`}>
+{(rws) => (<>
+                {rws.map((i) => (
                   <tr key={i.id}>
                     <td><div className="font-medium text-[color:var(--ds-ink)]">{i.company_name ?? '—'}</div><div className="text-xs text-[color:var(--ds-body)]">{i.email ?? 'No email on file'}</div></td>
                     <td>{i.kind === 'renewal' ? 'Renewal' : 'New partner'}</td>
@@ -67,8 +67,8 @@ export default function SentClient() {
                   </tr>
                 ))}
                 {rows.length === 0 && <tr><td colSpan={6} className="py-10 text-center text-[color:var(--ds-body)]">No proposals match your search.</td></tr>}
-              </tbody>
-            </table>
+              </>)}
+</SortTable>
           </div>
         </>
       )}

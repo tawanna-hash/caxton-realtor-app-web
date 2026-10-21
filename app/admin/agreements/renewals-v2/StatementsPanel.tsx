@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
+import SortTable from '@/components/anchor/SortTable';
 
 type Row = { advertiser_id: number; advertiser_name: string; recipient_email: string | null; outstanding_cents: number; overdue_cents: number; open_invoice_count: number; last_sent_at: string | null; send_count: number };
 
@@ -49,10 +50,9 @@ export default function StatementsPanel() {
       </div>
       {shown.length === 0 ? <EmptyState title="No statements found" body="Try a different search." /> : (
         <div className="overflow-x-auto">
-          <table className={A.table}>
-            <thead><tr><th>Partner</th><th>Email</th><th className="text-right">Open invoices</th><th className="text-right">Overdue</th><th className="text-right">Outstanding</th><th>Last sent</th><th /></tr></thead>
-            <tbody>
-              {shown.map((r) => (
+          <SortTable rows={shown} cols={[{ label: 'Partner', get: (r) => r.advertiser_name }, { label: 'Email', get: (r) => r.recipient_email }, { label: 'Open invoices', get: (r) => r.open_invoice_count, className: 'text-right' }, { label: 'Overdue', get: (r) => r.overdue_cents, className: 'text-right' }, { label: 'Outstanding', get: (r) => r.outstanding_cents, className: 'text-right' }, { label: 'Last sent', get: (r) => r.last_sent_at }, { label: '' }]} className={A.table}>
+{(rws) => (<>
+              {rws.map((r) => (
                 <tr key={r.advertiser_id}>
                   <td className="max-w-[240px] truncate" title={r.advertiser_name}>{r.advertiser_name}</td>
                   <td className="max-w-[220px] truncate" title={r.recipient_email ?? ''}>{r.recipient_email ?? '—'}</td>
@@ -63,8 +63,8 @@ export default function StatementsPanel() {
                   <td className="whitespace-nowrap"><Link className="text-[color:var(--ds-primary)]" href={`/admin/getpaid/statements/${r.advertiser_id}`}>View statement</Link></td>
                 </tr>
               ))}
-            </tbody>
-          </table>
+            </>)}
+</SortTable>
         </div>
       )}
     </div>

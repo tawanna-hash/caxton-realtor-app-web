@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { A, RowMenu, ColumnStyle, EditColumns, EmptyState, FilterChip, useColumns, type ColumnDef } from '@/components/anchor/ui';
+import SortTable from '@/components/anchor/SortTable';
 
 type Candidate = {
   id: string;
@@ -250,21 +251,13 @@ export default function RenewalsV2Client() {
 
       <div className="overflow-x-auto">
         <ColumnStyle tableClass="cols-renewals" cols={COLS} visible={cols.visible} />
-        <table className={`${A.table} cols-renewals min-w-[900px]`}>
-          <thead>
-            <tr>
-              <th>
-                <input type="checkbox" className="accent-[color:var(--ds-primary)]" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(sendable.map((r) => r.id)))} aria-label="Select all with an email" />
-              </th>
-              <th>Partner</th><th>Ad</th><th>Rate</th><th>Expires</th><th>Status</th><th />
-            </tr>
-          </thead>
-          <tbody>
+        <SortTable rows={visible} cols={[{ label: (<input type="checkbox" className="accent-[color:var(--ds-primary)]" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(sendable.map((r) => r.id)))} aria-label="Select all with an email" />) }, { label: 'Partner', get: (r) => r.company_name }, { label: 'Ad', get: (r) => [r.ad_size, r.frequency].filter(Boolean).join(' · ') || r.channel }, { label: 'Rate', get: (r) => r.rate_cents }, { label: 'Expires', get: (r) => r.exp_date }, { label: 'Status', get: (r) => r.state }, { label: '' }]} className={`${A.table} cols-renewals min-w-[900px]`}>
+{(rws) => (<>
             {rows === null && !error && <tr><td colSpan={7} className="text-center text-[color:var(--ds-body)]">Loading…</td></tr>}
             {rows !== null && visible.length === 0 && (
               <tr><td colSpan={7}><EmptyState title="No renewals" body="No agreements due for renewal match your filters." action={{ label: 'Clear filters', onClick: () => setStates(['not_started', 'draft', 'sent', 'opened', 'signed']) }} /></td></tr>
             )}
-            {visible.map((r) => (
+            {rws.map((r) => (
               <tr key={r.id}>
                 <td><input type="checkbox" className="accent-[color:var(--ds-primary)]" disabled={!r.email} checked={selected.has(r.id)} onChange={() => toggle(r.id)} aria-label={`Select ${r.company_name ?? 'agreement'}`} /></td>
                 <td>
@@ -301,8 +294,8 @@ export default function RenewalsV2Client() {
                 </td>
               </tr>
             ))}
-          </tbody>
-        </table>
+          </>)}
+</SortTable>
       </div>
     </div>
   );

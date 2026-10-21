@@ -2400,7 +2400,13 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 [data-admin-ui='true'] [data-anchor-ui='true'] .anchor-chip {
   border-radius: 9999px !important;
 }
-[data-admin-ui='true'] [data-anchor-ui='true'] textarea { border-radius: 20px !important; }
+[data-admin-ui='true'] [data-anchor-ui='true'] textarea,
+[data-admin-ui='true'] [data-anchor-ui='true'] textarea.anchor-input,
+[data-admin-ui='true'] [data-anchor-ui='true'] textarea.anchor-input:focus {
+  border-radius: 14px !important;
+  padding: 0.75rem 1rem !important;
+  line-height: 1.5;
+}
 [data-admin-ui='true'] [data-anchor-ui='true'] select { padding-left: 1.25rem; }
 
 /* Pills, once and for all: border-radius 9999px (Tailwind rounded-full) on every

@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
+import SortTable from '@/components/anchor/SortTable';
 
 type Inv = {
   id: string; number: string | null; advertiser_name: string | null; agreement_id: string | null; status: string;
@@ -74,10 +75,9 @@ export default function InvoicesPanel() {
       </div>
       {shown.length === 0 ? <EmptyState title="No invoices found" body="Try a different search or status." /> : (
         <div className="overflow-x-auto">
-          <table className={A.table}>
-            <thead><tr><th>Invoice</th><th>Client</th><th>Status</th><th>Issued</th><th>Due</th><th className="text-right">Total</th><th className="text-right">Paid</th><th className="text-right">Balance</th><th>Agreement</th></tr></thead>
-            <tbody>
-              {pageRows.map((i) => (
+          <SortTable rows={shown} cols={[{ label: 'Invoice', get: (r) => r.number }, { label: 'Client', get: (r) => r.advertiser_name }, { label: 'Status', get: (r) => r.status }, { label: 'Issued', get: (r) => r.issued_at ?? r.created_at }, { label: 'Due', get: (r) => r.due_date }, { label: 'Total', get: (r) => r.total_cents, className: 'text-right' }, { label: 'Paid', get: (r) => r.amount_paid_cents, className: 'text-right' }, { label: 'Balance', get: (r) => r.balance_cents, className: 'text-right' }, { label: 'Agreement', get: (r) => (r.agreement_id ? 1 : 0) }]} className={A.table} offset={page * PAGE} limit={PAGE}>
+{(rws) => (<>
+              {rws.map((i) => (
                 <tr key={i.id}>
                   <td className="max-w-[180px] truncate whitespace-nowrap font-medium text-[color:var(--ds-ink)]" title={i.number ?? undefined}>{i.number ?? 'Draft'}</td>
                   <td className="min-w-[180px]">{i.advertiser_name ?? '—'}</td>
@@ -90,8 +90,8 @@ export default function InvoicesPanel() {
                   <td>{i.agreement_id ? <span className="text-xs text-[color:var(--ds-primary)]">Linked</span> : <span className="text-xs text-[color:var(--ds-placeholder)]">None</span>}</td>
                 </tr>
               ))}
-            </tbody>
-          </table>
+            </>)}
+</SortTable>
         </div>
       )}
       {shown.length > PAGE && (
