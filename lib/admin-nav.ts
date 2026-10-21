@@ -72,13 +72,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
-    label: 'Get Paid',
-    links: [
-      { label: 'Deposit Slip', href: '/admin/reports/deposits', description: 'Printable check deposit summary' },
-      { label: 'Deposit Detail', href: '/admin/reports/detail', description: 'Printable check payment detail report' },
-    ],
-  },
-  {
     label: 'Mailing List HUB',
     links: [
       // The HUB page itself surfaces every audience segment as a tile, so

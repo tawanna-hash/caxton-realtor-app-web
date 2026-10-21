@@ -12,5 +12,5 @@ export default async function LegacyDepositReportPage({
     if (value) query.set(key, value);
   }
   const suffix = query.size ? `?${query.toString()}` : '';
-  redirect(`/admin/reports/deposits${suffix}`);
+  redirect(`/admin/reports-beta/deposit-slip${suffix}`);
 }

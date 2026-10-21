@@ -15,6 +15,8 @@ export const REPORTS = [
   { slug: 'active-services', title: 'Active Services', body: 'View all active services across all of your agreements with options to apply various filters.' },
   { slug: 'future-invoices', title: 'Future Invoices', body: 'View all invoices scheduled for issuance over the next 12 months.' },
   { slug: 'sent-proposals', title: 'Sent Agreements', body: 'View all sent agreements by their sent date and current status.' },
+  { slug: 'deposit-slip', title: 'Deposit Slip', body: 'Printable check deposit summary: every check recorded against an invoice in a date range, totalled for the bank.' },
+  { slug: 'deposit-detail', title: 'Deposit Detail', body: 'Transaction-level check payment detail from recorded invoice payments, printable.' },
   { slug: 'remaining-credit', title: 'Remaining Credit', body: 'View the remaining credit your clients have per agreement.' },
 ] as const;
 
