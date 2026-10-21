@@ -1239,12 +1239,21 @@ export function AgreementDrawer({
                 {form.payment_type === "Credit Card" ? (
                   <>
                     <input
-                      value={form.ad_rate}
-                      className={INPUT_READONLY}
-                      readOnly
+                      type="number"
+                      value={form.ad_rate_base}
+                      onChange={(e) => {
+                        const base = parseFloat(e.target.value);
+                        upd("ad_rate_base", e.target.value);
+                        upd("ad_rate", base > 0 ? String(applyCcSurcharge(base)) : "");
+                        upd("rate_user_edited", true);
+                      }}
+                      className={INPUT}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
                     />
                     <div className="text-[10px] text-[#645600] mt-1">
-                      +3% CC surcharge (base: ${form.ad_rate_base})
+                      Card payments add 3%: client pays ${form.ad_rate || "0"}
                     </div>
                   </>
                 ) : (
@@ -1261,6 +1270,15 @@ export function AgreementDrawer({
                     min="0"
                     step="0.01"
                   />
+                )}
+                {form.rate_user_edited && lookupRate(form.frequency, form.ad_size) && (
+                  <button
+                    type="button"
+                    className="text-[10px] text-[#301D5D] underline mt-1"
+                    onClick={() => onSizeFrChange(form.ad_size, form.frequency)}
+                  >
+                    Overridden. Reset to media kit rate (${lookupRate(form.frequency, form.ad_size)?.rate})
+                  </button>
                 )}
                 {rateLockOverride ? (
                   <div className="text-[10px] text-[#301D5D] mt-1">
