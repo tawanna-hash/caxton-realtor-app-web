@@ -2352,6 +2352,10 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   border-radius: 0;
   box-shadow: none;
 }
+[data-anchor-ui='true'][data-anchor-ui='true'] .anchor-card:has(> table) {
+  background-color: #ffffff;
+  border-radius: 10px;
+}
 [data-admin-ui='true'] [data-anchor-ui='true'] table thead,
 [data-admin-ui='true'] [data-anchor-ui='true'] table thead tr,
 [data-admin-ui='true'] [data-anchor-ui='true'] table thead th {

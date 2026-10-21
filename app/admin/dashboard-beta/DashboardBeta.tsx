@@ -152,7 +152,7 @@ export default function DashboardBeta() {
             <Stat label="Awaiting payment" tone="text-teal-700" value={usd0(d.current.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.current.length} invoice${d.current.length === 1 ? '' : 's'}`} />
             <Stat label="Require attention" value={usd0(d.overdue.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.overdue.length} invoice${d.overdue.length === 1 ? '' : 's'}`} />
           </div>
-          <div className="min-h-[200px] flex-1 rounded-[10px] bg-white p-5">
+          <div className="anchor-card min-h-[200px] flex-1 rounded-[10px] bg-white p-5">
             <div className="mb-3 h-3 rounded-full bg-[#BFE6F2]" />
             <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Type</th><th className="py-2 text-right font-normal">Invoices</th><th className="py-2 text-right font-normal">Amount</th></tr></thead>
               <tbody>{d.buckets.map(([label, test]) => { const rows = d.overdue.filter((i) => test(d.age(i))); return <tr key={label} className="border-t border-[color:var(--ds-line)]"><td className="py-2.5">{label}</td><td className="py-2.5 text-right">{rows.length}</td><td className="py-2.5 text-right">{money(rows.reduce((n, i) => n + d.bal(i), 0))}</td></tr>; })}</tbody></table>
@@ -173,7 +173,7 @@ export default function DashboardBeta() {
             <Stat label="Paid this month" value={usd0(d.paidOut)} />
             <Stat label="Processing" value={usd0(d.inTransit)} />
           </div>
-          <div className="min-h-[200px] flex-1 rounded-[10px] bg-white p-5">
+          <div className="anchor-card min-h-[200px] flex-1 rounded-[10px] bg-white p-5">
             <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Date</th><th className="py-2 text-right font-normal">Amount</th><th className="py-2 text-right font-normal">Status</th></tr></thead>
               <tbody>{pay.data.slice(0, 5).map((p) => <tr key={p.id} className="border-t border-[color:var(--ds-line)]"><td className="py-2.5">{day(p.batch_date)}</td><td className="py-2.5 text-right">{money(p.amount_cents)}</td><td className="py-2.5 text-right"><span className="rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-xs capitalize">{p.status.replaceAll('_', ' ')}</span></td></tr>)}</tbody></table>
             {pay.data.length === 0 && <p className="py-6 text-center text-sm text-[color:var(--ds-body)]">{pay.loading ? 'Loading payouts…' : 'Here you will view your payouts'}</p>}

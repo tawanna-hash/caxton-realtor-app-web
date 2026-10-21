@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SentClient from '../proposals/sent/SentClient';
 import BuilderList from '../proposals/BuilderList';
@@ -51,6 +51,18 @@ function Collapsible({ title, children }: { title: string; children: React.React
 export default function AgreementsBeta() {
   const want = useSearchParams()?.get('tab') as Tab | null;
   if (typeof window !== 'undefined' && (want as string | null) === 'templates') window.location.replace('/admin/agreements/templates-beta');
+  const [counts, setCounts] = useState<Partial<Record<Tab, number>>>({});
+  useEffect(() => {
+    const get = (u: string) => fetch(u, { credentials: 'include', cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    void Promise.all([get('/api/admin/agreements'), get('/api/admin/agreements-v2/board'), get('/api/admin/agreements-v2/builder'), get('/api/admin/renewals-v2?days=90')]).then(([a, b, d, r]) => {
+      const c: Partial<Record<Tab, number>> = {};
+      if (a?.agreements) c.board = (a.agreements as Array<{ status?: string; signed_at?: string | null; end_date?: string | null }>).filter((x) => { const t = String(x.status).toLowerCase(); return (t === 'signed' || t === 'active' || !!x.signed_at) && !['cancelled', 'canceled', 'terminated', 'expired'].includes(t) && !(x.end_date && x.end_date.slice(0, 10) < new Date().toISOString().slice(0, 10)); }).length;
+      if (b?.items) c.sent = (b.items as Array<{ stage?: string }>).filter((i) => i.stage === 'sent' || i.stage === 'opened').length;
+      if (d) { c.drafts = (d.drafts ?? []).length; c.archived = (d.archived ?? []).length; }
+      if (r?.candidates) c.renewals = (r.candidates as unknown[]).length;
+      setCounts(c);
+    });
+  }, []);
   const [tab, setTab] = useState<Tab>(want && TABS.some(([k]) => k === want) ? want : 'board');
   return (
     <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
@@ -70,7 +82,7 @@ export default function AgreementsBeta() {
             onClick={() => setTab(key)}
             className={`anchor-tab -mb-px border-b-2 pb-3 text-[15px] ${tab === key ? 'border-[color:var(--ds-primary)] font-medium text-[color:var(--ds-ink)]' : 'border-transparent text-[color:var(--ds-body)] hover:text-[color:var(--ds-ink)]'}`}
           >
-            {label}
+            {label}{typeof counts[key] === 'number' && <span className="ml-2 rounded-full bg-[#E4E3F1] px-2 py-0.5 align-middle text-[11px] font-medium leading-none text-[color:var(--ds-body)]">{counts[key]}</span>}
           </button>
         ))}
       </div>
