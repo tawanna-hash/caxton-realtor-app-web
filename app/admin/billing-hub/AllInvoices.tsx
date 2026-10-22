@@ -4,6 +4,7 @@
 // Same invoice records and the same editor, payment and link components, so nothing is duplicated or lost.
 // Beta rule: nothing here emails a client. Issuing an invoice only changes its status; links are copied.
 
+import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { A, EmptyState, RowMenu, SearchBox, type MenuItem } from '@/components/anchor/ui';
 import SortTable from '@/components/anchor/SortTable';
@@ -218,6 +219,8 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
   const [sharing, setSharing] = useState<Inv | null>(null);
   const [activity, setActivity] = useState<Inv | null>(null);
   const [createMenu, setCreateMenu] = useState(false);
+  const [createSlot, setCreateSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => { setCreateSlot(document.getElementById('create-invoice-slot')); }, []);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -415,6 +418,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
       { label: BETA_EMAIL_ENABLED ? 'Send invoice' : 'Send invoice (email off in beta)', onClick: () => setEmailing({ invoice: i, reminder: false }), disabled: !BETA_EMAIL_ENABLED || closed },
       { label: BETA_EMAIL_ENABLED ? 'Send reminder' : 'Send reminder (email off in beta)', onClick: () => setEmailing({ invoice: i, reminder: true }), disabled: !BETA_EMAIL_ENABLED || closed || i.status === 'draft' },
       { label: 'Create payment link', onClick: () => setLinking(i), disabled: closed || i.status === 'draft' },
+      { label: 'Create sales receipt', onClick: () => setReceipt(true) },
       { label: 'Copy invoice link', onClick: () => setSharing(i), disabled: closed || i.status === 'draft' },
       { label: 'Create task', onClick: () => task(i) },
       { label: 'Print', onClick: () => print(i) },
@@ -467,7 +471,10 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
           <option value="send" disabled={!BETA_EMAIL_ENABLED}>{BETA_EMAIL_ENABLED ? 'Send invoices' : 'Send invoices (email off in beta)'}</option>
           <option value="remind" disabled={!BETA_EMAIL_ENABLED}>{BETA_EMAIL_ENABLED ? 'Send reminders' : 'Send reminders (email off in beta)'}</option><option value="print">Print</option><option value="void">Void</option><option value="delete">Delete drafts</option>
         </select>
-        <div className="relative ml-auto flex">
+      </div>
+
+      {createSlot && createPortal(
+        <div className="relative flex">
           <button type="button" className={`${A.primary} rounded-r-none`} onClick={() => setCreating({ advertiser_id: null, agreement_id: '', amount_cents: null })}>Create invoice</button>
           <button type="button" aria-label="More create actions" className={`${A.primary} -ml-px rounded-l-none px-3`} onClick={() => setCreateMenu((o) => !o)}>&#9660;</button>
           {createMenu && (
@@ -477,7 +484,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
             </div>
           )}
         </div>
-      </div>
+      , createSlot)}
 
       {status === 'scheduled' ? (
         <ScheduledInvoicesPanel drafts={shown} onEditDraft={(i) => setEditing(i)} onSendDraft={(i) => void issue(i)} />

@@ -53,7 +53,6 @@ export default function BillingHub() {
   const [bill, setBill] = useState<null | { mode: 'charge' | 'credit'; seed?: { description: string; unit_cents: number } }>(null);
   const [control, setControl] = useState(false);
   const [noPick, setNoPick] = useState(false);
-  const [bulk, setBulk] = useState(false);
   const [version, setVersion] = useState(0);
   const [intent, setIntent] = useState<InvoiceIntent | null>(null);
 
@@ -126,11 +125,9 @@ export default function BillingHub() {
           </span>
         </Field>}
               </div>
-        <button type="button" onClick={() => setBulk(true)} className={A.outline}>Bill clients in bulk</button>
         {client && <button type="button" onClick={() => setControl(true)} className={A.outline}>Billing Control</button>}
       </div>
       {!client && <p className="py-24 text-center text-sm text-[color:var(--ds-ink)]">Please choose a client to start billing</p>}
-      {bulk && <BulkDialog clients={clients} onClose={() => setBulk(false)} onDone={() => setVersion((v) => v + 1)} />}
 
       {client && <div role="tablist" className="flex flex-wrap gap-x-8 border-b border-[color:var(--ds-line)]">
         {TABS.map(([k, l]) => (
@@ -304,13 +301,13 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
     .sort((a, b) => { const v = (i: FullInv) => (sort.k === 'number' ? i.number ?? '' : sort.k === 'issue' ? i.issue_date ?? '' : sort.k === 'due' ? i.due_date ?? '' : String(i.total_cents).padStart(12, '0')); return sort.dir * v(a).localeCompare(v(b)); });
   const th = (k: typeof sort.k, l: string, right = false) => <th className={right ? 'text-right' : ''}><button type="button" style={{ border: 0, background: 'transparent', padding: 0 }} className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--ds-body)]" onClick={() => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : 1 }))}>{l}<SortCaret dir={sort.k === k ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} /></button></th>;
   const scopeSwitch = (
-    <div role="group" aria-label="Invoice scope" className="flex gap-2">
+    <div role="group" aria-label="Invoice scope" className="flex items-center gap-2">
       {([['client', 'This client'], ['all', 'All clients']] as const).map(([k, l]) => (
-        <button key={k} type="button" aria-pressed={scope === k} onClick={() => setScope(k)} style={{ background: scope === k ? 'var(--ds-selected)' : 'transparent' }} className={`rounded-full border px-4 py-1.5 text-sm ${scope === k ? 'border-[color:var(--ds-primary)] text-[color:var(--ds-primary)]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{l}</button>
+        <button key={k} type="button" aria-pressed={scope === k} onClick={() => setScope(k)} className={`rounded-full border px-4 py-1.5 text-sm ${scope === k ? 'border-[color:var(--ds-primary)]' : 'bg-white border-[color:var(--ds-line)] text-[color:var(--ds-body)] hover:bg-[color:var(--ds-selected)] hover:text-[color:var(--ds-primary)]'}`}>{l}</button>
       ))}
     </div>
   );
-  if (scope === 'all') return <div className="space-y-4">{scopeSwitch}<AllInvoices intent={intent} initialQuery={focusQ} onIntentDone={onIntentDone} /></div>;
+  if (scope === 'all') return <div className="space-y-4"><div className="flex flex-wrap items-center gap-3">{scopeSwitch}<div id="create-invoice-slot" className="ml-auto" /></div><AllInvoices intent={intent} initialQuery={focusQ} onIntentDone={onIntentDone} /></div>;
   return (
     <div className="space-y-4">
       {scopeSwitch}
