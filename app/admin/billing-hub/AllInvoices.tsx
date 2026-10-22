@@ -425,7 +425,6 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
     return [
       { label: 'View/Edit', onClick: () => setEditing(i) },
       { label: 'View full invoice', onClick: () => { window.location.href = `/admin/billing-hub/invoice/${i.id}/preview`; } },
-      { label: 'Receive payment', onClick: () => setPaying(i), disabled: closed },
       { label: 'Duplicate', onClick: () => void duplicate(i, false) },
       { label: 'Duplicate and edit', onClick: () => void duplicate(i, true) },
       { label: 'Issue invoice (no email)', onClick: () => void issue(i), disabled: i.status !== 'draft' },
@@ -503,7 +502,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
                   <td className="whitespace-nowrap text-right font-medium">{formatCents(i.total_cents)}</td>
                   <td><StatusChip i={i} now={now} /></td>
                   <td className="whitespace-nowrap text-right">
-                    <button type="button" disabled={busy} className={`${A.small} mr-2`} onClick={() => setEditing(i)}>View/Edit</button>
+                    <button type="button" disabled={busy || ['paid', 'void'].includes(i.status)} title={['paid', 'void'].includes(i.status) ? `This invoice is ${i.status}.` : undefined} className={`${A.small} mr-2`} onClick={() => setPaying(i)}>Receive payment</button>
                     <RowMenu items={menu(i)} label={`More actions for ${i.number ?? 'invoice'}`} />
                   </td>
                 </tr>
