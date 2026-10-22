@@ -11,6 +11,7 @@ export const maxDuration = 60;
 
 const CUTOFF = '2026-10-18T05:00:00.000Z'; // Oct 18 00:00 America/Chicago
 const TTL_MS = 2 * 60 * 1000;
+const diag: string[] = [];
 let cache: { at: number; rows: Row[] } | null = null;
 
 type Row = { id: string; to: string[]; subject: string; created_at: string; last_event: string };
@@ -25,7 +26,7 @@ async function listKey(key: string): Promise<Row[]> {
     const url = `https://api.resend.com/emails?limit=100${after ? `&after=${after}` : ''}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${key}` }, cache: 'no-store' });
     if (res.status === 429) { await sleep(1200); page--; continue; }
-    if (!res.ok) break;
+    if (!res.ok) { diag.push(`${res.status} ${(await res.text()).slice(0, 120)}`); break; }
     const j = (await res.json()) as { data?: ListItem[]; has_more?: boolean };
     const data = j.data ?? [];
     for (const e of data) {
@@ -57,11 +58,12 @@ export async function GET() {
     process.env.RESEND_API_KEY,
   ].filter((k): k is string => Boolean(k))));
   const rows: Row[] = [];
+  diag.length = 0; diag.push(`keys:${keys.length}`);
   for (const k of keys) {
     try { rows.push(...(await listKey(k))); } catch { /* skip this key */ }
   }
   const seen = new Set<string>();
   const uniq = rows.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
   cache = { at: Date.now(), rows: uniq };
-  return NextResponse.json({ rows: uniq });
+  return NextResponse.json({ rows: uniq, diag });
 }
