@@ -266,19 +266,34 @@ export default async function StatementPage({
           </div>
         </section>
 
-        {overdueCents > 0 && (
+        {outstandingCents > 0 && (
           <section className="mb-4 border border-[#D9CFF0] bg-[#F6F3FB] px-4 py-4 text-center print:hidden">
-            <div className="font-semibold text-[#1B1726]">
-              Pay all overdue invoices: {money(overdueCents)}
+            <div className="grid gap-4 sm:grid-cols-2">
+              {overdueCents > 0 && (
+                <div>
+                  <div className="font-semibold text-[#1B1726]">Pay all overdue invoices: {money(overdueCents)}</div>
+                  <a
+                    href={statementPayUrl({ kind: 'statement', advertiserId: advertiser.id, scope: 'overdue' })}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-flex rounded bg-[#301D5D] px-4 py-2 text-xs font-semibold text-white hover:bg-[#42277C]"
+                  >
+                    Pay all overdue invoices
+                  </a>
+                </div>
+              )}
+              <div className={overdueCents > 0 ? '' : 'sm:col-span-2'}>
+                <div className="font-semibold text-[#1B1726]">Balance in full: {money(outstandingCents)}</div>
+                <a
+                  href={statementPayUrl({ kind: 'statement', advertiserId: advertiser.id, scope: 'all' })}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex rounded bg-[#301D5D] px-4 py-2 text-xs font-semibold text-white hover:bg-[#42277C]"
+                >
+                  Pay Balance in Full
+                </a>
+              </div>
             </div>
-            <a
-              href={statementPayUrl({ kind: 'statement', advertiserId: advertiser.id, scope: 'overdue' })}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-2 inline-flex rounded bg-[#301D5D] px-4 py-2 text-xs font-semibold text-white hover:bg-[#42277C]"
-            >
-              Pay all overdue invoices
-            </a>
           </section>
         )}
 
