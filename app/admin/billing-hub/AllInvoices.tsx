@@ -220,7 +220,8 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
   const [activity, setActivity] = useState<Inv | null>(null);
   const [createMenu, setCreateMenu] = useState(false);
   const [createSlot, setCreateSlot] = useState<HTMLElement | null>(null);
-  useEffect(() => { setCreateSlot(document.getElementById('create-invoice-slot')); }, []);
+  const [searchSlot, setSearchSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => { setCreateSlot(document.getElementById('create-invoice-slot')); setSearchSlot(document.getElementById('invoice-search-slot')); }, []);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -451,27 +452,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
 
       {(msg || err) && <div role="status" className={err ? A.error : A.notice}>{err || msg}</div>}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <SearchBox value={q} onChange={(v) => reset(() => setQ(v))} label="Search invoices" />
-        <select aria-label="Status" value={status} onChange={(e) => reset(() => setStatus(e.target.value as StatusFilter))} className={SELECT}>
-          {([['all', 'All statuses'], ['scheduled', 'Scheduled'], ['draft', 'Draft'], ['open', 'Open'], ['overdue', 'Overdue'], ['paid', 'Paid'], ['void', 'Void']] as const).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
-        <select aria-label="Date" value={dates} onChange={(e) => reset(() => setDates(e.target.value as DateFilter))} className={SELECT}>
-          {([['all', 'All dates'], ['today', 'Today'], ['30-days', 'Last 30 days'], ['3-months', 'Last 3 months'], ['12-months', 'Last 12 months']] as const).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
-        <select aria-label="Type" value={kind} onChange={(e) => reset(() => setKind(e.target.value as TypeFilter))} className={SELECT}>
-          <option value="all">All types</option><option value="invoice">Invoices</option><option value="receipt">Sales receipts</option>
-        </select>
-        <select aria-label="Errors" value={errors} onChange={(e) => reset(() => setErrors(e.target.value as ErrorFilter))} className={SELECT}>
-          <option value="all">Errors</option><option value="missing-email">Missing email</option><option value="past-due">Past due</option>
-        </select>
-        <select aria-label="Batch actions" value="" disabled={busy || sel.size === 0} onChange={(e) => void batch(e.target.value as Batch)} className={SELECT}>
-          <option value="">{sel.size ? `Batch actions (${sel.size})` : 'Batch actions'}</option>
-          <option value="issue">Issue drafts (no email)</option>
-          <option value="send" disabled={!BETA_EMAIL_ENABLED}>{BETA_EMAIL_ENABLED ? 'Send invoices' : 'Send invoices (email off in beta)'}</option>
-          <option value="remind" disabled={!BETA_EMAIL_ENABLED}>{BETA_EMAIL_ENABLED ? 'Send reminders' : 'Send reminders (email off in beta)'}</option><option value="print">Print</option><option value="void">Void</option><option value="delete">Delete drafts</option>
-        </select>
-      </div>
+      {searchSlot && createPortal(<SearchBox value={q} onChange={(v) => reset(() => setQ(v))} label="Search invoices" />, searchSlot)}
 
       {createSlot && createPortal(
         <button type="button" className={A.outline} onClick={() => setCreating({ advertiser_id: null, agreement_id: '', amount_cents: null })}>Create invoice</button>

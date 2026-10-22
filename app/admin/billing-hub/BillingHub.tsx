@@ -308,7 +308,7 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
       ))}
     </div>
   );
-  if (scope === 'all') return <div className="space-y-4">{scopeSwitch}<AllInvoices intent={intent} initialQuery={focusQ} onIntentDone={onIntentDone} /></div>;
+  if (scope === 'all') return <div className="space-y-4"><div className="flex flex-wrap items-center gap-3">{scopeSwitch}<span id="invoice-search-slot" className="contents" /></div><AllInvoices intent={intent} initialQuery={focusQ} onIntentDone={onIntentDone} /></div>;
   return (
     <div className="space-y-4">
       {scopeSwitch}
