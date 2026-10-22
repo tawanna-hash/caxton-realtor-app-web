@@ -41,6 +41,13 @@ export default function ClientDetail({ id }: { id: number }) {
   const agr = useJson('/api/admin/agreements', (j) => (j.agreements ?? []) as Agr[], noAgr);
   const inv = useJson('/api/admin/invoices', (j) => (j.invoices ?? []) as Inv[], noInv);
   const sch = useJson('/api/admin/recurring-invoices', (j) => (j.schedules ?? []) as Sch[], noSch);
+  const [removedAgr, setRemovedAgr] = useState<Set<string>>(new Set());
+  async function deleteAgreement(agId: string) {
+    if (!window.confirm('Delete this agreement? This cannot be undone.')) return;
+    const r = await fetch(`/api/admin/agreements/${agId}`, { method: 'DELETE' });
+    if (!r.ok) { window.alert('The agreement could not be deleted.'); return; }
+    setRemovedAgr((prev) => new Set(prev).add(agId));
+  }
   const [tab, setTab] = useState<Tab>('summary');
   const [agrFilter, setAgrFilter] = useState('all');
   const [q, setQ] = useState('');
@@ -51,7 +58,7 @@ export default function ClientDetail({ id }: { id: number }) {
 
   const a = useMemo(() => mergeClients(adv.data).find((c) => c.records.some((r) => r.id === id)), [adv.data, id]);
   const ids = useMemo(() => new Set(a?.records.map((r) => r.id) ?? [id]), [a, id]);
-  const myAgr = useMemo(() => agr.data.filter((x) => (x.advertiser_id != null && ids.has(x.advertiser_id))), [agr.data, ids]);
+  const myAgr = useMemo(() => agr.data.filter((x) => (x.advertiser_id != null && ids.has(x.advertiser_id) && !removedAgr.has(String(x.id)))), [agr.data, ids, removedAgr]);
   const myInv = useMemo(() => inv.data.filter((x) => (x.advertiser_id != null && ids.has(x.advertiser_id))).sort((p, q2) => (q2.issue_date ?? '').localeCompare(p.issue_date ?? '')), [inv.data, ids]);
   const mySch = useMemo(() => sch.data.filter((x) => (x.advertiser_id != null && ids.has(x.advertiser_id)) && x.status !== 'ended').sort((p, q2) => p.next_run_at.localeCompare(q2.next_run_at)), [sch.data, ids]);
   const today = new Date().toISOString().slice(0, 10);
@@ -133,7 +140,7 @@ export default function ClientDetail({ id }: { id: number }) {
                 <ul className="space-y-2">
                   {myAgr.slice(0, 5).map((g) => (
                     <li key={g.id} className="rounded-[10px] border border-[color:var(--ds-line)] p-3">
-                      <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm"><span className="font-medium text-[color:var(--ds-primary)]">Agreement</span><span className={g.signed_at ? 'rounded-full border border-[#047857] px-2 py-0.5 text-xs text-[#065F46]' : pill}>{g.signed_at ? 'Active' : 'Awaiting approval'}</span></span><RowMenu items={[{ label: 'View agreements', href: '/admin/agreements/renewals-v2' }]} /></div>
+                      <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm"><span className="font-medium text-[color:var(--ds-primary)]">Agreement</span><span className={g.signed_at ? 'rounded-full border border-[#047857] px-2 py-0.5 text-xs text-[#065F46]' : pill}>{g.signed_at ? 'Active' : 'Awaiting approval'}</span></span><RowMenu items={[{ label: 'View agreements', href: '/admin/agreements/renewals-v2' }, { label: 'Delete agreement', danger: true, onClick: () => deleteAgreement(String(g.id)) }]} /></div>
                       <p className="mt-1 text-xs text-[color:var(--ds-body)]">Effective date · {day(g.start_date ?? g.signed_at ?? g.created_at)}</p>
                     </li>
                   ))}
