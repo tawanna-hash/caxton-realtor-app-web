@@ -48,10 +48,16 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
+    // Top-level sidebar item right under the dashboard. Partner records and
+    // Partner Pages (builder/developer page visibility) are one workspace.
+    label: 'Partners',
+    links: [
+      { label: 'Partners', href: '/admin/crm', description: 'Accounts, contacts, share links and partner pages' },
+    ],
+  },
+  {
     label: 'Sales',
     links: [
-      { label: 'Partners',     href: '/admin/crm',           description: 'Accounts, contacts, share links' },
-      { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility', parent: '/admin/crm' },
       { label: 'Referral Network', href: '/admin/referral-network', description: 'Provider applications and approvals' },
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
       { label: 'Media Kit',    href: '/admin/ads/media-kit',   description: '2026 packages, rates & deadlines' },

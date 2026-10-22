@@ -39,9 +39,11 @@ const byLabel = (a: { label: string }, b: { label: string }) =>
   a.label.localeCompare(b.label, 'en', { sensitivity: 'base' });
 // Admin Dashboard is pinned first; every other group stays alphabetical.
 const PINNED_FIRST = 'Admin Dashboard';
+const PINNED_SECOND = 'Partners';
+const pinRank = (l: string) => (l === PINNED_FIRST ? 0 : l === PINNED_SECOND ? 1 : 2);
 const ADMIN_GROUPS: AdminNavGroup[] = ADMIN_NAV
   .map((g) => ({ ...g, links: g.label === 'Get Paid' ? [...g.links] : [...g.links].sort(byLabel) }))
-  .sort((a, b) => (a.label === PINNED_FIRST ? -1 : b.label === PINNED_FIRST ? 1 : byLabel(a, b)));
+  .sort((a, b) => pinRank(a.label) - pinRank(b.label) || byLabel(a, b));
 
 import BetaCountChip from '@/components/admin/BetaCountChip';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
@@ -50,6 +52,7 @@ import PendingGmailBadge from '@/components/PendingGmailBadge';
 
 const GROUP_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   'Admin Dashboard': LayoutDashboard,
+  Partners: Users,
   Sales: Users,
   'Get Paid': DollarSign,
   Beta: DollarSign,

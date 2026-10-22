@@ -36,6 +36,7 @@ import {
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 import LocationsStaffEditor from './LocationsStaffEditor';
 import AdvertiserChannelTabs from './AdvertiserChannelTabs';
+import PartnerPagesPanel from './PartnerPagesPanel';
 import AdvertiserImageUploader from '@/components/AdvertiserImageUploader';
 import { MARKETS, MARKET_META, isMarketLive, type Market } from '@/lib/types/markets';
 import PageTitle from '@/components/ui/PageTitle';
@@ -84,7 +85,7 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
   const [editing, setEditing] = useState<AdvertiserCrmRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
-  const [view, setView] = useUrlString<'audience' | 'sent'>('view', 'audience');
+  const [view, setView] = useUrlString<'audience' | 'sent' | 'pages'>('view', 'audience');
   const [prefillOutreachId, setPrefillOutreachId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -407,7 +408,13 @@ export default function CrmClient({ initialRows, renderedAt }: Props) {
           onClick={() => setView('sent')}
           className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'sent' ? 'border-[#301D5D] text-[#42277C]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >Sent</button>
+        <button type="button" role="tab" aria-selected={view === 'pages'}
+          onClick={() => setView('pages')}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'pages' ? 'border-[#301D5D] text-[#42277C]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >Partner Pages</button>
       </div>
+
+      {view === 'pages' && <PartnerPagesPanel />}
 
       {view === 'audience' && <>
       {/* Filters ────────────────────────────────────────────────── */}
