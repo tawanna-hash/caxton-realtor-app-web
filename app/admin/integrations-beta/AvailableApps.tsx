@@ -37,7 +37,7 @@ export default function AvailableApps() {
       <section>
         <h2 className="mb-3 text-base font-medium text-[color:var(--ds-ink)]">Communications</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Card name="Gmail" blurb="Connect a Gmail mailbox so event emails can be scanned for the calendar. Sending client email through Gmail is off in Beta." badge={s ? (s.gmail_configured ? 'Available' : 'Not configured') : '…'} action={<a className={A.small} href="/api/admin/gmail-auth/start" aria-disabled={s ? !s.gmail_configured : true}>Connect Gmail</a>} />
+          <Card name="Gmail" blurb="Connect a Gmail mailbox so event emails can be scanned for the calendar." badge={s ? (s.gmail_configured ? 'Available' : 'Not configured') : '…'} action={<a className={A.small} href="/api/admin/gmail-auth/start" aria-disabled={s ? !s.gmail_configured : true}>Connect Gmail</a>} />
         </div>
       </section>
     </div>

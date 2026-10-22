@@ -231,6 +231,18 @@ const nextConfig: NextConfig = {
         source: '/:path*',
         headers: securityHeaders,
       },
+      // The agreement builder opens inside a pop-up (iframe) on the Templates and
+      // Agreements pages, so allow same-origin framing for this route only.
+      {
+        source: '/admin/agreements/renewals-v2/new',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: reportOnlyCsp.replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
+          },
+        ],
+      },
       // The saved original contract PDF is previewed in an iframe on our own
       // Agent Desk page, so allow same-origin framing for this route only.
       {
