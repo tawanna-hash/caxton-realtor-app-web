@@ -15,7 +15,8 @@
  * no first-paint flash to RealtyLine.
  */
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useContext, useSyncExternalStore } from 'react';
+import { InitialPubContext } from './publication-provider';
 import {
   PUB_CHANGE_EVENT,
   PUB_DEFAULT,
@@ -28,7 +29,13 @@ function subscribe(callback: () => void): () => void {
   if (typeof window === 'undefined') return () => {};
   window.addEventListener(PUB_CHANGE_EVENT, callback);
   window.addEventListener('storage', callback);
+  window.addEventListener('focus', callback);
+  window.addEventListener('pageshow', callback);
+  document.addEventListener('visibilitychange', callback);
   return () => {
+    window.removeEventListener('focus', callback);
+    window.removeEventListener('pageshow', callback);
+    document.removeEventListener('visibilitychange', callback);
     window.removeEventListener(PUB_CHANGE_EVENT, callback);
     window.removeEventListener('storage', callback);
   };
@@ -50,7 +57,14 @@ export function usePublication(): {
   setPub: (next: Pub) => void;
   toggle: () => void;
 } {
-  const pub = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  // Hydrate from the market the server rendered (the same one the header
+  // uses) instead of a hardcoded RealtyLine, so body and header agree.
+  const initial = useContext(InitialPubContext);
+  const pub = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    initial ? () => initial : getServerSnapshot,
+  );
   const setPub = useCallback((next: Pub) => writeClientPub(next), []);
   const toggle = useCallback(() => {
     writeClientPub(readClientPub() === 'newsline' ? 'realtyline' : 'newsline');

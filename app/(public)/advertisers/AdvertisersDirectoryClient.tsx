@@ -1,7 +1,7 @@
 'use client';
 
 import { type PubKey } from '@/lib/pub-meta';
-import { readClientPub } from '@/lib/publication';
+import { usePublication } from '@/lib/use-publication';
 
 // app/(public)/advertisers/AdvertisersDirectoryClient.tsx
 //
@@ -23,7 +23,7 @@ import { readClientPub } from '@/lib/publication';
 // rows in production), so there is no extra network cost.
 
 import Link from 'next/link';
-import { useMemo, useState, useSyncExternalStore } from 'react';
+import { useMemo, useState } from 'react';
 
 type SitePub = PubKey;
 
@@ -52,26 +52,6 @@ type Props = {
   themes: Record<SitePub, { accent: string; label: string }>;
 };
 
-// Cookie-first read (matches the header/nav); falls back to localStorage.
-function readSavedPub(): SitePub {
-  return readClientPub() as SitePub;
-}
-
-function subscribePub(callback: () => void): () => void {
-  if (typeof window === 'undefined') return () => {};
-  window.addEventListener('storage', callback);
-  window.addEventListener('savedPubChange', callback);
-  return () => {
-    window.removeEventListener('storage', callback);
-    window.removeEventListener('savedPubChange', callback);
-  };
-}
-
-const SERVER_PUB: SitePub = 'realtyline';
-function getServerPubSnapshot(): SitePub {
-  return SERVER_PUB;
-}
-
 // Maps the UI-level site pub to the DB-level publication value used on
 // the advertisers table. Houston/Dallas do not have advertiser publication
 // values yet, so they intentionally render an empty directory.
@@ -83,11 +63,7 @@ const SITE_TO_DB: Record<SitePub, 'austin' | 'san_antonio' | null> = {
 };
 
 export default function AdvertisersDirectoryClient({ advertisers, themes }: Props) {
-  const pub = useSyncExternalStore<SitePub>(
-    subscribePub,
-    readSavedPub,
-    getServerPubSnapshot,
-  );
+  const { pub } = usePublication();
 
   const dbPub = SITE_TO_DB[pub];
   const inPub = useMemo(

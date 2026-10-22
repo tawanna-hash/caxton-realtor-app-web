@@ -10,13 +10,15 @@
  * correct value before paint with no hydration mismatch.
  */
 
-import { useEffect } from 'react';
+import { createContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   readClientPub,
   writeClientPub,
   type Pub,
 } from './publication';
+
+export const InitialPubContext = createContext<Pub | null>(null);
 
 function hasPubCookie(): boolean {
   return /(?:^|;\s*)caxton_pub=[^;]+/.test(document.cookie);
@@ -48,5 +50,5 @@ export function PublicationProvider({
     }
   }, [initialPub, router]);
 
-  return <>{children}</>;
+  return <InitialPubContext.Provider value={initialPub}>{children}</InitialPubContext.Provider>;
 }
