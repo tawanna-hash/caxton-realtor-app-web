@@ -6,7 +6,7 @@ import { A } from '@/components/anchor/ui';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents, outstandingCents } from '@/lib/invoices';
 
-export type EmailSender = 'auto' | 'tawanna@myrealtyline.com' | 'tawanna@newslinesa.com' | 'hello@myrealtyline.com' | 'hello@newslinesa.com';
+export type EmailSender = 'auto' | 'tawanna@myrealtyline.com' | 'tawanna@newslinesa.com';
 export type EmailValues = { from: EmailSender; to: string; subject: string; message: string };
 
 const FIELD = 'mt-1 w-full rounded-[10px] border border-[color:var(--ds-line)] bg-white px-3 py-2 text-sm text-[color:var(--ds-ink)]';
@@ -38,8 +38,6 @@ export default function EmailInvoiceDialog({ invoice, reminder, daysOver, busy, 
                 <option value="auto">Match partner&rsquo;s publication (recommended)</option>
                 <option value="tawanna@myrealtyline.com">Tawanna Verock &lt;tawanna@myrealtyline.com&gt;</option>
                 <option value="tawanna@newslinesa.com">Tawanna Verock &lt;tawanna@newslinesa.com&gt;</option>
-                <option value="hello@myrealtyline.com">Caxton Publications Inc. &lt;hello@myrealtyline.com&gt;</option>
-                <option value="hello@newslinesa.com">Caxton Publications Inc. &lt;hello@newslinesa.com&gt;</option>
               </select>
             </label>
             <label className="block text-xs font-medium text-[color:var(--ds-body)]">To<input className={FIELD} type="email" value={to} onChange={(e) => setTo(e.target.value)} /></label>

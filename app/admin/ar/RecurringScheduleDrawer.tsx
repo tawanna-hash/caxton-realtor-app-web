@@ -162,8 +162,6 @@ export function RecurringScheduleDrawer({
   const [emailFrom, setEmailFrom] = useState<
     | "tawanna@myrealtyline.com"
     | "tawanna@newslinesa.com"
-    | "hello@myrealtyline.com"
-    | "hello@newslinesa.com"
   >("tawanna@newslinesa.com");
   const [emailCcBcc, setEmailCcBcc] = useState("");
   const [emailSubject, setEmailSubject] = useState(
@@ -772,12 +770,6 @@ export function RecurringScheduleDrawer({
                     </option>
                     <option value="tawanna@newslinesa.com">
                       Tawanna Verock &lt;tawanna@newslinesa.com&gt;
-                    </option>
-                    <option value="hello@myrealtyline.com">
-                      Caxton Publications Inc. &lt;hello@myrealtyline.com&gt;
-                    </option>
-                    <option value="hello@newslinesa.com">
-                      Caxton Publications Inc. &lt;hello@newslinesa.com&gt;
                     </option>
                   </select>
                 </Field>

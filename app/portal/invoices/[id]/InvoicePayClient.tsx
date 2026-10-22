@@ -113,8 +113,14 @@ export default function InvoicePayClient({
 
   const alreadyPaid = invoice.status === 'paid' || justPaid;
   const isVoid = invoice.status === 'void';
-  const surchargeCents = processingFeeCents(invoice.total_cents, paymentMethod);
-  const chargeTotalCents = invoice.total_cents + surchargeCents;
+  const fullDueCents = Math.max(0, invoice.total_cents - accountSummary.paymentsCreditsCents);
+  const [amountText, setAmountText] = useState('');
+  const parsedCents = amountText.trim() === '' ? fullDueCents : Math.round(Number(amountText.replace(/[$,]/g, '')) * 100);
+  const amountValid = Number.isFinite(parsedCents) && parsedCents >= 100 && parsedCents <= fullDueCents;
+  const payCents = amountValid ? parsedCents : fullDueCents;
+  const partialBody = payCents < fullDueCents ? { amount_cents: payCents } : {};
+  const surchargeCents = processingFeeCents(payCents, paymentMethod);
+  const chargeTotalCents = payCents + surchargeCents;
 
   const startEmbedded = useCallback(async () => {
     setError(null);
@@ -138,7 +144,7 @@ export default function InvoicePayClient({
       const res = await fetch(`/api/portal/invoices/${invoice.id}/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ui_mode: 'hosted', payment_method: paymentMethod }),
+        body: JSON.stringify({ ui_mode: 'hosted', payment_method: paymentMethod, ...partialBody }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) {
@@ -151,20 +157,20 @@ export default function InvoicePayClient({
       setError('Could not start checkout. Please try again.');
       setMode('idle');
     }
-  }, [invoice.id, paymentMethod]);
+  }, [invoice.id, paymentMethod, payCents, fullDueCents]);
 
   const fetchClientSecret = useCallback(async () => {
     const res = await fetch(`/api/portal/invoices/${invoice.id}/checkout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ui_mode: 'embedded', payment_method: paymentMethod }),
+      body: JSON.stringify({ ui_mode: 'embedded', payment_method: paymentMethod, ...partialBody }),
     });
     const data = await res.json();
     if (!res.ok || !data.client_secret) {
       throw new Error(data.error ?? 'Could not start checkout.');
     }
     return data.client_secret as string;
-  }, [invoice.id, paymentMethod]);
+  }, [invoice.id, paymentMethod, payCents, fullDueCents]);
 
   return (
     <div className="space-y-6">
@@ -197,12 +203,27 @@ export default function InvoicePayClient({
             </EmbeddedCheckoutProvider>
           ) : (
             <div className="space-y-4">
+              <label className="block text-sm font-semibold text-gray-900">Amount to pay
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-gray-500">$</span>
+                  <input
+                    inputMode="decimal"
+                    value={amountText}
+                    onChange={(e) => setAmountText(e.target.value)}
+                    placeholder={(fullDueCents / 100).toFixed(2)}
+                    className="w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm font-normal"
+                  />
+                  <button type="button" className="text-xs font-medium text-gray-600 underline" onClick={() => setAmountText('')}>Pay balance in full</button>
+                </div>
+                <span className="mt-1 block text-xs font-normal text-gray-500">Balance due {fmtUsd(fullDueCents)}. You can pay any amount from $1.00 up to the balance.</span>
+                {!amountValid && amountText.trim() !== '' && <span className="mt-1 block text-xs font-normal text-[#661102]">Enter an amount between $1.00 and {fmtUsd(fullDueCents)}.</span>}
+              </label>
               <fieldset>
                 <legend className="mb-2 text-sm font-semibold text-gray-900">Payment method</legend>
                 <div className="grid gap-2 sm:grid-cols-3">
                   {INVOICE_PAYMENT_METHODS.map((option) => {
                     const selected = paymentMethod === option.value;
-                    const fee = processingFeeCents(invoice.total_cents, option.value);
+                    const fee = processingFeeCents(payCents, option.value);
                     return (
                       <label
                         key={option.value}
@@ -238,7 +259,7 @@ export default function InvoicePayClient({
               <button
                 type="button"
                 onClick={startEmbedded}
-                disabled={mode === 'redirecting'}
+                disabled={mode === 'redirecting' || !amountValid && amountText.trim() !== ''}
                 className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
               >
                 Pay {fmtUsd(chargeTotalCents)} now

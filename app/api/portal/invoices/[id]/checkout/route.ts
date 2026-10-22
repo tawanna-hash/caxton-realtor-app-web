@@ -91,14 +91,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       }
 
       const { remainingCents } = await lockInvoiceRemainingBalance(client, id);
+      // Optional partial payment: any whole-cent amount from $1.00 up to the remaining balance.
+      const requested = body.amount_cents == null ? remainingCents : Number(body.amount_cents);
+      if (!Number.isInteger(requested) || requested < 100 || requested > remainingCents) {
+        throw new InvoiceLifecycleError('Enter an amount of at least $1.00 and no more than the remaining balance.', 400);
+      }
       await invalidateInvoiceCheckoutSessions(client, id);
       const registered = await registerInvoiceCheckoutSession(client, {
         invoiceId: id,
-        baseAmountCents: remainingCents,
+        baseAmountCents: requested,
         createdBy: admin?.email ?? (portalUser ? 'portal' : null),
       });
       registryId = registered.id;
-      return { inv: { ...invoiceRow, total_cents: remainingCents }, chargeAmountCents: remainingCents };
+      return { inv: { ...invoiceRow, total_cents: remainingCents }, chargeAmountCents: requested };
     });
 
     const stripe = getStripe();
