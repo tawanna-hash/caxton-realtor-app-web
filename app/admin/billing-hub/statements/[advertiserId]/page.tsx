@@ -289,7 +289,7 @@ export default async function StatementPage({
             <div className="text-right">Paid</div>
             <div className="text-right">Due</div>
           </div>
-          {invoices.map((invoice) => (
+          {invoices.filter((invoice) => invoice.is_overdue).map((invoice) => (
             <div
               key={invoice.id}
               className="grid min-w-[570px] grid-cols-[110px_100px_100px_85px_85px_90px] border-b border-neutral-200 px-3 py-3 print:min-w-0"

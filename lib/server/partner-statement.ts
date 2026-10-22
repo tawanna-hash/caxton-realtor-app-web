@@ -143,7 +143,8 @@ export async function loadPartnerStatement(
     outstandingCents: overdueCents + notYetDueCents,
     overduePaymentLinkUrl: null,
     payScope: opts.scope ?? 'overdue',
-    invoices,
+    // Payment section lists overdue invoices only.
+    invoices: invoices.filter((invoice) => invoice.is_overdue),
   };
 }
 
