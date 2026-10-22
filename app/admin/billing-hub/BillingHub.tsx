@@ -126,6 +126,7 @@ export default function BillingHub() {
         </Field>}
               </div>
         {client && <button type="button" onClick={() => setControl(true)} className={A.outline}>Billing Control</button>}
+        <span id="create-invoice-slot" className="contents" />
       </div>
       {!client && <p className="py-24 text-center text-sm text-[color:var(--ds-ink)]">Please choose a client to start billing</p>}
 
@@ -307,7 +308,7 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
       ))}
     </div>
   );
-  if (scope === 'all') return <div className="space-y-4"><div className="flex flex-wrap items-center gap-3">{scopeSwitch}<div id="create-invoice-slot" className="ml-auto" /></div><AllInvoices intent={intent} initialQuery={focusQ} onIntentDone={onIntentDone} /></div>;
+  if (scope === 'all') return <div className="space-y-4">{scopeSwitch}<AllInvoices intent={intent} initialQuery={focusQ} onIntentDone={onIntentDone} /></div>;
   return (
     <div className="space-y-4">
       {scopeSwitch}

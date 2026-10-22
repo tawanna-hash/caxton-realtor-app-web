@@ -474,16 +474,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
       </div>
 
       {createSlot && createPortal(
-        <div className="relative flex">
-          <button type="button" className={`${A.primary} rounded-r-none`} onClick={() => setCreating({ advertiser_id: null, agreement_id: '', amount_cents: null })}>Create invoice</button>
-          <button type="button" aria-label="More create actions" className={`${A.primary} -ml-px rounded-l-none px-3`} onClick={() => setCreateMenu((o) => !o)}>&#9660;</button>
-          {createMenu && (
-            <div className="absolute right-0 top-11 z-30 w-52 rounded-[12px] border border-[color:var(--ds-line)] bg-white py-1 shadow-lg">
-              <button type="button" style={{ background: 'transparent', border: 0 }} className="block w-full px-4 py-2 text-left text-sm hover:bg-[color:var(--ds-page)]" onClick={() => { setCreateMenu(false); if (firstUnpaid) setLinking(firstUnpaid); else fail('No unpaid invoice is available.'); }}>Create payment link</button>
-              <button type="button" style={{ background: 'transparent', border: 0 }} className="block w-full px-4 py-2 text-left text-sm hover:bg-[color:var(--ds-page)]" onClick={() => { setCreateMenu(false); setReceipt(true); }}>Create sales receipt</button>
-            </div>
-          )}
-        </div>
+        <button type="button" className={A.outline} onClick={() => setCreating({ advertiser_id: null, agreement_id: '', amount_cents: null })}>Create invoice</button>
       , createSlot)}
 
       {status === 'scheduled' ? (
