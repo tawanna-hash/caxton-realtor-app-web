@@ -32,6 +32,34 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState<{ ok: boolean; t: string } | null>(null);
 
+  type Opt = { id: string; label: string; has_method: boolean; market: TemplateMarket; fields: PaymentMethodFields; to: string | null };
+  const [opts, setOpts] = useState<Opt[] | null>(null);
+  const [agId, setAgId] = useState('');
+  const [linking, setLinking] = useState(false);
+  const [linkMsg, setLinkMsg] = useState<{ ok: boolean; t: string } | null>(null);
+  useEffect(() => {
+    if (!open || opts) return;
+    fetch('/api/admin/agreements-v2/payment-method-template', { credentials: 'include' }).then((r) => r.json()).then((j) => setOpts(j.agreements ?? [])).catch(() => setOpts([]));
+  }, [open, opts]);
+
+  function pickAgreement(id: string) {
+    setAgId(id); setLinkMsg(null);
+    const o = opts?.find((x) => x.id === id);
+    if (o) { setMarket(o.market); setFields((f) => ({ ...o.fields, payment_setup_url: f.payment_setup_url && agId === id ? f.payment_setup_url : '' })); }
+  }
+
+  async function createLink() {
+    if (!agId) return;
+    setLinking(true); setLinkMsg(null);
+    try {
+      const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'link', agreement_id: agId }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { setLinkMsg({ ok: false, t: j.error ?? 'Could not create the link.' }); return; }
+      setMarket(j.market); setFields((f) => ({ ...f, ...j.fields, client_first_name: f.client_first_name || j.fields.client_first_name }));
+      setLinkMsg({ ok: true, t: `Secure link created — valid until ${new Date(j.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.` });
+    } catch { setLinkMsg({ ok: false, t: 'Could not create the link.' }); } finally { setLinking(false); }
+  }
+
   async function sendTest() {
     setSending(true); setSendMsg(null);
     try {
@@ -68,6 +96,15 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
         <div className="grid gap-5 md:grid-cols-[260px_1fr]">
           <div className="space-y-3">
             <label className="block space-y-1">
+              <span className="text-xs font-medium text-[color:var(--ds-body)]">Client agreement</span>
+              <select className={A.input} value={agId} onChange={(e) => pickAgreement(e.target.value)}>
+                <option value="">{opts === null ? 'Loading agreements…' : 'Choose a client agreement'}</option>
+                {(opts ?? []).map((o) => <option key={o.id} value={o.id}>{o.label}{o.has_method ? ' · method on file' : ''}</option>)}
+              </select>
+            </label>
+            <button type="button" className={`${A.outline} w-full`} disabled={!agId || linking} onClick={createLink}>{linking ? 'Creating link…' : 'Create secure setup link'}</button>
+            {linkMsg && <p className={`text-xs ${linkMsg.ok ? 'text-[#065F46]' : 'text-red-700'}`}>{linkMsg.t}</p>}
+            <label className="block space-y-1">
               <span className="text-xs font-medium text-[color:var(--ds-body)]">Market</span>
               <select className={A.input} value={market} onChange={(e) => setMarket(e.target.value as TemplateMarket)}>
                 {Object.values(MARKET_BRANDS).map((b) => <option key={b.market} value={b.market}>{b.label} — {b.brand}</option>)}
@@ -79,7 +116,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
                 <input className={A.input} placeholder={ph} value={fields[key] ?? ''} onChange={(e) => setFields((f) => ({ ...f, [key]: e.target.value }))} />
               </label>
             ))}
-            <p className="text-xs text-[color:var(--ds-body)]">Blank fields keep their {'{{placeholder}}'}. Bank (ACH) payments still need Stripe&apos;s bank authorization on the setup page.</p>
+            <p className="text-xs text-[color:var(--ds-body)]">Blank fields keep their {'{{placeholder}}'}. The secure link opens a branded page that hands off to Stripe to save a card or bank account (with Stripe&apos;s bank authorization). No charge is made.</p>
           </div>
 
           <div className="space-y-3">
