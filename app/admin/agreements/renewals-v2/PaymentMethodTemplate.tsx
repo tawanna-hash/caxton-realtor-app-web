@@ -31,6 +31,10 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
   const [testTo, setTestTo] = useState('tawanna@myrealtyline.com');
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState<{ ok: boolean; t: string } | null>(null);
+  const [toList, setToList] = useState('');
+  const [ccList, setCcList] = useState('');
+  const [realSending, setRealSending] = useState(false);
+  const [realMsg, setRealMsg] = useState<{ ok: boolean; t: string } | null>(null);
 
   type Opt = { id: number; label: string; has_method: boolean; has_agreement: boolean; market: TemplateMarket };
   const [opts, setOpts] = useState<Opt[] | null>(null);
@@ -46,7 +50,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
     setAgId(id); setLinkMsg(null);
     const o = opts?.find((x) => String(x.id) === id);
     // A new client gets a fresh link; clear the previous client's details.
-    setFields({});
+    setFields({}); setToList(''); setCcList(''); setRealMsg(null);
     if (o) setMarket(o.market);
   }
 
@@ -58,6 +62,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { setLinkMsg({ ok: false, t: j.error ?? 'Could not create the link.' }); return; }
       setMarket(j.market); setFields((f) => { const next: PaymentMethodFields = { ...f }; for (const [k, v] of Object.entries(j.fields as PaymentMethodFields)) if (v) next[k as keyof PaymentMethodFields] = v; return next; });
+      if (j.to) setToList((t) => t.trim() ? t : j.to);
       setLinkMsg({ ok: true, t: `Secure link created — valid until ${new Date(j.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.` });
     } catch { setLinkMsg({ ok: false, t: 'Could not create the link.' }); } finally { setLinking(false); }
   }
@@ -69,6 +74,15 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
       const j = await r.json().catch(() => ({}));
       setSendMsg(r.ok ? { ok: true, t: `Test sent to ${j.to} from ${j.from}.` } : { ok: false, t: j.detail ?? j.error ?? 'Test could not be sent.' });
     } catch { setSendMsg({ ok: false, t: 'Test could not be sent.' }); } finally { setSending(false); }
+  }
+
+  async function sendReal() {
+    setRealSending(true); setRealMsg(null);
+    try {
+      const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'send', market, fields, to: toList, cc: ccList }) });
+      const j = await r.json().catch(() => ({}));
+      setRealMsg(r.ok ? { ok: true, t: `Sent to ${[...(j.to ?? []), ...(j.cc ?? [])].join(', ')} from ${j.from}.` } : { ok: false, t: j.detail ?? j.error ?? 'Email could not be sent.' });
+    } catch { setRealMsg({ ok: false, t: 'Email could not be sent.' }); } finally { setRealSending(false); }
   }
 
   useEffect(() => {
@@ -139,6 +153,22 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
               <button type="button" className={A.primary} onClick={() => copy('Email copied', out.body)}>Copy email</button>
               <button type="button" className={A.outline} onClick={() => copy('HTML copied', out.html)}>Copy HTML</button>
               {copied && <span className="text-sm text-[color:var(--ds-body)]">{copied}</span>}
+            </div>
+            <div className="space-y-2 border-t border-[color:var(--ds-line)] pt-3">
+              <label className="block space-y-1">
+                <span className="text-xs font-medium text-[color:var(--ds-body)]">To</span>
+                <input className={A.input} type="text" placeholder="client@company.com, ap@company.com" value={toList} onChange={(e) => setToList(e.target.value)} />
+              </label>
+              <label className="block space-y-1">
+                <span className="text-xs font-medium text-[color:var(--ds-body)]">CC (optional)</span>
+                <input className={A.input} type="text" placeholder="accountspayable@company.com" value={ccList} onChange={(e) => setCcList(e.target.value)} />
+              </label>
+              <p className="text-xs text-[color:var(--ds-body)]">Separate multiple emails with commas. Replies go to {out.brand.billing_contact_email}.</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" className={A.primary} disabled={realSending || !toList.trim() || !fields.payment_setup_url} onClick={sendReal}>{realSending ? 'Sending…' : 'Send email'}</button>
+                {!fields.payment_setup_url && <span className="text-xs text-[color:var(--ds-body)]">Create the secure setup link first.</span>}
+                {realMsg && <span className={`text-sm ${realMsg.ok ? 'text-[#065F46]' : 'text-red-700'}`}>{realMsg.t}</span>}
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--ds-line)] pt-3">
               <input className={`${A.input} max-w-[280px]`} type="email" aria-label="Test recipient" value={testTo} onChange={(e) => setTestTo(e.target.value)} />

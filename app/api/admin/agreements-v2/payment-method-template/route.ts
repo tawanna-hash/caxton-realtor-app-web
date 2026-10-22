@@ -3,6 +3,8 @@
 //   POST { action: 'link', advertiser_id } -> signed client setup link + prefill
 //   POST { market, fields, to? } -> send a TEST from the market's sender
 //        (recipient defaults to tawanna@myrealtyline.com)
+//   POST { action: 'send', market, fields, to: string[], cc?: string[] } -> send
+//        the real email (e.g. client + accounts payable); requires a setup link
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getSql } from '@/lib/db';
@@ -78,9 +80,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: paymentSetupUrl(token), expires_at: expiresAt.toISOString(), ...p, fields: { ...p.fields, payment_setup_url: paymentSetupUrl(token) } });
   }
 
+  const EMAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/;
+  const list = (v: unknown) => (Array.isArray(v) ? v : typeof v === 'string' ? v.split(/[,;\s]+/) : [])
+    .map((x) => String(x).trim()).filter(Boolean);
+
   const raw = (body.fields ?? {}) as Record<string, unknown>;
   const fields: PaymentMethodFields = {};
   for (const k of KEYS) if (typeof raw[k] === 'string') fields[k] = (raw[k] as string).slice(0, 800);
+  if (body.action === 'send') {
+    const to = list(body.to); const cc = list(body.cc);
+    const bad = [...to, ...cc].filter((e) => !EMAIL_RE.test(e));
+    if (!to.length) return NextResponse.json({ error: 'Add at least one recipient.' }, { status: 400 });
+    if (bad.length) return NextResponse.json({ error: `Invalid email: ${bad.join(', ')}` }, { status: 400 });
+    if (to.length + cc.length > 10) return NextResponse.json({ error: 'Up to 10 recipients.' }, { status: 400 });
+    if (!/^https:\/\/realtynewsnow\.app\/pay\/setup\//.test(fields.payment_setup_url ?? '')) {
+      return NextResponse.json({ error: 'Create the secure setup link first.' }, { status: 400 });
+    }
+    const out = renderPaymentMethodHtml(typeof body.market === 'string' ? body.market : null, fields);
+    const res = await sendEmail({ from: out.from, to, cc: cc.length ? cc : undefined, subject: out.subject, html: out.html, replyTo: out.brand.billing_contact_email });
+    if (!res.ok) {
+      console.error('[payment-method-template] send failed', { from: out.from, error: 'error' in res ? res.error : 'unknown' });
+      return NextResponse.json({ error: 'send failed', detail: 'error' in res ? res.error : 'error' }, { status: 502 });
+    }
+    return NextResponse.json({ ok: true, to, cc, from: out.from });
+  }
+
   const to = typeof body.to === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.to.trim()) ? body.to.trim() : DEFAULT_TEST_TO;
   const out = renderPaymentMethodHtml(typeof body.market === 'string' ? body.market : null, fields);
   const res = await sendEmail({ from: out.from, to, subject: `[Test] ${out.subject}`, html: out.html, replyTo: out.brand.billing_contact_email });
