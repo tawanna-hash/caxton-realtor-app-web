@@ -69,6 +69,7 @@ export default function PaymentSetupHistory({ id, ids }: { id: number; ids: numb
                     {(e.cc_emails ?? []).length > 0 && <p>CC: <span className="text-[color:var(--ds-ink)]">{(e.cc_emails ?? []).join(', ')}</span></p>}
                     <p>From {e.from_email}{e.actor ? ` · sent by ${e.actor}` : ''}</p>
                     {e.link_expires_at && <p>Link valid until {new Date(e.link_expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>}
+                    {e.details && <p>{e.details}</p>}
                     {e.has_copy && <button type="button" onClick={() => open(e)} style={{ border: 0, background: 'transparent', padding: 0 }} className="mt-1 text-sm font-medium text-[color:var(--ds-primary)] hover:underline">View email</button>}
                   </div>
                 ) : (

@@ -16,6 +16,39 @@ export async function GET(req: NextRequest) {
     myrealtyline: !!process.env.RESEND_API_KEY_MYREALTYLINE?.trim(),
     newslinesa: !!(process.env.RESEND_API_KEY_NEWSLINESA ?? process.env.RESEND_API_KEY)?.trim(),
   };
+  // TEMP: rebuild one pre-history request from its known details.
+  const rb = req.nextUrl.searchParams.get('rebuild');
+  if (rb) {
+    const crypto = await import('node:crypto');
+    const { getSql } = await import('@/lib/db');
+    const { verifyPaymentSetupToken, paymentSetupUrl } = await import('@/lib/payment-setup-token');
+    const { ensurePaymentSetupSchema, loadSetupTarget } = await import('@/lib/server/payment-setup');
+    await ensurePaymentSetupSchema();
+    const sql = getSql();
+    const adv = (await sql`SELECT id, company, name, contact_email, billing_email, publication FROM advertisers WHERE LOWER(contact_email) = LOWER(${rb}) OR LOWER(billing_email) = LOWER(${rb}) OR LOWER(company) LIKE '%champions%school%'`) as unknown as Array<{ id: number }>;
+    const linkAt = Number(req.nextUrl.searchParams.get('link_ms'));
+    const sentAt = Number(req.nextUrl.searchParams.get('sent_ms'));
+    if (adv.length !== 1) return NextResponse.json({ adv });
+    const id = adv[0].id;
+    const exp = Math.floor(linkAt / 1000) + 30 * 86400;
+    const body = `c${id}.${exp}`;
+    const token = `${body}.${crypto.createHmac('sha256', process.env.SIGN_SECRET!).update(`pm_setup:${body}`).digest('base64url')}`;
+    const ok = verifyPaymentSetupToken(token);
+    const t = await loadSetupTarget({ kind: 'client', id });
+    if (!t) return NextResponse.json({ error: 'no target' });
+    const url = paymentSetupUrl(token);
+    const out = renderPaymentMethodHtml(t.brand.market, { client_first_name: 'Courtney', payment_terms: '$755 per month', billing_schedule: 'Monthly on the 18th', payment_setup_url: url });
+    const row = { id, company: t.company, market: t.brand.market, from: out.from, subject: out.subject, ok, exp: new Date(exp * 1000).toISOString(), agreement: t.agreement?.id ?? null, inserted: false };
+    if (req.nextUrl.searchParams.get('commit') === '1') {
+      const ins = await sql`
+        INSERT INTO client_payment_setup_log (advertiser_id, event, created_at, market, from_email, to_emails, cc_emails, subject, html, setup_url, link_expires_at, agreement_id, details, stripe_ref)
+        VALUES (${id}, 'request_sent', ${new Date(sentAt).toISOString()}, ${t.brand.market}, ${out.from}, ${[rb]}, ${[]}, ${out.subject}, ${out.html}, ${url}, ${new Date(exp * 1000).toISOString()}, ${t.agreement?.id ?? null},
+                'Sent before history was added; email copy rebuilt from the template with the same details', ${'backfill:courtney-2026-10-21'})
+        ON CONFLICT DO NOTHING RETURNING id`;
+      row.inserted = ins.length > 0;
+    }
+    return NextResponse.json(row);
+  }
   // TEMP: backfill a Payment Method Setup request sent before history existed.
   const bf = req.nextUrl.searchParams.get('backfill');
   if (bf) {
