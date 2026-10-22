@@ -113,7 +113,7 @@ export default function BillingHub() {
           <span className="relative block">
             <select aria-label="Client" className={selectCls} value={clientId ?? ''} onChange={(e) => { setClientId(e.target.value ? Number(e.target.value) : null); setAgreementId(''); }}>
               {clientId == null && <option value="" disabled>Select a client</option>}
-              {clients.map((c) => <option key={c.id} value={c.id}>{c.name}{marketsOf(c.publication).length ? ` (${marketsOf(c.publication).join(', ')})` : ''}{groupOf(c.status) !== 'active' ? ` · ${GROUP_LABEL[groupOf(c.status)]}` : ''}</option>)}
+              {clients.filter((c) => groupOf(c.status) === 'active' || c.id === clientId).map((c) => <option key={c.id} value={c.id}>{c.name}{marketsOf(c.publication).length ? ` (${marketsOf(c.publication).join(', ')})` : ''}{groupOf(c.status) !== 'active' ? ` · ${GROUP_LABEL[groupOf(c.status)]}` : ''}</option>)}
             </select><Caret />
           </span>
         </Field>

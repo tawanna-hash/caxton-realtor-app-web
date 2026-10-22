@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { A, RowMenu, EmptyState, SearchBox } from '@/components/anchor/ui';
 import SortTable from '@/components/anchor/SortTable';
+import { BuilderPopup } from './BuilderPopup';
 import PaymentMethodTemplate from './PaymentMethodTemplate';
 import { PAYMENT_METHOD_TEMPLATE_NAME } from '@/lib/agreements-v2/payment-method-template';
 
@@ -16,6 +17,7 @@ export default function TemplatesPanel() {
   const [q, setQ] = useState('');
   const [tick, setTick] = useState(0);
   const [pmOpen, setPmOpen] = useState(false);
+  const [pop, setPop] = useState<{ query: string; title: string } | null>(null);
   const reload = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
@@ -26,6 +28,12 @@ export default function TemplatesPanel() {
       .catch(() => { if (alive) setRows([]); });
     return () => { alive = false; };
   }, [tick]);
+
+  const closePop = useCallback((to?: string) => {
+    setPop(null);
+    if (to && (to === '/admin' || to.includes('tab=sent'))) { window.location.href = to; return; }
+    reload();
+  }, [reload]);
 
   async function remove(t: BuilderTemplate) {
     if (!window.confirm(`Delete the template "${t.name}"?`)) return;
@@ -39,10 +47,11 @@ export default function TemplatesPanel() {
 
   return (
     <div className="space-y-4">
+      {pop && <BuilderPopup query={pop.query} title={pop.title} onClose={closePop} />}
       <PaymentMethodTemplate open={pmOpen} onClose={() => setPmOpen(false)} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SearchBox value={q} onChange={setQ} label="Search templates" />
-        <a href="/admin/agreements/renewals-v2/new" className={A.primary}>Create template</a>
+        <button type="button" className={A.primary} onClick={() => setPop({ query: '', title: 'Create template' })}>Create template</button>
       </div>
       <div className="overflow-x-auto">
         <SortTable rows={list} cols={[{ label: 'Template name', get: (r) => r.name }, { label: 'Last updated', get: (r) => r.updated_at }, { label: '' }]} className={`${A.table} min-w-[520px]`}>
@@ -61,7 +70,7 @@ export default function TemplatesPanel() {
                 <td className="font-medium text-[color:var(--ds-ink)]">{t.name}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-body)]">{new Date(t.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                 <td className="whitespace-nowrap text-right"><span className="inline-flex items-center gap-2">
-                  <a href={`/admin/agreements/renewals-v2/new?template=${t.id}`} className={A.small}>Use template</a>
+                  <button type="button" className={A.small} onClick={() => setPop({ query: `&template=${t.id}`, title: `Use template: ${t.name}` })}>Use template</button>
                   <RowMenu items={[{ label: 'Delete template', danger: true, onClick: () => remove(t) }]} />
                 </span></td>
               </tr>

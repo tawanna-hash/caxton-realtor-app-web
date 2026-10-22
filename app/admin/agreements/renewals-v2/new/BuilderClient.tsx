@@ -4,7 +4,6 @@
 // fields, billing timeline panel, client preview, save as template, send.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { A, RowMenu } from '@/components/anchor/ui';
 import { DEFAULT_BILLING, DEFAULT_PAYMENT, billingBadge, cleanBilling, termMonths, type ServiceBilling } from '@/lib/agreements-v2/service-billing';
@@ -53,6 +52,14 @@ function Field({ label, children, isSelect }: { label: string; children: React.R
 }
 
 const sel = `${A.input} appearance-none pr-9`;
+
+/** True when the builder is open inside the pop-up (iframe). */
+const inPopup = () => typeof window !== 'undefined' && window.self !== window.top;
+/** Leave the builder: close the pop-up when embedded, otherwise go to the page. */
+function leaveTo(router: { push: (p: string) => void }, path: string) {
+  if (inPopup()) window.parent.postMessage({ type: 'builder-close', to: path }, window.location.origin);
+  else router.push(path);
+}
 
 export default function BuilderClient() {
   const router = useRouter();
@@ -268,7 +275,7 @@ export default function BuilderClient() {
 
   async function discard() {
     setBusy(true);
-    try { await finishDraft(); } finally { router.push('/admin/agreements/renewals-v2'); }
+    try { await finishDraft(); } finally { leaveTo(router, '/admin/agreements/renewals-v2'); }
   }
 
   const svcLabel = (s: ServiceLine) => s.name || 'Service';
@@ -277,7 +284,7 @@ export default function BuilderClient() {
     <div className="min-h-screen bg-[color:var(--ds-page)]" data-anchor-ui="true" data-no-auto-open>
       {/* Top bar */}
       <div className="sticky top-0 z-40 flex flex-wrap items-center gap-3 border-b border-[color:var(--ds-line)] bg-white px-4 py-3">
-        <Link href="/admin/agreements/renewals-v2" aria-label="Close builder" className="text-2xl leading-none text-[color:var(--ds-ink)]">×</Link>
+        <button type="button" aria-label="Close builder" onClick={() => leaveTo(router, '/admin/agreements/renewals-v2')} style={{ border: 0, background: 'transparent' }} className="text-2xl leading-none text-[color:var(--ds-ink)]">×</button>
         <h1 className={A.title}>Create agreement</h1>
         {saveState !== 'idle' && (
           <span className="rounded-full border border-green-600 px-2.5 py-0.5 text-xs text-green-700">{saveState === 'saving' ? 'Saving…' : 'Draft saved'}</span>
@@ -570,7 +577,7 @@ export default function BuilderClient() {
           </section>
 
           {templates.length > 0 && (
-            <p className="text-sm text-[color:var(--ds-body)]">Start from a saved template: {templates.map((t) => <a key={t.id} href={`/admin/agreements/renewals-v2/new?template=${t.id}`} className="mr-3 text-[color:var(--ds-primary)] underline">{t.name}</a>)}</p>
+            <p className="text-sm text-[color:var(--ds-body)]">Start from a saved template: {templates.map((t) => <a key={t.id} href={`/admin/agreements/renewals-v2/new?template=${t.id}${inPopup() ? '&embed=1' : ''}`} className="mr-3 text-[color:var(--ds-primary)] underline">{t.name}</a>)}</p>
           )}
         </main>
       </div>
@@ -612,7 +619,7 @@ export default function BuilderClient() {
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4" role="dialog" aria-modal="true" aria-label="Agreement sent">
           <div className="w-full max-w-4xl overflow-hidden rounded-[10px] bg-white shadow-xl">
             <div className="relative px-4 py-8 text-center sm:px-8">
-              <button type="button" aria-label="Close" onClick={() => router.push('/admin/agreements/renewals-v2?tab=sent')} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
+              <button type="button" aria-label="Close" onClick={() => leaveTo(router, '/admin/agreements/renewals-v2?tab=sent')} className="absolute right-4 top-4 text-xl leading-none text-[color:var(--ds-ink)]">×</button>
               <svg className="mx-auto" width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true"><circle cx="32" cy="32" r="22" stroke="#047857" strokeWidth="4" opacity=".7" /><path d="M22 33l7 7 14-15" stroke="#047857" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /></svg>
               <h2 className="mt-4 text-2xl font-semibold text-[color:var(--ds-ink)]">Agreement Sent</h2>
               <p className="mt-1 text-base text-[color:var(--ds-ink)]">Your agreement was emailed to {sentInfo.to}</p>
@@ -622,9 +629,9 @@ export default function BuilderClient() {
               <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   { t: 'Share', d: 'Use a different channel to share this agreement', b: copied ? 'Link Copied' : 'Copy Link', disabled: !sentInfo.link, go: async () => { if (sentInfo.link) { await navigator.clipboard.writeText(sentInfo.link); setCopied(true); } } },
-                  { t: 'Monitor', d: 'Keep track of the approval process', b: 'Review Progress', go: () => router.push('/admin/agreements/renewals-v2?tab=sent') },
-                  { t: 'Create Another Agreement', d: 'Ready to send another one? Go for it', b: 'Create Agreement', go: () => { window.location.href = '/admin/agreements/renewals-v2/new'; } },
-                  { t: 'Back To My Dashboard', d: 'Go back to your dashboard and continue working', b: 'Go To Dashboard', go: () => router.push('/admin') },
+                  { t: 'Monitor', d: 'Keep track of the approval process', b: 'Review Progress', go: () => leaveTo(router, '/admin/agreements/renewals-v2?tab=sent') },
+                  { t: 'Create Another Agreement', d: 'Ready to send another one? Go for it', b: 'Create Agreement', go: () => { window.location.href = `/admin/agreements/renewals-v2/new${inPopup() ? '?embed=1' : ''}`; } },
+                  { t: 'Back To My Dashboard', d: 'Go back to your dashboard and continue working', b: 'Go To Dashboard', go: () => leaveTo(router, '/admin') },
                 ].map((c) => (
                   <div key={c.t} className="flex flex-col items-center rounded-[10px] bg-white p-4 text-center">
                     <div className="text-sm font-semibold text-[color:var(--ds-ink)]">{c.t}</div>
@@ -639,7 +646,7 @@ export default function BuilderClient() {
         </div>
       )}
       {shareOpen && (
-        <Modal title="Share by link" onClose={() => { if (busy) return; setShareOpen(false); if (shareLink) router.push('/admin/agreements/renewals-v2'); }}>
+        <Modal title="Share by link" onClose={() => { if (busy) return; setShareOpen(false); if (shareLink) leaveTo(router, '/admin/agreements/renewals-v2'); }}>
           {!shareLink ? (
             <>
               <p className="text-sm text-[color:var(--ds-ink)]">This creates the agreement for {client?.name ?? doc.new_client?.name} and gives you a link to share yourself. No email is sent. Total {money(total)}.</p>
@@ -651,7 +658,7 @@ export default function BuilderClient() {
               <input className={A.input} readOnly value={shareLink} aria-label="Agreement link" onFocus={(e) => e.currentTarget.select()} />
               <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
                 <button type="button" className={A.outline} onClick={async () => { await navigator.clipboard.writeText(shareLink); setCopied(true); }}>{copied ? 'Copied' : 'Copy link'}</button>
-                <button type="button" className={A.primary} onClick={() => router.push('/admin/agreements/renewals-v2')}>Done</button>
+                <button type="button" className={A.primary} onClick={() => leaveTo(router, '/admin/agreements/renewals-v2')}>Done</button>
               </div>
             </>
           )}

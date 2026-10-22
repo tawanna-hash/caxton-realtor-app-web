@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { A, RowMenu } from '@/components/anchor/ui';
 import { computeNextRun, type RecurringFrequency } from '@/lib/recurring-invoices';
 import StatementDialog from './StatementDialog';
@@ -66,6 +66,36 @@ function PortalAccessBody({ advertiserId, email, activatedAt }: { advertiserId: 
         <button type="button" className={A.small} onClick={preview}>Preview portal</button>
         <button type="button" className={A.small} onClick={sendLink} disabled={busy}>{busy ? 'Sending…' : activatedAt ? 'Send sign-in link' : 'Invite to portal'}</button>
       </div>
+      {msg && <p className="text-xs text-[color:var(--ds-body)]">{msg}</p>}
+    </div>
+  );
+}
+
+function PartialPaymentsBody({ advertiserId }: { advertiserId: number }) {
+  const [allow, setAllow] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    setAllow(null);
+    fetch(`/api/admin/advertisers/${advertiserId}/partial-payments`, { credentials: 'include' }).then((r) => r.json()).then((j) => { if (alive) setAllow(j.allow === true); }).catch(() => { if (alive) setMsg('Could not load this setting.'); });
+    return () => { alive = false; };
+  }, [advertiserId]);
+  async function flip() {
+    if (allow === null) return;
+    const next = !allow;
+    setBusy(true); setMsg(null);
+    const r = await fetch(`/api/admin/advertisers/${advertiserId}/partial-payments`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ allow: next }) });
+    setBusy(false);
+    if (r.ok) { setAllow(next); setMsg(next ? 'This client can now pay any amount up to the balance.' : 'This client must pay invoices in full.'); } else setMsg('Could not save the change.');
+  }
+  return (
+    <div className="space-y-3 text-sm text-[color:var(--ds-ink)]">
+      <div className="flex items-center gap-2">
+        <span className={allow ? 'rounded-full border border-[#047857] px-2 py-0.5 text-xs text-[#065F46]' : pill}>{allow === null ? 'Loading…' : allow ? 'Any amount allowed' : 'Pay in full only'}</span>
+      </div>
+      <p className="text-xs text-[color:var(--ds-body)]">When on, this client can pay a different amount than the full invoice or the full outstanding balance in the client portal. Leave off for everyone else.</p>
+      <div><button type="button" className={A.small} onClick={flip} disabled={busy || allow === null}>{busy ? 'Saving…' : allow ? 'Require payment in full' : 'Allow partial payments'}</button></div>
       {msg && <p className="text-xs text-[color:var(--ds-body)]">{msg}</p>}
     </div>
   );
@@ -207,6 +237,9 @@ export default function ClientDetail({ id }: { id: number }) {
             </Card>
             <Card title="Client portal access">
               <PortalAccessBody advertiserId={a.id} email={a.portal_email ?? a.contact_email} activatedAt={a.portal_activated_at} />
+            </Card>
+            <Card title="Partial payments">
+              <PartialPaymentsBody advertiserId={a.id} />
             </Card>
             <Card title="Payment methods" action={<Link href={`/admin/billing-hub?tab=payment&clientId=${id}`} className={link}>Add a payment method</Link>}>
               {a.card_last4 ? <p className="text-sm">Card ending {a.card_last4}</p> : <p className="text-sm text-[color:var(--ds-body)]">There are no payment methods to display.</p>}

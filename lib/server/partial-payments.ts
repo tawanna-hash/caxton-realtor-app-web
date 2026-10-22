@@ -29,3 +29,8 @@ export async function canPayPartial(advertiserId: number | null | undefined): Pr
   const rows = (await getSql()`SELECT allow_partial_payments FROM advertisers WHERE id = ${advertiserId}`) as unknown as Array<{ allow_partial_payments: boolean }>;
   return rows[0]?.allow_partial_payments === true;
 }
+
+export async function setCanPayPartial(advertiserId: number, allow: boolean): Promise<void> {
+  await ensureColumn();
+  await getSql()`UPDATE advertisers SET allow_partial_payments = ${allow} WHERE id = ${advertiserId}`;
+}
