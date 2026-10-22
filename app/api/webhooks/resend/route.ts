@@ -51,8 +51,9 @@ interface ResendWebhookEvent {
 }
 
 export async function POST(req: NextRequest) {
-  const secret = process.env.RESEND_WEBHOOK_SECRET;
-  if (!secret) {
+  // One signing secret per Resend account (myrealtyline.com and newslinesa.com).
+  const secrets = [process.env.RESEND_WEBHOOK_SECRET, process.env.RESEND_WEBHOOK_SECRET_NEWSLINESA].filter((x): x is string => Boolean(x));
+  if (secrets.length === 0) {
     logger.error({}, '[resend-webhook] RESEND_WEBHOOK_SECRET not configured');
     return NextResponse.json(
       { error: 'RESEND_WEBHOOK_SECRET not configured' },
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
 
   const rawBody = await req.text();
 
-  if (!verifySvixSignature(secret, svixId, svixTimestamp, svixSignature, rawBody)) {
+  if (!secrets.some((sec) => verifySvixSignature(sec, svixId, svixTimestamp, svixSignature, rawBody))) {
     logger.warn({ svixId }, '[resend-webhook] signature verification failed');
     return NextResponse.json({ error: 'invalid signature' }, { status: 400 });
   }
