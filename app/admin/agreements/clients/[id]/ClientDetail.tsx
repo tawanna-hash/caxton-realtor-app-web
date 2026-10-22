@@ -213,9 +213,9 @@ export default function ClientDetail({ id }: { id: number }) {
             <SortTable rows={issuedShown} cols={[{ label: (<input type="checkbox" aria-label="Select all unpaid invoices" checked={payable.length > 0 && chosen.length === payable.length} onChange={(e) => setPicked(e.target.checked ? new Set(payable.map((x) => x.id)) : new Set())} />) }, { label: 'Invoice ID', get: (r) => r.number }, { label: 'Invoice Status', get: (r) => invStatus(r) }, { label: 'Additional Information', get: (r) => String(info(r) ?? '') }, { label: 'Issue Date', get: (r) => r.issue_date }, { label: 'Due Date', get: (r) => r.due_date }, { label: 'Total', get: (r) => r.total_cents, className: 'text-right' }, { label: 'Balance', get: (r) => r.balance_cents, className: 'text-right' }]} className={`${A.table} min-w-[680px]`}>
 {(rws) => (<>
                 {rws.map((i) => (
-                  <tr key={i.id}>
+                  <tr key={i.id} className="cursor-pointer" onClick={(e) => { if ((e.target as HTMLElement).closest('input,button,a')) return; window.location.href = `/admin/billing-hub/invoice/${i.id}/preview`; }}>
                     <td>{payable.some((x) => x.id === i.id) && <input type="checkbox" aria-label={`Select ${i.number ?? 'invoice'}`} checked={picked.has(i.id)} onChange={(e) => setPicked((p) => { const n = new Set(p); if (e.target.checked) n.add(i.id); else n.delete(i.id); return n; })} />}</td>
-                    <td className="font-medium text-[color:var(--ds-ink)]">{i.number ?? '—'}</td>
+                    <td className="font-medium text-[color:var(--ds-ink)]"><a href={`/admin/billing-hub/invoice/${i.id}/preview`} className="text-[color:var(--ds-primary)] hover:underline">{i.number ?? '—'}</a></td>
                     <td><span className={pill}>{invStatus(i)}</span></td>
                     <td>{info(i)}</td>
                     <td className="whitespace-nowrap">{day(i.issue_date)}</td>

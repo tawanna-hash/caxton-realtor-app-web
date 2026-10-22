@@ -182,8 +182,8 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
               {(rws) => (<>
                 {rws.length === 0 && <tr><td colSpan={5}><EmptyState title="No unpaid invoices" body={loading ? 'Loading invoices…' : 'Nothing matches these filters.'} /></td></tr>}
                 {rws.map((i) => (
-                  <tr key={i.id}>
-                    <td className="font-medium text-[color:var(--ds-ink)]">{i.number ?? 'Draft'}</td>
+                  <tr key={i.id} className="cursor-pointer" onClick={(e) => { if (!(e.target as HTMLElement).closest('a')) window.location.href = `/admin/billing-hub/invoice/${i.id}/preview`; }}>
+                    <td className="font-medium text-[color:var(--ds-ink)]"><Link href={`/admin/billing-hub/invoice/${i.id}/preview`} className="text-[color:var(--ds-primary)] hover:underline">{i.number ?? 'Draft'}</Link></td>
                     <td className="text-[color:var(--ds-ink)]">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td>
                     <td className="text-[color:var(--ds-ink)]">{money(i.bal)}</td>
                     <td className="text-[color:var(--ds-body)]">{i.due_date ? day(i.due_date) : '—'}</td>
@@ -197,8 +197,8 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
               {(rws) => (<>
                 {rws.length === 0 && <tr><td colSpan={4}><EmptyState title="No paid invoices" body={loading ? 'Loading invoices…' : 'Nothing matches these filters.'} /></td></tr>}
                 {rws.map((i) => (
-                  <tr key={i.id}>
-                    <td className="font-medium text-[color:var(--ds-ink)]">{i.number ?? 'Draft'}</td>
+                  <tr key={i.id} className="cursor-pointer" onClick={(e) => { if (!(e.target as HTMLElement).closest('a')) window.location.href = `/admin/billing-hub/invoice/${i.id}/preview`; }}>
+                    <td className="font-medium text-[color:var(--ds-ink)]"><Link href={`/admin/billing-hub/invoice/${i.id}/preview`} className="text-[color:var(--ds-primary)] hover:underline">{i.number ?? 'Draft'}</Link></td>
                     <td className="text-[color:var(--ds-ink)]">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td>
                     <td className="text-[color:var(--ds-ink)]">{money(i.amount_paid_cents ?? i.total_cents)}</td>
                     <td className="text-[color:var(--ds-body)]">{i.paid_at ? day(i.paid_at) : '—'}</td>

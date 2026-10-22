@@ -407,6 +407,8 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
     const closed = ['paid', 'void'].includes(i.status);
     return [
       { label: 'View/Edit', onClick: () => setEditing(i) },
+      { label: 'View full invoice', onClick: () => { window.location.href = `/admin/billing-hub/invoice/${i.id}/preview`; } },
+      { label: 'Receive payment', onClick: () => setPaying(i), disabled: closed },
       { label: 'Duplicate', onClick: () => void duplicate(i, false) },
       { label: 'Duplicate and edit', onClick: () => void duplicate(i, true) },
       { label: 'Issue invoice (no email)', onClick: () => void issue(i), disabled: i.status !== 'draft' },
@@ -503,14 +505,13 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
                   <td className="whitespace-nowrap">{day(txDate(i))}</td>
                   <td className="whitespace-nowrap">{day(receivedDate(i))}</td>
                   <td className="whitespace-nowrap">{isReceipt(i) ? 'Sales receipt' : 'Invoice'}</td>
-                  <td className="max-w-[160px] truncate whitespace-nowrap font-medium text-[color:var(--ds-ink)]" title={i.number ?? undefined}>{i.number ?? 'Draft'}</td>
-                  <td className="min-w-[180px]">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td>
-                  <td className="max-w-[180px] truncate" title={memoOf(i)}>{memoOf(i) || '—'}</td>
+                  <td className="max-w-[160px] truncate whitespace-nowrap font-medium text-[color:var(--ds-ink)]" title={i.number ?? undefined}><a href={`/admin/billing-hub/invoice/${i.id}/preview`} className="text-[color:var(--ds-primary)] hover:underline">{i.number ?? 'Draft'}</a></td>
+                  <td className="max-w-[170px]">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td>
+                  <td className="max-w-[130px] truncate" title={memoOf(i)}>{memoOf(i) || '—'}</td>
                   <td className="whitespace-nowrap text-right font-medium">{formatCents(i.total_cents)}</td>
                   <td><StatusChip i={i} now={now} /></td>
                   <td className="whitespace-nowrap text-right">
                     <button type="button" disabled={busy} className={`${A.small} mr-2`} onClick={() => setEditing(i)}>View/Edit</button>
-                    {!['paid', 'void'].includes(i.status) && <button type="button" disabled={busy} className={`${A.small} mr-2`} onClick={() => setPaying(i)}>Receive payment</button>}
                     <RowMenu items={menu(i)} label={`More actions for ${i.number ?? 'invoice'}`} />
                   </td>
                 </tr>

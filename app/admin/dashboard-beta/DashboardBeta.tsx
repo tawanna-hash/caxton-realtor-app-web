@@ -22,13 +22,14 @@ const signedOf = (a: { signed_at: string | null; status: string; created_at?: st
 const DEAD = ['expired', 'cancelled', 'canceled', 'void', 'declined', 'draft', 'terminated'];
 const usd0 = (c: number) => `$${Math.round(c / 100).toLocaleString('en-US')}`;
 
-function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: string }) {
+function Stat({ label, value, sub, tone, href }: { label: string; value: string; sub?: string; tone?: string; href?: string }) {
+  const Wrap = ({ children }: { children: React.ReactNode }) => href ? <Link href={href} className="block rounded-[10px] bg-white px-4 py-5 text-center transition-shadow hover:shadow-md">{children}</Link> : <div className="rounded-[10px] bg-white px-4 py-5 text-center">{children}</div>;
   return (
-    <div className="rounded-[10px] bg-white px-4 py-5 text-center">
+    <Wrap>
       <div className={`text-sm ${tone ?? 'text-[color:var(--ds-ink)]'}`}>{label}</div>
       <div className="mt-1 text-xl font-semibold text-[color:var(--ds-ink)]">{value}</div>
       {sub && <div className="text-xs text-[color:var(--ds-body)]">{sub}</div>}
-    </div>
+    </Wrap>
   );
 }
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
@@ -149,8 +150,8 @@ export default function DashboardBeta() {
       <div className="grid items-stretch gap-6 lg:grid-cols-2">
         <Panel title="Invoices">
           <div className="grid grid-cols-2 gap-3">
-            <Stat label="Awaiting payment" tone="text-teal-700" value={usd0(d.current.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.current.length} invoice${d.current.length === 1 ? '' : 's'}`} />
-            <Stat label="Require attention" value={usd0(d.overdue.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.overdue.length} invoice${d.overdue.length === 1 ? '' : 's'}`} />
+            <Stat href="/admin/billing-hub?tab=invoices" label="Awaiting payment" tone="text-teal-700" value={usd0(d.current.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.current.length} invoice${d.current.length === 1 ? '' : 's'}`} />
+            <Stat href="/admin/billing-hub?tab=invoices" label="Require attention" value={usd0(d.overdue.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.overdue.length} invoice${d.overdue.length === 1 ? '' : 's'}`} />
           </div>
           <div className="anchor-card min-h-[200px] flex-1 rounded-[10px] bg-white p-5">
             <div className="mb-3 h-3 rounded-full bg-[#BFE6F2]" />
@@ -162,16 +163,16 @@ export default function DashboardBeta() {
 
         <Panel title="Agreements">
           <div className="grid grid-cols-2 gap-3">
-            <Stat label="Active agreements" tone="text-teal-700" value={String(d.activeA.length)} sub={`${money(d.activeA.reduce((n, a) => n + d.mrr(a), 0))} monthly recurring`} />
-            <Stat label="Awaiting approval" value={String(d.awaiting.length)} sub={`${money(d.awaiting.reduce((n, b) => n + (b.rate_cents ?? 0), 0))} monthly recurring`} />
+            <Stat href="/admin/agreements/renewals-v2" label="Active agreements" tone="text-teal-700" value={String(d.activeA.length)} sub={`${money(d.activeA.reduce((n, a) => n + d.mrr(a), 0))} monthly recurring`} />
+            <Stat href="/admin/agreements/renewals-v2?tab=sent" label="Awaiting approval" value={String(d.awaiting.length)} sub={`${money(d.awaiting.reduce((n, b) => n + (b.rate_cents ?? 0), 0))} monthly recurring`} />
           </div>
           <Bars values={d.activeByMonth} legend="Active agreements" />
         </Panel>
 
         <Panel title="Payouts">
           <div className="grid grid-cols-2 gap-3">
-            <Stat label="Paid this month" value={usd0(d.paidOut)} />
-            <Stat label="Processing" value={usd0(d.inTransit)} />
+            <Stat href="/admin/payouts-beta" label="Paid this month" value={usd0(d.paidOut)} />
+            <Stat href="/admin/payouts-beta" label="Processing" value={usd0(d.inTransit)} />
           </div>
           <div className="anchor-card min-h-[200px] flex-1 rounded-[10px] bg-white p-5">
             <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Date</th><th className="py-2 text-right font-normal">Amount</th><th className="py-2 text-right font-normal">Status</th></tr></thead>
@@ -184,16 +185,16 @@ export default function DashboardBeta() {
 
         <Panel title="Revenue">
           <div className="grid grid-cols-2 gap-3">
-            <Stat label="Earned this year" tone="text-teal-700" value={usd0(d.earned)} />
-            <Stat label="Expected this year" value={usd0(d.expected)} />
+            <Stat href="/admin/reports-beta" label="Earned this year" tone="text-teal-700" value={usd0(d.earned)} />
+            <Stat href="/admin/reports-beta" label="Expected this year" value={usd0(d.expected)} />
           </div>
           <Bars values={d.expectedBy} color="#D5D4E0" money legend="Expected" />
         </Panel>
 
         <Panel title="Sent agreements">
           <div className="grid grid-cols-2 gap-3">
-            <Stat label="Agreements sent this year" value={String(d.sentThisYear.length)} />
-            <Stat label="Median time to sign" value={`${d.median} Days`} />
+            <Stat href="/admin/agreements/renewals-v2?tab=sent" label="Agreements sent this year" value={String(d.sentThisYear.length)} />
+            <Stat href="/admin/agreements/renewals-v2?tab=sent" label="Median time to sign" value={`${d.median} Days`} />
           </div>
           <Bars values={d.signedBy} legend="Signed" />
         </Panel>
