@@ -20,7 +20,7 @@ import { withAdminTracking } from '@/lib/server/admin-tracking';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const schema = z.object({ advertiser_id: z.number().int().positive() });
+const schema = z.object({ advertiser_id: z.number().int().positive(), invoice_id: z.string().uuid().optional() });
 
 export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
@@ -43,7 +43,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     RETURNING id
   `) as unknown as { id: string }[];
 
-  const res = NextResponse.json({ ok: true, url: '/portal' });
+  const res = NextResponse.json({ ok: true, url: parsed.data.invoice_id ? `/portal/invoices/${parsed.data.invoice_id}` : '/portal' });
   const base = {
     httpOnly: true,
     sameSite: 'lax' as const,

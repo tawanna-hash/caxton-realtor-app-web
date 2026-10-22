@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { notFound, redirect } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import PreviewAsClientButton from '@/components/admin/PreviewAsClientButton';
 import PrintInvoiceButton from '@/app/admin/beta-core/PrintInvoiceButton';
 
 export const dynamic = 'force-dynamic';
@@ -102,7 +103,10 @@ export default async function InvoicePreviewPage({
           <h1 className="text-lg font-semibold text-gray-900">Invoice Preview</h1>
           <p className="text-sm text-gray-500">{invoice.number ?? 'Draft invoice'}</p>
         </div>
-        <PrintInvoiceButton />
+        <div className="flex items-center gap-2">
+          <PreviewAsClientButton advertiserId={invoice.advertiser_id} invoiceId={invoice.id} />
+          <PrintInvoiceButton />
+        </div>
       </div>
 
       <article className="min-w-0 bg-white px-4 py-6 text-[11px] leading-[1.35] text-neutral-800 shadow-sm ring-1 ring-gray-200 print:px-0 print:py-0 print:shadow-none print:ring-0 sm:px-8 sm:py-8">
