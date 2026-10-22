@@ -197,6 +197,8 @@ export default function DashboardBeta() {
           </div>
           <Bars values={d.signedBy} legend="Signed" />
         </Panel>
+
+        <Panel title="Receivables"><div id="receivables-slot" className="flex-1" /></Panel>
       </div>
 
       <GetPaidSection invoices={inv.data} payouts={pay.data} loading={inv.loading} />

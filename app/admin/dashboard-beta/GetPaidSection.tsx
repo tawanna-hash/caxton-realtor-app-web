@@ -5,7 +5,8 @@
 // time with period choices and a year-over-year comparison.
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { A, EmptyState, SearchBox } from '@/components/anchor/ui';
 import SortTable from '@/components/anchor/SortTable';
 import { agingBucketForDaysPastDue, AGING_BUCKET_LABELS, type AgingBucket } from '@/lib/invoices';
@@ -122,6 +123,9 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
   const change = income.totalPrev ? ((income.totalCur - income.totalPrev) / income.totalPrev) * 100 : null;
   const showEvery = Math.ceil(income.slots.length / 14);
 
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => { setSlot(document.getElementById('receivables-slot')); }, []);
+
   return (
     <div className="space-y-6">
       {!dismissed && d.overdue.length > 0 && (
@@ -132,9 +136,8 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
         </div>
       )}
 
-      <section className="space-y-3">
-        <H2>Receivables</H2>
-        <div className="grid items-stretch gap-4 lg:grid-cols-[1.35fr_1fr]">
+      {slot && createPortal(
+        <div className="flex h-full flex-col gap-4">
           <Card className="space-y-4">
             <div className="flex items-baseline justify-between text-sm"><span className="font-semibold text-[color:var(--ds-ink)]">{usd0(d.notPaid)} outstanding</span><span className="text-xs text-[color:var(--ds-body)]">{d.unpaid.length} unpaid invoice{d.unpaid.length === 1 ? '' : 's'}</span></div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -159,7 +162,7 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
             <div className="flex h-3 overflow-hidden rounded-full bg-[#ECECF3]" aria-hidden="true"><div style={{ width: `${d.notPaid + d.paidMonthTotal ? (d.notPaid / (d.notPaid + d.paidMonthTotal)) * 100 : 0}%`, background: '#8C94F5' }} /><div className="flex-1" style={{ background: '#1B7A3D' }} /></div>
           </Card>
         </div>
-      </section>
+      , slot)}
 
       <section id="gp-invoices"><Card className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
