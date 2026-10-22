@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   };
   if (req.nextUrl.searchParams.get('setup_probe') === '1') {
     // Temporary verification: signed setup link for a test agreement.
-    const rows = (await getSql()`SELECT id, company_name, stripe_customer_id FROM agreements WHERE company_name ILIKE '%test%' AND status <> 'cancelled' ORDER BY (stripe_customer_id IS NOT NULL) DESC, updated_at DESC NULLS LAST LIMIT 1`) as unknown as Array<{ id: string; company_name: string; stripe_customer_id: string | null }>;
+    const rows = (await getSql()`SELECT id, company_name, stripe_customer_id FROM agreements WHERE stripe_customer_id IS NOT NULL AND status <> 'cancelled' ORDER BY (company_name ILIKE '%test%') DESC, updated_at DESC NULLS LAST LIMIT 1`) as unknown as Array<{ id: string; company_name: string; stripe_customer_id: string | null }>;
     if (!rows[0]) return NextResponse.json({ keys, probe: null });
     return NextResponse.json({ keys, probe: { company: rows[0].company_name, has_customer: !!rows[0].stripe_customer_id, url: paymentSetupUrl(signPaymentSetupToken(rows[0].id, 1).token) } });
   }
