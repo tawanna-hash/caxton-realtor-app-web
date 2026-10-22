@@ -42,7 +42,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
-const selectCls = 'w-full appearance-none rounded-full border border-[color:var(--ds-ink)]/60 bg-transparent px-5 py-3.5 pr-10 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
+const selectCls = 'w-full appearance-none rounded-full border border-[color:var(--ds-ink)]/60 bg-white px-5 py-3.5 pr-10 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
 const Caret = () => null; // caret is now drawn globally on every select (app/globals.css)
 
 export default function BillingHub() {
@@ -476,24 +476,24 @@ function BillScreen({ client, agreementId, mode, seed, onClose, onDone }: { clie
         <div className="flex items-center gap-3"><span className="text-sm text-[color:var(--ds-body)]">&#128206; Attach Files</span><button type="button" className={A.primary} disabled={!valid || busy} onClick={submit}>{busy ? 'Billing…' : 'Bill now →'}</button></div>
       </div>
       <div className="p-5">
-        <div className="space-y-4 rounded-[10px] bg-white p-5">
+        <div className="space-y-3">
           <div className="flex flex-wrap gap-4">
-            <label className="relative block w-72"><span className="absolute -top-2 left-3 bg-white px-1 text-[11px] text-[color:var(--ds-body)]">Choose how to bill</span>
+            <label className="relative block w-72"><span className="mb-1 block px-1 text-xs font-medium text-[color:var(--ds-body)]">Choose how to bill</span>
               <select className={selectCls} value={how} onChange={(e) => setHow(e.target.value)}><option value="date">Bill on date</option></select><Caret /></label>
-            <label className="relative block w-72"><span className="absolute -top-2 left-3 bg-white px-1 text-[11px] text-[color:var(--ds-body)]">Issue date</span>
+            <label className="relative block w-72"><span className="mb-1 block px-1 text-xs font-medium text-[color:var(--ds-body)]">Issue date</span>
               <input type="date" min={today} className={selectCls} value={issue} onChange={(e) => setIssue(e.target.value)} /></label>
           </div>
           {lines.map((l, i) => (
-            <div key={i} className="grid grid-cols-[1fr_90px_140px_auto] items-center gap-3 rounded-[8px] border border-[color:var(--ds-line)] p-3">
+            <div key={i} className="grid grid-cols-[1fr_90px_140px_auto] items-center gap-3 rounded-[10px] bg-white p-3">
               <input className={A.input} placeholder={l.credit ? 'Credit description' : 'Charge description'} value={l.description} onChange={(e) => setLine(i, { description: e.target.value })} />
               <input className={A.input} type="number" min={1} aria-label="Quantity" value={l.qty} onChange={(e) => setLine(i, { qty: Math.max(1, Number(e.target.value) || 1) })} />
               <input className={A.input} type="number" min={0} step="0.01" aria-label={l.credit ? 'Credit amount' : 'Price'} placeholder={l.credit ? 'Credit $' : 'Price $'} value={l.unit} onChange={(e) => setLine(i, { unit: e.target.value })} />
               <button type="button" aria-label="Remove" onClick={() => setLines((ls) => ls.filter((_, n) => n !== i))} style={{ border: 0, background: 'transparent' }}>&#10005;</button>
             </div>
           ))}
-          <button type="button" onClick={() => setLines((ls) => [...ls, { description: '', qty: 1, unit: '', credit: false }])} style={{ background: 'transparent' }} className="flex w-full items-center gap-2 rounded-[8px] border border-dashed border-[color:var(--ds-line)] px-4 py-3 text-sm font-medium text-[color:var(--ds-primary)]">&#8853; Add charge</button>
+          <button type="button" onClick={() => setLines((ls) => [...ls, { description: '', qty: 1, unit: '', credit: false }])} style={{ background: 'transparent' }} className="flex w-full items-center gap-2 rounded-[10px] border border-dashed border-[color:var(--ds-primary)] px-4 py-3 text-sm font-medium text-[color:var(--ds-primary)]">&#8853; Add charge</button>
           <button type="button" onClick={() => setLines((ls) => [...ls, { description: 'Credit', qty: 1, unit: '', credit: true }])} style={{ background: 'transparent', border: 0 }} className="text-sm font-medium text-[color:var(--ds-primary)]">&#8853; Add credit</button>
-          {lines.length > 0 && <div className="flex justify-end text-sm text-[color:var(--ds-ink)]">Total&nbsp;<span className="font-semibold">{money(total)}</span></div>}
+          {lines.length > 0 && <div className="flex justify-end rounded-[10px] bg-white px-4 py-3 text-sm text-[color:var(--ds-ink)]">Total&nbsp;<span className="font-semibold">{money(total)}</span></div>}
           {err && <p className="text-sm text-red-700">{err}</p>}
         </div>
       </div>
