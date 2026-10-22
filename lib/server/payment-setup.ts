@@ -44,7 +44,79 @@ export async function ensurePaymentSetupSchema() {
   await sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS stripe_payment_method_id text`;
   await sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS payment_method_label text`;
   await sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS payment_method_saved_at timestamptz`;
+  // Client file history: each sent setup request (with a copy of the email)
+  // and each setup outcome from the client.
+  await sql`
+    CREATE TABLE IF NOT EXISTS client_payment_setup_log (
+      id bigserial PRIMARY KEY,
+      advertiser_id integer NOT NULL,
+      event text NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT NOW(),
+      actor text,
+      market text,
+      from_email text,
+      to_emails text[],
+      cc_emails text[],
+      subject text,
+      html text,
+      setup_url text,
+      link_expires_at timestamptz,
+      agreement_id text,
+      method_label text,
+      method_last4 text,
+      details text,
+      stripe_ref text
+    )`;
+  await sql`CREATE INDEX IF NOT EXISTS client_payment_setup_log_adv_idx ON client_payment_setup_log (advertiser_id, created_at DESC)`;
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS client_payment_setup_log_ref_uq ON client_payment_setup_log (event, stripe_ref) WHERE stripe_ref IS NOT NULL`;
   schemaReady = true;
+}
+
+export type SetupLogEvent = 'request_sent' | 'method_saved' | 'bank_pending' | 'setup_failed';
+export type SetupLogInput = {
+  advertiserId: number;
+  event: SetupLogEvent;
+  actor?: string | null;
+  market?: string | null;
+  fromEmail?: string | null;
+  to?: string[] | null;
+  cc?: string[] | null;
+  subject?: string | null;
+  html?: string | null;
+  setupUrl?: string | null;
+  linkExpiresAt?: Date | null;
+  agreementId?: string | null;
+  methodLabel?: string | null;
+  methodLast4?: string | null;
+  details?: string | null;
+  stripeRef?: string | null;
+};
+
+/** Add an entry to the client's payment setup history. Best effort; never throws. */
+export async function logClientSetup(e: SetupLogInput): Promise<void> {
+  try {
+    await ensurePaymentSetupSchema();
+    await getSql()`
+      INSERT INTO client_payment_setup_log
+        (advertiser_id, event, actor, market, from_email, to_emails, cc_emails, subject, html, setup_url,
+         link_expires_at, agreement_id, method_label, method_last4, details, stripe_ref)
+      VALUES (${e.advertiserId}, ${e.event}, ${e.actor ?? null}, ${e.market ?? null}, ${e.fromEmail ?? null},
+              ${e.to ?? null}, ${e.cc ?? null}, ${e.subject ?? null}, ${e.html ?? null}, ${e.setupUrl ?? null},
+              ${e.linkExpiresAt ? e.linkExpiresAt.toISOString() : null}, ${e.agreementId ?? null}, ${e.methodLabel ?? null},
+              ${e.methodLast4 ?? null}, ${e.details ?? null}, ${e.stripeRef ?? null})
+      ON CONFLICT DO NOTHING`;
+  } catch (err) {
+    console.warn('[payment-setup] history log failed', err);
+  }
+}
+
+function logOutcome(t: SetupTarget, event: SetupLogEvent, siId: string, extra: { label?: string | null; last4?: string | null; details?: string | null }) {
+  if (!t.advertiser) return Promise.resolve();
+  return logClientSetup({
+    advertiserId: t.advertiser.id, event, actor: t.email ?? 'client', market: t.brand.market,
+    agreementId: t.agreement?.id ?? null, methodLabel: extra.label ?? null, methodLast4: extra.last4 ?? null,
+    details: extra.details ?? null, stripeRef: siId,
+  });
 }
 
 function marketFromPublication(agPub: string | null | undefined, advPub: string | null | undefined): MarketBrand {
@@ -183,6 +255,7 @@ export async function persistSetupIntent(t: SetupTarget, si: Stripe.SetupIntent)
   const saved: SavedMethod = { kind: isBank ? 'bank' : 'card', label, last4, status: pending ? 'pending' : 'saved' };
   if (pending) {
     await auditAgreement(t, 'payment_method_pending', `Client payment setup page — ${label} ••••${last4 ?? '????'} (bank verification pending) — seti: ${si.id}`, si.id);
+    await logOutcome(t, 'bank_pending', si.id, { label, last4, details: 'Bank verification pending' });
     return saved;
   }
 
@@ -233,6 +306,7 @@ export async function persistSetupIntent(t: SetupTarget, si: Stripe.SetupIntent)
     const updated = await loadAgreement(ag.id);
     if (updated) { try { await syncAgreementToAdvertiser(updated); } catch (e) { console.warn('[payment-setup] advertiser sync failed', e); } }
   }
+  await logOutcome(t, 'method_saved', si.id, { label, last4, details: t.agreement ? 'Saved on the client and the current agreement' : 'Saved on the client' });
   return saved;
 }
 
@@ -297,5 +371,6 @@ export async function handleClientSetupIntentEvent(siEvent: Stripe.SetupIntent, 
 
   const reason = si.last_setup_error?.message ?? siEvent.last_setup_error?.message ?? 'Verification did not complete.';
   await auditAgreement(t, 'payment_method_failed', `Client payment setup — ${isBank ? 'bank verification failed' : 'setup failed'}: ${reason} — seti: ${si.id}`, si.id);
+  await logOutcome(t, 'setup_failed', si.id, { label: isBank ? 'Bank account' : 'Card', details: reason });
   if (isBank) await notifyBankOutcome(t, false, reason);
 }

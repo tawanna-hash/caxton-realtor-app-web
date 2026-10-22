@@ -72,7 +72,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
     try {
       const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ market, fields, to: testTo }) });
       const j = await r.json().catch(() => ({}));
-      setSendMsg(r.ok ? { ok: true, t: `Test sent to ${j.to} from ${j.from}.` } : { ok: false, t: j.detail ?? j.error ?? 'Test could not be sent.' });
+      setSendMsg(r.ok ? { ok: true, t: `Test sent to ${j.to} from ${j.from}.${j.logged ? ' Saved to the client file.' : ''}` } : { ok: false, t: j.detail ?? j.error ?? 'Test could not be sent.' });
     } catch { setSendMsg({ ok: false, t: 'Test could not be sent.' }); } finally { setSending(false); }
   }
 
@@ -81,7 +81,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
     try {
       const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'send', market, fields, to: toList, cc: ccList }) });
       const j = await r.json().catch(() => ({}));
-      setRealMsg(r.ok ? { ok: true, t: `Sent to ${[...(j.to ?? []), ...(j.cc ?? [])].join(', ')} from ${j.from}.` } : { ok: false, t: j.detail ?? j.error ?? 'Email could not be sent.' });
+      setRealMsg(r.ok ? { ok: true, t: `Sent to ${[...(j.to ?? []), ...(j.cc ?? [])].join(', ')} from ${j.from}.${j.logged ? ' Saved to the client file.' : ''}` } : { ok: false, t: j.detail ?? j.error ?? 'Email could not be sent.' });
     } catch { setRealMsg({ ok: false, t: 'Email could not be sent.' }); } finally { setRealSending(false); }
   }
 

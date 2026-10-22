@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { A, RowMenu } from '@/components/anchor/ui';
 import { computeNextRun, type RecurringFrequency } from '@/lib/recurring-invoices';
 import StatementDialog from './StatementDialog';
+import PaymentSetupHistory from './PaymentSetupHistory';
 import { mainOf, othersOf } from '../contacts/ContactsList';
 import { GROUP_LABEL, mergeClients, day, money, useJson, type Adv, type Agr, type Inv, type Sch } from '../data';
 import { ContactModal, EditClientModal, targetFor, type ContactTarget } from '../ClientEditors';
@@ -164,6 +165,7 @@ export default function ClientDetail({ id }: { id: number }) {
             <Card title="Payment methods" action={<Link href={`/admin/billing-hub?tab=payment&clientId=${id}`} className={link}>Add a payment method</Link>}>
               {a.card_last4 ? <p className="text-sm">Card ending {a.card_last4}</p> : <p className="text-sm text-[color:var(--ds-body)]">There are no payment methods to display.</p>}
             </Card>
+            <PaymentSetupHistory id={id} ids={[...ids]} />
           </div>
         </div>
       )}

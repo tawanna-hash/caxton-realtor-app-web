@@ -10,8 +10,8 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getSql } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { renderPaymentMethodHtml, type PaymentMethodFields } from '@/lib/agreements-v2/payment-method-template';
-import { signPaymentSetupToken, paymentSetupUrl } from '@/lib/payment-setup-token';
-import { ensurePaymentSetupSchema, loadSetupTarget, type SetupTarget } from '@/lib/server/payment-setup';
+import { signPaymentSetupToken, paymentSetupUrl, verifyPaymentSetupToken } from '@/lib/payment-setup-token';
+import { ensurePaymentSetupSchema, loadSetupTarget, logClientSetup, type SetupTarget } from '@/lib/server/payment-setup';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -93,16 +93,28 @@ export async function POST(req: NextRequest) {
     if (!to.length) return NextResponse.json({ error: 'Add at least one recipient.' }, { status: 400 });
     if (bad.length) return NextResponse.json({ error: `Invalid email: ${bad.join(', ')}` }, { status: 400 });
     if (to.length + cc.length > 10) return NextResponse.json({ error: 'Up to 10 recipients.' }, { status: 400 });
-    if (!/^https:\/\/realtynewsnow\.app\/pay\/setup\//.test(fields.payment_setup_url ?? '')) {
-      return NextResponse.json({ error: 'Create the secure setup link first.' }, { status: 400 });
-    }
+    const tokenStr = /^https:\/\/realtynewsnow\.app\/pay\/setup\/([^/?#\s]+)$/.exec((fields.payment_setup_url ?? '').trim())?.[1];
+    const tok = tokenStr ? verifyPaymentSetupToken(tokenStr) : null;
+    if (!tok) return NextResponse.json({ error: 'Create the secure setup link first.' }, { status: 400 });
+    if (!tok.ok) return NextResponse.json({ error: tok.reason === 'expired' ? 'The setup link has expired. Create a new one.' : 'The setup link is not valid. Create a new one.' }, { status: 400 });
+    const target = await loadSetupTarget(tok.subject);
+    const linkExp = new Date(Number(tokenStr!.split('.')[1]) * 1000);
     const out = renderPaymentMethodHtml(typeof body.market === 'string' ? body.market : null, fields);
     const res = await sendEmail({ from: out.from, to, cc: cc.length ? cc : undefined, subject: out.subject, html: out.html, replyTo: out.brand.billing_contact_email });
     if (!res.ok) {
       console.error('[payment-method-template] send failed', { from: out.from, error: 'error' in res ? res.error : 'unknown' });
       return NextResponse.json({ error: 'send failed', detail: 'error' in res ? res.error : 'error' }, { status: 502 });
     }
-    return NextResponse.json({ ok: true, to, cc, from: out.from });
+    let logged = false;
+    if (target?.advertiser) {
+      await logClientSetup({
+        advertiserId: target.advertiser.id, event: 'request_sent', actor: admin.email ?? null, market: out.brand.market,
+        fromEmail: out.from, to, cc, subject: out.subject, html: out.html, setupUrl: fields.payment_setup_url ?? null,
+        linkExpiresAt: linkExp, agreementId: target.agreement?.id ?? null,
+      });
+      logged = true;
+    }
+    return NextResponse.json({ ok: true, to, cc, from: out.from, logged });
   }
 
   const to = typeof body.to === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.to.trim()) ? body.to.trim() : DEFAULT_TEST_TO;
