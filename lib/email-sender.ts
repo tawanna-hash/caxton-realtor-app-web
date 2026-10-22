@@ -11,7 +11,7 @@ export const EMAIL_SENDERS = {
 
 export type EmailSenderAddress = keyof typeof EMAIL_SENDERS;
 
-export const DEFAULT_EMAIL_SENDER: EmailSenderAddress = 'tawanna@newslinesa.com';
+export const DEFAULT_EMAIL_SENDER: EmailSenderAddress = 'tawanna@myrealtyline.com';
 
 export function resolveEmailSenderAddress(
   requested: string | undefined,

@@ -33,11 +33,11 @@ export interface SendEmailResult {
 }
 
 import { captureServerEvent } from '@/lib/server/posthog';
-import { getResendApiKeyForFrom, verifiedEmailFrom } from '@/lib/email-sender';
+import { DEFAULT_EMAIL_SENDER, EMAIL_SENDERS, getResendApiKeyForFrom, verifiedEmailFrom } from '@/lib/email-sender';
 
 // The active Resend team has newslinesa.com verified. verifiedEmailFrom also
 // protects sends from stale deployment variables that still name old domains.
-const FROM_DEFAULT = verifiedEmailFrom(process.env.EMAIL_FROM);
+const FROM_DEFAULT = EMAIL_SENDERS[DEFAULT_EMAIL_SENDER];
 
 export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult> {
   const from = verifiedEmailFrom(opts.from ?? FROM_DEFAULT);
