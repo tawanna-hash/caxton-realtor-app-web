@@ -54,7 +54,7 @@ export const POST = withAdminTracking(async function POST(
     });
     if (!original) {
       return NextResponse.json(
-        { error: 'no outstanding invoices found for this partner' },
+        { error: 'This client has no overdue invoices, so there is no statement to send.' },
         { status: 404 },
       );
     }

@@ -118,6 +118,8 @@ export async function loadPartnerStatement(
     bill_to_address: string | null;
   }>;
   const bill = billRows[0];
+  // Statements are only available while something is overdue.
+  if (!invoices.some((invoice) => invoice.is_overdue)) return null;
   const clean = (value: string | null | undefined) => value?.trim() || null;
   const overdueCents = invoices
     .filter((invoice) => invoice.is_overdue)

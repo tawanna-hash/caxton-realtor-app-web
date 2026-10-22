@@ -17,18 +17,17 @@ export default function StatementsPanel() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState('');
-  const [overdueOnly, setOverdueOnly] = useState(false);
-
+  
   useEffect(() => {
     fetch('/api/admin/agreements-v2/statements', { credentials: 'include' })
-      .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.error || 'failed'); setRows(j.partners as Row[]); })
+      .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.error || 'failed'); setRows((j.partners as Row[]).filter((r) => r.overdue_cents > 0)); })
       .catch((e) => setError(e instanceof Error ? e.message : 'Could not load statements.'));
   }, []);
 
   const shown = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return (rows ?? []).filter((r) => (!overdueOnly || r.overdue_cents > 0) && (!term || `${r.advertiser_name} ${r.recipient_email ?? ''}`.toLowerCase().includes(term)));
-  }, [rows, q, overdueOnly]);
+    return (rows ?? []).filter((r) => (!term || `${r.advertiser_name} ${r.recipient_email ?? ''}`.toLowerCase().includes(term)));
+  }, [rows, q]);
 
   if (error) return <div className={A.error}>{error}</div>;
   if (!rows) return <p className="text-sm text-[color:var(--ds-body)]">Loading statements…</p>;
@@ -38,13 +37,12 @@ export default function StatementsPanel() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {([['Partners with a balance', String(rows.length)], ['Outstanding', money(out)], ['Overdue', money(over)]] as const).map(([l, v]) => (
+        {([['Partners with overdue invoices', String(rows.length)], ['Outstanding', money(out)], ['Overdue', money(over)]] as const).map(([l, v]) => (
           <div key={l} className={`${A.card} p-5`}><div className="text-xs text-[color:var(--ds-body)]">{l}</div><div className="mt-1 text-xl font-semibold text-[color:var(--ds-ink)]">{v}</div></div>
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} />
-        <label className="flex items-center gap-2 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} />Overdue only</label>
         <span className="text-xs text-[color:var(--ds-body)]">{shown.length} of {rows.length} partners</span>
         <span className="ml-auto text-xs text-[color:var(--ds-body)]">Open a statement to send it or copy its payment links.</span>
       </div>

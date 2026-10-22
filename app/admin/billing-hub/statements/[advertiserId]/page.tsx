@@ -173,6 +173,16 @@ export default async function StatementPage({
   const overdueCents = invoices.filter((i) => i.is_overdue).reduce((sum, i) => sum + i.balance_cents, 0);
   const notYetDueCents = invoices.filter((i) => !i.is_overdue).reduce((sum, i) => sum + i.balance_cents, 0);
   const outstandingCents = overdueCents + notYetDueCents;
+  if (overdueCents <= 0) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        <Link href="/admin/billing-hub" className="text-xs text-gray-500 underline">Back to Billing</Link>
+        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[color:var(--ds-ink)]">Statement of Account</h1>
+        <p className="text-sm text-gray-500">{advertiser.name}</p>
+        <div className="mt-4 bg-white px-6 py-8 text-sm text-gray-700 ring-1 ring-gray-200">Statement unavailable. This client has no overdue invoices.</div>
+      </div>
+    );
+  }
   const asOf = new Date().toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
