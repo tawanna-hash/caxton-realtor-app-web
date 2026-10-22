@@ -88,3 +88,38 @@ export function renderPaymentMethodTemplate(market: string | null | undefined, f
   const fill = (s: string) => s.replace(/\{\{\s*([A-Za-z_]+)\s*\}\}/g, (all, k: string) => vals[k] ?? all);
   return { brand: b, from: `Tawanna Verock <${b.sender_email}>`, subject: fill(PAYMENT_METHOD_SUBJECT), body: fill(PAYMENT_METHOD_BODY) };
 }
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/** Branded HTML email: real button for the setup link, market brand in header and footer. */
+export function renderPaymentMethodHtml(market: string | null | undefined, fields: PaymentMethodFields = {}) {
+  const r = renderPaymentMethodTemplate(market, fields);
+  const b = r.brand;
+  const v = (k: keyof PaymentMethodFields) => (fields[k]?.trim() ? esc(fields[k]!.trim()) : `{{${k}}}`);
+  const url = fields.payment_setup_url?.trim();
+  const safeUrl = url && /^https:\/\//i.test(url) ? esc(url) : '';
+  const p = 'margin:0 0 16px;font-size:15px;line-height:1.6;color:#16132D;';
+  const row = (label: string, val: string) => `<tr><td width="150" style="width:150px;padding:6px 12px 6px 0;font-size:14px;color:#4E4B66;white-space:nowrap;vertical-align:top;">${label}</td><td style="padding:6px 0;font-size:14px;color:#16132D;font-weight:600;">${val}</td></tr>`;
+  const button = safeUrl
+    ? `<a href="${safeUrl}" style="display:inline-block;background:#301D5D;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:14px 28px;border-radius:10px;">Securely Add Payment Method</a>`
+    : `<span style="display:inline-block;background:#301D5D;color:#ffffff;font-weight:600;font-size:15px;padding:14px 28px;border-radius:10px;opacity:.85;">Securely Add Payment Method</span><div style="margin-top:8px;font-size:12px;color:#4E4B66;">Setup link: {{payment_setup_url}}</div>`;
+  const html = `<!doctype html><html><body style="margin:0;padding:0;background:#F3F4F7;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F3F4F7;padding:24px 12px;"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;">
+<tr><td style="background:#301D5D;padding:22px 28px;color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.01em;">${esc(b.brand)}</td></tr>
+<tr><td style="padding:28px;">
+<p style="${p}">Hi ${v('client_first_name')},</p>
+<p style="${p}">Please add your preferred payment method for your ${esc(b.brand)} advertising account using the secure button below.</p>
+<p style="${p}">You will not be charged during this setup. Future payments will follow the amounts and billing schedule in your advertising agreement.</p>
+<div style="margin:24px 0;text-align:center;">${button}</div>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-top:1px solid #E2DFEC;border-bottom:1px solid #E2DFEC;width:100%;padding:8px 0;">
+${row('Agreement', v('agreement_name_or_number'))}${row('Payment amount', v('payment_terms'))}${row('Billing schedule', v('billing_schedule'))}
+</table>
+<p style="${p}">Please don't email your card or bank account details. Use the secure setup page instead.</p>
+<div style="margin:0 0 20px;padding:14px 16px;background:#EEE8FD;border-radius:10px;font-size:13px;line-height:1.6;color:#16132D;"><strong>Authorization</strong><br>I authorize ${esc(b.brand)} to save my selected payment method and use it for payments under agreement ${v('agreement_name_or_number')}, according to the payment amount or calculation and billing schedule stated above. To change my payment method or revoke authorization for future charges, I will contact <a href="mailto:${b.billing_contact_email}" style="color:#301D5D;">${b.billing_contact_email}</a>.</div>
+<p style="margin:0;font-size:15px;line-height:1.6;color:#16132D;">Thank you,<br>Tawanna Verock<br>${esc(b.brand)}</p>
+</td></tr>
+<tr><td style="padding:16px 28px;background:#ffffff;border-top:1px solid #E2DFEC;font-size:12px;color:#4E4B66;"><a href="mailto:${b.sender_email}" style="color:#4E4B66;">${b.sender_email}</a> · <a href="https://${b.domain}" style="color:#4E4B66;">${b.domain}</a></td></tr>
+</table></td></tr></table></body></html>`;
+  return { ...r, html };
+}

@@ -2,14 +2,14 @@
 
 // Built-in Payment Method Setup email template. The brand, sender, domain and
 // billing contact follow the selected market (Austin -> RealtyLine Austin,
-// San Antonio -> Newsline San Antonio). Staff fill the client fields, then copy
-// the subject and body. Nothing is emailed from here.
+// San Antonio -> Newsline San Antonio). Staff fill the client fields, preview the
+// branded email, copy it, or send a test to themselves.
 
 import { useEffect, useMemo, useState } from 'react';
 import { A } from '@/components/anchor/ui';
 import {
   MARKET_BRANDS,
-  renderPaymentMethodTemplate,
+  renderPaymentMethodHtml,
   type PaymentMethodFields,
   type TemplateMarket,
 } from '@/lib/agreements-v2/payment-method-template';
@@ -26,7 +26,20 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
   const [market, setMarket] = useState<TemplateMarket>('austin');
   const [fields, setFields] = useState<PaymentMethodFields>({});
   const [copied, setCopied] = useState<string | null>(null);
-  const out = useMemo(() => renderPaymentMethodTemplate(market, fields), [market, fields]);
+  const out = useMemo(() => renderPaymentMethodHtml(market, fields), [market, fields]);
+  const [view, setView] = useState<'preview' | 'text'>('preview');
+  const [testTo, setTestTo] = useState('tawanna@myrealtyline.com');
+  const [sending, setSending] = useState(false);
+  const [sendMsg, setSendMsg] = useState<{ ok: boolean; t: string } | null>(null);
+
+  async function sendTest() {
+    setSending(true); setSendMsg(null);
+    try {
+      const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ market, fields, to: testTo }) });
+      const j = await r.json().catch(() => ({}));
+      setSendMsg(r.ok ? { ok: true, t: `Test sent to ${j.to} from ${j.from}.` } : { ok: false, t: j.detail ?? j.error ?? 'Test could not be sent.' });
+    } catch { setSendMsg({ ok: false, t: 'Test could not be sent.' }); } finally { setSending(false); }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -74,11 +87,24 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
               <div><span className="text-[color:var(--ds-body)]">From: </span><span className="text-[color:var(--ds-ink)]">{out.from}</span></div>
               <div className="mt-1"><span className="text-[color:var(--ds-body)]">Subject: </span><span className="font-medium text-[color:var(--ds-ink)]">{out.subject}</span></div>
             </div>
-            <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-[10px] border border-[color:var(--ds-line)] bg-[color:var(--ds-page)] p-4 font-sans text-sm leading-relaxed text-[color:var(--ds-ink)]">{out.body}</pre>
+            <div className="flex gap-2">
+              {(['preview', 'text'] as const).map((k) => (
+                <button key={k} type="button" onClick={() => setView(k)} className={`rounded-full px-3 py-1 text-xs font-medium ${view === k ? 'bg-[color:var(--ds-primary)] text-white' : 'border border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{k === 'preview' ? 'Email preview' : 'Plain text'}</button>
+              ))}
+            </div>
+            {view === 'preview'
+              ? <iframe title="Email preview" srcDoc={out.html} sandbox="" className="h-[460px] w-full rounded-[10px] border border-[color:var(--ds-line)] bg-white" />
+              : <pre className="max-h-[460px] overflow-y-auto whitespace-pre-wrap rounded-[10px] border border-[color:var(--ds-line)] bg-[color:var(--ds-page)] p-4 font-sans text-sm leading-relaxed text-[color:var(--ds-ink)]">{out.body}</pre>}
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" className={A.outline} onClick={() => copy('Subject copied', out.subject)}>Copy subject</button>
               <button type="button" className={A.primary} onClick={() => copy('Email copied', out.body)}>Copy email</button>
+              <button type="button" className={A.outline} onClick={() => copy('HTML copied', out.html)}>Copy HTML</button>
               {copied && <span className="text-sm text-[color:var(--ds-body)]">{copied}</span>}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--ds-line)] pt-3">
+              <input className={`${A.input} max-w-[280px]`} type="email" aria-label="Test recipient" value={testTo} onChange={(e) => setTestTo(e.target.value)} />
+              <button type="button" className={A.primary} disabled={sending || !testTo.trim()} onClick={sendTest}>{sending ? 'Sending…' : 'Send test'}</button>
+              {sendMsg && <span className={`text-sm ${sendMsg.ok ? 'text-[#065F46]' : 'text-red-700'}`}>{sendMsg.t}</span>}
             </div>
           </div>
         </div>
