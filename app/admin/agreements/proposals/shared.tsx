@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { A } from '@/components/anchor/ui';
 
 export const NEW_PROPOSAL = '/admin/agreements/renewals-v2/new';
+export const NEW_AGREEMENT = '/admin/agreements/renewals-v2?new=1';
 export const TEMPLATES = '/admin/agreements/renewals-v2?tab=templates';
 
 export function relTime(iso: string): string {
@@ -35,13 +36,13 @@ export function CreateProposal({ label = 'Create agreement' }: { label?: string 
   }, [open]);
   return (
     <div ref={ref} className="relative inline-flex">
-      <a href={NEW_PROPOSAL} className={A.primary} style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0 }}>{label}</a>
+      <a href={NEW_AGREEMENT} className={A.primary} style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0 }}>{label}</a>
       <button type="button" aria-label="More ways to create an agreement" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} className={`${A.primary} px-3`} style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, marginLeft: 1 }}>
         <span aria-hidden="true" className="inline-block text-[10px] leading-none">&#9660;</span>
       </button>
       {open && (
         <div role="menu" className="absolute right-0 top-full z-40 mt-1.5 w-56 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
-          <a role="menuitem" href={NEW_PROPOSAL} className="block rounded-[10px] px-3 py-2 text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]">Blank agreement</a>
+          <a role="menuitem" href={NEW_AGREEMENT} className="block rounded-[10px] px-3 py-2 text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]">Blank agreement</a>
           <a role="menuitem" href={TEMPLATES} className="block rounded-[10px] px-3 py-2 text-sm text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]">From a template</a>
         </div>
       )}
