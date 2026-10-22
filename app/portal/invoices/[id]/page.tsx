@@ -8,6 +8,7 @@
 import { redirect } from 'next/navigation';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
+import { canPayPartial } from '@/lib/server/partial-payments';
 import InvoicePayClient from './InvoicePayClient';
 
 export const dynamic = 'force-dynamic';
@@ -112,6 +113,13 @@ export default async function InvoicePayPage({
   const paymentsCreditsCents = invoice.status === 'paid' ? invoice.total_cents : 0;
   const totalAmountDueCents = balanceForwardCents + invoice.total_cents - paymentsCreditsCents;
 
+  const allowPartial = await canPayPartial(invoice.advertiser_id);
+  let remainingCents = Math.max(0, invoice.total_cents - paymentsCreditsCents);
+  if (allowPartial && invoice.status !== 'paid') {
+    const paid = (await sql`SELECT COALESCE(sum(amount_cents), 0)::int AS c FROM invoice_payments WHERE invoice_id = ${invoice.id}`) as unknown as Array<{ c: number }>;
+    remainingCents = Math.max(0, invoice.total_cents - Number(paid[0]?.c ?? 0));
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">
       <InvoicePayClient
@@ -122,6 +130,8 @@ export default async function InvoicePayPage({
           newChargesCents: invoice.total_cents,
           totalAmountDueCents,
         }}
+        allowPartial={allowPartial}
+        remainingCents={remainingCents}
         justPaid={sp.paid === '1'}
         justCanceled={sp.canceled === '1'}
       />

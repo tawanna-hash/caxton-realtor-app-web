@@ -100,11 +100,15 @@ export default function InvoicePayClient({
   accountSummary,
   justPaid,
   justCanceled,
+  allowPartial = false,
+  remainingCents,
 }: {
   invoice: InvoiceData;
   accountSummary: AccountSummary;
   justPaid: boolean;
   justCanceled: boolean;
+  allowPartial?: boolean;
+  remainingCents?: number;
 }) {
   const [mode, setMode] = useState<'idle' | 'embedded' | 'redirecting'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -113,9 +117,9 @@ export default function InvoicePayClient({
 
   const alreadyPaid = invoice.status === 'paid' || justPaid;
   const isVoid = invoice.status === 'void';
-  const fullDueCents = Math.max(0, invoice.total_cents - accountSummary.paymentsCreditsCents);
+  const fullDueCents = remainingCents ?? Math.max(0, invoice.total_cents - accountSummary.paymentsCreditsCents);
   const [amountText, setAmountText] = useState('');
-  const parsedCents = amountText.trim() === '' ? fullDueCents : Math.round(Number(amountText.replace(/[$,]/g, '')) * 100);
+  const parsedCents = !allowPartial || amountText.trim() === '' ? fullDueCents : Math.round(Number(amountText.replace(/[$,]/g, '')) * 100);
   const amountValid = Number.isFinite(parsedCents) && parsedCents >= 100 && parsedCents <= fullDueCents;
   const payCents = amountValid ? parsedCents : fullDueCents;
   const partialBody = payCents < fullDueCents ? { amount_cents: payCents } : {};
@@ -203,7 +207,7 @@ export default function InvoicePayClient({
             </EmbeddedCheckoutProvider>
           ) : (
             <div className="space-y-4">
-              <label className="block text-sm font-semibold text-gray-900">Amount to pay
+              {allowPartial && <label className="block text-sm font-semibold text-gray-900">Amount to pay
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-gray-500">$</span>
                   <input
@@ -217,7 +221,7 @@ export default function InvoicePayClient({
                 </div>
                 <span className="mt-1 block text-xs font-normal text-gray-500">Balance due {fmtUsd(fullDueCents)}. You can pay any amount from $1.00 up to the balance.</span>
                 {!amountValid && amountText.trim() !== '' && <span className="mt-1 block text-xs font-normal text-[#661102]">Enter an amount between $1.00 and {fmtUsd(fullDueCents)}.</span>}
-              </label>
+              </label>}
               <fieldset>
                 <legend className="mb-2 text-sm font-semibold text-gray-900">Payment method</legend>
                 <div className="grid gap-2 sm:grid-cols-3">

@@ -18,6 +18,7 @@ import {
   processingFeeCents,
   type InvoicePaymentMethod,
 } from '@/lib/payment-processing-fees';
+import { canPayPartial } from '@/lib/server/partial-payments';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import {
@@ -92,6 +93,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
       const { remainingCents } = await lockInvoiceRemainingBalance(client, id);
       // Optional partial payment: any whole-cent amount from $1.00 up to the remaining balance.
+      const wantsPartial = body.amount_cents != null && Number(body.amount_cents) !== remainingCents;
+      if (wantsPartial && !(await canPayPartial(invoiceRow.advertiser_id))) {
+        throw new InvoiceLifecycleError('This invoice must be paid in full.', 400);
+      }
       const requested = body.amount_cents == null ? remainingCents : Number(body.amount_cents);
       if (!Number.isInteger(requested) || requested < 100 || requested > remainingCents) {
         throw new InvoiceLifecycleError('Enter an amount of at least $1.00 and no more than the remaining balance.', 400);
