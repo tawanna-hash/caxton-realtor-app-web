@@ -7,7 +7,8 @@
 //   URL:    https://realtynewsnow.app/api/stripe/webhook
 //   Events: payment_intent.succeeded, payment_intent.payment_failed, charge.refunded,
 //           checkout.session.completed, customer.subscription.updated,
-//           customer.subscription.deleted
+//           customer.subscription.deleted, setup_intent.succeeded,
+//           setup_intent.setup_failed (client payment setup: bank verification)
 // Then set STRIPE_WEBHOOK_SECRET in Vercel env to the whsec_... value Stripe gives.
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -25,6 +26,7 @@ import {
   upsertStripeStatementPayments,
 } from '@/lib/server/stripe-payment-ledger-sync';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
+import { handleClientSetupIntentEvent, loadSetupAgreement, saveFromCheckoutSession } from '@/lib/server/payment-setup';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -95,8 +97,23 @@ export async function POST(req: NextRequest) {
         await handleRefund(sql, charge);
         break;
       }
+      case 'setup_intent.succeeded': {
+        await handleClientSetupIntentEvent(event.data.object as Stripe.SetupIntent, 'succeeded');
+        break;
+      }
+      case 'setup_intent.setup_failed': {
+        await handleClientSetupIntentEvent(event.data.object as Stripe.SetupIntent, 'failed');
+        break;
+      }
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
+        // Client payment setup page: save the method even if the client never
+        // returns to the success page (closed the tab after Stripe).
+        if (session.mode === 'setup' && session.metadata?.source === 'client_payment_setup' && session.metadata.agreement_id) {
+          const ag = await loadSetupAgreement(session.metadata.agreement_id);
+          if (ag) await saveFromCheckoutSession(ag, session.id);
+          break;
+        }
         if (
           ['invoice_payment', 'statement_payment'].includes(session.metadata?.source ?? '') &&
           session.payment_status === 'paid'

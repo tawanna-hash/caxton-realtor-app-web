@@ -75,6 +75,11 @@ export async function saveFromCheckoutSession(ag: SetupAgreement, sessionId: str
   if (session.mode !== 'setup' || session.metadata?.agreement_id !== ag.id) return { error: 'This setup session does not belong to this agreement.' };
   const si = session.setup_intent as Stripe.SetupIntent | null;
   if (!si || typeof si === 'string') return { error: 'Setup is not complete yet.' };
+  return persistSetupIntent(ag, si);
+}
+
+/** Write a client-setup SetupIntent's payment method onto the agreement (card, or bank once verified). */
+export async function persistSetupIntent(ag: SetupAgreement, si: Stripe.SetupIntent): Promise<SavedMethod | { error: string }> {
   const pm = typeof si.payment_method === 'string' || !si.payment_method ? null : si.payment_method;
   if (!pm) return { error: si.status === 'requires_payment_method' ? 'No payment method was saved.' : 'Setup is not complete yet.' };
 
@@ -121,9 +126,10 @@ export async function saveFromCheckoutSession(ag: SetupAgreement, sessionId: str
 
   const rows = (await sql`SELECT audit_log FROM agreements WHERE id = ${ag.id}`) as unknown as Array<{ audit_log: AgreementAuditEntry[] | null }>;
   const log = rows[0]?.audit_log ?? [];
-  if (!log.some((e) => typeof e.details === 'string' && e.details.includes(si.id))) {
+  const eventName = pending ? 'payment_method_pending' : 'card_on_file_saved';
+  if (!log.some((e) => e.event === eventName && typeof e.details === 'string' && e.details.includes(si.id))) {
     const next = appendAudit(log, {
-      event: pending ? 'payment_method_pending' : 'card_on_file_saved',
+      event: eventName,
       timestamp: new Date().toISOString(),
       user_email: ag.billing_email ?? ag.advertiser_email ?? 'client',
       details: `Client payment setup page — ${saved.label} ••••${saved.last4 ?? '????'}${pending ? ' (bank verification pending)' : ''} — seti: ${si.id}`,
@@ -135,4 +141,59 @@ export async function saveFromCheckoutSession(ag: SetupAgreement, sessionId: str
     if (updated[0]) { try { await syncAgreementToAdvertiser(updated[0]); } catch (e) { console.warn('[payment-setup] advertiser sync failed', e); } }
   }
   return saved;
+}
+
+/** Notify the market's billing inbox about a bank verification outcome. Best effort. */
+async function notifyBankOutcome(ag: SetupAgreement, ok: boolean, detail: string) {
+  try {
+    const { sendEmail } = await import('@/lib/email');
+    const brand = marketForAgreement(ag);
+    const who = ag.company_name ?? ag.rep_name ?? 'An advertiser';
+    const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    await sendEmail({
+      from: `Tawanna Verock <${brand.sender_email}>`,
+      to: brand.billing_contact_email,
+      subject: `${ok ? 'Bank account verified' : 'Bank verification failed'} — ${who} (${brand.brand})`,
+      html: `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#16132D"><p><strong>${esc(who)}</strong> — ${ok ? 'the bank account from the payment setup page is verified and now on file for this agreement.' : 'bank verification failed, so no bank account was saved. Send them a new setup link from Templates (Beta).'}</p><p style="color:#4E4B66">${esc(detail)}</p><p style="color:#4E4B66">Agreement ${esc(ag.id)}</p></div>`,
+    });
+  } catch (e) {
+    console.warn('[payment-setup] bank outcome notify failed', e);
+  }
+}
+
+/**
+ * Stripe webhook: setup_intent.succeeded / setup_intent.setup_failed for SetupIntents
+ * created by the client payment setup page. Bank accounts verified later (e.g. micro-deposits)
+ * land here, so the agreement updates without the client returning to the page.
+ */
+export async function handleClientSetupIntentEvent(siEvent: Stripe.SetupIntent, outcome: 'succeeded' | 'failed'): Promise<void> {
+  if (siEvent.metadata?.source !== 'client_payment_setup' || !siEvent.metadata?.agreement_id) return;
+  const ag = await loadSetupAgreement(siEvent.metadata.agreement_id);
+  if (!ag) return;
+  const si = await getStripe().setupIntents.retrieve(siEvent.id, { expand: ['payment_method'] });
+  const pm = typeof si.payment_method === 'string' || !si.payment_method ? null : si.payment_method;
+  const isBank = pm?.type === 'us_bank_account' || (!pm?.card && !!siEvent.payment_method_types?.includes('us_bank_account'));
+
+  if (outcome === 'succeeded') {
+    const before = ag.stripe_payment_method_id;
+    const saved = await persistSetupIntent(ag, si);
+    if (!('error' in saved) && saved.kind === 'bank' && before !== pm?.id) {
+      await notifyBankOutcome(ag, true, `${saved.label} ending in ${saved.last4 ?? '????'}`);
+    }
+    return;
+  }
+
+  const reason = si.last_setup_error?.message ?? siEvent.last_setup_error?.message ?? 'Verification did not complete.';
+  const sql = getSql();
+  const rows = (await sql`SELECT audit_log FROM agreements WHERE id = ${ag.id}`) as unknown as Array<{ audit_log: AgreementAuditEntry[] | null }>;
+  const log = rows[0]?.audit_log ?? [];
+  if (log.some((e) => e.event === 'payment_method_failed' && typeof e.details === 'string' && e.details.includes(si.id))) return;
+  const next = appendAudit(log, {
+    event: 'payment_method_failed',
+    timestamp: new Date().toISOString(),
+    user_email: 'stripe',
+    details: `Client payment setup — ${isBank ? 'bank verification failed' : 'setup failed'}: ${reason} — seti: ${si.id}`,
+  });
+  await sql`UPDATE agreements SET audit_log = ${JSON.stringify(next)}::jsonb, updated_at = NOW() WHERE id = ${ag.id}`;
+  if (isBank) await notifyBankOutcome(ag, false, reason);
 }
