@@ -10,6 +10,7 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 import { getSql } from '@/lib/db';
+import { statementPayUrl } from '@/lib/server/statement-pay-token';
 import { senderAddressForPublication } from '@/lib/invoice-sender-routing';
 import {
   EMAIL_SENDERS,
@@ -68,11 +69,24 @@ export const POST = withAdminTracking(async function POST(
     const pubRows = (await getSql()`SELECT publication FROM advertisers WHERE id = ${advertiserId}`) as unknown as Array<{ publication: string | null }>;
     const fromKey: EmailSenderAddress = resolvedSender ?? senderAddressForPublication(pubRows[0]?.publication);
 
-    const refreshed = await refreshPartnerStatementLinks({
+    const refreshedRaw = await refreshPartnerStatementLinks({
       ...original,
       recipientEmail: recipient,
       billToEmail: original.billToEmail ?? recipient,
     });
+    // Emailed links must outlive Stripe's 24h checkout expiry, so swap each raw
+    // Stripe URL for a stable signed app link that mints a fresh checkout on click.
+    const payScope = body.scope === 'all' ? 'all' : 'overdue';
+    const refreshed = {
+      ...refreshedRaw,
+      overduePaymentLinkUrl: refreshedRaw.overduePaymentLinkUrl
+        ? statementPayUrl({ kind: 'statement', advertiserId, scope: payScope })
+        : null,
+      invoices: refreshedRaw.invoices.map((inv) => ({
+        ...inv,
+        stripe_payment_link_url: inv.stripe_payment_link_url ? statementPayUrl({ kind: 'invoice', invoiceId: inv.id }) : null,
+      })),
+    };
     const rendered = renderPartnerStatementEmail(refreshed, message);
     const pdf = await generatePartnerStatementPdf(refreshed);
 
