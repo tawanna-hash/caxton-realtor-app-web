@@ -6,6 +6,7 @@
 // outstanding invoice with its payment link, cross-referencing whatever
 // is already stored on the invoice from Billing > Payment links.
 
+import SendStatementButton from './SendStatementButton';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -211,7 +212,7 @@ export default async function StatementPage({
           <p className="text-sm text-gray-500">{advertiser.name}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">Emailing is off in beta</span>
+          <SendStatementButton advertiserId={advertiser.id} to={(advertiser as { billing_email?: string | null; contact_email?: string | null }).billing_email || (advertiser as { contact_email?: string | null }).contact_email || null} />
           <PrintInvoiceButton />
         </div>
       </div>

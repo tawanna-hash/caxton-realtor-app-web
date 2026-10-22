@@ -46,7 +46,7 @@ export default function StatementsPanel() {
         <SearchBox value={q} onChange={setQ} />
         <label className="flex items-center gap-2 text-sm text-[color:var(--ds-ink)]"><input type="checkbox" className="h-4 w-4 accent-[color:var(--ds-primary)]" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} />Overdue only</label>
         <span className="text-xs text-[color:var(--ds-body)]">{shown.length} of {rows.length} partners</span>
-        <span className="ml-auto text-xs text-[color:var(--ds-body)]">Emailing statements is off in beta. Open a statement to copy its payment links.</span>
+        <span className="ml-auto text-xs text-[color:var(--ds-body)]">Open a statement to send it or copy its payment links.</span>
       </div>
       {shown.length === 0 ? <EmptyState title="No statements found" body="Try a different search." /> : (
         <div className="overflow-x-auto">

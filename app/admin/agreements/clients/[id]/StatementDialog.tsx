@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { A } from '@/components/anchor/ui';
 import { day, money, type Adv, type Inv } from '../data';
+import { BETA_EMAIL_ENABLED } from '@/lib/beta-email';
 import SortTable from '@/components/anchor/SortTable';
 
 // Statement summary for the selected issued invoices. Sending creates one
@@ -15,8 +16,20 @@ export default function StatementDialog({ client, invoices, onClose }: { client:
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   const total = invoices.reduce((n, i) => n + Math.max(i.balance_cents, 0), 0);
 
-  // Beta: statements are not emailed to clients, so there is no send action.
-  void setBusy; void busy; void message;
+  async function send() {
+    setBusy(true); setResult(null);
+    try {
+      const r = await fetch(`/api/admin/advertisers/${client.id}/send-statement`, {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, message, scope: 'all', invoice_ids: invoices.map((i) => i.id) }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+      setResult({ ok: true, text: `Statement sent to ${to}.` });
+    } catch (e) {
+      setResult({ ok: false, text: e instanceof Error ? e.message : 'Could not send the statement.' });
+    } finally { setBusy(false); }
+  }
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Statement summary" className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -44,7 +57,7 @@ export default function StatementDialog({ client, invoices, onClose }: { client:
         {result && <p className={`mt-3 text-sm ${result.ok ? 'text-[#065F46]' : 'text-red-700'}`}>{result.text}</p>}
         <div className="mt-5 flex justify-end gap-3">
           <button type="button" className={A.outline} onClick={onClose}>{result?.ok ? 'Close' : 'Cancel'}</button>
-          {!result?.ok && <button type="button" className={A.primary} disabled>Send statement (off in beta)</button>}
+          {!result?.ok && <button type="button" className={A.primary} disabled={!BETA_EMAIL_ENABLED || busy || !to.trim() || invoices.length === 0} onClick={send}>{busy ? 'Sending…' : 'Send statement'}</button>}
         </div>
       </div>
     </div>
