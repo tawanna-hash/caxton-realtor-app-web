@@ -532,7 +532,7 @@ export default function AppShell({
           this row collapses to just <main> below the lg breakpoint where
           the hamburger + NavDrawer take over navigation instead. */}
       <div className={isAdmin ? 'flex' : undefined}>
-        {isAdmin && <AdminSidebar />}
+        {isAdmin && !chromeless && <AdminSidebar />}
         <main
           id="main-content"
           tabIndex={-1}
