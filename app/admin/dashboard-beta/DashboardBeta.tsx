@@ -32,7 +32,7 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub?:
   );
 }
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="flex h-full flex-col gap-3"><h2 className="text-lg font-medium text-[color:var(--ds-ink)]">{title}</h2>{children}</section>;
+  return <section className="flex h-full flex-col gap-3"><h2 className="text-xl font-semibold text-[color:var(--ds-ink)]">{title}</h2>{children}</section>;
 }
 function Bars({ values, color = '#8C94F5', money: isMoney, legend, labels = MONTHS }: { values: number[]; color?: string; money?: boolean; legend: string; labels?: string[] }) {
   const max = Math.max(1, ...values);

@@ -2356,6 +2356,8 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   background-color: #ffffff;
   border-radius: 10px;
 }
+[data-anchor-ui='true'] .anchor-card table :is(th, td) { padding-inline: 14px; }
+[data-anchor-ui='true'] .anchor-card table thead th { font-size: 13px; font-weight: 500; color: var(--ds-body); text-transform: none; }
 [data-admin-ui='true'] [data-anchor-ui='true'] table thead,
 [data-admin-ui='true'] [data-anchor-ui='true'] table thead tr,
 [data-admin-ui='true'] [data-anchor-ui='true'] table thead th {
