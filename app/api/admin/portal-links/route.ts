@@ -5,7 +5,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { verifiedEmailFrom } from '@/lib/email-sender';
+import { isAdvertiserInactive } from '@/lib/server/inactive-guard';
+import { EMAIL_SENDERS, getResendApiKeyForFrom } from '@/lib/email-sender';
+import { senderAddressForPublication } from '@/lib/invoice-sender-routing';
 import { getSql, ensureSchema } from '@/lib/db';
 import {
   generateMagicLinkToken,
@@ -20,10 +22,6 @@ import { withAdminTracking } from '@/lib/server/admin-tracking';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const PORTAL_FROM_EMAIL = verifiedEmailFrom(
-  process.env.PORTAL_FROM_EMAIL,
-  'Realty News Now',
-);
 const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://realtynewsnow.app';
 
 export async function GET(req: NextRequest) {
@@ -82,8 +80,8 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     const sql = getSql();
 
     const adv = (await sql`
-      SELECT id, name, portal_email, contact_email AS email FROM advertisers WHERE id = ${advertiserId}
-    `) as unknown as { id: number; name: string; portal_email: string | null; email: string | null }[];
+      SELECT id, name, publication, portal_email, contact_email AS email FROM advertisers WHERE id = ${advertiserId}
+    `) as unknown as { id: number; name: string; publication: string | null; portal_email: string | null; email: string | null }[];
     if (adv.length === 0) {
       return NextResponse.json({ error: 'partner not found' }, { status: 404 });
     }
@@ -118,11 +116,14 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
 
     // Send via Resend (if enabled)
     let emailStatus: 'sent' | 'skipped' | 'failed' = 'skipped';
-    if (sendEmail && sendTo && process.env.RESEND_API_KEY) {
+    const marketSender = senderAddressForPublication(a.publication);
+    const portalKey = getResendApiKeyForFrom(marketSender);
+    if (sendEmail && sendTo && portalKey && !(await isAdvertiserInactive(a.id))) {
       try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        const resend = new Resend(portalKey);
         await resend.emails.send({
-          from: PORTAL_FROM_EMAIL,
+          from: EMAIL_SENDERS[marketSender],
+          replyTo: marketSender,
           to: sendTo,
           subject: 'Your secure link to the RealtyLine portal',
           html: portalEmailHtml({ name: a.name, consumeUrl, purpose }),

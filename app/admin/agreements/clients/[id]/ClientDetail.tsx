@@ -36,6 +36,41 @@ function invStatus(i: Inv) {
   return 'Issued';
 }
 
+function PortalAccessBody({ advertiserId, email, activatedAt }: { advertiserId: number; email: string | null; activatedAt: string | null }) {
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function preview() {
+    const tab = window.open('about:blank', '_blank');
+    const r = await fetch('/api/admin/portal-preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ advertiser_id: advertiserId }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { tab?.close(); setMsg(j.error ?? 'Could not open the preview.'); return; }
+    if (tab) tab.location.href = j.url ?? '/portal'; else window.location.href = j.url ?? '/portal';
+  }
+  async function sendLink() {
+    if (!email) { setMsg('Add an email to this client first.'); return; }
+    if (!window.confirm(`Email a secure portal sign-in link to ${email}?`)) return;
+    setBusy(true); setMsg(null);
+    const r = await fetch('/api/admin/portal-links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ advertiser_id: advertiserId, purpose: 'login' }) });
+    const j = await r.json().catch(() => ({}));
+    setBusy(false);
+    setMsg(!r.ok ? (j.error ?? 'Could not send the link.') : j.email_status === 'sent' ? `Sign-in link sent to ${j.sent_to}.` : `The link was created but the email was ${j.email_status}.`);
+  }
+  return (
+    <div className="space-y-3 text-sm text-[color:var(--ds-ink)]">
+      <div className="flex items-center gap-2">
+        <span className={activatedAt ? 'rounded-full border border-[#047857] px-2 py-0.5 text-xs text-[#065F46]' : pill}>{activatedAt ? 'Portal active' : 'No portal access'}</span>
+        {activatedAt && <span className="text-xs text-[color:var(--ds-body)]">Since {day(activatedAt)}</span>}
+      </div>
+      <p className="text-xs text-[color:var(--ds-body)]">Sign-in email: {email ?? 'none on file'}</p>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className={A.small} onClick={preview}>Preview portal</button>
+        <button type="button" className={A.small} onClick={sendLink} disabled={busy}>{busy ? 'Sending…' : activatedAt ? 'Send sign-in link' : 'Invite to portal'}</button>
+      </div>
+      {msg && <p className="text-xs text-[color:var(--ds-body)]">{msg}</p>}
+    </div>
+  );
+}
+
 export default function ClientDetail({ id }: { id: number }) {
   const adv = useJson('/api/admin/advertisers', (j) => (j.advertisers ?? []) as Adv[], noAdv);
   const agr = useJson('/api/admin/agreements', (j) => (j.agreements ?? []) as Agr[], noAgr);
@@ -168,6 +203,9 @@ export default function ClientDetail({ id }: { id: number }) {
                 ))}
                 {allContacts.length === 0 && <li className="text-sm text-[color:var(--ds-body)]">No contacts on file.</li>}
               </ul>
+            </Card>
+            <Card title="Client portal access">
+              <PortalAccessBody advertiserId={a.id} email={a.portal_email ?? a.contact_email} activatedAt={a.portal_activated_at} />
             </Card>
             <Card title="Payment methods" action={<Link href={`/admin/billing-hub?tab=payment&clientId=${id}`} className={link}>Add a payment method</Link>}>
               {a.card_last4 ? <p className="text-sm">Card ending {a.card_last4}</p> : <p className="text-sm text-[color:var(--ds-body)]">There are no payment methods to display.</p>}
