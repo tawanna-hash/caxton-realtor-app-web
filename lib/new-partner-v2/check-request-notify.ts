@@ -22,8 +22,8 @@ export async function notifyCheckRequest(ag: { id: string; company_name: string 
           <strong>${escapeHtml(company)}</strong>${ag.rep_name ? ` (${escapeHtml(ag.rep_name)})` : ''} asked to pay by check. Their agreement includes digital products or e-Blasts, which are paid before signing by bank account or credit card unless you approve a check.
         </p>
         ${note ? `<p style="color: #444; font-size: 14px; margin: 0 0 16px;">Their note: ${escapeHtml(note)}</p>` : ''}
-        <p style="color: #444; font-size: 14px; margin: 0 0 16px;">To allow it, open the Partners tab in Agreements (Beta) and choose Approve check. Services are not provided until payment is received.</p>
-        <p style="margin: 24px 0 8px;"><a href="${SITE}/admin/agreements/renewals-v2" style="display: inline-block; background: #301D5D; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 500;">Open Agreements (Beta)</a></p>
+        <p style="color: #444; font-size: 14px; margin: 0 0 16px;">To allow it, open the Partners tab in Agreements and choose Approve check. Services are not provided until payment is received.</p>
+        <p style="margin: 24px 0 8px;"><a href="${SITE}/admin/agreements/renewals-v2" style="display: inline-block; background: #301D5D; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 500;">Open Agreements</a></p>
         <p style="color: #999; font-size: 12px; margin: 16px 0 0;">Agreement ID: ${escapeHtml(ag.id)}</p>
       </div>`;
     const res = await sendEmail({ to: ADMIN_INBOX, subject: `[Realty News Now] Check payment request - ${company.slice(0, 80)}`, html });

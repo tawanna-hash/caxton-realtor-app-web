@@ -68,7 +68,7 @@ export default function AgreementsBeta() {
     <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6" data-anchor-ui="true" data-no-auto-open>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-        <h1 className={A.title}>Agreements <span className="ml-1 rounded-full border border-[color:var(--ds-primary)] px-2 py-0.5 align-middle text-xs font-medium text-[color:var(--ds-primary)]">Beta</span></h1>
+        <h1 className={A.title}>Agreements</h1>
         {tab !== 'board' && <p className={A.subtitle}>{SUB[tab]}</p>}
         </div>
         <div id="agr-actions" className="flex flex-wrap items-center gap-3" />
