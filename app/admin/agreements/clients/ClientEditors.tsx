@@ -134,6 +134,10 @@ export function ContactModal({ client, target, current, onClose }: { client: Adv
         await patch(client.id, { first_name: first ?? '', last_name: rest.join(' '), contact_email: email, phone });
       } else if (target.kind === 'billing') {
         await patch(client.id, remove ? { billing_contact_name: '', billing_email: '', billing_contact_phone: '' } : { billing_contact_name: name, billing_email: email, billing_contact_phone: phone });
+      } else if (target.kind === 'new' && !client.first_name && !client.last_name && !client.contact_email) {
+        // The client has no main contact yet, so the first person added becomes it.
+        const [first, ...rest] = name.trim().split(/\s+/);
+        await patch(client.id, { first_name: first ?? '', last_name: rest.join(' '), contact_email: email.trim(), phone: phone.trim() });
       } else {
         const entry = { name: name.trim(), email: email.trim(), phone: phone.trim() };
         const next = target.kind === 'extra' ? (remove ? extras.filter((_, i) => i !== target.index) : extras.map((x, i) => (i === target.index ? { ...x, ...entry } : x))) : [...extras, entry];

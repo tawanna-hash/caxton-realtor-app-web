@@ -120,6 +120,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     }
     const updates: string[] = [];
     let previousBillingEmail: string | null = null;
+    let previousContactEmail: string | null = null;
     const setClauses: { col: string; val: unknown }[] = [];
 
     // Company Name is the canonical partner identity throughout admin. Some
@@ -196,7 +197,12 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       switch (col) {
         case 'name':                await sql`UPDATE advertisers SET name = ${val}                       WHERE id = ${idNum}`; break;
         case 'slug':                await sql`UPDATE advertisers SET slug = ${val}                       WHERE id = ${idNum}`; break;
-        case 'contact_email':       await sql`UPDATE advertisers SET contact_email = ${val}              WHERE id = ${idNum}`; break;
+        case 'contact_email': {
+          const prior = (await sql`SELECT contact_email FROM advertisers WHERE id = ${idNum}`) as unknown as { contact_email: string | null }[];
+          previousContactEmail = prior[0]?.contact_email ?? null;
+          await sql`UPDATE advertisers SET contact_email = ${val}              WHERE id = ${idNum}`;
+          break;
+        }
         case 'requires_email_gate': await sql`UPDATE advertisers SET requires_email_gate = ${val}        WHERE id = ${idNum}`; break;
         case 'is_locked':           await sql`UPDATE advertisers SET is_locked = ${val}                  WHERE id = ${idNum}`; break;
         case 'publication':         await sql`UPDATE advertisers SET publication = ${val}                WHERE id = ${idNum}`; break;
@@ -355,6 +361,36 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       await upsertAdvertiserMailingByAdvertiserId(idNum);
     } catch (err) {
       console.warn('[admin/advertisers PATCH] mailing upsert failed:', err);
+    }
+
+    // The main contact is the client. When its email changes, carry it to the
+    // portal sign-in email, open invoices and active recurring schedules that
+    // were using the old one (or had none), so it updates everywhere.
+    if (updates.includes('contact_email')) {
+      try {
+        const nextContact = (rows[0] as { contact_email?: string | null } | undefined)?.contact_email?.trim() || null;
+        if (nextContact) {
+          const prev = previousContactEmail ?? '';
+          await sql`
+            UPDATE advertisers SET portal_email = ${nextContact}
+             WHERE id = ${idNum}
+               AND (COALESCE(btrim(portal_email), '') = '' OR lower(portal_email) = lower(${prev}))
+          `;
+          await sql`
+            UPDATE invoices SET bill_to_email = ${nextContact}, updated_at = NOW()
+             WHERE advertiser_id = ${idNum}
+               AND status NOT IN ('paid', 'void')
+               AND (COALESCE(btrim(bill_to_email), '') = '' OR lower(bill_to_email) = lower(${prev}))
+          `;
+          await sql`
+            UPDATE recurring_invoice_schedules SET bill_to_email = ${nextContact}
+             WHERE advertiser_id = ${idNum} AND status = 'active'
+               AND (COALESCE(btrim(bill_to_email), '') = '' OR lower(bill_to_email) = lower(${prev}))
+          `;
+        }
+      } catch (err) {
+        console.warn('[admin/advertisers PATCH] contact email sync failed:', err);
+      }
     }
 
     // Carry a changed billing email onto this partner's active recurring
