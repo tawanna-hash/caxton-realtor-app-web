@@ -20,7 +20,7 @@ export default function ClientsList() {
   const clients = useMemo(() => mergeClients(data), [data]);
   const rows = useMemo(() => {
     const n = q.trim().toLowerCase();
-    const l = clients.filter((a) => st.includes(a.group) && (!n || `${a.name} ${person(a)} ${a.contact_email ?? ''}`.toLowerCase().includes(n)));
+    const l = clients.filter((a) => st.includes(a.group) && (!n || `${a.name} ${person(a)} ${a.contact_email ?? ''} ${a.billing_email ?? ''}`.toLowerCase().includes(n)));
     const val = (a: Client) => (sort.key === 'name' ? a.name ?? '' : sort.key === 'status' ? GROUP_LABEL[a.group] : person(a));
     return [...l].sort((a, b) => (sort.dir === 'desc' ? -1 : 1) * val(a).localeCompare(val(b)));
   }, [clients, q, st, sort]);
@@ -67,6 +67,7 @@ export default function ClientsList() {
                 <p className="mt-1 text-sm text-[color:var(--ds-body)]">{a.type === 'individual' ? 'Individual' : 'Business'}</p>
                 <p className="mt-1 text-sm text-[color:var(--ds-body)]">{who ? `${who}${more > 0 ? `, +${more} more` : ''}` : '—'}</p>
                 {a.contact_email && <p className="text-sm text-[color:var(--ds-body)]">{a.contact_email}</p>}
+                {a.billing_email && <p className="text-sm text-[color:var(--ds-body)]">Billing: {a.billing_email}</p>}
               </li>
             );
           })}
@@ -81,7 +82,7 @@ export default function ClientsList() {
                   <td><div className="flex flex-wrap items-center gap-2"><Link href={`/admin/agreements/clients/${a.id}`} className="font-semibold text-[color:var(--ds-ink)] hover:underline">{a.name}</Link>{a.markets.map((m) => <span key={m} className="rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[11px] font-normal text-[color:var(--ds-body)]">{m}</span>)}</div></td>
                   <td className="font-semibold text-[color:var(--ds-ink)]">{GROUP_LABEL[a.group]}</td>
                   <td className="text-[color:var(--ds-ink)]">{person(a) || '—'}</td>
-                  <td className="text-[color:var(--ds-ink)]">{a.contact_email ?? '—'}<div className="text-xs text-[color:var(--ds-body)]">{a.phone ?? ''}</div></td>
+                  <td className="text-[color:var(--ds-ink)]">{a.contact_email ?? '—'}<div className="text-xs text-[color:var(--ds-body)]">{a.phone ?? ''}</div>{a.billing_email && <div className="text-xs text-[color:var(--ds-body)]">Billing: {a.billing_email}</div>}</td>
                   <td className="text-right"><RowMenu items={[{ label: 'View client', href: `/admin/agreements/clients/${a.id}` }]} /></td>
                 </tr>
               ))}

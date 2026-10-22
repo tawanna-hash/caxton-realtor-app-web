@@ -186,6 +186,7 @@ export default function ClientDetail({ id }: { id: number }) {
           <div className="space-y-5">
             <Card title="Client details" action={<button type="button" className={link} style={{ border: 0, background: 'transparent' }} onClick={() => setEditing(true)}>Edit client</button>}>
               <div className="space-y-1 text-sm text-[color:var(--ds-ink)]">
+                <p><span className="text-[color:var(--ds-body)]">Billing email: </span>{a.billing_email ?? a.records.find((r) => r.billing_email)?.billing_email ?? <button type="button" onClick={() => setEditing(true)} style={{ border: 0, background: 'transparent' }} className={link}>Add billing email</button>}</p>
                 {address ? <p>{address}</p> : <button type="button" onClick={() => setEditing(true)} style={{ border: 0, background: 'transparent' }} className={`${link} inline-flex items-center gap-2`}><span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-current leading-none">+</span>Add address</button>}
               </div>
             </Card>

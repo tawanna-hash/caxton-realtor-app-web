@@ -53,6 +53,7 @@ const AddLink = ({ children, onClick }: { children: React.ReactNode; onClick: ()
 export function EditClientModal({ client, onClose }: { client: Adv; onClose: () => void }) {
   const [f, setF] = useState({
     company: client.company || client.name || '',
+    billing_email: client.billing_email ?? '',
     status: client.status === 'prospect' ? 'prospect' : client.status === 'archived' || client.status === 'inactive' ? 'archived' : 'advertiser',
     address: client.address ?? '', address_2: client.address_2 ?? '', city: client.city ?? '', state: client.state ?? '', zip: client.zip ?? '',
   });
@@ -80,6 +81,7 @@ export function EditClientModal({ client, onClose }: { client: Adv; onClose: () 
         </div>
       </div>
       <Field label="Client name" value={f.company} onChange={set('company')} />
+      <Field label="Billing email" type="email" value={f.billing_email} onChange={set('billing_email')} />
       <label className="relative mb-5 block">
         <span className="absolute -top-2 left-3 bg-[#fcfcfc] px-1 text-xs leading-4 text-[color:var(--ds-body)]">Status</span>
         <select value={f.status} onChange={(e) => set('status')(e.target.value)} className="h-12 w-full appearance-none rounded-md border border-[#C9C7D1] bg-[#fcfcfc] px-4 text-base text-[color:var(--ds-body)] focus:border-[#6240ED] focus:outline-none"><option value="advertiser">Active</option><option value="prospect">Prospect</option><option value="archived">Archived</option></select>
