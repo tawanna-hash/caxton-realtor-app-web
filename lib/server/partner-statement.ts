@@ -149,7 +149,7 @@ export async function loadPartnerStatement(
 
 function overdueAllocations(statement: PartnerStatement): StatementInvoiceAllocation[] {
   return statement.invoices
-    .filter((invoice) => statement.payScope === 'all' || invoice.is_overdue)
+    .filter((invoice) => invoice.is_overdue) // never include invoices that are not yet due
     .map((invoice) => {
       const amountCents = Number(invoice.balance_cents);
       if (!isSafeCents(amountCents, { positive: true })) {
@@ -627,7 +627,7 @@ export function renderPartnerStatementEmail(
   const messageHtml = escapeHtml(personalMessage).replaceAll('\n', '<br>');
   const payAllHtml = statement.overduePaymentLinkUrl
     ? `<div style="margin:0 0 22px;padding:16px;background:#FFF3E0;border:1px solid #FFF3E0;text-align:center">
-        <div style="font-size:13px;font-weight:700;color:#301D5D;margin-bottom:10px">${statement.payScope === 'all' ? `Balance in full: ${statementMoney(statement.payAllCents ?? statement.outstandingCents)}` : `Total overdue: ${statementMoney(statement.overdueCents)}`}</div>
+        <div style="font-size:13px;font-weight:700;color:#301D5D;margin-bottom:10px">${statement.payScope === 'all' ? `Balance in full: ${statementMoney(statement.payAllCents ?? statement.overdueCents)}` : `Total overdue: ${statementMoney(statement.overdueCents)}`}</div>
         <a href="${escapeHtml(statement.overduePaymentLinkUrl)}" style="display:inline-block;background:#301D5D;color:#fff;padding:10px 16px;border-radius:4px;text-decoration:none;font-weight:700">${statement.payScope === 'all' ? 'Pay Balance in Full' : 'Pay all overdue invoices'}</a>
       </div>`
     : '';
@@ -670,7 +670,7 @@ export function renderPartnerStatementEmail(
     )
     .join('\n\n');
   const payAllText = statement.overduePaymentLinkUrl
-    ? (statement.payScope === 'all' ? `\nPay balance in full (${statementMoney(statement.payAllCents ?? statement.outstandingCents)}): ${statement.overduePaymentLinkUrl}\n` : `\nPay all overdue invoices (${statementMoney(statement.overdueCents)}): ${statement.overduePaymentLinkUrl}\n`)
+    ? (statement.payScope === 'all' ? `\nPay balance in full (${statementMoney(statement.payAllCents ?? statement.overdueCents)}): ${statement.overduePaymentLinkUrl}\n` : `\nPay all overdue invoices (${statementMoney(statement.overdueCents)}): ${statement.overduePaymentLinkUrl}\n`)
     : '';
   const text = `${personalMessage}\n\nSTATEMENT OF ACCOUNT\n${statement.billToName}\nAs of ${statementDate(statement.asOf)}\n\nOverdue: ${statementMoney(statement.overdueCents)}\nNot yet due: ${statementMoney(statement.notYetDueCents)}\nOutstanding balance (USD): ${statementMoney(statement.outstandingCents)}\n${payAllText}\n${invoiceText}\n\nWe appreciate your business.`;
 
