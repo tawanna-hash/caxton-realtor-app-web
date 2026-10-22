@@ -86,7 +86,14 @@ export function renderPaymentMethodTemplate(market: string | null | undefined, f
   };
   for (const [k, v] of Object.entries(fields)) if (typeof v === 'string' && v.trim()) vals[k] = v.trim();
   const fill = (s: string) => s.replace(/\{\{\s*([A-Za-z_]+)\s*\}\}/g, (all, k: string) => vals[k] ?? all);
-  return { brand: b, from: `Tawanna Verock <${b.sender_email}>`, subject: fill(PAYMENT_METHOD_SUBJECT), body: fill(PAYMENT_METHOD_BODY) };
+  // No agreement (client without one): drop the Agreement line and agreement wording.
+  const body = fields.agreement_name_or_number?.trim()
+    ? PAYMENT_METHOD_BODY
+    : PAYMENT_METHOD_BODY
+        .replace('Agreement: {{agreement_name_or_number}}\n', '')
+        .replace('in your advertising agreement.', 'stated below.')
+        .replace('for payments under agreement {{agreement_name_or_number}}, according to', 'for my advertising payments, according to');
+  return { brand: b, from: `Tawanna Verock <${b.sender_email}>`, subject: fill(PAYMENT_METHOD_SUBJECT), body: fill(body) };
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -96,6 +103,7 @@ export function renderPaymentMethodHtml(market: string | null | undefined, field
   const r = renderPaymentMethodTemplate(market, fields);
   const b = r.brand;
   const v = (k: keyof PaymentMethodFields) => (fields[k]?.trim() ? esc(fields[k]!.trim()) : `{{${k}}}`);
+  const hasAg = !!fields.agreement_name_or_number?.trim();
   const url = fields.payment_setup_url?.trim();
   const safeUrl = url && /^https:\/\//i.test(url) ? esc(url) : '';
   const p = 'margin:0 0 16px;font-size:15px;line-height:1.6;color:#16132D;';
@@ -110,13 +118,13 @@ export function renderPaymentMethodHtml(market: string | null | undefined, field
 <tr><td style="padding:28px;">
 <p style="${p}">Hi ${v('client_first_name')},</p>
 <p style="${p}">Please add your preferred payment method for your ${esc(b.brand)} advertising account using the secure button below.</p>
-<p style="${p}">You will not be charged during this setup. Future payments will follow the amounts and billing schedule in your advertising agreement.</p>
+<p style="${p}">You will not be charged during this setup. Future payments will follow the amounts and billing schedule ${hasAg ? 'in your advertising agreement' : 'stated below'}.</p>
 <div style="margin:24px 0;text-align:center;">${button}</div>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-top:1px solid #E2DFEC;border-bottom:1px solid #E2DFEC;width:100%;padding:8px 0;">
-${row('Agreement', v('agreement_name_or_number'))}${row('Payment amount', v('payment_terms'))}${row('Billing schedule', v('billing_schedule'))}
+${hasAg ? row('Agreement', v('agreement_name_or_number')) : ''}${row('Payment amount', v('payment_terms'))}${row('Billing schedule', v('billing_schedule'))}
 </table>
 <p style="${p}">Please don't email your card or bank account details. Use the secure setup page instead.</p>
-<div style="margin:0 0 20px;padding:14px 16px;background:#EEE8FD;border-radius:10px;font-size:13px;line-height:1.6;color:#16132D;"><strong>Authorization</strong><br>I authorize ${esc(b.brand)} to save my selected payment method and use it for payments under agreement ${v('agreement_name_or_number')}, according to the payment amount or calculation and billing schedule stated above. To change my payment method or revoke authorization for future charges, I will contact <a href="mailto:${b.billing_contact_email}" style="color:#301D5D;">${b.billing_contact_email}</a>.</div>
+<div style="margin:0 0 20px;padding:14px 16px;background:#EEE8FD;border-radius:10px;font-size:13px;line-height:1.6;color:#16132D;"><strong>Authorization</strong><br>I authorize ${esc(b.brand)} to save my selected payment method and use it for ${hasAg ? `payments under agreement ${v('agreement_name_or_number')}` : 'my advertising payments'}, according to the payment amount or calculation and billing schedule stated above. To change my payment method or revoke authorization for future charges, I will contact <a href="mailto:${b.billing_contact_email}" style="color:#301D5D;">${b.billing_contact_email}</a>.</div>
 <p style="margin:0;font-size:15px;line-height:1.6;color:#16132D;">Thank you,<br>Tawanna Verock<br>${esc(b.brand)}</p>
 </td></tr>
 <tr><td style="padding:16px 28px;background:#ffffff;border-top:1px solid #E2DFEC;font-size:12px;color:#4E4B66;"><a href="mailto:${b.sender_email}" style="color:#4E4B66;">${b.sender_email}</a> · <a href="https://${b.domain}" style="color:#4E4B66;">${b.domain}</a></td></tr>

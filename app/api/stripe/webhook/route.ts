@@ -26,7 +26,7 @@ import {
   upsertStripeStatementPayments,
 } from '@/lib/server/stripe-payment-ledger-sync';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
-import { handleClientSetupIntentEvent, loadSetupAgreement, saveFromCheckoutSession } from '@/lib/server/payment-setup';
+import { handleClientSetupIntentEvent, handleClientSetupSessionCompleted } from '@/lib/server/payment-setup';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -109,9 +109,8 @@ export async function POST(req: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
         // Client payment setup page: save the method even if the client never
         // returns to the success page (closed the tab after Stripe).
-        if (session.mode === 'setup' && session.metadata?.source === 'client_payment_setup' && session.metadata.agreement_id) {
-          const ag = await loadSetupAgreement(session.metadata.agreement_id);
-          if (ag) await saveFromCheckoutSession(ag, session.id);
+        if (session.mode === 'setup' && session.metadata?.source === 'client_payment_setup') {
+          await handleClientSetupSessionCompleted(session);
           break;
         }
         if (

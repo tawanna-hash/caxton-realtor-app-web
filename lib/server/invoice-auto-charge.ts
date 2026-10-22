@@ -18,7 +18,8 @@ import { recordInvoicePayment, InvoicePaymentError } from '@/lib/server/invoice-
 import { isCardExpired, EXPIRED_CARD_CHARGE_ERROR } from '@/lib/card-expiration';
 
 export type ResolvedCardOnFile = {
-  agreementId: string;
+  /** null when the method is saved on the client record (no agreement). */
+  agreementId: string | null;
   customerId: string;
   paymentMethodId: string;
   companyName: string | null;
@@ -78,6 +79,29 @@ export async function resolveCardOnFile(params: {
       `) as unknown as AgreementCardRow[]);
 
   const row = rows[0];
+  if ((!row?.stripe_customer_id || !row.stripe_payment_method_id) && !params.agreementId) {
+    // Client without an agreement card: use the method saved on the client
+    // record by the client payment setup page.
+    const adv = (await sql`
+      SELECT stripe_customer_id, stripe_payment_method_id, company, name, billing_email, contact_email
+        FROM advertisers
+       WHERE id = ${params.advertiserId}
+         AND stripe_customer_id IS NOT NULL
+         AND stripe_payment_method_id IS NOT NULL
+       LIMIT 1
+    `.catch(() => [])) as unknown as Array<{ stripe_customer_id: string; stripe_payment_method_id: string; company: string | null; name: string | null; billing_email: string | null; contact_email: string | null }>;
+    const a = adv[0];
+    if (a) {
+      return {
+        agreementId: null,
+        customerId: a.stripe_customer_id,
+        paymentMethodId: a.stripe_payment_method_id,
+        companyName: a.company ?? a.name,
+        receiptEmail: a.billing_email ?? a.contact_email ?? null,
+        cardExpiration: null,
+      };
+    }
+  }
   if (!row?.stripe_customer_id || !row.stripe_payment_method_id) return null;
   return {
     agreementId: row.id,
@@ -164,7 +188,7 @@ export async function autoChargeInvoice(params: {
         source: 'invoice_auto_charge',
         invoice_id: invoiceId,
         invoice_number: params.invoiceNumber ?? '',
-        agreement_id_ref: card.agreementId,
+        agreement_id_ref: card.agreementId ?? '',
         publication: 'RealtyLine',
       },
     });

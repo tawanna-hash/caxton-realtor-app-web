@@ -16,7 +16,7 @@ import {
 
 const FIELDS: Array<[keyof PaymentMethodFields, string, string]> = [
   ['client_first_name', 'Client first name', 'Jane'],
-  ['agreement_name_or_number', 'Agreement name or number', 'AGR-1042'],
+  ['agreement_name_or_number', 'Agreement (optional)', 'Leave blank if there is no agreement'],
   ['payment_terms', 'Payment amount or calculation', '$1,880 per month'],
   ['billing_schedule', 'Billing schedule', 'Monthly on the 1st'],
   ['payment_setup_url', 'Secure payment setup link', 'https://…'],
@@ -32,30 +32,32 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState<{ ok: boolean; t: string } | null>(null);
 
-  type Opt = { id: string; label: string; has_method: boolean; market: TemplateMarket; fields: PaymentMethodFields; to: string | null };
+  type Opt = { id: number; label: string; has_method: boolean; has_agreement: boolean; market: TemplateMarket };
   const [opts, setOpts] = useState<Opt[] | null>(null);
   const [agId, setAgId] = useState('');
   const [linking, setLinking] = useState(false);
   const [linkMsg, setLinkMsg] = useState<{ ok: boolean; t: string } | null>(null);
   useEffect(() => {
     if (!open || opts) return;
-    fetch('/api/admin/agreements-v2/payment-method-template', { credentials: 'include' }).then((r) => r.json()).then((j) => setOpts(j.agreements ?? [])).catch(() => setOpts([]));
+    fetch('/api/admin/agreements-v2/payment-method-template', { credentials: 'include' }).then((r) => r.json()).then((j) => setOpts(j.clients ?? [])).catch(() => setOpts([]));
   }, [open, opts]);
 
-  function pickAgreement(id: string) {
+  function pickClient(id: string) {
     setAgId(id); setLinkMsg(null);
-    const o = opts?.find((x) => x.id === id);
-    if (o) { setMarket(o.market); setFields((f) => ({ ...o.fields, payment_setup_url: f.payment_setup_url && agId === id ? f.payment_setup_url : '' })); }
+    const o = opts?.find((x) => String(x.id) === id);
+    // A new client gets a fresh link; clear the previous client's details.
+    setFields({});
+    if (o) setMarket(o.market);
   }
 
   async function createLink() {
     if (!agId) return;
     setLinking(true); setLinkMsg(null);
     try {
-      const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'link', agreement_id: agId }) });
+      const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'link', advertiser_id: Number(agId) }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { setLinkMsg({ ok: false, t: j.error ?? 'Could not create the link.' }); return; }
-      setMarket(j.market); setFields((f) => ({ ...f, ...j.fields, client_first_name: f.client_first_name || j.fields.client_first_name }));
+      setMarket(j.market); setFields((f) => { const next: PaymentMethodFields = { ...f }; for (const [k, v] of Object.entries(j.fields as PaymentMethodFields)) if (v) next[k as keyof PaymentMethodFields] = v; return next; });
       setLinkMsg({ ok: true, t: `Secure link created — valid until ${new Date(j.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.` });
     } catch { setLinkMsg({ ok: false, t: 'Could not create the link.' }); } finally { setLinking(false); }
   }
@@ -96,10 +98,10 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
         <div className="grid gap-5 md:grid-cols-[260px_1fr]">
           <div className="space-y-3">
             <label className="block space-y-1">
-              <span className="text-xs font-medium text-[color:var(--ds-body)]">Client agreement</span>
-              <select className={A.input} value={agId} onChange={(e) => pickAgreement(e.target.value)}>
-                <option value="">{opts === null ? 'Loading agreements…' : 'Choose a client agreement'}</option>
-                {(opts ?? []).map((o) => <option key={o.id} value={o.id}>{o.label}{o.has_method ? ' · method on file' : ''}</option>)}
+              <span className="text-xs font-medium text-[color:var(--ds-body)]">Client</span>
+              <select className={A.input} value={agId} onChange={(e) => pickClient(e.target.value)}>
+                <option value="">{opts === null ? 'Loading clients…' : 'Choose client'}</option>
+                {(opts ?? []).map((o) => <option key={o.id} value={o.id}>{o.label} · {MARKET_BRANDS[o.market].label}{o.has_method ? ' · method on file' : ''}</option>)}
               </select>
             </label>
             <button type="button" className={`${A.outline} w-full`} disabled={!agId || linking} onClick={createLink}>{linking ? 'Creating link…' : 'Create secure setup link'}</button>
@@ -116,7 +118,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
                 <input className={A.input} placeholder={ph} value={fields[key] ?? ''} onChange={(e) => setFields((f) => ({ ...f, [key]: e.target.value }))} />
               </label>
             ))}
-            <p className="text-xs text-[color:var(--ds-body)]">Blank fields keep their {'{{placeholder}}'}. The secure link opens a branded page that hands off to Stripe to save a card or bank account (with Stripe&apos;s bank authorization). No charge is made.</p>
+            <p className="text-xs text-[color:var(--ds-body)]">Leave Agreement blank for clients without one — that line is left out. Other blank fields keep their {'{{placeholder}}'}. The secure link opens a branded page that hands off to Stripe to save a card or bank account (with Stripe&apos;s bank authorization). No charge is made.</p>
           </div>
 
           <div className="space-y-3">

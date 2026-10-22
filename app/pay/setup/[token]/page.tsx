@@ -4,7 +4,7 @@
 // Stripe returns here with ?session_id= and we save the method on the agreement.
 import type { Metadata } from 'next';
 import { verifyPaymentSetupToken } from '@/lib/payment-setup-token';
-import { loadSetupAgreement, marketForAgreement, saveFromCheckoutSession, type SavedMethod } from '@/lib/server/payment-setup';
+import { loadSetupTarget, saveFromCheckoutSession, type SavedMethod } from '@/lib/server/payment-setup';
 import { brandForMarket } from '@/lib/agreements-v2/payment-method-template';
 
 export const dynamic = 'force-dynamic';
@@ -44,17 +44,18 @@ export default async function PaymentSetupPage({ params, searchParams }: Props) 
       </Shell>
     );
   }
-  const ag = await loadSetupAgreement(v.agreementId);
-  if (!ag || ag.status === 'cancelled') {
+  const t = await loadSetupTarget(v.subject);
+  if (!t) {
     return <Shell brand="Payment method setup"><h1 className="text-xl font-semibold">This link is not valid</h1><p>Please ask us for a new secure setup link.</p></Shell>;
   }
-  const brand = marketForAgreement(ag);
-  const first = (ag.rep_name ?? '').trim().split(/\s+/)[0] || null;
+  const brand = t.brand;
+  const first = t.firstName;
+  const ag = t.agreement;
 
   const sessionId = one(sp.session_id);
   let saved: SavedMethod | { error: string } | null = null;
   if (/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
-    try { saved = await saveFromCheckoutSession(ag, sessionId); } catch (e) { console.error('[pay/setup] save failed', e); saved = { error: 'We could not confirm your setup. Please try again.' }; }
+    try { saved = await saveFromCheckoutSession(t, sessionId); } catch (e) { console.error('[pay/setup] save failed', e); saved = { error: 'We could not confirm your setup. Please try again.' }; }
   }
 
   if (saved && !('error' in saved)) {
@@ -64,7 +65,7 @@ export default async function PaymentSetupPage({ params, searchParams }: Props) 
         <Note tone={saved.status === 'pending' ? 'warn' : 'ok'}>
           {saved.label} ending in {saved.last4 ?? '••••'} {saved.status === 'pending' ? 'is waiting on bank verification. Stripe will email you if anything else is needed.' : 'is now on file for your advertising account.'}
         </Note>
-        <p>You were not charged. Future payments will follow the amounts and billing schedule in your advertising agreement.</p>
+        <p>You were not charged. Future payments will follow the amounts and billing schedule you agreed to with us.</p>
         <p className="text-sm text-[#4E4B66]">Questions or changes? Contact <a className="underline" href={`mailto:${brand.billing_contact_email}`}>{brand.billing_contact_email}</a>.</p>
         <p className="text-sm text-[#4E4B66]">Thank you,<br />Tawanna Verock<br />{brand.brand}</p>
       </Shell>
@@ -74,12 +75,13 @@ export default async function PaymentSetupPage({ params, searchParams }: Props) 
   const err = saved && 'error' in saved ? saved.error
     : one(sp.error) === 'unavailable' ? 'Secure setup is temporarily unavailable. Please try again in a few minutes.'
     : one(sp.error) ? 'This link is not valid. Please ask us for a new one.' : null;
-  const rate = money(ag.total_monthly_rate_cents ?? ag.amount_cents);
+  const rate = ag ? money(ag.total_monthly_rate_cents ?? ag.amount_cents) : null;
+  const d = (v: string) => new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
   const rows: Array<[string, string | null]> = [
-    ['Advertiser', ag.company_name],
-    ['Advertising', [ag.ad_size, ag.frequency].filter(Boolean).join(' · ') || null],
-    ['Amount', rate ? `${rate}${ag.total_monthly_rate_cents ? ' per month' : ''}` : null],
-    ['Term', ag.start_date ? `${new Date(ag.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}${ag.end_date ? ` – ${new Date(ag.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}` : ''}` : null],
+    ['Advertiser', t.company],
+    ['Advertising', ag ? [ag.ad_size, ag.frequency].filter(Boolean).join(' · ') || null : null],
+    ['Amount', rate ? `${rate}${ag?.total_monthly_rate_cents ? ' per month' : ''}` : null],
+    ['Term', ag?.start_date ? `${d(ag.start_date)}${ag.end_date ? ` – ${d(ag.end_date)}` : ''}` : null],
   ];
 
   return (
@@ -88,7 +90,7 @@ export default async function PaymentSetupPage({ params, searchParams }: Props) 
       {err && <Note tone="err">{err}</Note>}
       {one(sp.canceled) && !err && <Note tone="warn">Setup was not finished. You can start again whenever you&apos;re ready.</Note>}
       <p>{first ? `Hi ${first}, please` : 'Please'} add the card or bank account you&apos;d like to use for your {brand.brand} advertising.</p>
-      <p><strong>You will not be charged now.</strong> Future payments will follow the amounts and billing schedule in your advertising agreement.</p>
+      <p><strong>You will not be charged now.</strong> Future payments will follow the amounts and billing schedule {ag ? 'in your advertising agreement' : 'you agree to with us'}.</p>
       {rows.some(([, v]) => v) && (
         <dl className="divide-y divide-[#E2DFEC] border-y border-[#E2DFEC] text-sm">
           {rows.filter(([, v]) => v).map(([k, val]) => (
@@ -101,7 +103,7 @@ export default async function PaymentSetupPage({ params, searchParams }: Props) 
       </form>
       <p className="text-xs text-[#4E4B66]">You&apos;ll continue to Stripe, our payment processor, to enter a card or connect a bank account. {brand.brand} never sees your full card or bank account number.</p>
       <div className="rounded-xl bg-[#EEE8FD] px-4 py-3 text-xs leading-relaxed">
-        <strong>Authorization.</strong> By saving a payment method, you authorize {brand.brand} to save it and use it for payments under your advertising agreement, according to the amounts and billing schedule stated there. To change your payment method or revoke authorization for future charges, contact <a className="underline" href={`mailto:${brand.billing_contact_email}`}>{brand.billing_contact_email}</a>.
+        <strong>Authorization.</strong> By saving a payment method, you authorize {brand.brand} to save it and use it for your advertising payments, according to the amounts and billing schedule you agreed to. To change your payment method or revoke authorization for future charges, contact <a className="underline" href={`mailto:${brand.billing_contact_email}`}>{brand.billing_contact_email}</a>.
       </div>
       <p className="text-sm text-[#4E4B66]">{brand.sender_email} · {brand.domain}</p>
     </Shell>
