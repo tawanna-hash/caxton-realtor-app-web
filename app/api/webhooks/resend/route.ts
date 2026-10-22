@@ -111,6 +111,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true, ignored: 'no_email_id' });
   }
 
+  // Record every email's latest status so the Billing invoices list can show
+  // delivered / opened / clicked per invoice email (matched by subject or recipient).
+  try {
+    const ev = event.type.replace(/^email\./, '');
+    const rank: Record<string, number> = { sent: 1, delivery_delayed: 2, delivered: 3, opened: 4, clicked: 5, bounced: 6, complained: 6, failed: 6, suppressed: 6 };
+    if (rank[ev]) {
+      const toRaw = event.data?.to;
+      const toList = (Array.isArray(toRaw) ? toRaw : toRaw ? [toRaw] : []).map((t) => String(t).toLowerCase());
+      await exec(`CREATE TABLE IF NOT EXISTS invoice_email_events (
+        email_id text PRIMARY KEY, to_addresses text[] NOT NULL DEFAULT '{}', subject text NOT NULL DEFAULT '',
+        last_event text NOT NULL, rank int NOT NULL DEFAULT 0, sent_at timestamptz NOT NULL DEFAULT NOW(), updated_at timestamptz NOT NULL DEFAULT NOW())`);
+      await exec(
+        `INSERT INTO invoice_email_events (email_id, to_addresses, subject, last_event, rank, sent_at)
+         VALUES ($1, $2, $3, $4, $5, COALESCE($6::timestamptz, NOW()))
+         ON CONFLICT (email_id) DO UPDATE SET
+           last_event = CASE WHEN EXCLUDED.rank >= invoice_email_events.rank THEN EXCLUDED.last_event ELSE invoice_email_events.last_event END,
+           rank = GREATEST(EXCLUDED.rank, invoice_email_events.rank),
+           to_addresses = CASE WHEN cardinality(EXCLUDED.to_addresses) > 0 THEN EXCLUDED.to_addresses ELSE invoice_email_events.to_addresses END,
+           subject = CASE WHEN EXCLUDED.subject <> '' THEN EXCLUDED.subject ELSE invoice_email_events.subject END,
+           updated_at = NOW()`,
+        [emailId, toList, String(event.data?.subject ?? ''), ev, rank[ev], ev === 'sent' ? (event.created_at ?? null) : null],
+      );
+    }
+  } catch (err) {
+    logger.warn({ err: err instanceof Error ? err.message : 'unknown' }, '[resend-webhook] invoice_email_events record failed');
+  }
+
   try {
     switch (event.type) {
       case 'email.delivered': {
