@@ -57,6 +57,17 @@ const statusText = (i: Inv, now: number) =>
   i.is_overdue ? `Overdue ${daysOver(i, now)} days` : i.status === 'paid' ? 'Paid' : i.status === 'sent' ? 'Open' : i.status[0].toUpperCase() + i.status.slice(1);
 const isReceipt = (i: Inv) => Boolean(i.number?.startsWith('SR-'));
 const memoOf = (i: Inv) => i.line_items?.map((l) => l.description?.trim()).filter(Boolean).join('; ') || i.memo || '';
+type MailRow = { to: string[]; subject: string; created_at: string; last_event: string };
+const EVENT_LABEL: Record<string, string> = { clicked: 'Clicked', opened: 'Opened', delivered: 'Delivered', sent: 'Sent', delivery_delayed: 'Delayed', bounced: 'Bounced', complained: 'Complained', failed: 'Failed', suppressed: 'Suppressed' };
+const EVENT_CLS: Record<string, string> = { clicked: 'bg-green-100 text-green-800', opened: 'bg-blue-100 text-blue-800', delivered: 'bg-gray-100 text-gray-700', sent: 'bg-gray-100 text-gray-600', delivery_delayed: 'bg-amber-100 text-amber-800', bounced: 'bg-red-100 text-red-800', complained: 'bg-red-100 text-red-800', failed: 'bg-red-100 text-red-800', suppressed: 'bg-red-100 text-red-800' };
+// Match by invoice number in the subject, else by recipient address; newest email wins.
+const mailFor = (i: Inv, mail: MailRow[]) => {
+  const num = i.number?.toLowerCase();
+  const to = i.bill_to_email?.trim().toLowerCase();
+  const byNum = num ? mail.filter((m) => m.subject.toLowerCase().includes(num)) : [];
+  const pool = byNum.length ? byNum : to ? mail.filter((m) => m.to.includes(to) && m.created_at.slice(0, 10) >= iso(txDate(i)).slice(0, 10)) : [];
+  return pool.sort((a, b) => b.created_at.localeCompare(a.created_at))[0] ?? null;
+};
 const safeUrl = (v: unknown): v is string => { try { return typeof v === 'string' && /^https?:$/.test(new URL(v).protocol); } catch { return false; } };
 
 function inRange(i: Inv, f: DateFilter, ref: Date) {
@@ -219,6 +230,8 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
   const [sharing, setSharing] = useState<Inv | null>(null);
   const [activity, setActivity] = useState<Inv | null>(null);
   const [createMenu, setCreateMenu] = useState(false);
+  const [mail, setMail] = useState<MailRow[]>([]);
+  useEffect(() => { fetch('/api/admin/invoices/email-status', { credentials: 'include' }).then((r) => (r.ok ? r.json() : { rows: [] })).then((j) => setMail(j.rows ?? [])).catch(() => {}); }, []);
   const [createSlot, setCreateSlot] = useState<HTMLElement | null>(null);
   const [searchSlot, setSearchSlot] = useState<HTMLElement | null>(null);
   useEffect(() => { setCreateSlot(document.getElementById('create-invoice-slot')); setSearchSlot(document.getElementById('invoice-search-slot')); }, []);
@@ -471,7 +484,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
               { label: 'Type', get: (r) => (isReceipt(r) ? 'Sales receipt' : 'Invoice') },
               { label: 'No.', get: (r) => r.number },
               { label: 'Client', get: (r) => r.advertiser_name ?? r.bill_to_name },
-              { label: 'Memo', get: (r) => memoOf(r) },
+              { label: 'Email', get: (r) => mailFor(r, mail)?.last_event ?? '' },
               { label: 'Amount', get: (r) => r.total_cents, className: 'text-right' },
               { label: 'Status', get: (r) => statusText(r, now) },
               { label: <span className="sr-only">Actions</span> },
@@ -486,7 +499,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
                   <td className="whitespace-nowrap">{isReceipt(i) ? 'Sales receipt' : 'Invoice'}</td>
                   <td className="max-w-[160px] truncate whitespace-nowrap font-medium text-[color:var(--ds-ink)]" title={i.number ?? undefined}><a href={`/admin/billing-hub/invoice/${i.id}/preview`} className="text-[color:var(--ds-primary)] hover:underline">{i.number ?? 'Draft'}</a></td>
                   <td className="max-w-[170px]">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td>
-                  <td className="max-w-[130px] truncate" title={memoOf(i)}>{memoOf(i) || '—'}</td>
+                  <td className="whitespace-nowrap">{(() => { const m = mailFor(i, mail); return m ? <span title={`${m.subject} - ${new Date(m.created_at).toLocaleString()}`} className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${EVENT_CLS[m.last_event] ?? 'bg-gray-100 text-gray-700'}`}>{EVENT_LABEL[m.last_event] ?? m.last_event}</span> : '—'; })()}</td>
                   <td className="whitespace-nowrap text-right font-medium">{formatCents(i.total_cents)}</td>
                   <td><StatusChip i={i} now={now} /></td>
                   <td className="whitespace-nowrap text-right">
