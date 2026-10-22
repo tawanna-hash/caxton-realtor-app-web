@@ -47,10 +47,11 @@ async function listKey(key: string): Promise<Row[]> {
   return out;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const fresh = new URL(req.url).searchParams.get('fresh') === '1';
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (cache && Date.now() - cache.at < TTL_MS) return NextResponse.json({ rows: cache.rows });
+  if (!fresh && cache && Date.now() - cache.at < TTL_MS) return NextResponse.json({ rows: cache.rows });
   const keys = Array.from(new Set([
     process.env.RESEND_API_KEY_MYREALTYLINE,
     process.env.RESEND_API_KEY_REALTYNEWSNOW,
