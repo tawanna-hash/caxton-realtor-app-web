@@ -1,5 +1,5 @@
 // POST /api/pay/setup/[token] — public. Verifies the signed setup token, then
-// creates a Stripe Checkout Session in setup mode (card or US bank account,
+// creates a Stripe Checkout Session in setup mode (card only,
 // no charge) for the client's Stripe customer and redirects to it.
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPaymentSetupToken } from '@/lib/payment-setup-token';
@@ -29,10 +29,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       mode: 'setup',
       customer,
       currency: 'usd',
-      payment_method_types: ['card', 'us_bank_account'],
-      payment_method_options: {
-        us_bank_account: { financial_connections: { permissions: ['payment_method'] }, verification_method: 'automatic' },
-      },
+      // Card only. Bank accounts are added on our own page (see ./bank) because
+      // Stripe's hosted bank connection asks returning Link users to sign in.
+      payment_method_types: ['card'],
       setup_intent_data: {
         description: `${t.company ?? 'Client'} — payment method on file (${brand.brand})`,
         metadata: meta,

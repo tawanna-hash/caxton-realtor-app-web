@@ -239,6 +239,40 @@ export async function saveFromCheckoutSession(t: SetupTarget, sessionId: string)
   return persistSetupIntent(t, si);
 }
 
+/**
+ * Persist the payment method from a SetupIntent confirmed on our own bank form
+ * (manual routing/account entry, no Stripe sign-in). Idempotent.
+ */
+export async function saveFromSetupIntentId(t: SetupTarget, setupIntentId: string): Promise<(SavedMethod & { verifyUrl?: string | null }) | { error: string }> {
+  const si = await getStripe().setupIntents.retrieve(setupIntentId, { expand: ['payment_method'] });
+  if (!belongs(t, si.metadata)) return { error: 'This setup does not belong to this client.' };
+  const already = (await getSql()`SELECT 1 FROM client_payment_setup_log WHERE event = 'bank_pending' AND stripe_ref = ${si.id} LIMIT 1`) as unknown[];
+  const saved = await persistSetupIntent(t, si);
+  if ('error' in saved) return saved;
+  const verifyUrl = si.next_action?.verify_with_microdeposits?.hosted_verification_url ?? null;
+  // First time we see this pending bank: email the client their verification link.
+  if (saved.status === 'pending' && verifyUrl && already.length === 0) await emailMicrodepositLink(t, verifyUrl, saved.last4);
+  return { ...saved, verifyUrl };
+}
+
+/** Email the client their Stripe microdeposit verification link (no sign-in needed). Best effort. */
+export async function emailMicrodepositLink(t: SetupTarget, verifyUrl: string, last4: string | null): Promise<void> {
+  if (!t.email) return;
+  try {
+    const { sendEmail } = await import('@/lib/email');
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const hi = t.firstName ? `Hi ${esc(t.firstName)},` : 'Hello,';
+    await sendEmail({
+      from: `Tawanna Verock <${t.brand.sender_email}>`,
+      to: t.email,
+      subject: `One last step to verify your bank account — ${t.brand.brand}`,
+      html: `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#16132D;max-width:560px"><p>${hi}</p><p>Thank you for adding your bank account${last4 ? ` ending in ${esc(last4)}` : ''}. Within 1–2 business days you'll see a small deposit from Stripe, our payment processor, on your bank statement. Its description includes a 6-digit code that starts with <strong>SM</strong>.</p><p>When it arrives, use the button below to enter that code. No login or account is needed.</p><p><a href="${esc(verifyUrl)}" style="display:inline-block;background:#301D5D;color:#ffffff;font-weight:600;padding:14px 28px;border-radius:10px;text-decoration:none">Verify bank account</a></p><p style="font-size:13px;color:#4E4B66">You were not charged. Questions? Contact ${esc(t.brand.billing_contact_email)}.</p><p>Have a great day! ~ Tawanna<br/>${esc(t.brand.brand)}</p></div>`,
+    });
+  } catch (e) {
+    console.warn('[payment-setup] microdeposit email failed', e);
+  }
+}
+
 /** Write a client-setup SetupIntent's payment method onto the client (and its current agreement). */
 export async function persistSetupIntent(t: SetupTarget, si: Stripe.SetupIntent): Promise<SavedMethod | { error: string }> {
   const pm = typeof si.payment_method === 'string' || !si.payment_method ? null : si.payment_method;
