@@ -53,7 +53,21 @@ export async function GET(req: NextRequest) {
     const defaults = await getDefaults(sql);
     return NextResponse.json({
       catalog: buildCatalog(),
-      drafts: await listDrafts('draft', sql),
+      // Autosaved builder drafts plus agreements that were created but never sent.
+      drafts: [
+        ...(await listDrafts('draft', sql)),
+        ...((await sql`
+          SELECT 'ag:' || ag.id::text AS id, 'draft' AS kind,
+                 COALESCE(NULLIF(ag.company_name, ''), adv.name, 'Agreement') AS name,
+                 COALESCE(ag.updated_at, ag.created_at) AS updated_at,
+                 ag.advertiser_id
+            FROM agreements ag
+            LEFT JOIN advertisers adv ON adv.id = ag.advertiser_id
+           WHERE ag.status = 'draft'
+           ORDER BY COALESCE(ag.updated_at, ag.created_at) DESC
+           LIMIT 100
+        `) as unknown as Array<Record<string, unknown>>),
+      ],
       templates: await listDrafts('template', sql),
       archived: await listDrafts('archived', sql),
       intros: { new_partner: defaults.intro_new, renewal: defaults.intro_renewal },

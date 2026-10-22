@@ -8,7 +8,7 @@ import { A, RowMenu, SearchBox, type MenuItem } from '@/components/anchor/ui';
 import { CreateProposal, EmptyPanel, NEW_PROPOSAL, PageHeader, checkbox, relTime, stamp } from './shared';
 import SortCaret from '@/components/anchor/SortCaret';
 
-type Row = { id: string; name: string; updated_at: string };
+type Row = { id: string; name: string; updated_at: string; advertiser_id?: number | null };
 export type ListKind = 'draft' | 'archived' | 'template';
 
 const CFG = {
@@ -73,6 +73,13 @@ export default function BuilderList({ kind }: { kind: ListKind }) {
     setNotice(null);
     try {
       for (const id of ids) {
+        if (id.startsWith('ag:')) {
+          // A created-but-unsent agreement: only deleting applies.
+          if (action !== 'delete') continue;
+          const dr = await fetch(`/api/admin/agreements/${id.slice(3)}`, { method: 'DELETE', credentials: 'include' });
+          if (!dr.ok) throw new Error(`HTTP ${dr.status}`);
+          continue;
+        }
         const res = await fetch('/api/admin/agreements-v2/builder', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, id }) });
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j.error || `HTTP ${res.status}`);
@@ -83,9 +90,9 @@ export default function BuilderList({ kind }: { kind: ListKind }) {
     } catch (e) { setNotice(`Could not complete that: ${e instanceof Error ? e.message : 'error'}`); }
   }
 
-  const editHref = (id: string) => `${NEW_PROPOSAL}?${kind === 'template' ? 'template' : 'draft'}=${id}`;
+  const editHref = (id: string, adv?: number | null) => id.startsWith('ag:') ? (adv ? `/admin/agreements/clients/${adv}` : '/admin/agreements/renewals-v2') : `${NEW_PROPOSAL}?${kind === 'template' ? 'template' : 'draft'}=${id}`;
   const rowItems = (r: Row): MenuItem[] =>
-    kind === 'draft' ? [{ label: 'Duplicate', onClick: () => act('duplicate', [r.id]) }, { label: 'Archive', onClick: () => act('archive', [r.id]) }, { label: 'Delete', danger: true, onClick: () => act('delete', [r.id]) }]
+    kind === 'draft' ? r.id.startsWith('ag:') ? [{ label: 'Delete', danger: true, onClick: () => act('delete', [r.id]) }] : [{ label: 'Duplicate', onClick: () => act('duplicate', [r.id]) }, { label: 'Archive', onClick: () => act('archive', [r.id]) }, { label: 'Delete', danger: true, onClick: () => act('delete', [r.id]) }]
     : kind === 'archived' ? [{ label: 'Restore', onClick: () => act('restore', [r.id]) }, { label: 'Delete', danger: true, onClick: () => act('delete', [r.id]) }]
     : [{ label: 'Duplicate', onClick: () => act('duplicate', [r.id]) }, { label: 'Delete', danger: true, onClick: () => act('delete', [r.id]) }];
   const bulkItems: MenuItem[] =
@@ -134,7 +141,7 @@ export default function BuilderList({ kind }: { kind: ListKind }) {
                     <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{kind === 'draft' ? relTime(r.updated_at) : stamp(r.updated_at)}</td>
                     <td className="whitespace-nowrap text-right">
                       <span className="inline-flex items-center gap-2">
-                        {kind !== 'archived' && <a href={editHref(r.id)} className={A.small}>{kind === 'template' ? 'Use template' : 'Edit'}</a>}
+                        {kind !== 'archived' && <a href={editHref(r.id, r.advertiser_id)} className={A.small}>{kind === 'template' ? 'Use template' : 'Edit'}</a>}
                         <RowMenu items={rowItems(r)} />
                       </span>
                     </td>
