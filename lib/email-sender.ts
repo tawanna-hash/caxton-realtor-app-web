@@ -7,13 +7,11 @@ const VERIFIED_DOMAINS = new Set([
 export const EMAIL_SENDERS = {
   'tawanna@myrealtyline.com': 'Tawanna Verock <tawanna@myrealtyline.com>',
   'tawanna@newslinesa.com': 'Tawanna Verock <tawanna@newslinesa.com>',
-  'hello@myrealtyline.com': 'Caxton Publications Inc. <hello@myrealtyline.com>',
-  'hello@newslinesa.com': 'Caxton Publications Inc. <hello@newslinesa.com>',
 } as const;
 
 export type EmailSenderAddress = keyof typeof EMAIL_SENDERS;
 
-export const DEFAULT_EMAIL_SENDER: EmailSenderAddress = 'hello@newslinesa.com';
+export const DEFAULT_EMAIL_SENDER: EmailSenderAddress = 'tawanna@newslinesa.com';
 
 export function resolveEmailSenderAddress(
   requested: string | undefined,
@@ -21,6 +19,9 @@ export function resolveEmailSenderAddress(
   const value = requested?.trim().toLowerCase();
   if (!value) return null;
   if (value in EMAIL_SENDERS) return value as EmailSenderAddress;
+  // Only Tawanna's market addresses are used; legacy hello@ maps to the same domain.
+  if (value === 'hello@myrealtyline.com') return 'tawanna@myrealtyline.com';
+  if (value === 'hello@newslinesa.com') return 'tawanna@newslinesa.com';
   return null;
 }
 
@@ -64,6 +65,8 @@ export function verifiedEmailFrom(
   const value = requested?.trim();
   const requestedDomain = value ? extractDomain(value) : undefined;
   if (value && requestedDomain && VERIFIED_DOMAINS.has(requestedDomain)) {
+    const mappedHello = resolveEmailSenderAddress(extractAddress(value));
+    if (mappedHello && extractAddress(value).startsWith('hello@')) return EMAIL_SENDERS[mappedHello];
     return value;
   }
   if (value) {
@@ -73,5 +76,5 @@ export function verifiedEmailFrom(
       return `${displayName || fallbackName} <${mapped}>`;
     }
   }
-  return `${fallbackName} <${DEFAULT_EMAIL_SENDER}>`;
+  return EMAIL_SENDERS[DEFAULT_EMAIL_SENDER];
 }

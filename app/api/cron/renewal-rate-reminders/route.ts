@@ -5,6 +5,8 @@
 // Rows are claimed before sending so overlapping invocations cannot duplicate
 // the message. A failed send releases the claim for the next hourly retry.
 
+import { EMAIL_SENDERS } from '@/lib/email-sender';
+import { NEWSLINE_SA_INVOICE_SENDER, senderAddressForPublication } from '@/lib/invoice-sender-routing';
 import { NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
@@ -95,10 +97,11 @@ export async function GET(req: Request) {
     const isNewslineSender =
       agreement.publication === 'san_antonio'
       || agreement.company_name?.trim().toLowerCase() === 'newsline san antonio';
+    const marketSender = isNewslineSender ? NEWSLINE_SA_INVOICE_SENDER : senderAddressForPublication(agreement.publication);
     let result = await sendEmail({
       to: recipient,
-      from: isNewslineSender ? 'Newsline San Antonio <hello@newslinesa.com>' : undefined,
-      replyTo: isNewslineSender ? 'hello@newslinesa.com' : undefined,
+      from: EMAIL_SENDERS[marketSender],
+      replyTo: marketSender,
       subject,
       html,
     });
@@ -110,7 +113,7 @@ export async function GET(req: Request) {
     if (newslineDomainUnverified) {
       result = await sendEmail({
         to: recipient,
-        replyTo: 'hello@newslinesa.com',
+        replyTo: marketSender,
         subject,
         html,
       });

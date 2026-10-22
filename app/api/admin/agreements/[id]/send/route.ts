@@ -3,6 +3,8 @@
 // POST — Send agreement notification email with signing link.
 // Auth: admin required.
 
+import { EMAIL_SENDERS } from '@/lib/email-sender';
+import { NEWSLINE_SA_INVOICE_SENDER, senderAddressForPublication } from '@/lib/invoice-sender-routing';
 import { isAdvertiserInactive } from '@/lib/server/inactive-guard';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
@@ -157,10 +159,11 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     const isNewslineSender =
       ag.publication === 'san_antonio'
       || ag.company_name?.trim().toLowerCase() === 'newsline san antonio';
+    const marketSender = isNewslineSender ? NEWSLINE_SA_INVOICE_SENDER : senderAddressForPublication(ag.publication);
     let result = await sendEmail({
       to: recipient,
-      from: isNewslineSender ? 'Newsline San Antonio <hello@newslinesa.com>' : undefined,
-      replyTo: isNewslineSender ? 'hello@newslinesa.com' : undefined,
+      from: EMAIL_SENDERS[marketSender],
+      replyTo: marketSender,
       subject,
       html,
     });
@@ -177,7 +180,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     if (newslineDomainUnverified) {
       result = await sendEmail({
         to: recipient,
-        replyTo: 'hello@newslinesa.com',
+        replyTo: marketSender,
         subject,
         html,
       });

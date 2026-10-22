@@ -10,8 +10,8 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 import { getSql } from '@/lib/db';
+import { senderAddressForPublication } from '@/lib/invoice-sender-routing';
 import {
-  DEFAULT_EMAIL_SENDER,
   EMAIL_SENDERS,
   resolveEmailSenderAddress,
   type EmailSenderAddress,
@@ -65,7 +65,8 @@ export const POST = withAdminTracking(async function POST(
     const message =
       body.message?.trim() ||
       `Dear ${original.advertiserName},\n\nPlease find your current Statement of Account below and attached as a PDF.`;
-    const fromKey: EmailSenderAddress = resolvedSender ?? DEFAULT_EMAIL_SENDER;
+    const pubRows = (await getSql()`SELECT publication FROM advertisers WHERE id = ${advertiserId}`) as unknown as Array<{ publication: string | null }>;
+    const fromKey: EmailSenderAddress = resolvedSender ?? senderAddressForPublication(pubRows[0]?.publication);
 
     const refreshed = await refreshPartnerStatementLinks({
       ...original,
