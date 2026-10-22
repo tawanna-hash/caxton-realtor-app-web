@@ -128,16 +128,15 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
 
   return (
     <div className="space-y-6">
-      {!dismissed && d.overdue.length > 0 && (
-        <div role="status" className="flex flex-wrap items-center gap-3 rounded-[10px] bg-[#FDE8E8] px-5 py-3 text-sm text-[#7A1B12]">
-          <span className="font-medium">{d.overdue.length} invoice{d.overdue.length === 1 ? ' is' : 's are'} overdue, totaling {usd0(d.overdueTotal)}.</span>
-          <button type="button" className="underline" style={{ border: 0, background: 'transparent' }} onClick={() => { setView('unpaid'); setBucket('overdue'); setPage(0); document.getElementById('gp-invoices')?.scrollIntoView({ behavior: 'smooth' }); }}>Show overdue invoices</button>
-          <button type="button" aria-label="Dismiss overdue alert" className="ml-auto text-lg leading-none" style={{ border: 0, background: 'transparent' }} onClick={() => setDismissed(true)}>&times;</button>
-        </div>
-      )}
-
       {slot && createPortal(
         <div className="flex h-full flex-col gap-4">
+    {!dismissed && d.overdue.length > 0 && (
+      <div role="status" className="flex flex-wrap items-center gap-3 rounded-[10px] bg-[#FDE8E8] px-5 py-3 text-sm text-[#7A1B12]">
+        <span className="font-medium">{d.overdue.length} invoice{d.overdue.length === 1 ? ' is' : 's are'} overdue, totaling {usd0(d.overdueTotal)}.</span>
+        <Link href="/admin/billing-hub?tab=invoices" className="underline">Show overdue invoices</Link>
+        <button type="button" aria-label="Dismiss overdue alert" className="ml-auto text-lg leading-none" style={{ border: 0, background: 'transparent' }} onClick={() => setDismissed(true)}>&times;</button>
+      </div>
+    )}
           <Card className="space-y-4">
             <div className="flex items-baseline justify-between text-sm"><span className="font-semibold text-[color:var(--ds-ink)]">{usd0(d.notPaid)} outstanding</span><span className="text-xs text-[color:var(--ds-body)]">{d.unpaid.length} unpaid invoice{d.unpaid.length === 1 ? '' : 's'}</span></div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -163,56 +162,6 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
           </Card>
         </div>
       , slot)}
-
-      <section id="gp-invoices"><Card className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <H2>Invoices</H2>
-          <div role="group" aria-label="Invoice view" className="flex gap-2"><Pill on={view === 'unpaid'} onClick={() => { setView('unpaid'); setPage(0); }}>Unpaid ({d.unpaid.length})</Pill><Pill on={view === 'paid'} onClick={() => { setView('paid'); setPage(0); }}>Paid ({d.paid.length})</Pill></div>
-          {view === 'unpaid' && (
-            <select aria-label="Aging filter" className={`${A.input} !w-auto`} value={bucket} onChange={(e) => { setBucket(e.target.value as typeof bucket); setPage(0); }}>
-              <option value="all">All aging</option><option value="overdue">Overdue</option>
-              {ORDER.map((b) => <option key={b} value={b}>{AGING_BUCKET_LABELS[b]}</option>)}
-            </select>
-          )}
-          <div className="ml-auto"><SearchBox value={q} onChange={(v) => { setQ(v); setPage(0); setPPage(0); }} label="Search invoices" /></div>
-        </div>
-        <div className="overflow-x-auto">
-          {view === 'unpaid' ? (
-            <SortTable rows={unpaidRows} offset={cur * PAGE} limit={PAGE} cols={[{ label: 'Invoice', get: (i) => i.number }, { label: 'Partner', get: (i) => i.advertiser_name ?? i.bill_to_name }, { label: 'Balance', get: (i) => i.bal }, { label: 'Due date', get: (i) => i.due_date }, { label: 'Aging status', get: (i) => i.days }]} className={`${A.table} min-w-[640px]`}>
-              {(rws) => (<>
-                {rws.length === 0 && <tr><td colSpan={5}><EmptyState title="No unpaid invoices" body={loading ? 'Loading invoices…' : 'Nothing matches these filters.'} /></td></tr>}
-                {rws.map((i) => (
-                  <tr key={i.id} className="cursor-pointer" onClick={(e) => { if (!(e.target as HTMLElement).closest('a')) window.location.href = `/admin/billing-hub/invoice/${i.id}/preview`; }}>
-                    <td className="font-medium text-[color:var(--ds-ink)]"><Link href={`/admin/billing-hub/invoice/${i.id}/preview`} className="text-[color:var(--ds-primary)] hover:underline">{i.number ?? 'Draft'}</Link></td>
-                    <td className="text-[color:var(--ds-ink)]">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td>
-                    <td className="text-[color:var(--ds-ink)]">{money(i.bal)}</td>
-                    <td className="text-[color:var(--ds-body)]">{i.due_date ? day(i.due_date) : '—'}</td>
-                    <td><span className={`rounded-full px-3 py-0.5 text-xs ${i.days > 0 ? 'bg-[#FDE8E8] text-[#B42318]' : 'bg-[#EEF0F6] text-[color:var(--ds-ink)]'}`}>{i.days > 0 ? `${i.days} day${i.days === 1 ? '' : 's'} overdue` : 'Current'}</span></td>
-                  </tr>
-                ))}
-              </>)}
-            </SortTable>
-          ) : (
-            <SortTable rows={paidRows} offset={cur * PAGE} limit={PAGE} cols={[{ label: 'Invoice', get: (i) => i.number }, { label: 'Partner', get: (i) => i.advertiser_name ?? i.bill_to_name }, { label: 'Amount', get: (i) => i.amount_paid_cents ?? i.total_cents }, { label: 'Paid on', get: (i) => i.paid_at }]} className={`${A.table} min-w-[560px]`}>
-              {(rws) => (<>
-                {rws.length === 0 && <tr><td colSpan={4}><EmptyState title="No paid invoices" body={loading ? 'Loading invoices…' : 'Nothing matches these filters.'} /></td></tr>}
-                {rws.map((i) => (
-                  <tr key={i.id} className="cursor-pointer" onClick={(e) => { if (!(e.target as HTMLElement).closest('a')) window.location.href = `/admin/billing-hub/invoice/${i.id}/preview`; }}>
-                    <td className="font-medium text-[color:var(--ds-ink)]"><Link href={`/admin/billing-hub/invoice/${i.id}/preview`} className="text-[color:var(--ds-primary)] hover:underline">{i.number ?? 'Draft'}</Link></td>
-                    <td className="text-[color:var(--ds-ink)]">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td>
-                    <td className="text-[color:var(--ds-ink)]">{money(i.amount_paid_cents ?? i.total_cents)}</td>
-                    <td className="text-[color:var(--ds-body)]">{i.paid_at ? day(i.paid_at) : '—'}</td>
-                  </tr>
-                ))}
-              </>)}
-            </SortTable>
-          )}
-        </div>
-        <div className="flex items-center justify-between text-sm text-[color:var(--ds-body)]">
-          <span>{rowsLen ? `${cur * PAGE + 1}–${Math.min((cur + 1) * PAGE, rowsLen)} of ${rowsLen}` : '0 results'} · <Link href="/admin/billing-hub" className="text-[color:var(--ds-primary)]">Open Billing</Link></span>
-          <span className="flex gap-2"><button type="button" className={A.small} disabled={cur === 0} onClick={() => setPage(cur - 1)}>Previous</button><button type="button" className={A.small} disabled={cur >= pages - 1} onClick={() => setPage(cur + 1)}>Next</button></span>
-        </div>
-      </Card></section>
 
       <div className="grid items-stretch gap-6 lg:grid-cols-[1fr_1.4fr]">
         <section className="flex flex-col gap-3">
