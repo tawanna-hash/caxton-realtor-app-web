@@ -66,6 +66,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Clients', href: '/admin/agreements/clients', description: 'Main contact person for each client' },
       { label: 'Contacts', href: '/admin/agreements/clients/contacts', description: 'Other people inside each client organization', parent: '/admin/agreements/clients' },
       { label: 'Billing', href: '/admin/billing-hub', description: 'Agreement, payment methods, invoices and activity for one client' },
+      { label: 'Invoices', href: '/admin/billing-hub/invoices', description: 'Every invoice across all clients', parent: '/admin/billing-hub' },
       { label: 'Payouts', href: '/admin/payouts-beta', description: 'Stripe payouts, fees, transactions and deposit IDs' },
       { label: 'Services', href: '/admin/services-beta', description: 'Services, rates, billing occurrence and trigger' },
       { label: 'Bundles', href: '/admin/services-beta/bundles', description: 'Group services into one priced bundle', parent: '/admin/services-beta' },

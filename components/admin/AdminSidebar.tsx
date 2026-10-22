@@ -226,8 +226,9 @@ export default function AdminSidebar() {
               {isOpen && (
                 <div className="ml-6 mb-2 pl-3 space-y-1">
                   {group.links.filter((l) => !l.parent).map((link) => {
-                    const linkActive = pathname === link.href || pathname.startsWith(link.href + '/');
                     const kids = group.links.filter((l) => l.parent === link.href);
+                    const onKid = kids.some((k) => pathname === k.href || pathname.startsWith(k.href + '/'));
+                    const linkActive = !onKid && (pathname === link.href || pathname.startsWith(link.href + '/'));
                     return (
                       <div key={link.href}>
                         <Link

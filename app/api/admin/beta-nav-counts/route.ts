@@ -29,6 +29,7 @@ export async function GET() {
     '/admin/agreements/clients': clients,
     '/admin/agreements/clients/contacts': contacts,
     '/admin/billing-hub': invoices,
+    '/admin/billing-hub/invoices': invoices,
     '/admin/services-beta': services,
     '/admin/services-beta/bundles': bundles,
     '/admin/integrations-beta/api-keys': keys,

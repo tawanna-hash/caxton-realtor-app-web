@@ -133,7 +133,7 @@ export default function GetPaidSection({ invoices, payouts, loading }: { invoice
     {!dismissed && d.overdue.length > 0 && (
       <div role="status" className="flex flex-wrap items-center gap-3 rounded-[10px] bg-[#FDE8E8] px-5 py-3 text-sm text-[#7A1B12]">
         <span className="font-medium">{d.overdue.length} invoice{d.overdue.length === 1 ? ' is' : 's are'} overdue, totaling {usd0(d.overdueTotal)}.</span>
-        <Link href="/admin/billing-hub?tab=invoices&scope=all" className="underline">Show overdue invoices</Link>
+        <Link href="/admin/billing-hub/invoices" className="underline">Show overdue invoices</Link>
         <button type="button" aria-label="Dismiss overdue alert" className="ml-auto text-lg leading-none" style={{ border: 0, background: 'transparent' }} onClick={() => setDismissed(true)}>&times;</button>
       </div>
     )}

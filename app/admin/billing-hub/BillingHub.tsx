@@ -45,6 +45,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const selectCls = 'w-full appearance-none rounded-full border border-[color:var(--ds-ink)]/60 bg-white px-5 py-3.5 pr-10 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
 const Caret = () => null; // caret is now drawn globally on every select (app/globals.css)
 
+const wantsAll = () => typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('scope') === 'all' || window.location.pathname.endsWith('/billing-hub/invoices'));
 export default function BillingHub() {
   const advs = useJson('/api/admin/advertisers', (j) => (j.advertisers ?? []) as Adv[], none as Adv[]);
   const [clientId, setClientId] = useState<number | null>(null);
@@ -62,7 +63,7 @@ export default function BillingHub() {
     const p = new URLSearchParams(window.location.search);
     const fromUrl = Number(p.get('clientId'));
     const wanted = p.get('agreementId') ?? '';
-    const t = p.get('tab'); if (TABS.some(([k]) => k === t)) setTab(t as Tab);
+    const t = window.location.pathname.endsWith('/billing-hub/invoices') ? 'invoices' : p.get('tab'); if (TABS.some(([k]) => k === t)) setTab(t as Tab);
     // Legacy Get Paid invoice links: ?invoice=<id> opens that invoice, ?create=1 starts a new one.
     const invoiceId = p.get('invoice') ?? p.get('edit') ?? p.get('focus') ?? p.get('id');
     if (invoiceId && !fromUrl) {
@@ -77,7 +78,7 @@ export default function BillingHub() {
       const amt = p.get('amount_cents');
       setIntent({ create: { advertiser_id: fromUrl || null, agreement_id: p.get('agreement_id') ?? '', amount_cents: amt ? Number(amt) : null } });
     }
-    if (p.get('scope') === 'all' && !fromUrl && !wanted) { setClientId(clients[0].id); return; }
+    if (wantsAll() && !fromUrl && !wanted) { setClientId(clients[0].id); return; }
     const pick = (id?: number | null) => { const c = clients.find((x) => x.id === id); if (c) setClientId(c.id); else setNoPick(true); };
     if (wanted && !fromUrl) {
       // Deep link from Agreements (Beta): find the agreement's client first.
@@ -290,7 +291,7 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
 
 /* ---------------- Invoices tab ---------------- */
 function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { client: Adv; invoices: FullInv[]; agreements: Agr[]; intent: InvoiceIntent | null; onIntentDone: () => void }) {
-  const [scope, setScope] = useState<'client' | 'all'>(intent || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('scope') === 'all') ? 'all' : 'client');
+  const [scope, setScope] = useState<'client' | 'all'>(intent || wantsAll() ? 'all' : 'client');
   const [focusQ, setFocusQ] = useState('');
   const [q, setQ] = useState(''); const [st, setSt] = useState<string[]>([]);
   const [from, setFrom] = useState(''); const [to, setTo] = useState(''); const [addOpen, setAddOpen] = useState(false);

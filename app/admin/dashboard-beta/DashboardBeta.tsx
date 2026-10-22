@@ -150,13 +150,13 @@ export default function DashboardBeta() {
       <div className="grid items-stretch gap-6 lg:grid-cols-2">
         <Panel title="Invoices">
           <div className="grid grid-cols-2 gap-3">
-            <Stat href="/admin/billing-hub?tab=invoices&scope=all" label="Awaiting payment" tone="text-teal-700" value={usd0(d.current.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.current.length} invoice${d.current.length === 1 ? '' : 's'}`} />
-            <Stat href="/admin/billing-hub?tab=invoices&scope=all" label="Require attention" value={usd0(d.overdue.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.overdue.length} invoice${d.overdue.length === 1 ? '' : 's'}`} />
+            <Stat href="/admin/billing-hub/invoices" label="Awaiting payment" tone="text-teal-700" value={usd0(d.current.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.current.length} invoice${d.current.length === 1 ? '' : 's'}`} />
+            <Stat href="/admin/billing-hub/invoices" label="Require attention" value={usd0(d.overdue.reduce((n, i) => n + d.bal(i), 0))} sub={`${d.overdue.length} invoice${d.overdue.length === 1 ? '' : 's'}`} />
           </div>
           <div className="anchor-card min-h-[200px] flex-1 rounded-[10px] bg-white p-5">
             <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Type</th><th className="py-2 text-right font-normal">Invoices</th><th className="py-2 text-right font-normal">Amount</th></tr></thead>
               <tbody>{d.buckets.map(([label, test]) => { const rows = d.overdue.filter((i) => test(d.age(i))); return <tr key={label} className="border-t border-[color:var(--ds-line)]"><td className="py-2.5">{label}</td><td className="py-2.5 text-right">{rows.length}</td><td className="py-2.5 text-right">{money(rows.reduce((n, i) => n + d.bal(i), 0))}</td></tr>; })}</tbody></table>
-            <Link href="/admin/billing-hub?tab=invoices&scope=all" className="mt-3 inline-block text-xs text-[color:var(--ds-primary)]">View invoices</Link>
+            <Link href="/admin/billing-hub/invoices" className="mt-3 inline-block text-xs text-[color:var(--ds-primary)]">View invoices</Link>
           </div>
         </Panel>
 
