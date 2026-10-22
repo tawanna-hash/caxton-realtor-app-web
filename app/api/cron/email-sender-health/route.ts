@@ -28,8 +28,9 @@ export async function GET(req: NextRequest) {
     const adv = (await sql`SELECT id, company, name, contact_email, billing_email, publication FROM advertisers WHERE LOWER(contact_email) = LOWER(${rb}) OR LOWER(billing_email) = LOWER(${rb}) OR LOWER(company) LIKE '%champions%school%'`) as unknown as Array<{ id: number }>;
     const linkAt = Number(req.nextUrl.searchParams.get('link_ms'));
     const sentAt = Number(req.nextUrl.searchParams.get('sent_ms'));
-    if (adv.length !== 1) return NextResponse.json({ adv });
-    const id = adv[0].id;
+    const pick = Number(req.nextUrl.searchParams.get('adv_id'));
+    if (!adv.some((a) => a.id === pick)) return NextResponse.json({ adv });
+    const id = pick;
     const exp = Math.floor(linkAt / 1000) + 30 * 86400;
     const body = `c${id}.${exp}`;
     const token = `${body}.${crypto.createHmac('sha256', process.env.SIGN_SECRET!).update(`pm_setup:${body}`).digest('base64url')}`;
