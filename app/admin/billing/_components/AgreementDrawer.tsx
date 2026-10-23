@@ -1050,10 +1050,54 @@ export function AgreementDrawer({
         <Field label="Company Name *">
           <input
             value={form.company_name}
-            onChange={(e) => upd("company_name", e.target.value)}
+            list="agreement-partners-on-file"
+            onChange={(e) => {
+              const name = e.target.value;
+              const match = isCreate
+                ? advertisers.filter(
+                    (a) => a.name.trim().toLowerCase() === name.trim().toLowerCase(),
+                  )
+                : [];
+              const a = match.length === 1 ? match[0] : null;
+              setForm((cur) => {
+                const next = { ...cur, company_name: name };
+                if (!a) return next;
+                const fill = (k: keyof AgForm, v: string | null | undefined) => {
+                  if (v && !String(cur[k] ?? "").trim()) (next as Record<string, unknown>)[k] = v;
+                };
+                next.advertiser_id = a.id;
+                next.publication = a.publication as PublicationScope;
+                fill("rep_name", [a.first_name, a.last_name].filter(Boolean).join(" "));
+                fill("phone", a.phone ? formatPhoneInput(a.phone) : null);
+                fill("email", a.contact_email);
+                fill("address", a.address);
+                fill("city", a.city);
+                fill("state", a.state);
+                fill("zip", a.zip);
+                fill("billing_email", a.billing_email ?? a.contact_email);
+                fill("billing_contact_name", a.billing_contact_name);
+                fill(
+                  "billing_contact_phone",
+                  a.billing_contact_phone ? formatPhoneInput(a.billing_contact_phone) : null,
+                );
+                return next;
+              });
+            }}
             className={INPUT}
             placeholder="Partner company name"
           />
+          <datalist id="agreement-partners-on-file">
+            {isCreate &&
+              advertisers.map((a) => (
+                <option key={a.id} value={a.name} label={`${a.name} · ${a.publication} (on file)`} />
+              ))}
+          </datalist>
+          {isCreate && form.advertiser_id != null &&
+            advertisers.some((a) => a.id === form.advertiser_id && a.name === form.company_name) && (
+              <div className="mt-1 text-xs text-emerald-700">
+                Partner on file. Empty fields were filled in from their record.
+              </div>
+            )}
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Representative Name *">

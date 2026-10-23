@@ -58,7 +58,7 @@ export default async function AgreementsPage() {
       ) pay ON true
       ORDER BY i.created_at DESC
     `.catch(() => [] as unknown[]),
-    sql`SELECT id, name, publication, contact_email, billing_email FROM advertisers ORDER BY name ASC`
+    sql`SELECT id, name, publication, contact_email, billing_email, first_name, last_name, phone, address, city, state, zip, billing_contact_name, billing_contact_phone FROM advertisers ORDER BY name ASC`
       .catch(() => [] as unknown[]),
     sql`
       SELECT id, advertiser_name, ad_space_slug, publication,
