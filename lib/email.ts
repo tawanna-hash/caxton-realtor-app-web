@@ -43,6 +43,19 @@ const FROM_DEFAULT = EMAIL_SENDERS[DEFAULT_EMAIL_SENDER];
 
 export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult> {
   const from = verifiedEmailFrom(opts.from ?? FROM_DEFAULT);
+  // Sandbox/test deployments: record the email instead of sending it. Off unless EMAIL_DRY_RUN=1.
+  if (process.env.EMAIL_DRY_RUN === '1') {
+    try {
+      const { getSql } = await import('@/lib/db');
+      const sql = getSql();
+      await sql`CREATE TABLE IF NOT EXISTS email_dry_run_log (id serial PRIMARY KEY, created_at timestamptz DEFAULT NOW(), sender text, recipients text, subject text, html text, text_body text)`;
+      const to = (Array.isArray(opts.to) ? opts.to : [opts.to]).join(', ');
+      await sql`INSERT INTO email_dry_run_log (sender, recipients, subject, html, text_body) VALUES (${from}, ${to}, ${opts.subject}, ${opts.html}, ${(opts as { text?: string }).text ?? null})`;
+    } catch (e) {
+      console.warn('[email dry run] could not record email', e);
+    }
+    return { ok: true, id: 'dry-run' } as SendEmailResult;
+  }
   const apiKey = getResendApiKeyForFrom(from);
   if (!apiKey) {
     return {
