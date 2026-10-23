@@ -19,6 +19,8 @@ export type AdvertiserOption = {
   payment_mode?: string | null;
   stripe_customer_id?: string | null;
   card_last4?: string | null;
+  stripe_payment_method_id?: string | null;
+  payment_method_label?: string | null;
 };
 
 export type AdCampaignOption = {
