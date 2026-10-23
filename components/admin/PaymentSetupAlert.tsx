@@ -13,26 +13,32 @@ type Ag = {
 export default function PaymentSetupAlert({ ag, variant }: { ag: Ag; variant: "chip" | "banner" }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [email, setEmail] = useState(ag.payment_setup_sent_to ?? "");
   const waiting = !!ag.payment_setup_requested_at;
   const verifying = !waiting && !!ag.payment_setup_verification_pending;
   if (!waiting && !verifying) return null;
 
   async function resend() {
-    const to = ag.payment_setup_sent_to ?? "";
-    if (!window.confirm(`Resend the payment setup link to ${to || "the email on file"}?`)) return;
+    const to = email.trim();
+    if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(to)) { setMsg("Enter a valid email address"); return; }
     setBusy(true); setMsg(null);
     try {
-      const res = await fetch(`/api/admin/agreements/${ag.id}/resend-setup-link`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      const res = await fetch(`/api/admin/agreements/${ag.id}/resend-setup-link`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: to }) });
       const j = await res.json().catch(() => ({}));
-      setMsg(res.ok ? `Link sent to ${j.sentTo}` : (j.error ?? "Could not resend"));
+      if (res.ok) { setMsg(`Link sent to ${j.sentTo}`); setEditing(false); } else setMsg(j.error ?? "Could not resend");
     } catch { setMsg("Could not resend"); }
     setBusy(false);
   }
 
-  const btn = (
-    <button type="button" onClick={resend} disabled={busy} className="ml-2 underline font-semibold disabled:opacity-50">
-      {busy ? "Sending…" : "Resend link"}
-    </button>
+  const btn = editing ? (
+    <span className="ml-2 inline-flex flex-wrap items-center gap-1 align-middle">
+      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Send setup link to" placeholder="ap@company.com" className="w-56 rounded border border-amber-400 bg-white px-2 py-0.5 text-xs text-amber-950" />
+      <button type="button" onClick={resend} disabled={busy} className="rounded bg-amber-700 px-2 py-0.5 text-xs font-semibold text-white disabled:opacity-50">{busy ? "Sending…" : "Send"}</button>
+      <button type="button" onClick={() => { setEditing(false); setMsg(null); }} className="text-xs underline">Cancel</button>
+    </span>
+  ) : (
+    <button type="button" onClick={() => setEditing(true)} className="ml-2 underline font-semibold">Resend link</button>
   );
   const status = msg ? <span className="ml-2" role="status">{msg}</span> : null;
 
