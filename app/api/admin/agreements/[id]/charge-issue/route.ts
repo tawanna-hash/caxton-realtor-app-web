@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
+import { processingFeeCents } from '@/lib/payment-processing-fees';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
@@ -65,11 +66,13 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
         { status: 400 },
       );
     }
-    const totalCents = withSurcharge(baseCents);
+    const stripe = getStripe();
+    // Bank accounts (ACH) get the ACH processing fee, not the 3% card surcharge.
+    let isBank = false;
+    try { isBank = (await stripe.paymentMethods.retrieve(ag.stripe_payment_method_id)).type === 'us_bank_account'; } catch { /* treat as card */ }
+    const totalCents = isBank ? baseCents + processingFeeCents(baseCents, 'ach') : withSurcharge(baseCents);
     const surchargeCents = totalCents - baseCents;
     const issueMonth = body.issueMonth ?? new Date().toISOString().slice(0, 7);
-
-    const stripe = getStripe();
 
     // Create issue_charges row first (pending)
     const chargeRows = (await sql`
@@ -86,10 +89,11 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
         currency: 'usd',
         customer: ag.stripe_customer_id,
         payment_method: ag.stripe_payment_method_id,
+        ...(isBank ? { payment_method_types: ['us_bank_account'] } : {}),
         off_session: true,
         confirm: true,
         description: `${ag.company_name ?? 'Partner'} \u2014 ${ag.ad_size ?? 'ad'} \u2014 ${issueMonth}`,
-        statement_descriptor_suffix: 'REALTYLINE AUSTIN',
+        ...(isBank ? {} : { statement_descriptor_suffix: 'REALTYLINE AUSTIN' }),
         receipt_email: ag.advertiser_email ?? ag.billing_email ?? undefined,
         metadata: {
           agreement_id: ag.id,

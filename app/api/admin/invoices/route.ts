@@ -320,7 +320,9 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
         event: charge.ok ? 'invoice_auto_charge_succeeded' : 'invoice_auto_charge_failed',
         user_email: admin.email ?? null,
         details: charge.ok
-          ? `Charged card on file \u2014 payment intent ${charge.paymentIntentId}`
+          ? (charge.pending
+              ? `Bank payment submitted from account on file \u2014 clears in about 4 business days \u2014 payment intent ${charge.paymentIntentId}`
+              : `Charged card on file \u2014 payment intent ${charge.paymentIntentId}`)
           : charge.error,
       }).catch(() => { /* audit is best-effort; never fail a created invoice */ });
       if (!charge.ok) autoChargeError = charge.error;

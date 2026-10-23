@@ -129,7 +129,7 @@ export async function appendInvoiceAudit(
 }
 
 export type AutoChargeResult =
-  | { ok: true; paymentIntentId: string }
+  | { ok: true; paymentIntentId: string; pending?: boolean }
   | { ok: false; error: string };
 
 /**
@@ -167,6 +167,17 @@ export async function autoChargeInvoice(params: {
 
   let paymentIntentId: string;
   let succeeded: boolean;
+  // A bank account (ACH) saved by the client payment setup page is charged the
+  // same way, but Stripe returns 'processing' for a few business days before it
+  // clears. That is a submitted payment, not a failure: the Stripe webhook
+  // records it on the invoice when it clears (source 'invoice_auto_charge').
+  let isBank = false;
+  try {
+    const pm = await stripe.paymentMethods.retrieve(card.paymentMethodId);
+    isBank = pm.type === 'us_bank_account';
+  } catch {
+    /* unknown type: fall through to the original card behaviour */
+  }
   try {
     // The invoice total is charged as-is: unlike agreement issue charges, the
     // invoice amount already reflects whatever the admin billed.
@@ -175,30 +186,42 @@ export async function autoChargeInvoice(params: {
       currency: 'usd',
       customer: card.customerId,
       payment_method: card.paymentMethodId,
+      ...(isBank ? { payment_method_types: ['us_bank_account'] } : {}),
       off_session: true,
       confirm: true,
       description: `${card.companyName ?? 'Partner'} \u2014 ${params.invoiceNumber ?? 'Invoice'}`,
-      statement_descriptor_suffix: 'REALTYLINE AUSTIN',
+      ...(isBank ? {} : { statement_descriptor_suffix: 'REALTYLINE AUSTIN' }),
       receipt_email: card.receiptEmail ?? undefined,
       // `source` intentionally is NOT one of the webhook-owned values
       // ('invoice_payment' / 'statement_payment' / 'self_serve_checkout') and
       // no agreement_id is sent, so the Stripe webhook will not double-record
-      // this payment or mutate the agreement.
+      // this payment or mutate the agreement. Bank payments that clear later
+      // are recorded by the webhook with the same (source, external_id) key.
       metadata: {
         source: 'invoice_auto_charge',
         invoice_id: invoiceId,
         invoice_number: params.invoiceNumber ?? '',
         agreement_id_ref: card.agreementId ?? '',
         publication: 'RealtyLine',
+        method: isBank ? 'ach' : 'card',
       },
     });
     paymentIntentId = pi.id;
     succeeded = pi.status === 'succeeded';
+    if (!succeeded && isBank && pi.status === 'processing') {
+      await sql`
+        UPDATE invoices
+           SET stripe_payment_intent_id = ${paymentIntentId},
+               stripe_customer_id = ${card.customerId}
+         WHERE id = ${invoiceId}
+      `;
+      return { ok: true, paymentIntentId, pending: true };
+    }
     if (!succeeded) {
-      return { ok: false, error: `Card charge did not complete (status: ${pi.status}).` };
+      return { ok: false, error: `${isBank ? 'Bank' : 'Card'} charge did not complete (status: ${pi.status}).` };
     }
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'card charge failed' };
+    return { ok: false, error: err instanceof Error ? err.message : `${isBank ? 'bank' : 'card'} charge failed` };
   }
 
   // Charge went through — persist the Stripe ids before touching the ledger so
@@ -215,9 +238,9 @@ export async function autoChargeInvoice(params: {
       invoiceId,
       amountCents: totalCents,
       paymentDate: new Date().toISOString().slice(0, 10),
-      paymentMethod: 'Credit card',
+      paymentMethod: isBank ? 'ACH bank payment' : 'Credit card',
       reference: paymentIntentId,
-      memo: 'Auto-charged card on file at invoice creation',
+      memo: isBank ? 'Auto-charged bank account on file at invoice creation' : 'Auto-charged card on file at invoice creation',
       // Distinct from 'manual' and from the webhook-reserved 'stripe' /
       // 'stripe_statement' sources, so the (source, external_id) upsert key
       // can never collide with a webhook-owned row.
@@ -235,4 +258,35 @@ export async function autoChargeInvoice(params: {
   }
 
   return { ok: true, paymentIntentId };
+}
+
+/**
+ * Webhook: a bank (ACH) auto-charge cleared or failed. Records the payment on
+ * the invoice ledger (idempotent on source + external_id) or logs the failure.
+ */
+export async function handleInvoiceAutoChargeEvent(pi: import('stripe').Stripe.PaymentIntent, outcome: 'succeeded' | 'failed'): Promise<void> {
+  const invoiceId = pi.metadata?.invoice_id;
+  if (!invoiceId || pi.metadata?.method !== 'ach') return; // card auto-charges are recorded synchronously
+  if (outcome === 'succeeded') {
+    try {
+      await recordInvoicePayment({
+        invoiceId,
+        amountCents: pi.amount_received || pi.amount,
+        paymentDate: new Date().toISOString().slice(0, 10),
+        paymentMethod: 'ACH bank payment',
+        reference: pi.id,
+        memo: 'Auto-charged bank account on file (cleared)',
+        source: 'stripe_auto_charge',
+        externalId: pi.id,
+        createdBy: 'stripe_webhook',
+      });
+      await appendInvoiceAudit(invoiceId, { event: 'invoice_auto_charge_succeeded', user_email: 'stripe_webhook', details: `Bank payment cleared \u2014 payment intent ${pi.id}` });
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : 'unknown error';
+      await appendInvoiceAudit(invoiceId, { event: 'invoice_auto_charge_record_failed', user_email: 'stripe_webhook', details: `Bank payment ${pi.id} cleared but could not be recorded: ${detail}. Record it manually.` }).catch(() => {});
+    }
+    return;
+  }
+  const reason = pi.last_payment_error?.message ?? 'Bank payment failed.';
+  await appendInvoiceAudit(invoiceId, { event: 'invoice_auto_charge_failed', user_email: 'stripe_webhook', details: `Bank payment ${pi.id} failed: ${reason}` }).catch(() => {});
 }

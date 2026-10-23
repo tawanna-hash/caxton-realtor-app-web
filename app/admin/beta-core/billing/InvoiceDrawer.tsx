@@ -286,8 +286,13 @@ export function InvoiceDrawer({
     if (!form.advertiser_id) return null;
     return matchingAgreements.find(usable) ?? null;
   }, [effectiveAgreements, matchingAgreements, form.agreement_id, form.advertiser_id]);
-  const cardOnFile = isCreate && Boolean(cardAgreement);
+  // Client-level method (client payment setup page, no agreement) — the server
+  // falls back to it only when no agreement is linked.
+  const clientMethod = !form.agreement_id && !cardAgreement && Boolean(selectedAdvertiser?.stripe_customer_id && selectedAdvertiser?.stripe_payment_method_id);
+  const cardOnFile = isCreate && (Boolean(cardAgreement) || clientMethod);
   const cardLast4 = cardAgreement?.card_number_last4 ?? selectedAdvertiser?.card_last4 ?? null;
+  const methodIsBank = /^bank/i.test((cardAgreement ? cardAgreement.card_type : selectedAdvertiser?.payment_method_label) ?? '');
+  const methodWord = methodIsBank ? 'bank account' : 'card';
 
   // Which agreement a newly added card should be attached to: the explicitly
   // linked one, else the agreement that already holds the card, else the
@@ -361,7 +366,7 @@ export function InvoiceDrawer({
       // surfaced both inline and on the page banner (which outlives the drawer).
       if (data.auto_charge_error) {
         setAutoChargeWarning(data.auto_charge_error);
-        onError(`Invoice created, but the card on file was not charged: ${data.auto_charge_error}`);
+        onError(`Invoice created, but the ${methodWord} on file was not charged: ${data.auto_charge_error}`);
       }
       await onSaved();
     } catch (e) {
@@ -560,9 +565,9 @@ export function InvoiceDrawer({
               onChange={(e) => setAutoCharge(e.target.checked)}
             />
             <span>
-              Auto-charge card on file{cardLast4 ? ` (\u2022\u2022\u2022\u2022 ${cardLast4})` : ''} when created
+              Auto-charge {methodWord} on file{cardLast4 ? ` (\u2022\u2022\u2022\u2022 ${cardLast4})` : ''} when created
               <span className="mt-0.5 block text-xs text-gray-500">
-                Charges the saved card for the full invoice total immediately and marks the invoice paid.
+                {methodIsBank ? 'Charges the saved bank account for the full invoice total. Bank payments take about 4 business days to clear; the invoice is marked paid when they do.' : 'Charges the saved card for the full invoice total immediately and marks the invoice paid.'}
                 {formatCardExpiration(cardExpiration) ? ` Exp ${formatCardExpiration(cardExpiration)}.` : ''}
               </span>
             </span>
@@ -827,10 +832,10 @@ function PaymentHistoryRow({
 
 function auditDescription(entry: InvoiceAuditEntry) {
   if (entry.event === 'invoice_auto_charge_succeeded') {
-    return `Card on file charged${entry.details ? ` — ${entry.details}` : ''}`;
+    return `Payment method on file charged${entry.details ? ` — ${entry.details}` : ''}`;
   }
   if (entry.event === 'invoice_auto_charge_failed') {
-    return `Card on file charge failed${entry.details ? ` — ${entry.details}` : ''}`;
+    return `Payment method on file charge failed${entry.details ? ` — ${entry.details}` : ''}`;
   }
   const fields = (entry.fields ?? []).map((field) => AUDIT_FIELD_LABELS[field] ?? field.replaceAll('_', ' '));
   return fields.length ? `Changed ${fields.join(', ')}` : 'Invoice updated';

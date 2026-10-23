@@ -27,6 +27,7 @@ import {
 } from '@/lib/server/stripe-payment-ledger-sync';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 import { handleClientSetupIntentEvent, handleClientSetupSessionCompleted } from '@/lib/server/payment-setup';
+import { handleInvoiceAutoChargeEvent } from '@/lib/server/invoice-auto-charge';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -173,6 +174,11 @@ async function handlePaymentSucceeded(
 
   if (pi.metadata?.source === 'statement_payment') {
     await handleStatementPaymentSucceeded(sql, pi);
+    return;
+  }
+
+  if (pi.metadata?.source === 'invoice_auto_charge') {
+    await handleInvoiceAutoChargeEvent(pi, 'succeeded');
     return;
   }
 
@@ -457,6 +463,11 @@ async function handlePaymentFailed(
     console.warn('[stripe-webhook] invoice payment failed. invoice_id:', pi.metadata.invoice_id, 'pi:', pi.id);
     return;
   }
+  if (pi.metadata?.source === 'invoice_auto_charge') {
+    await handleInvoiceAutoChargeEvent(pi, 'failed');
+    return;
+  }
+
   if (pi.metadata?.source === 'statement_payment') {
     console.warn(
       '[stripe-webhook] statement payment failed. statement_payment_id:',
