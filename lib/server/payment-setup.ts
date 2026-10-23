@@ -225,8 +225,10 @@ export function setupMetadata(t: SetupTarget): Record<string, string> {
 
 function subjectFromMetadata(m: Stripe.Metadata | null | undefined): PaymentSetupSubject | null {
   if (!m || m.source !== 'client_payment_setup') return null;
-  if (m.advertiser_id && /^\d+$/.test(m.advertiser_id)) return { kind: 'client', id: Number(m.advertiser_id) };
+  // An agreement-scoped setup (sign wizard, "set up later" link) must land on that agreement, not just the
+  // client's current one; loading by agreement also loads its client.
   if (m.agreement_id) return { kind: 'agreement', id: m.agreement_id };
+  if (m.advertiser_id && /^\d+$/.test(m.advertiser_id)) return { kind: 'client', id: Number(m.advertiser_id) };
   return null;
 }
 
