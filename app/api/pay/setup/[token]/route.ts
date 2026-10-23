@@ -7,8 +7,8 @@
 // POST — same behaviour, used by the "try again" button on the fallback page.
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPaymentSetupToken } from '@/lib/payment-setup-token';
-import { loadSetupTarget, ensureStripeCustomer, setupMetadata } from '@/lib/server/payment-setup';
-import { getStripe, isStripeConfigured } from '@/lib/stripe';
+import { loadSetupTarget, createSetupCheckoutSession } from '@/lib/server/payment-setup';
+import { isStripeConfigured } from '@/lib/stripe';
 import { rateLimited, clientIp } from '@/lib/server/simple-rate-limit';
 
 export const runtime = 'nodejs';
@@ -27,34 +27,14 @@ async function start(req: NextRequest, ctx: Ctx) {
   try {
     const t = await loadSetupTarget(v.subject);
     if (!t) return back('error=invalid');
-    const brand = t.brand;
-    const stripe = getStripe();
-    const customer = await ensureStripeCustomer(stripe, t);
-    const meta = setupMetadata(t);
     const base = req.nextUrl.origin;
-    const session = await stripe.checkout.sessions.create({
-      mode: 'setup',
-      customer,
-      currency: 'usd',
-      // Card (incl. Apple Pay / Link) and US bank account. Bank accounts verify
-      // instantly through the bank login, or by microdeposit as a fallback.
-      payment_method_types: ['card', 'us_bank_account'],
-      payment_method_options: {
-        us_bank_account: { financial_connections: { permissions: ['payment_method'] }, verification_method: 'automatic' },
-      },
-      setup_intent_data: {
-        description: `${t.company ?? 'Client'} — payment method on file (${brand.brand})`,
-        metadata: meta,
-      },
-      metadata: meta,
-      custom_text: {
-        submit: { message: `By saving, you authorize ${brand.brand} to charge this payment method for your advertising payments, according to the amounts and billing schedule you agreed to. Contact ${brand.billing_contact_email} to change or revoke this authorization.` },
-      },
-      success_url: `${base}/pay/setup/${token}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${base}/pay/setup/${token}?canceled=1`,
+    const url = await createSetupCheckoutSession(t, {
+      methods: ['card', 'us_bank_account'],
+      successUrl: `${base}/pay/setup/${token}?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${base}/pay/setup/${token}?canceled=1`,
     });
-    if (!session.url) return back('error=unavailable');
-    return NextResponse.redirect(session.url, 303);
+    if (!url) return back('error=unavailable');
+    return NextResponse.redirect(url, 303);
   } catch (e) {
     console.error('[pay/setup] checkout session failed', e);
     return back('error=unavailable');

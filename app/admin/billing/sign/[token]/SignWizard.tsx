@@ -636,6 +636,8 @@ export default function SignWizard({
   const checkAllowed = allowsCheckPayment(channel);
   // Nothing is preselected: the client chooses how they pay.
   const [paymentType, setPaymentType] = useState<string>('');
+  // ACH: the client connects their bank account (Stripe) before signing.
+  const [ach, setAch] = useState<{ label: string; last4: string | null; status: string } | null>(null);
 
   // ── Sign step ──────────────────────────────────────────────────────────────
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -722,6 +724,7 @@ export default function SignWizard({
               if (typeof d.paymentType === 'string' && (checkAllowed || d.paymentType !== 'Check')) {
                 setPaymentType(d.paymentType);
               }
+              if (d.ach && typeof d.ach === 'object') setAch(d.ach as { label: string; last4: string | null; status: string });
               if (typeof d.confirmedPaymentIntentId === 'string') {
                 setConfirmedPaymentIntentId(d.confirmedPaymentIntentId);
               }
@@ -746,7 +749,7 @@ export default function SignWizard({
           adSize, frequency, adRate, discount, adPremium, pagePosition, applyPagePremium,
           timing, markets: [...markets],
           lineStarts, emailLineAlternates, placementStart, singleEmailAlternates,
-          billTo, billingEmail, billingContactName, billingContactPhone, paymentType,
+          billTo, billingEmail, billingContactName, billingContactPhone, paymentType, ach,
           confirmedPaymentIntentId,
         }),
       );
@@ -756,7 +759,7 @@ export default function SignWizard({
     step, companyName, repName, advertiserEmail, advertiserPhone, address, city, stateVal, zip,
     adSize, frequency, adRate, discount, adPremium, pagePosition, applyPagePremium,
     timing, markets, lineStarts, emailLineAlternates, placementStart, singleEmailAlternates,
-    billTo, billingEmail, billingContactName, billingContactPhone, paymentType,
+    billTo, billingEmail, billingContactName, billingContactPhone, paymentType, ach,
     confirmedPaymentIntentId,
   ]);
 
@@ -842,7 +845,7 @@ export default function SignWizard({
       billing_email: billingEmail || null,
       billing_contact_name: billingContactName || null,
       billing_contact_phone: billingContactPhone || null,
-      payment_mode: paymentType === 'Credit Card' ? 'card' : paymentType === 'Check' && checkAllowed ? 'check' : null,
+      payment_mode: paymentType === 'Credit Card' || (paymentType === 'ACH' && ach) ? 'card' : paymentType === 'Check' && checkAllowed ? 'check' : null,
       ...(isSingleLine && channel === 'email'
         ? { preferred_send_dates: [placementStart, ...singleEmailAlternates].filter(Boolean) }
         : {}),
@@ -875,6 +878,28 @@ export default function SignWizard({
       setSaving(false);
     }
   }
+
+  // Back from Stripe after connecting a bank account: confirm it, then continue.
+  const [achBusy, setAchBusy] = useState(false);
+  useEffect(() => {
+    if (!draftReady || typeof window === 'undefined') return;
+    const sp = new URLSearchParams(window.location.search);
+    const sid = sp.get('ach_session');
+    const canceled = sp.get('ach_canceled');
+    if (!sid && !canceled) return;
+    /* eslint-disable react-hooks/set-state-in-effect -- returning from Stripe restores wizard state */
+    window.history.replaceState(null, '', window.location.pathname);
+    setPaymentType('ACH');
+    setStep(4);
+    if (canceled) { setError('Bank account setup was canceled. Connect your bank account to continue with ACH, or choose another method.'); return; }
+    setAchBusy(true);
+    fetch(`/api/ad-sign/${token}/ach-setup`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'confirm', sessionId: sid }) })
+      .then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`); return j; })
+      .then((j) => { setAch({ label: j.label, last4: j.last4 ?? null, status: j.status }); setError(null); setStep(5); })
+      .catch((e) => { setError(`We could not confirm your bank account: ${e instanceof Error ? e.message : 'error'}. Please try again.`); })
+      .finally(() => setAchBusy(false));
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [draftReady, token]);
 
   async function handleNext() {
     if (step === 3 && missingPreferredEmailDate) {
@@ -916,6 +941,24 @@ export default function SignWizard({
       } finally {
         setSaving(false);
       }
+    }
+    // ACH: connect the bank account with Stripe before the client can sign.
+    if (step === 4 && paymentType === 'ACH' && !ach) {
+      setSaving(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/ad-sign/${token}/ach-setup`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'start', returnPath: window.location.pathname }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok || !j.url) throw new Error(j.error || `HTTP ${res.status}`);
+        window.location.assign(j.url);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not start bank setup.');
+        setSaving(false);
+      }
+      return;
     }
     setStep((s) => s + 1);
   }
@@ -1728,9 +1771,11 @@ export default function SignWizard({
         nextLabel={
           paymentType === 'Credit Card'
             ? (stripeReady ? 'Authorize Card →' : 'Loading payment form…')
-            : 'Next →'
+            : paymentType === 'ACH' && !ach
+              ? 'Connect Bank Account →'
+              : 'Next →'
         }
-        nextDisabled={ccNotReady || !paymentType}
+        nextDisabled={ccNotReady || !paymentType || achBusy}
         saving={saving}
       >
         <div className="space-y-4">
@@ -1822,7 +1867,11 @@ export default function SignWizard({
               PaymentMethod when the webhook fires. */}
           {paymentType === 'ACH' && (
             <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 leading-relaxed">
-              A 1% ACH processing fee applies to each payment, up to $5.00. Nothing is charged now. After you sign, we will email you a secure link to connect your bank account.
+              A 1% ACH processing fee applies to each payment, up to $5.00. Nothing is charged now.{' '}
+              {ach
+                ? <strong className="text-green-800">{ach.label}{ach.last4 ? ` ending in ${ach.last4}` : ''} is connected.</strong>
+                : 'Next, you will connect your bank account securely with Stripe, then return here to sign.'}
+              {ach?.status === 'pending' && ' Stripe will send a small deposit in 1–2 business days to verify it; we will email you a link to confirm.'}
             </div>
           )}
 

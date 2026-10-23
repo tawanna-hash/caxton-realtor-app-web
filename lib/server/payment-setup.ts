@@ -466,3 +466,36 @@ export async function handleClientSetupIntentEvent(siEvent: Stripe.SetupIntent, 
   await logOutcome(t, 'setup_failed', si.id, { label: isBank ? 'Bank account' : 'Card', details: reason });
   if (isBank) await notifyBankOutcome(t, false, reason);
 }
+
+
+/** Create a Stripe Checkout Session in setup mode (no charge) for a client or agreement.
+ *  `methods` picks what Stripe offers: card (incl. Apple Pay / Link), bank account, or both. */
+export async function createSetupCheckoutSession(
+  t: SetupTarget,
+  opts: { successUrl: string; cancelUrl: string; methods: Array<'card' | 'us_bank_account'> },
+): Promise<string | null> {
+  const stripe = getStripe();
+  const customer = await ensureStripeCustomer(stripe, t);
+  const meta = setupMetadata(t);
+  const brand = t.brand;
+  const session = await stripe.checkout.sessions.create({
+    mode: 'setup',
+    customer,
+    currency: 'usd',
+    payment_method_types: opts.methods,
+    ...(opts.methods.includes('us_bank_account')
+      ? { payment_method_options: { us_bank_account: { financial_connections: { permissions: ['payment_method' as const] }, verification_method: 'automatic' as const } } }
+      : {}),
+    setup_intent_data: {
+      description: `${t.company ?? 'Client'} \u2014 payment method on file (${brand.brand})`,
+      metadata: meta,
+    },
+    metadata: meta,
+    custom_text: {
+      submit: { message: `By saving, you authorize ${brand.brand} to charge this payment method for your advertising payments, according to the amounts and billing schedule you agreed to. Contact ${brand.billing_contact_email} to change or revoke this authorization.` },
+    },
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
+  });
+  return session.url;
+}
