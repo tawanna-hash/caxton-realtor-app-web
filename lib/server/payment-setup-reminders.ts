@@ -68,10 +68,15 @@ export async function runPaymentSetupReminderSweep(opts: { dry?: boolean } = {})
     const t = await loadSetupTarget({ kind: 'agreement', id: r.agreement_id });
     const hasMethod = !!(t?.agreement?.stripe_payment_method_id || t?.advertiser?.stripe_payment_method_id);
     if (!t || hasMethod) { if (!opts.dry) await resolveSetupRequest(r.agreement_id, !t ? 'agreement cancelled or removed' : 'payment method saved'); out.resolved++; continue; }
+    // Only chase signed agreements; an unsigned one is a different follow-up.
+    if (!t.agreement?.signed_at) continue;
     const ageDays = (Date.now() - new Date(r.requested_at).getTime()) / 86_400_000;
     if (ageDays < STAGE_DAYS[r.reminders_sent]) continue;
     const stage = r.reminders_sent;
     if (opts.dry) { out.would_send.push(`${r.agreement_id}:${stage === 2 ? 'internal' : r.sent_to}`); continue; }
+    // Claim this stage atomically so overlapping runs never double-send.
+    const claimed = (await sql`UPDATE payment_setup_requests SET reminders_sent = reminders_sent + 1, last_reminder_at = NOW() WHERE agreement_id = ${r.agreement_id} AND reminders_sent = ${stage} AND resolved_at IS NULL RETURNING 1`) as unknown[];
+    if (claimed.length === 0) continue;
     try {
       if (stage < 2) {
         const { token, expiresAt } = signPaymentSetupToken({ kind: 'agreement', id: r.agreement_id });
@@ -102,8 +107,8 @@ export async function runPaymentSetupReminderSweep(opts: { dry?: boolean } = {})
         if (!sent.ok) throw new Error('send failed');
         out.escalated++;
       }
-      await sql`UPDATE payment_setup_requests SET reminders_sent = reminders_sent + 1, last_reminder_at = NOW() WHERE agreement_id = ${r.agreement_id}`;
     } catch (e) {
+      await sql`UPDATE payment_setup_requests SET reminders_sent = ${stage} WHERE agreement_id = ${r.agreement_id} AND reminders_sent = ${stage + 1}`.catch(() => null);
       console.error('[payment-setup-reminders] failed', r.agreement_id, e);
       out.failed++;
     }

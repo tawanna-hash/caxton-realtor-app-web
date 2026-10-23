@@ -12,7 +12,8 @@ import { signPaymentSetupToken, paymentSetupUrl } from '@/lib/payment-setup-toke
 import { renderPaymentMethodHtml, renderPaymentMethodText, type PaymentMethodFields } from '@/lib/agreements-v2/payment-method-template';
 import { sendEmail } from '@/lib/email';
 import { logClientSetup } from '@/lib/server/payment-setup';
-import { recordSetupRequest } from '@/lib/server/payment-setup-reminders';
+import { getSql } from '@/lib/db';
+import { recordSetupRequest, ensurePaymentSetupRequestsSchema } from '@/lib/server/payment-setup-reminders';
 import { rateLimited, clientIp } from '@/lib/server/simple-rate-limit';
 
 export const runtime = 'nodejs';
@@ -47,6 +48,10 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       // Accounts payable connects the bank account: email them the secure setup link.
       const email = typeof body.email === 'string' ? body.email.trim() : '';
       if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(email)) return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 });
+      // One email per 10 minutes per agreement: this endpoint sends mail to an address the signer typed.
+      await ensurePaymentSetupRequestsSchema();
+      const recent = (await getSql()`SELECT 1 FROM payment_setup_requests WHERE agreement_id = ${parsed.agreementId} AND requested_at > NOW() - INTERVAL '10 minutes' LIMIT 1`) as unknown[];
+      if (recent.length) return NextResponse.json({ error: 'A setup link was just sent. Please wait a few minutes before sending another.' }, { status: 429 });
       const { token: setupTok, expiresAt } = signPaymentSetupToken({ kind: 'agreement', id: parsed.agreementId });
       const url = paymentSetupUrl(setupTok);
       const ag = t.agreement;
@@ -74,7 +79,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 
     // start
     const rp = typeof body.returnPath === 'string' ? body.returnPath : '';
-    if (!rp.startsWith('/') || rp.startsWith('//') || !rp.includes(token)) return NextResponse.json({ error: 'invalid return path' }, { status: 400 });
+    if (!rp.startsWith('/') || rp.startsWith('//') || !rp.includes(token) || /[?#]/.test(rp)) return NextResponse.json({ error: 'invalid return path' }, { status: 400 });
     const base = req.nextUrl.origin;
     const url = await createSetupCheckoutSession(t, {
       methods: ['us_bank_account'],

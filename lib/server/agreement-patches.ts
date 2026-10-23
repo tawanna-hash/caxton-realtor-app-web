@@ -63,7 +63,9 @@ export async function applyPatches(
         case 'billing_email':         await sql`UPDATE agreements SET billing_email         = ${v} WHERE id = ${id}`; break;
         case 'billing_contact_name':  await sql`UPDATE agreements SET billing_contact_name  = ${v} WHERE id = ${id}`; break;
         case 'billing_contact_phone': await sql`UPDATE agreements SET billing_contact_phone = ${v} WHERE id = ${id}`; break;
-        case 'payment_mode':          await sql`UPDATE agreements SET payment_mode          = ${v} WHERE id = ${id}`; break;
+        // A null never wipes the mode of an agreement that already has a saved payment method
+        // (e.g. accounts payable connected the bank before the client signed).
+        case 'payment_mode':          await sql`UPDATE agreements SET payment_mode          = CASE WHEN ${v}::text IS NULL AND stripe_payment_method_id IS NOT NULL THEN payment_mode ELSE ${v} END WHERE id = ${id}`; break;
         case 'card_type':             await sql`UPDATE agreements SET card_type             = ${v} WHERE id = ${id}`; break;
         case 'cardholder_name':       await sql`UPDATE agreements SET cardholder_name       = ${v} WHERE id = ${id}`; break;
         case 'card_number_last4':     await sql`UPDATE agreements SET card_number_last4     = ${v} WHERE id = ${id}`; break;

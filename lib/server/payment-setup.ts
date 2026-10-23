@@ -184,11 +184,12 @@ export async function ensureStripeCustomer(stripe: Stripe, t: SetupTarget): Prom
       if (c.deleted) customerId = null;
     } catch { customerId = null; }
   }
-  if (!customerId && t.advertiser) {
-    // Match by our own client id first. Email alone is unsafe: a shared billing
-    // inbox would attach one client's card or bank account to another client.
+  if (!customerId && (t.advertiser || t.agreement)) {
+    // Match by our own ids only. Email is unsafe: a shared billing inbox would
+    // attach one client's card or bank account to another client.
     try {
-      const found = await stripe.customers.search({ query: `metadata['advertiser_id']:'${t.advertiser.id}'`, limit: 1 });
+      const q = t.advertiser ? `metadata['advertiser_id']:'${t.advertiser.id}'` : `metadata['agreement_id']:'${t.agreement!.id}'`;
+      const found = await stripe.customers.search({ query: q, limit: 1 });
       if (found.data[0] && !found.data[0].deleted) customerId = found.data[0].id;
     } catch (e) {
       console.warn('[payment-setup] customer search failed', e);
@@ -196,11 +197,6 @@ export async function ensureStripeCustomer(stripe: Stripe, t: SetupTarget): Prom
   }
   if (!customerId) {
     const email = t.email ?? undefined;
-    // Agreement-only links (no client record) keep the legacy email match.
-    if (email && !t.advertiser) {
-      const found = await stripe.customers.list({ email, limit: 1 });
-      if (found.data.length > 0) customerId = found.data[0].id;
-    }
     if (!customerId) {
       const created = await stripe.customers.create({
         email,
@@ -316,6 +312,8 @@ export async function persistSetupIntent(t: SetupTarget, si: Stripe.SetupIntent)
   if (pending) {
     await auditAgreement(t, 'payment_method_pending', `Client payment setup page — ${label} ••••${last4 ?? '????'} (bank verification pending) — seti: ${si.id}`, si.id);
     await logOutcome(t, 'bank_pending', si.id, { label, last4, details: 'Bank verification pending' });
+    // The client has acted; stop AP reminders while Stripe verifies (failures email billing).
+    if (t.agreement) void import('@/lib/server/payment-setup-reminders').then((m) => m.resolveSetupRequest(t.agreement!.id, 'bank verification pending'));
     return saved;
   }
 

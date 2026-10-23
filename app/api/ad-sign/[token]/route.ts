@@ -16,6 +16,7 @@ import {
   syncAgreementToLocationsAndStaff,
 } from '@/lib/server/billing-crm-sync';
 import { notifyAgreementSigned } from '@/lib/server/agreement-signed-notify';
+import { ensurePaymentSetupRequestsSchema } from '@/lib/server/payment-setup-reminders';
 import { rateLimit } from '@/lib/server/rate-limit';
 import { ApiError } from '@/lib/server/error';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
@@ -199,6 +200,22 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         { error: 'agreement already signed', signed_at: ag.signed_at },
         { status: 409 },
       );
+    }
+
+    // ACH must be connected, pending verification, or handed to accounts payable before signing.
+    if (paymentChoice === 'ACH') {
+      await ensurePaymentSetupRequestsSchema();
+      const ok = (await sql`
+        SELECT 1 FROM agreements a
+         WHERE a.id = ${id}
+           AND (a.stripe_payment_method_id IS NOT NULL
+                OR a.audit_log::text LIKE '%payment_method_pending%'
+                OR EXISTS (SELECT 1 FROM payment_setup_requests r WHERE r.agreement_id = a.id)
+                OR EXISTS (SELECT 1 FROM advertisers v WHERE v.id = a.advertiser_id AND v.stripe_payment_method_id IS NOT NULL))
+         LIMIT 1`) as unknown[];
+      if (ok.length === 0) {
+        return NextResponse.json({ error: 'Connect your bank account, or send the setup link to accounts payable, before signing with ACH.' }, { status: 400 });
+      }
     }
 
     const storedChannel = (ag as Agreement & { channel?: string | null }).channel;

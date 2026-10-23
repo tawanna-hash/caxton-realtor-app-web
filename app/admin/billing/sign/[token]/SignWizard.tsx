@@ -684,6 +684,8 @@ export default function SignWizard({
                 // Never imply payment is complete: if CC was chosen but the
                 // payment intent wasn't captured, don't restore past Step 4.
                 if (s > 4 && d.paymentType === 'Credit Card' && !d.confirmedPaymentIntentId) s = 4;
+                // Same for ACH: bank connected or setup link sent is required first.
+                if (s > 4 && d.paymentType === 'ACH' && !d.ach && !d.achLaterTo) s = 4;
                 setStep(s);
               }
               applyStr('companyName', setCompanyName);
