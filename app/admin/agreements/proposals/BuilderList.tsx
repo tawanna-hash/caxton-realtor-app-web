@@ -7,6 +7,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { A, RowMenu, SearchBox, type MenuItem } from '@/components/anchor/ui';
 import { CreateProposal, EmptyPanel, NEW_PROPOSAL, PageHeader, checkbox, relTime, stamp } from './shared';
 import SortCaret from '@/components/anchor/SortCaret';
+import { BuilderPopup } from '../renewals-v2/BuilderPopup';
+import { AgreementDrawer } from '@/app/admin/beta-core/billing/AgreementDrawer';
+import type { AgreementWithAdvertiser } from '@/lib/agreements';
+import type { AdCampaignOption, AdvertiserOption } from '@/app/admin/beta-core/billing/types';
 
 type Row = { id: string; name: string; updated_at: string; advertiser_id?: number | null };
 export type ListKind = 'draft' | 'archived' | 'template';
@@ -53,6 +57,22 @@ export default function BuilderList({ kind }: { kind: ListKind }) {
   const [desc, setDesc] = useState(true);
   const [tick, setTick] = useState(0);
   const reload = useCallback(() => setTick((t) => t + 1), []);
+  // Editing happens in a pop-up, not a page change: the builder for saved
+  // drafts/templates, the agreement form for created-but-unsent agreements.
+  const [pop, setPop] = useState<string | null>(null);
+  const [agDrawer, setAgDrawer] = useState<{ ag: AgreementWithAdvertiser; advs: AdvertiserOption[]; camps: AdCampaignOption[] } | null>(null);
+
+  async function openEdit(r: Row) {
+    setNotice(null);
+    if (!r.id.startsWith('ag:')) { setPop(`&${kind === 'template' ? 'template' : 'draft'}=${r.id}`); return; }
+    try {
+      const get = async (u: string) => { const x = await fetch(u, { credentials: 'include' }); if (!x.ok) throw new Error(`HTTP ${x.status}`); return x.json(); };
+      const [a, v, c] = await Promise.all([get('/api/admin/agreements'), get('/api/admin/advertisers'), get('/api/admin/ads/campaigns').catch(() => ({ campaigns: [] }))]);
+      const found = ((a.agreements ?? []) as Array<{ id: string }>).find((x) => String(x.id) === r.id.slice(3));
+      if (!found) throw new Error('agreement not found');
+      setAgDrawer({ ag: found as unknown as AgreementWithAdvertiser, advs: (v.advertisers ?? []) as AdvertiserOption[], camps: (c.campaigns ?? []) as AdCampaignOption[] });
+    } catch (e) { setNotice(`Could not open that agreement: ${e instanceof Error ? e.message : 'error'}`); }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -90,7 +110,6 @@ export default function BuilderList({ kind }: { kind: ListKind }) {
     } catch (e) { setNotice(`Could not complete that: ${e instanceof Error ? e.message : 'error'}`); }
   }
 
-  const editHref = (id: string, adv?: number | null) => id.startsWith('ag:') ? (adv ? `/admin/agreements/clients/${adv}` : '/admin/agreements/renewals-v2') : `${NEW_PROPOSAL}?${kind === 'template' ? 'template' : 'draft'}=${id}`;
   const rowItems = (r: Row): MenuItem[] =>
     kind === 'draft' ? r.id.startsWith('ag:') ? [{ label: 'Delete', danger: true, onClick: () => act('delete', [r.id]) }] : [{ label: 'Duplicate', onClick: () => act('duplicate', [r.id]) }, { label: 'Archive', onClick: () => act('archive', [r.id]) }, { label: 'Delete', danger: true, onClick: () => act('delete', [r.id]) }]
     : kind === 'archived' ? [{ label: 'Restore', onClick: () => act('restore', [r.id]) }, { label: 'Delete', danger: true, onClick: () => act('delete', [r.id]) }]
@@ -110,6 +129,19 @@ export default function BuilderList({ kind }: { kind: ListKind }) {
       </PageHeader>
       {notice && <div className={A.notice}>{notice}</div>}
       {error && <div className={A.error}>{error}</div>}
+      {pop && <BuilderPopup query={pop} title={kind === 'template' ? 'Use a template' : 'Edit agreement'} onClose={(to) => { setPop(null); if (to && (to === '/admin' || to.includes('tab=sent'))) { window.location.href = to; return; } reload(); }} />}
+      {agDrawer && (
+        <AgreementDrawer
+          existing={agDrawer.ag}
+          advertisers={agDrawer.advs}
+          adCampaigns={agDrawer.camps}
+          onClose={() => setAgDrawer(null)}
+          onSaved={async () => { setAgDrawer(null); reload(); }}
+          onRefresh={async () => { reload(); }}
+          onError={(m) => setNotice(m)}
+          onGenerateInvoice={() => { setAgDrawer(null); window.location.href = '/admin/billing-hub'; }}
+        />
+      )}
       {rows === null && !error && <p className="text-sm text-[color:var(--ds-body)]">Loading…</p>}
       {empty && kind === 'archived' && <EmptyPanel tag="Archived" title="No archived agreements yet" body="When you archive an agreement, it stays here for reference." />}
       {empty && kind === 'draft' && <EmptyPanel tag="Draft" title="No drafts yet" body="Agreements you start and leave unfinished are saved here automatically." />}
@@ -141,7 +173,7 @@ export default function BuilderList({ kind }: { kind: ListKind }) {
                     <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{kind === 'draft' ? relTime(r.updated_at) : stamp(r.updated_at)}</td>
                     <td className="whitespace-nowrap text-right">
                       <span className="inline-flex items-center gap-2">
-                        {kind !== 'archived' && <a href={editHref(r.id, r.advertiser_id)} className={A.small}>{kind === 'template' ? 'Use template' : 'Edit'}</a>}
+                        {kind !== 'archived' && <button type="button" onClick={() => openEdit(r)} className={A.small}>{kind === 'template' ? 'Use template' : 'Edit'}</button>}
                         <RowMenu items={rowItems(r)} />
                       </span>
                     </td>
