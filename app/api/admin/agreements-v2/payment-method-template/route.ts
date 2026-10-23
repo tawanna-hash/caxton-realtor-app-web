@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getSql } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
-import { renderPaymentMethodHtml, type PaymentMethodFields } from '@/lib/agreements-v2/payment-method-template';
+import { renderPaymentMethodHtml, renderPaymentMethodText, unresolvedPlaceholders, type PaymentMethodFields } from '@/lib/agreements-v2/payment-method-template';
 import { signPaymentSetupToken, paymentSetupUrl, verifyPaymentSetupToken } from '@/lib/payment-setup-token';
 import { ensurePaymentSetupSchema, loadSetupTarget, logClientSetup, type SetupTarget } from '@/lib/server/payment-setup';
 
@@ -27,7 +27,7 @@ function prefill(t: SetupTarget) {
   return {
     market: t.brand.market,
     fields: {
-      client_first_name: t.firstName ?? '',
+      client_first_name: t.firstName ?? 'there',
       agreement_name_or_number: ag ? ([t.company, ag.ad_size].filter(Boolean).join(' — ') || `Agreement ${ag.id.slice(0, 8)}`) : '',
       payment_terms: ag ? (monthly != null ? `${money(monthly)} per month` : money(ag.amount_cents)) : '',
       billing_schedule: monthly != null ? 'Monthly' : '',
@@ -93,14 +93,19 @@ export async function POST(req: NextRequest) {
     if (!to.length) return NextResponse.json({ error: 'Add at least one recipient.' }, { status: 400 });
     if (bad.length) return NextResponse.json({ error: `Invalid email: ${bad.join(', ')}` }, { status: 400 });
     if (to.length + cc.length > 10) return NextResponse.json({ error: 'Up to 10 recipients.' }, { status: 400 });
-    const tokenStr = /^https:\/\/realtynewsnow\.app\/pay\/setup\/([^/?#\s]+)$/.exec((fields.payment_setup_url ?? '').trim())?.[1];
+    const prefix = paymentSetupUrl('').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const tokenStr = new RegExp(`^${prefix}([^/?#\s]+)$`).exec((fields.payment_setup_url ?? '').trim())?.[1];
     const tok = tokenStr ? verifyPaymentSetupToken(tokenStr) : null;
     if (!tok) return NextResponse.json({ error: 'Create the secure setup link first.' }, { status: 400 });
     if (!tok.ok) return NextResponse.json({ error: tok.reason === 'expired' ? 'The setup link has expired. Create a new one.' : 'The setup link is not valid. Create a new one.' }, { status: 400 });
     const target = await loadSetupTarget(tok.subject);
     const linkExp = new Date(Number(tokenStr!.split('.')[1]) * 1000);
-    const out = renderPaymentMethodHtml(typeof body.market === 'string' ? body.market : null, fields);
-    const res = await sendEmail({ from: out.from, to, cc: cc.length ? cc : undefined, subject: out.subject, html: out.html, replyTo: out.brand.billing_contact_email });
+    // The client's own market decides the brand and sender, not the browser.
+    const market = target?.brand.market ?? (typeof body.market === 'string' ? body.market : null);
+    const missing = unresolvedPlaceholders(market, fields);
+    if (missing.length) return NextResponse.json({ error: `Fill in these fields before sending: ${missing.join(', ')}` }, { status: 400 });
+    const out = renderPaymentMethodHtml(market, fields);
+    const res = await sendEmail({ from: out.from, to, cc: cc.length ? cc : undefined, subject: out.subject, html: out.html, text: renderPaymentMethodText(market, fields), replyTo: out.brand.billing_contact_email });
     if (!res.ok) {
       console.error('[payment-method-template] send failed', { from: out.from, error: 'error' in res ? res.error : 'unknown' });
       return NextResponse.json({ error: 'send failed', detail: 'error' in res ? res.error : 'error' }, { status: 502 });

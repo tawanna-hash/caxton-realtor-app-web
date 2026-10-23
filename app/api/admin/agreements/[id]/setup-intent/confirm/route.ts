@@ -24,6 +24,7 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
+import { ensurePaymentSetupSchema, logClientSetup } from '@/lib/server/payment-setup';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
@@ -141,6 +142,25 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
         updated_at = NOW()
       WHERE id = ${ag.id}
     `;
+
+    // Also record the method on the client (what invoice auto-charge reads
+    // first) and in the client's setup history, like the client setup page does.
+    if (ag.advertiser_id) {
+      await ensurePaymentSetupSchema();
+      await sql`
+        UPDATE advertisers SET
+          stripe_customer_id = COALESCE(${customerId}, stripe_customer_id),
+          stripe_payment_method_id = ${paymentMethodId},
+          payment_method_label = ${cardBrand ?? 'Card'},
+          payment_method_saved_at = NOW(),
+          payment_method_expiration = ${cardExp},
+          updated_at = NOW()
+        WHERE id = ${ag.advertiser_id}`;
+      await logClientSetup({
+        advertiserId: ag.advertiser_id, event: 'method_saved', actor: admin.email ?? null, agreementId: ag.id,
+        methodLabel: cardBrand ?? 'Card', methodLast4: cardLast4, details: 'Card added by admin', stripeRef: si.id,
+      });
+    }
 
     const auditRows = (await sql`SELECT audit_log FROM agreements WHERE id = ${ag.id}`) as unknown as Array<{
       audit_log: AgreementAuditEntry[] | null;

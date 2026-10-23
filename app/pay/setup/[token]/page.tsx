@@ -1,11 +1,12 @@
 // Client Payment Method Setup page — public, reached from the signed link in
 // the Payment Method Setup email. Branded by market (RealtyLine Austin /
-// Newsline San Antonio). The button hands off to Stripe's hosted setup page;
-// Stripe returns here with ?session_id= and we save the method on the agreement.
+// Newsline San Antonio). Opening the link goes straight to Stripe's hosted
+// setup page (card or bank); Stripe returns here with ?session_id= and we save
+// the method. This page only renders results, errors and the retry button.
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { verifyPaymentSetupToken } from '@/lib/payment-setup-token';
-import { loadSetupTarget, saveFromCheckoutSession, saveFromSetupIntentId, type SavedMethod } from '@/lib/server/payment-setup';
-import BankAccountForm from './BankAccountForm';
+import { loadSetupTarget, saveFromCheckoutSession, type SavedMethod } from '@/lib/server/payment-setup';
 import { brandForMarket } from '@/lib/agreements-v2/payment-method-template';
 
 export const dynamic = 'force-dynamic';
@@ -49,17 +50,17 @@ export default async function PaymentSetupPage({ params, searchParams }: Props) 
   if (!t) {
     return <Shell brand="Payment method setup"><h1 className="text-xl font-semibold">This link is not valid</h1><p>Please ask us for a new secure setup link.</p></Shell>;
   }
+  // One click from the email: with no result/error/cancel on the URL, go
+  // straight to Stripe's payment window instead of showing an extra page.
+  if (!one(sp.session_id) && !one(sp.canceled) && !one(sp.error) && !one(sp.info)) redirect(`/api/pay/setup/${token}`);
   const brand = t.brand;
   const first = t.firstName;
   const ag = t.agreement;
 
   const sessionId = one(sp.session_id);
-  const setupIntentId = one(sp.setup_intent);
   let saved: (SavedMethod & { verifyUrl?: string | null }) | { error: string } | null = null;
   if (/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId)) {
     try { saved = await saveFromCheckoutSession(t, sessionId); } catch (e) { console.error('[pay/setup] save failed', e); saved = { error: 'We could not confirm your setup. Please try again.' }; }
-  } else if (/^seti_[A-Za-z0-9]+$/.test(setupIntentId)) {
-    try { saved = await saveFromSetupIntentId(t, setupIntentId); } catch (e) { console.error('[pay/setup] bank save failed', e); saved = { error: 'We could not confirm your bank account. Please try again.' }; }
   }
 
   if (saved && !('error' in saved)) {
@@ -83,6 +84,7 @@ export default async function PaymentSetupPage({ params, searchParams }: Props) 
   }
 
   const err = saved && 'error' in saved ? saved.error
+    : one(sp.error) === 'busy' ? 'Too many attempts. Please wait a few minutes and try again.'
     : one(sp.error) === 'unavailable' ? 'Secure setup is temporarily unavailable. Please try again in a few minutes.'
     : one(sp.error) ? 'This link is not valid. Please ask us for a new one.' : null;
   const rate = ag ? money(ag.total_monthly_rate_cents ?? ag.amount_cents) : null;
@@ -108,17 +110,10 @@ export default async function PaymentSetupPage({ params, searchParams }: Props) 
           ))}
         </dl>
       )}
-      <section className="space-y-3 rounded-xl border border-[#E2DFEC] p-5">
-        <h2 className="text-lg font-semibold">Bank account (ACH)</h2>
-        <BankAccountForm token={token} brand={brand.brand} defaultName={t.company} />
-      </section>
-      <section className="space-y-3 rounded-xl border border-[#E2DFEC] p-5">
-        <h2 className="text-lg font-semibold">Or use a card</h2>
-        <form method="post" action={`/api/pay/setup/${token}`}>
-          <button type="submit" className="w-full rounded-xl border-2 border-[#301D5D] bg-white px-6 py-3 text-[15px] font-semibold text-[#301D5D] hover:bg-[#EEE8FD] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#301D5D]/30">Add a card securely</button>
-        </form>
-        <p className="text-xs text-[#4E4B66]">You&apos;ll continue to Stripe, our payment processor, to enter your card. {brand.brand} never sees your full card number.</p>
-      </section>
+      <form method="post" action={`/api/pay/setup/${token}`} className="space-y-3">
+        <button type="submit" className="w-full rounded-xl bg-[#301D5D] px-6 py-3.5 text-[15px] font-semibold text-white hover:bg-[#3D2775] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#301D5D]/30">{err || one(sp.canceled) ? 'Try again' : 'Add payment method'}</button>
+        <p className="text-xs text-[#4E4B66]">You&apos;ll continue to Stripe, our payment processor, to add a card or bank account. {brand.brand} never sees your full card or account number.</p>
+      </form>
       <div className="rounded-xl bg-[#EEE8FD] px-4 py-3 text-xs leading-relaxed">
         <strong>Authorization.</strong> By saving a payment method, you authorize {brand.brand} to save it and use it for your advertising payments, according to the amounts and billing schedule you agreed to. To change your payment method or revoke authorization for future charges, contact <a className="underline" href={`mailto:${brand.billing_contact_email}`}>{brand.billing_contact_email}</a>.
       </div>

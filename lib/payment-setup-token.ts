@@ -1,11 +1,11 @@
 // Signed, purpose-scoped token for the client Payment Method Setup page.
 // Format: <subject>.<expiresUnix>.<hmac>, where subject is `c<advertiserId>`
-// for a client or a bare agreement id (links created before client links). — HMAC-SHA256 over
-// "pm_setup:<agreementId>.<expiresUnix>" with SIGN_SECRET, so a setup link
+// for a client or a bare agreement id (links created before client links).
+// HMAC-SHA256 over "pm_setup:<subject>.<expiresUnix>" with SIGN_SECRET, so a setup link
 // can't be reused as an agreement-signing token (and vice versa).
 import crypto from 'node:crypto';
 
-const DEFAULT_TTL_DAYS = 30;
+const DEFAULT_TTL_DAYS = 14;
 
 function secret(): string {
   const s = process.env.SIGN_SECRET;

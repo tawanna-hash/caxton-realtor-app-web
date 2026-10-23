@@ -44,6 +44,7 @@ export async function ensurePaymentSetupSchema() {
   await sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS stripe_payment_method_id text`;
   await sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS payment_method_label text`;
   await sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS payment_method_saved_at timestamptz`;
+  await sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS payment_method_expiration text`;
   // Client file history: each sent setup request (with a copy of the email)
   // and each setup outcome from the client.
   await sql`
@@ -119,6 +120,14 @@ function logOutcome(t: SetupTarget, event: SetupLogEvent, siId: string, extra: {
   });
 }
 
+/** Like logOutcome but reports whether this was the first time we saw this SetupIntent. */
+async function logOutcomeOnce(t: SetupTarget, event: SetupLogEvent, siId: string, extra: { label?: string | null; last4?: string | null; details?: string | null }): Promise<boolean> {
+  if (!t.advertiser) return false;
+  const seen = (await getSql()`SELECT 1 FROM client_payment_setup_log WHERE event = ${event} AND stripe_ref = ${siId} LIMIT 1`) as unknown[];
+  await logOutcome(t, event, siId, extra);
+  return seen.length === 0;
+}
+
 function marketFromPublication(agPub: string | null | undefined, advPub: string | null | undefined): MarketBrand {
   if (agPub === 'san_antonio' || agPub === 'austin') return brandForMarket(agPub);
   const first = (advPub ?? '').split(',')[0]?.trim();
@@ -175,9 +184,20 @@ export async function ensureStripeCustomer(stripe: Stripe, t: SetupTarget): Prom
       if (c.deleted) customerId = null;
     } catch { customerId = null; }
   }
+  if (!customerId && t.advertiser) {
+    // Match by our own client id first. Email alone is unsafe: a shared billing
+    // inbox would attach one client's card or bank account to another client.
+    try {
+      const found = await stripe.customers.search({ query: `metadata['advertiser_id']:'${t.advertiser.id}'`, limit: 1 });
+      if (found.data[0] && !found.data[0].deleted) customerId = found.data[0].id;
+    } catch (e) {
+      console.warn('[payment-setup] customer search failed', e);
+    }
+  }
   if (!customerId) {
     const email = t.email ?? undefined;
-    if (email) {
+    // Agreement-only links (no client record) keep the legacy email match.
+    if (email && !t.advertiser) {
       const found = await stripe.customers.list({ email, limit: 1 });
       if (found.data.length > 0) customerId = found.data[0].id;
     }
@@ -231,12 +251,18 @@ function prettyBrand(b: string | null | undefined): string | null {
 export type SavedMethod = { kind: 'card' | 'bank'; label: string; last4: string | null; status: 'saved' | 'pending' };
 
 /** Persist the payment method from a completed setup Checkout Session. Idempotent. */
-export async function saveFromCheckoutSession(t: SetupTarget, sessionId: string): Promise<SavedMethod | { error: string }> {
+export async function saveFromCheckoutSession(t: SetupTarget, sessionId: string): Promise<(SavedMethod & { verifyUrl?: string | null }) | { error: string }> {
   const session = await getStripe().checkout.sessions.retrieve(sessionId, { expand: ['setup_intent', 'setup_intent.payment_method'] });
   if (session.mode !== 'setup' || !belongs(t, session.metadata)) return { error: 'This setup session does not belong to this client.' };
   const si = session.setup_intent as Stripe.SetupIntent | null;
   if (!si || typeof si === 'string') return { error: 'Setup is not complete yet.' };
-  return persistSetupIntent(t, si);
+  const already = (await getSql()`SELECT 1 FROM client_payment_setup_log WHERE event = 'bank_pending' AND stripe_ref = ${si.id} LIMIT 1`) as unknown[];
+  const saved = await persistSetupIntent(t, si);
+  if ('error' in saved) return saved;
+  // Bank account that Stripe could not verify instantly: email the verify link once.
+  const verifyUrl = si.next_action?.verify_with_microdeposits?.hosted_verification_url ?? null;
+  if (saved.status === 'pending' && verifyUrl && already.length === 0) await emailMicrodepositLink(t, verifyUrl, saved.last4);
+  return { ...saved, verifyUrl };
 }
 
 /**
@@ -293,6 +319,9 @@ export async function persistSetupIntent(t: SetupTarget, si: Stripe.SetupIntent)
     return saved;
   }
 
+  const prevId = t.advertiser?.stripe_payment_method_id ?? t.agreement?.stripe_payment_method_id ?? null;
+  const expText = !isBank && card?.exp_month && card?.exp_year ? `${String(card.exp_month).padStart(2, '0')}/${String(card.exp_year).slice(-2)}` : null;
+
   // Client record — always.
   if (t.advertiser) {
     await sql`
@@ -301,6 +330,7 @@ export async function persistSetupIntent(t: SetupTarget, si: Stripe.SetupIntent)
         stripe_payment_method_id = ${pm.id},
         payment_method_label = ${label},
         payment_method_saved_at = NOW(),
+        payment_method_expiration = ${expText},
         card_last4 = ${last4},
         payment_mode = COALESCE(payment_mode, 'card'),
         updated_at = NOW()
@@ -315,6 +345,7 @@ export async function persistSetupIntent(t: SetupTarget, si: Stripe.SetupIntent)
         UPDATE agreements SET
           stripe_customer_id = COALESCE(${customerId}, stripe_customer_id),
           stripe_payment_method_id = ${pm.id},
+          payment_mode = COALESCE(payment_mode, 'card'),
           card_type = ${label}, card_number_last4 = ${last4}, card_expiration = NULL,
           cardholder_name = COALESCE(${pm.billing_details?.name ?? null}, cardholder_name),
           updated_at = NOW()
@@ -340,7 +371,8 @@ export async function persistSetupIntent(t: SetupTarget, si: Stripe.SetupIntent)
     const updated = await loadAgreement(ag.id);
     if (updated) { try { await syncAgreementToAdvertiser(updated); } catch (e) { console.warn('[payment-setup] advertiser sync failed', e); } }
   }
-  await logOutcome(t, 'method_saved', si.id, { label, last4, details: t.agreement ? 'Saved on the client and the current agreement' : 'Saved on the client' });
+  const firstSave = await logOutcomeOnce(t, 'method_saved', si.id, { label, last4, details: t.agreement ? 'Saved on the client and the current agreement' : 'Saved on the client' });
+  if (firstSave) await notifyMethodSaved(t, label, last4, !!prevId && prevId !== pm.id);
   return saved;
 }
 
@@ -352,6 +384,32 @@ async function auditAgreement(t: SetupTarget, event: string, details: string, si
   if (log.some((e) => e.event === event && typeof e.details === 'string' && e.details.includes(siId))) return;
   const next = appendAudit(log, { event, timestamp: new Date().toISOString(), user_email: t.email ?? 'client', details });
   await sql`UPDATE agreements SET audit_log = ${JSON.stringify(next)}::jsonb WHERE id = ${t.agreement.id}`;
+}
+
+/** Tell billing (and confirm to the client) that a payment method was saved or replaced. Best effort. */
+async function notifyMethodSaved(t: SetupTarget, label: string, last4: string | null, replaced: boolean) {
+  try {
+    const { sendEmail } = await import('@/lib/email');
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const who = t.company ?? 'A client';
+    const what = `${label}${last4 ? ` ending in ${last4}` : ''}`;
+    await sendEmail({
+      from: `Tawanna Verock <${t.brand.sender_email}>`,
+      to: t.brand.billing_contact_email,
+      subject: `${replaced ? 'Payment method REPLACED' : 'Payment method saved'} — ${who} (${t.brand.brand})`,
+      html: `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#16132D"><p><strong>${esc(who)}</strong> ${replaced ? 'replaced their payment method on file with' : 'saved'} ${esc(what)} from the payment setup page.</p>${replaced ? '<p style="color:#9B1C1C">If this was not expected, contact the client before the next charge.</p>' : ''}</div>`,
+    });
+    if (t.email && replaced) {
+      await sendEmail({
+        from: `Tawanna Verock <${t.brand.sender_email}>`,
+        to: t.email,
+        subject: `Your payment method was updated — ${t.brand.brand}`,
+        html: `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#16132D;max-width:560px"><p>${t.firstName ? `Hi ${esc(t.firstName)},` : 'Hello,'}</p><p>The payment method on file for your ${esc(t.brand.brand)} advertising account is now ${esc(what)}. You were not charged.</p><p>If you did not make this change, contact ${esc(t.brand.billing_contact_email)} right away.</p></div>`,
+      });
+    }
+  } catch (e) {
+    console.warn('[payment-setup] method saved notice failed', e);
+  }
 }
 
 /** Notify the market's billing inbox about a bank verification outcome. Best effort. */

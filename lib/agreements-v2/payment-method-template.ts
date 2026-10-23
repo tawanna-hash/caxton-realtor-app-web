@@ -47,9 +47,9 @@ export const PAYMENT_METHOD_SUBJECT = 'Add your payment method — {{BRAND}}';
 
 export const PAYMENT_METHOD_BODY = `Hi {{client_first_name}},
 
-Please add your preferred payment method for your {{BRAND}} advertising account using the secure button below.
+Please add a card or bank account (ACH) for your {{BRAND}} advertising account using the secure button below. It opens Stripe, our payment processor, so you can finish in one step.
 
-You will not be charged during this setup. Future payments will follow the amounts and billing schedule in your advertising agreement.
+You will not be charged during this setup. Future payments will follow the amounts and billing schedule in your advertising agreement. If you choose a bank account, Stripe may send a small deposit within 1-2 business days to verify it, and we will email you a link to confirm.
 
 [Securely Add Payment Method] {{payment_setup_url}}
 
@@ -60,7 +60,7 @@ Billing schedule: {{billing_schedule}}
 Please don't email your card or bank account details. Use the secure setup page instead.
 
 Authorization:
-I authorize {{BRAND}} to save my selected payment method and use it for payments under agreement {{agreement_name_or_number}}, according to the payment amount or calculation and billing schedule stated above. To change my payment method or revoke authorization for future charges, I will contact {{BILLING_CONTACT_EMAIL}}.
+By saving a payment method on the secure page, you authorize {{BRAND}} to save it and use it for payments under agreement {{agreement_name_or_number}}, according to the payment amount or calculation and billing schedule stated above. To change your payment method or revoke authorization for future charges, contact {{BILLING_CONTACT_EMAIL}}.
 
 Thank you,
 Tawanna Verock
@@ -92,7 +92,7 @@ export function renderPaymentMethodTemplate(market: string | null | undefined, f
     : PAYMENT_METHOD_BODY
         .replace('Agreement: {{agreement_name_or_number}}\n', '')
         .replace('in your advertising agreement.', 'stated below.')
-        .replace('for payments under agreement {{agreement_name_or_number}}, according to', 'for my advertising payments, according to');
+        .replace('for payments under agreement {{agreement_name_or_number}}, according to', 'for your advertising payments, according to');
   return { brand: b, from: `Tawanna Verock <${b.sender_email}>`, subject: fill(PAYMENT_METHOD_SUBJECT), body: fill(body) };
 }
 
@@ -117,17 +117,28 @@ export function renderPaymentMethodHtml(market: string | null | undefined, field
 <tr><td style="background:#301D5D;padding:22px 28px;color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.01em;">${esc(b.brand)}</td></tr>
 <tr><td style="padding:28px;">
 <p style="${p}">Hi ${v('client_first_name')},</p>
-<p style="${p}">Please add your preferred payment method for your ${esc(b.brand)} advertising account using the secure button below.</p>
-<p style="${p}">You will not be charged during this setup. Future payments will follow the amounts and billing schedule ${hasAg ? 'in your advertising agreement' : 'stated below'}.</p>
+<p style="${p}">Please add a card or bank account (ACH) for your ${esc(b.brand)} advertising account using the secure button below. It opens Stripe, our payment processor, so you can finish in one step.</p>
+<p style="${p}">You will not be charged during this setup. Future payments will follow the amounts and billing schedule ${hasAg ? 'in your advertising agreement' : 'stated below'}. If you choose a bank account, Stripe may send a small deposit within 1&ndash;2 business days to verify it, and we will email you a link to confirm.</p>
 <div style="margin:24px 0;text-align:center;">${button}</div>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-top:1px solid #E2DFEC;border-bottom:1px solid #E2DFEC;width:100%;padding:8px 0;">
 ${hasAg ? row('Agreement', v('agreement_name_or_number')) : ''}${row('Payment amount', v('payment_terms'))}${row('Billing schedule', v('billing_schedule'))}
 </table>
 <p style="${p}">Please don't email your card or bank account details. Use the secure setup page instead.</p>
-<div style="margin:0 0 20px;padding:14px 16px;background:#EEE8FD;border-radius:10px;font-size:13px;line-height:1.6;color:#16132D;"><strong>Authorization</strong><br>I authorize ${esc(b.brand)} to save my selected payment method and use it for ${hasAg ? `payments under agreement ${v('agreement_name_or_number')}` : 'my advertising payments'}, according to the payment amount or calculation and billing schedule stated above. To change my payment method or revoke authorization for future charges, I will contact <a href="mailto:${b.billing_contact_email}" style="color:#301D5D;">${b.billing_contact_email}</a>.</div>
+<div style="margin:0 0 20px;padding:14px 16px;background:#EEE8FD;border-radius:10px;font-size:13px;line-height:1.6;color:#16132D;"><strong>Authorization</strong><br>By saving a payment method on the secure page, you authorize ${esc(b.brand)} to save it and use it for ${hasAg ? `payments under agreement ${v('agreement_name_or_number')}` : 'your advertising payments'}, according to the payment amount or calculation and billing schedule stated above. To change your payment method or revoke authorization for future charges, contact <a href="mailto:${b.billing_contact_email}" style="color:#301D5D;">${b.billing_contact_email}</a>.</div>
 <p style="margin:0;font-size:15px;line-height:1.6;color:#16132D;">Thank you,<br>Tawanna Verock<br>${esc(b.brand)}</p>
 </td></tr>
 <tr><td style="padding:16px 28px;background:#ffffff;border-top:1px solid #E2DFEC;font-size:12px;color:#4E4B66;"><a href="mailto:${b.sender_email}" style="color:#4E4B66;">${b.sender_email}</a> · <a href="https://${b.domain}" style="color:#4E4B66;">${b.domain}</a></td></tr>
 </table></td></tr></table></body></html>`;
   return { ...r, html };
+}
+
+/** Placeholders that would still show as {{like_this}} in the email. Used to block sending. */
+export function unresolvedPlaceholders(market: string | null | undefined, fields: PaymentMethodFields = {}): string[] {
+  const body = renderPaymentMethodTemplate(market, fields).body;
+  return [...new Set([...body.matchAll(/\{\{\s*([A-Za-z_]+)\s*\}\}/g)].map((m) => m[1]))];
+}
+
+/** Plain-text alternative for the HTML email (setup link included). */
+export function renderPaymentMethodText(market: string | null | undefined, fields: PaymentMethodFields = {}): string {
+  return renderPaymentMethodTemplate(market, fields).body;
 }

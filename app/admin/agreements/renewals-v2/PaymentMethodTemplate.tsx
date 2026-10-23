@@ -10,6 +10,7 @@ import { A } from '@/components/anchor/ui';
 import {
   MARKET_BRANDS,
   renderPaymentMethodHtml,
+  unresolvedPlaceholders,
   type PaymentMethodFields,
   type TemplateMarket,
 } from '@/lib/agreements-v2/payment-method-template';
@@ -27,6 +28,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
   const [fields, setFields] = useState<PaymentMethodFields>({});
   const [copied, setCopied] = useState<string | null>(null);
   const out = useMemo(() => renderPaymentMethodHtml(market, fields), [market, fields]);
+  const missing = useMemo(() => unresolvedPlaceholders(market, fields), [market, fields]);
   const [view, setView] = useState<'preview' | 'text'>('preview');
   const [testTo, setTestTo] = useState('tawanna@myrealtyline.com');
   const [sending, setSending] = useState(false);
@@ -132,7 +134,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
                 <input className={A.input} placeholder={ph} value={fields[key] ?? ''} onChange={(e) => setFields((f) => ({ ...f, [key]: e.target.value }))} />
               </label>
             ))}
-            <p className="text-xs text-[color:var(--ds-body)]">Leave Agreement blank for clients without one — that line is left out. Other blank fields keep their {'{{placeholder}}'}. The secure link opens a branded page that hands off to Stripe to save a card or bank account (with Stripe&apos;s bank authorization). No charge is made.</p>
+            <p className="text-xs text-[color:var(--ds-body)]">Leave Agreement blank for clients without one — that line is left out. Other blank fields keep their {'{{placeholder}}'}. The secure link opens Stripe&apos;s payment window directly (card, Apple Pay, Link or bank account). No charge is made.</p>
           </div>
 
           <div className="space-y-3">
@@ -165,8 +167,9 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
               </label>
               <p className="text-xs text-[color:var(--ds-body)]">Separate multiple emails with commas. Replies go to {out.brand.billing_contact_email}.</p>
               <div className="flex flex-wrap items-center gap-2">
-                <button type="button" className={A.primary} disabled={realSending || !toList.trim() || !fields.payment_setup_url} onClick={sendReal}>{realSending ? 'Sending…' : 'Send email'}</button>
+                <button type="button" className={A.primary} disabled={realSending || !toList.trim() || !fields.payment_setup_url || missing.length > 0} onClick={sendReal}>{realSending ? 'Sending…' : 'Send email'}</button>
                 {!fields.payment_setup_url && <span className="text-xs text-[color:var(--ds-body)]">Create the secure setup link first.</span>}
+                {fields.payment_setup_url && missing.length > 0 && <span className="text-xs text-red-700">Fill in before sending: {missing.join(', ')}</span>}
                 {realMsg && <span className={`text-sm ${realMsg.ok ? 'text-[#065F46]' : 'text-red-700'}`}>{realMsg.t}</span>}
               </div>
             </div>

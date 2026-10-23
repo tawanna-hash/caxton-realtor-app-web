@@ -21,6 +21,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getStripe, isStripeConfigured, getPublishableKey } from '@/lib/stripe';
 import type { Agreement } from '@/lib/agreements';
+import { loadSetupTarget, ensureStripeCustomer } from '@/lib/server/payment-setup';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
@@ -60,48 +61,26 @@ export const POST = withAdminTracking(async function POST(_req: NextRequest, ctx
 
     const stripe = getStripe();
 
-    // 1. Customer — reuse if the stored id still exists in the active Stripe
-    //    account (same defensive check as the sign-wizard payment-intent route:
-    //    rotating Stripe accounts leaves stale customer ids behind).
-    let customerId = ag.stripe_customer_id ?? null;
-    if (customerId) {
-      try {
-        const existingCustomer = await stripe.customers.retrieve(customerId);
-        if (existingCustomer.deleted) customerId = null;
-      } catch {
-        customerId = null;
-      }
-    }
-    if (!customerId) {
-      const email = ag.billing_email ?? ag.advertiser_email ?? undefined;
-      if (email) {
-        const found = await stripe.customers.list({ email, limit: 1 });
-        if (found.data.length > 0) customerId = found.data[0].id;
-      }
-      if (!customerId) {
-        const created = await stripe.customers.create({
-          email,
-          name: ag.company_name ?? ag.rep_name ?? undefined,
-          phone: ag.advertiser_phone ?? undefined,
-          metadata: { agreement_id: ag.id, publication: 'RealtyLine' },
-        });
-        customerId = created.id;
-      }
-      await sql`UPDATE agreements SET stripe_customer_id = ${customerId}, updated_at = NOW() WHERE id = ${ag.id}`;
-    }
+    // 1. Customer — shared helper: reuses the stored id when it still exists,
+    //    otherwise matches by our client id (never by shared email alone) and
+    //    keeps the agreement and client records in sync.
+    const target = await loadSetupTarget({ kind: 'agreement', id: ag.id });
+    if (!target) return NextResponse.json({ error: 'agreement not found or cancelled' }, { status: 404 });
+    const customerId = await ensureStripeCustomer(stripe, target);
 
-    // 2. SetupIntent — always fresh. SetupIntents are cheap, single-use, and a
-    //    reused one may already be in a terminal state from an earlier attempt.
+    // 2. SetupIntent — always fresh, card only (the confirm route stores card
+    //    brand / last4 / expiration; bank accounts use the client setup link).
     const si = await stripe.setupIntents.create({
       customer: customerId,
       usage: 'off_session',
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ['card'],
       description: `${ag.company_name ?? 'Partner'} \u2014 card on file`,
       metadata: {
         agreement_id: ag.id,
+        advertiser_id: target.advertiser ? String(target.advertiser.id) : '',
         source: 'admin_card_on_file',
         added_by: admin.email ?? '',
-        publication: 'RealtyLine',
+        publication: target.brand.brand,
       },
     });
 

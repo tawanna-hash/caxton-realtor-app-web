@@ -20,6 +20,8 @@ export interface SendEmailOptions {
   from?: string;
   subject: string;
   html: string;
+  /** Optional plain-text alternative. */
+  text?: string;
   replyTo?: string | string[];
   cc?: string | string[];
   bcc?: string | string[];
@@ -56,6 +58,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
     subject: opts.subject,
     html: opts.html,
   };
+  if (opts.text) payload.text = opts.text;
   if (opts.replyTo) payload.reply_to = opts.replyTo;
   if (opts.cc) payload.cc = Array.isArray(opts.cc) ? opts.cc : [opts.cc];
   if (opts.bcc) payload.bcc = Array.isArray(opts.bcc) ? opts.bcc : [opts.bcc];

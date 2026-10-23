@@ -284,11 +284,13 @@ export function InvoiceDrawer({
       return picked && usable(picked) ? picked : null;
     }
     if (!form.advertiser_id) return null;
+    // Server prefers the client-level method (newest save) when no agreement is linked.
+    if (selectedAdvertiser?.stripe_customer_id && selectedAdvertiser?.stripe_payment_method_id) return null;
     return matchingAgreements.find(usable) ?? null;
-  }, [effectiveAgreements, matchingAgreements, form.agreement_id, form.advertiser_id]);
+  }, [effectiveAgreements, matchingAgreements, form.agreement_id, form.advertiser_id, selectedAdvertiser]);
   // Client-level method (client payment setup page, no agreement) — the server
   // falls back to it only when no agreement is linked.
-  const clientMethod = !form.agreement_id && !cardAgreement && Boolean(selectedAdvertiser?.stripe_customer_id && selectedAdvertiser?.stripe_payment_method_id);
+  const clientMethod = !cardAgreement && Boolean(selectedAdvertiser?.stripe_customer_id && selectedAdvertiser?.stripe_payment_method_id);
   const cardOnFile = isCreate && (Boolean(cardAgreement) || clientMethod);
   const cardLast4 = cardAgreement?.card_number_last4 ?? selectedAdvertiser?.card_last4 ?? null;
   const methodIsBank = /^bank/i.test((cardAgreement ? cardAgreement.card_type : selectedAdvertiser?.payment_method_label) ?? '');

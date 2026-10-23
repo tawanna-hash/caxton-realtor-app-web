@@ -15,6 +15,7 @@
 import { getSql } from '@/lib/db';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { recordInvoicePayment, InvoicePaymentError } from '@/lib/server/invoice-payments';
+import { ensurePaymentSetupSchema } from '@/lib/server/payment-setup';
 import { isCardExpired, EXPIRED_CARD_CHARGE_ERROR } from '@/lib/card-expiration';
 
 export type ResolvedCardOnFile = {
@@ -26,6 +27,8 @@ export type ResolvedCardOnFile = {
   receiptEmail: string | null;
   /** Raw agreements.card_expiration, "MM/YY" (may be null on legacy rows). */
   cardExpiration: string | null;
+  /** Market brand used for the statement descriptor and metadata. */
+  market: 'austin' | 'san_antonio';
 };
 
 type AgreementCardRow = {
@@ -36,6 +39,7 @@ type AgreementCardRow = {
   advertiser_email: string | null;
   billing_email: string | null;
   card_expiration: string | null;
+  publication?: string | null;
 };
 
 /**
@@ -61,55 +65,77 @@ export async function resolveCardOnFile(params: {
   agreementId: string | null;
 }): Promise<ResolvedCardOnFile | null> {
   const sql = getSql();
-  const rows = params.agreementId
+  await ensurePaymentSetupSchema();
+  const agRows = params.agreementId
     ? ((await sql`
-        SELECT id, stripe_customer_id, stripe_payment_method_id, company_name, advertiser_email, billing_email, card_expiration
+        SELECT id, stripe_customer_id, stripe_payment_method_id, company_name, advertiser_email, billing_email, card_expiration, publication
           FROM agreements
          WHERE id = ${params.agreementId}
          LIMIT 1
       `) as unknown as AgreementCardRow[])
-    : ((await sql`
-        SELECT id, stripe_customer_id, stripe_payment_method_id, company_name, advertiser_email, billing_email, card_expiration
-          FROM agreements
-         WHERE advertiser_id = ${params.advertiserId}
-           AND stripe_customer_id IS NOT NULL
-           AND stripe_payment_method_id IS NOT NULL
-         ORDER BY updated_at DESC
-         LIMIT 1
-      `) as unknown as AgreementCardRow[]);
+    : [];
+  const adv = (await sql`
+    SELECT stripe_customer_id, stripe_payment_method_id, payment_method_expiration, company, name, billing_email, contact_email, publication
+      FROM advertisers
+     WHERE id = ${params.advertiserId}
+     LIMIT 1
+  `) as unknown as Array<{ stripe_customer_id: string | null; stripe_payment_method_id: string | null; payment_method_expiration: string | null; company: string | null; name: string | null; billing_email: string | null; contact_email: string | null; publication: string | null }>;
+  const a = adv[0];
+  const marketOf = (pub: string | null | undefined) => (pub === 'san_antonio' || (pub ?? '').split(',')[0]?.trim() === 'san_antonio' ? 'san_antonio' : 'austin') as 'austin' | 'san_antonio';
 
-  const row = rows[0];
-  if ((!row?.stripe_customer_id || !row.stripe_payment_method_id) && !params.agreementId) {
-    // Client without an agreement card: use the method saved on the client
-    // record by the client payment setup page.
-    const adv = (await sql`
-      SELECT stripe_customer_id, stripe_payment_method_id, company, name, billing_email, contact_email
-        FROM advertisers
-       WHERE id = ${params.advertiserId}
-         AND stripe_customer_id IS NOT NULL
-         AND stripe_payment_method_id IS NOT NULL
-       LIMIT 1
-    `.catch(() => [])) as unknown as Array<{ stripe_customer_id: string; stripe_payment_method_id: string; company: string | null; name: string | null; billing_email: string | null; contact_email: string | null }>;
-    const a = adv[0];
-    if (a) {
-      return {
-        agreementId: null,
-        customerId: a.stripe_customer_id,
-        paymentMethodId: a.stripe_payment_method_id,
-        companyName: a.company ?? a.name,
-        receiptEmail: a.billing_email ?? a.contact_email ?? null,
-        cardExpiration: null,
-      };
-    }
+  const clientCard = (): ResolvedCardOnFile | null =>
+    a?.stripe_customer_id && a.stripe_payment_method_id
+      ? {
+          agreementId: null,
+          customerId: a.stripe_customer_id,
+          paymentMethodId: a.stripe_payment_method_id,
+          companyName: a.company ?? a.name,
+          receiptEmail: a.billing_email ?? a.contact_email ?? null,
+          cardExpiration: a.payment_method_expiration ?? null,
+          market: marketOf(a.publication),
+        }
+      : null;
+
+  // An agreement the admin explicitly picked wins when it carries its own method
+  // (never charge a different agreement's card). If it has none, use the client's.
+  const picked = agRows[0];
+  if (picked?.stripe_customer_id && picked.stripe_payment_method_id) {
+    return {
+      agreementId: picked.id,
+      customerId: picked.stripe_customer_id,
+      paymentMethodId: picked.stripe_payment_method_id,
+      companyName: picked.company_name,
+      receiptEmail: picked.advertiser_email ?? picked.billing_email ?? null,
+      cardExpiration: picked.card_expiration ?? null,
+      market: marketOf(picked.publication ?? a?.publication),
+    };
   }
-  if (!row?.stripe_customer_id || !row.stripe_payment_method_id) return null;
+  if (params.agreementId) return clientCard();
+
+  // No agreement picked: the client record is the newest method the client or
+  // admin saved (every save path writes it), so prefer it; legacy
+  // agreement-only cards are the fallback.
+  const client = clientCard();
+  if (client) return client;
+  const legacy = (await sql`
+    SELECT id, stripe_customer_id, stripe_payment_method_id, company_name, advertiser_email, billing_email, card_expiration, publication
+      FROM agreements
+     WHERE advertiser_id = ${params.advertiserId}
+       AND stripe_customer_id IS NOT NULL
+       AND stripe_payment_method_id IS NOT NULL
+     ORDER BY updated_at DESC
+     LIMIT 1
+  `) as unknown as AgreementCardRow[];
+  const row = legacy[0];
+  if (!row) return null;
   return {
     agreementId: row.id,
-    customerId: row.stripe_customer_id,
-    paymentMethodId: row.stripe_payment_method_id,
+    customerId: row.stripe_customer_id!,
+    paymentMethodId: row.stripe_payment_method_id!,
     companyName: row.company_name,
     receiptEmail: row.advertiser_email ?? row.billing_email ?? null,
     cardExpiration: row.card_expiration ?? null,
+    market: marketOf(row.publication ?? a?.publication),
   };
 }
 
@@ -190,7 +216,7 @@ export async function autoChargeInvoice(params: {
       off_session: true,
       confirm: true,
       description: `${card.companyName ?? 'Partner'} \u2014 ${params.invoiceNumber ?? 'Invoice'}`,
-      ...(isBank ? {} : { statement_descriptor_suffix: 'REALTYLINE AUSTIN' }),
+      ...(isBank ? {} : { statement_descriptor_suffix: card.market === 'san_antonio' ? 'NEWSLINE SAN ANTONIO' : 'REALTYLINE AUSTIN' }),
       receipt_email: card.receiptEmail ?? undefined,
       // `source` intentionally is NOT one of the webhook-owned values
       // ('invoice_payment' / 'statement_payment' / 'self_serve_checkout') and
@@ -202,7 +228,7 @@ export async function autoChargeInvoice(params: {
         invoice_id: invoiceId,
         invoice_number: params.invoiceNumber ?? '',
         agreement_id_ref: card.agreementId ?? '',
-        publication: 'RealtyLine',
+        publication: card.market === 'san_antonio' ? 'Newsline' : 'RealtyLine',
         method: isBank ? 'ach' : 'card',
       },
     });

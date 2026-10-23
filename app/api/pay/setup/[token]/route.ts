@@ -1,19 +1,26 @@
-// POST /api/pay/setup/[token] — public. Verifies the signed setup token, then
-// creates a Stripe Checkout Session in setup mode (card only,
-// no charge) for the client's Stripe customer and redirects to it.
+// /api/pay/setup/[token] — public. Verifies the signed setup token, then
+// creates a Stripe Checkout Session in setup mode (no charge) for the client's
+// Stripe customer and redirects straight to it. Stripe's page offers card,
+// Apple Pay / Link and bank account (ACH) in one step.
+//
+// GET  — used by the email button, so the client lands on Stripe in one click.
+// POST — same behaviour, used by the "try again" button on the fallback page.
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPaymentSetupToken } from '@/lib/payment-setup-token';
 import { loadSetupTarget, ensureStripeCustomer, setupMetadata } from '@/lib/server/payment-setup';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
+import { rateLimited, clientIp } from '@/lib/server/simple-rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type Ctx = { params: Promise<{ token: string }> };
 
-export async function POST(req: NextRequest, ctx: Ctx) {
+async function start(req: NextRequest, ctx: Ctx) {
   const { token } = await ctx.params;
+  // `info=1` shows the page instead of redirecting (used by "Back" links).
   const back = (q: string) => NextResponse.redirect(new URL(`/pay/setup/${token}?${q}`, req.nextUrl.origin), 303);
+  if (rateLimited(`pay-setup:${clientIp(req)}`, 15, 10 * 60 * 1000)) return back('error=busy');
   const v = verifyPaymentSetupToken(token);
   if (!v.ok) return back(`error=${v.reason}`);
   if (!isStripeConfigured()) return back('error=unavailable');
@@ -29,9 +36,12 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       mode: 'setup',
       customer,
       currency: 'usd',
-      // Card only. Bank accounts are added on our own page (see ./bank) because
-      // Stripe's hosted bank connection asks returning Link users to sign in.
-      payment_method_types: ['card'],
+      // Card (incl. Apple Pay / Link) and US bank account. Bank accounts verify
+      // instantly through the bank login, or by microdeposit as a fallback.
+      payment_method_types: ['card', 'us_bank_account'],
+      payment_method_options: {
+        us_bank_account: { financial_connections: { permissions: ['payment_method'] }, verification_method: 'automatic' },
+      },
       setup_intent_data: {
         description: `${t.company ?? 'Client'} — payment method on file (${brand.brand})`,
         metadata: meta,
@@ -50,3 +60,6 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     return back('error=unavailable');
   }
 }
+
+export const GET = start;
+export const POST = start;
