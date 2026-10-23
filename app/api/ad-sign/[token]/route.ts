@@ -159,6 +159,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
   // Sign method + signature/document URL (new — type / draw / upload).
   // Method is informational and stored only in the audit log; signed_document
   // / is_uploaded carry the actual persisted state.
+  const paymentChoice = body.paymentChoice === 'ACH' || body.paymentChoice === 'Check' || body.paymentChoice === 'Credit Card' ? body.paymentChoice : null;
   const signMethodRaw = typeof body.signMethod === 'string' ? body.signMethod : 'type';
   const signMethod: 'type' | 'draw' | 'upload' =
     signMethodRaw === 'draw' || signMethodRaw === 'upload' ? signMethodRaw : 'type';
@@ -259,7 +260,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const newLog = appendAudit(ag.audit_log, {
       event: 'signed',
       timestamp: now,
-      details: `Digitally signed by "${signerName}" via sign wizard (${methodLabel})${anchorNote}`,
+      details: `Digitally signed by "${signerName}" via sign wizard (${methodLabel})${anchorNote}${paymentChoice ? ` · client chose ${paymentChoice === 'ACH' ? 'ACH (1% up to $5)' : paymentChoice === 'Credit Card' ? 'Credit Card (3%)' : 'Check'}` : ''}`,
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${id}`;
 

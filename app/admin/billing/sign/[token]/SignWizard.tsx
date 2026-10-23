@@ -22,6 +22,7 @@ import {
   FREQUENCIES,
   MONTHS_LIST,
   PAYMENT_TYPES,
+  PAYMENT_TYPE_LABELS,
   BILL_TO,
 } from '@/lib/pressbook-constants';
 import {
@@ -633,13 +634,8 @@ export default function SignWizard({
   // Digital/e-Blast/App require prepayment by credit card before placement;
   // Check is only offered for print agreements.
   const checkAllowed = allowsCheckPayment(channel);
-  const [paymentType, setPaymentType] = useState<string>(
-    !checkAllowed
-      ? 'Credit Card'
-      : (ag.card_type || ag.payment_mode === 'card'
-          ? 'Credit Card'
-          : (ag.payment_mode === 'check' ? 'Check' : '')),
-  );
+  // Nothing is preselected: the client chooses how they pay.
+  const [paymentType, setPaymentType] = useState<string>('');
 
   // ── Sign step ──────────────────────────────────────────────────────────────
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -1008,6 +1004,7 @@ export default function SignWizard({
           signedDocumentUrl,
           patches: buildPatchPayload(),
           stripePaymentIntentId,
+          paymentChoice: paymentType || null,
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1733,7 +1730,7 @@ export default function SignWizard({
             ? (stripeReady ? 'Authorize Card →' : 'Loading payment form…')
             : 'Next →'
         }
-        nextDisabled={ccNotReady}
+        nextDisabled={ccNotReady || !paymentType}
         saving={saving}
       >
         <div className="space-y-4">
@@ -1804,15 +1801,18 @@ export default function SignWizard({
                       onChange={() => setPaymentType(p)}
                       className="accent-[#301D5D]"
                     />
-                    <span className="text-sm text-gray-800">{p}</span>
+                    <span className="text-sm text-gray-800">{PAYMENT_TYPE_LABELS[p as keyof typeof PAYMENT_TYPE_LABELS] ?? p}</span>
                   </label>
                 );
               })}
             </div>
             {!checkAllowed && (
               <p className="text-xs text-gray-500 mt-1">
-                Prepayment by credit card is required for digital, e-Blast, and App ad placements before they go live.
+                Check is available for print agreements only. Digital, e-Blast, and App placements are paid by ACH or credit card.
               </p>
+            )}
+            {!paymentType && (
+              <p className="text-xs text-gray-500 mt-1">Please choose how you would like to pay.</p>
             )}
           </div>
 
@@ -1820,6 +1820,12 @@ export default function SignWizard({
               Stripe captures card type, cardholder, last 4, expiration, and
               billing address securely; server populates DB fields from the
               PaymentMethod when the webhook fires. */}
+          {paymentType === 'ACH' && (
+            <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 leading-relaxed">
+              A 1% ACH processing fee applies to each payment, up to $5.00. Nothing is charged now. After you sign, we will email you a secure link to connect your bank account.
+            </div>
+          )}
+
           {paymentType === 'Credit Card' && (
             <div className="space-y-4 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] p-4">
               {ccSurchargeTotal != null && (

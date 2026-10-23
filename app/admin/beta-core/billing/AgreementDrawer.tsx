@@ -23,6 +23,7 @@ import {
   AD_SIZES,
   FREQUENCIES,
   PAYMENT_TYPES,
+  PAYMENT_TYPE_LABELS,
   CARD_TYPES,
   BILL_TO,
 } from "@/lib/pressbook-constants";
@@ -407,30 +408,16 @@ export function AgreementDrawer({
       ),
     [lineItems, form.type],
   );
-  const checkAllowed = allowsCheckPayment(agreementChannel);
+  // Hide Check only once the channel is known to be non-print; before any
+  // line item or type is chosen, all three methods are offered.
+  const channelKnown = lineItems.length > 0 || !!form.type;
+  const checkAllowed = !channelKnown || allowsCheckPayment(agreementChannel);
   const paymentTypes = checkAllowed
     ? PAYMENT_TYPES
     : PAYMENT_TYPES.filter((type) => type !== "Check");
   const paymentModes = checkAllowed
     ? PAY_MODES
     : PAY_MODES.filter((mode) => mode.value !== "check");
-
-  useEffect(() => {
-    if (!isCreate || checkAllowed) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- enforce card-only state when a record resolves to a non-print channel
-    setForm((current) => {
-      if (
-        current.payment_type === "Credit Card" &&
-        current.payment_mode === "card"
-      )
-        return current;
-      return {
-        ...current,
-        payment_type: "Credit Card",
-        payment_mode: "card",
-      };
-    });
-  }, [checkAllowed, isCreate]);
 
   const upd = <K extends keyof AgForm>(k: K, v: AgForm[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -562,6 +549,10 @@ export function AgreementDrawer({
   // When payment type changes, recalc rate if CC
   const onPayTypeChange = (pt: string) => {
     upd("payment_type", pt);
+    // Keep payment mode in step with the chosen method (ACH has no mode value).
+    if (pt === "Credit Card") upd("payment_mode", "card");
+    else if (pt === "Check") upd("payment_mode", "check");
+    else if (form.payment_mode === "card" || form.payment_mode === "check") upd("payment_mode", null);
     const base = parseFloat(form.ad_rate_base) || 0;
     if (base > 0) {
       const newRate =
@@ -650,7 +641,7 @@ export function AgreementDrawer({
       billing_email: form.billing_email || null,
       billing_contact_name: form.billing_contact_name || null,
       billing_contact_phone: form.billing_contact_phone || null,
-      payment_type: (!checkAllowed ? "Credit Card" : form.payment_type) || null,
+      payment_type: form.payment_type || null,
       card_type: form.payment_type === "Credit Card" ? form.card_type : null,
       cardholder_name:
         form.payment_type === "Credit Card"
@@ -672,7 +663,7 @@ export function AgreementDrawer({
       status: isSigning ? "signed" : form.status,
       advertiser_id: form.advertiser_id,
       type: form.type || null,
-      payment_mode: !checkAllowed ? "card" : form.payment_mode || null,
+      payment_mode: form.payment_mode || null,
       publication: form.publication || null,
       exp_date: expPreview || null,
       end_date: expPreview || null,
@@ -1506,10 +1497,17 @@ export function AgreementDrawer({
                 onChange={() => onPayTypeChange(pt)}
                 className="w-4 h-4 accent-[#301D5D]"
               />
-              {pt}
+              {PAYMENT_TYPE_LABELS[pt]}
             </label>
           ))}
         </div>
+
+        {form.payment_type === "ACH" && (
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 leading-relaxed">
+            ACH processing fee: 1% of each payment, up to $5.00. The client
+            connects their bank account through the secure payment link.
+          </div>
+        )}
 
         {form.payment_type === "Credit Card" && (
           <div className="rounded-md border border-[#FAD800]/30 bg-[#FEF8CC]/40 p-3 space-y-3">

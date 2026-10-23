@@ -16,7 +16,7 @@ export const INVOICE_PAYMENT_METHODS: Array<{
     value: 'ach',
     label: 'ACH bank payment',
     shortLabel: 'ACH',
-    feeLabel: '0.8%, capped at $5.00',
+    feeLabel: '1%, capped at $5.00',
   },
   {
     value: 'bnpl',
@@ -35,7 +35,7 @@ export function processingFeeCents(
   method: InvoicePaymentMethod,
 ): number {
   const amount = Math.max(0, Math.round(amountCents));
-  if (method === 'ach') return Math.min(Math.round(amount * 0.008), 500);
+  if (method === 'ach') return Math.min(Math.round(amount * 0.01), 500);
   if (method === 'bnpl') return Math.round(amount * 0.0599) + 30;
   return Math.round(amount * 0.03);
 }

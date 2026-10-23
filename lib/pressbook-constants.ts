@@ -40,6 +40,12 @@ export const FREQ_MONTHS: Record<string, number> = {
 };
 export const AD_SIZES     = ['1/4 page', '1/2 page', 'Full-page'] as const;
 export const FREQUENCIES  = ['1x', '3x', '6x', '12x'] as const;
-export const PAYMENT_TYPES = ['Check', 'Credit Card'] as const;
+export const PAYMENT_TYPES = ['Check', 'ACH', 'Credit Card'] as const;
+/** Radio labels: fee shown next to the method. */
+export const PAYMENT_TYPE_LABELS: Record<(typeof PAYMENT_TYPES)[number], string> = {
+  'Check': 'Check',
+  'ACH': 'ACH (1% up to $5)',
+  'Credit Card': 'Credit Card (3%)',
+};
 export const CARD_TYPES    = ['Visa', 'Mastercard', 'American Express', 'Other'] as const;
 export const BILL_TO       = ['Advertiser', 'Agency'] as const;
