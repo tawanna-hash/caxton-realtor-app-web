@@ -1017,14 +1017,14 @@ export function AgreementDrawer({
       <div role="radiogroup" aria-label="Agreement kind" className="flex gap-2">
         {([
           { label: "Print", value: "print_ad" },
-          { label: "Digital", value: "app_ad" },
+          { label: "Digital", value: "eblast" },
           { label: "Website", value: "sponsored_content" },
         ] as { label: string; value: AgreementType }[]).map((o) => {
           const active =
             o.value === "print_ad"
               ? form.type === "print_ad" || form.type === "package"
-              : o.value === "app_ad"
-                ? form.type === "app_ad" || form.type === "eblast"
+              : o.value === "eblast"
+                ? form.type === "eblast" || form.type === "app_ad"
                 : form.type === "sponsored_content" || form.type === "other";
           return (
             <button
