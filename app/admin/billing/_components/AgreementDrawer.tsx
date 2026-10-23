@@ -7,6 +7,7 @@
 // month/year timing grid, attachments, signing-link flow, amend flow,
 // and the legacy system-fields panel.
 
+import PaymentSetupAlert from "@/components/admin/PaymentSetupAlert";
 import { RENEWAL_CAP_PCT } from "@/lib/renewals-v2/pricing";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
@@ -974,14 +975,7 @@ export function AgreementDrawer({
       }
       onClose={onClose}
     >
-      {!isCreate && existing?.payment_setup_requested_at && (
-        <div role="alert" className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-          <strong>Payment method not on file yet.</strong> The client chose ACH and sent the setup link to{" "}
-          {existing.payment_setup_sent_to ?? "accounts payable"} on {new Date(existing.payment_setup_requested_at).toLocaleDateString("en-US")}.{" "}
-          {(existing.payment_setup_reminders ?? 0) > 0 ? `${existing.payment_setup_reminders} reminder${existing.payment_setup_reminders === 1 ? "" : "s"} sent. ` : "Reminders go out automatically on day 3 and 7. "}
-          This clears when a payment method is saved.
-        </div>
-      )}
+      {!isCreate && existing && <PaymentSetupAlert ag={existing as never} variant="banner" />}
       {!isCreate && onGenerateInvoice && (
         <div className="rounded-md border border-[#D9CFF0] bg-[#F6F3FB]/60 p-3 flex items-center justify-between">
           <div>

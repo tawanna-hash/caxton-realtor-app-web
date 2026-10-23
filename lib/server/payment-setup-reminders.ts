@@ -45,7 +45,7 @@ export async function resolveSetupRequest(agreementId: string | null | undefined
   if (!agreementId) return;
   try {
     await ensurePaymentSetupRequestsSchema();
-    await getSql()`UPDATE payment_setup_requests SET resolved_at = NOW(), resolved_reason = ${reason} WHERE agreement_id = ${agreementId} AND resolved_at IS NULL`;
+    await getSql()`UPDATE payment_setup_requests SET resolved_at = NOW(), resolved_reason = ${reason} WHERE agreement_id = ${agreementId} AND (resolved_at IS NULL OR resolved_reason = 'bank verification pending')`;
   } catch (e) {
     console.warn('[payment-setup-reminders] resolve failed', e);
   }
@@ -114,4 +114,28 @@ export async function runPaymentSetupReminderSweep(opts: { dry?: boolean } = {})
     }
   }
   return out;
+}
+
+/** Email a fresh setup link for an agreement (admin "resend"). Restarts the reminder clock. */
+export async function resendSetupLink(agreementId: string, to: string, actor: string) {
+  const t = await loadSetupTarget({ kind: 'agreement', id: agreementId });
+  if (!t || !t.agreement) return { ok: false as const, status: 404, error: 'agreement not found' };
+  const { token, expiresAt } = signPaymentSetupToken({ kind: 'agreement', id: agreementId });
+  const ag = t.agreement;
+  const monthly = ag.total_monthly_rate_cents ?? null;
+  const fields: PaymentMethodFields = {
+    client_first_name: 'there',
+    agreement_name_or_number: [t.company, ag.ad_size].filter(Boolean).join(' \u2014 ') || `Agreement ${ag.id.slice(0, 8)}`,
+    payment_terms: monthly != null ? `${(monthly / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })} per month` : 'the amounts in the advertising agreement',
+    billing_schedule: monthly != null ? 'Monthly' : 'the billing schedule in the advertising agreement',
+    payment_setup_url: paymentSetupUrl(token),
+  };
+  const mail = renderPaymentMethodHtml(t.brand.market, fields, { reminder: true });
+  const sent = await sendEmail({ from: mail.from, to, subject: mail.subject, html: mail.html, text: renderPaymentMethodText(t.brand.market, fields, { reminder: true }), replyTo: mail.brand.billing_contact_email });
+  if (!sent.ok) return { ok: false as const, status: 502, error: 'Could not send the email.' };
+  await recordSetupRequest(agreementId, to, t.brand.market);
+  if (t.advertiser) {
+    await logClientSetup({ advertiserId: t.advertiser.id, event: 'request_sent', actor, market: t.brand.market, fromEmail: mail.from, to: [to], subject: mail.subject, html: mail.html, setupUrl: fields.payment_setup_url, linkExpiresAt: expiresAt, agreementId, details: 'Setup link resent by admin' });
+  }
+  return { ok: true as const, sentTo: to, billingEmail: t.brand.billing_contact_email };
 }

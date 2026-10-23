@@ -47,10 +47,11 @@ export async function GET() {
         COALESCE(inv.invoiced_cents, 0)::int AS invoiced_cents,
         COALESCE(inv.paid_cents, 0)::int     AS paid_cents,
         psr.sent_to        AS payment_setup_sent_to,
-        psr.requested_at   AS payment_setup_requested_at,
-        psr.reminders_sent AS payment_setup_reminders
+        CASE WHEN psr.resolved_at IS NULL THEN psr.requested_at END   AS payment_setup_requested_at,
+        CASE WHEN psr.resolved_at IS NULL THEN psr.reminders_sent END AS payment_setup_reminders,
+        (psr.resolved_reason = 'bank verification pending') AS payment_setup_verification_pending
       FROM agreements ag
-      LEFT JOIN payment_setup_requests psr ON psr.agreement_id = ag.id AND psr.resolved_at IS NULL
+      LEFT JOIN payment_setup_requests psr ON psr.agreement_id = ag.id AND (psr.resolved_at IS NULL OR psr.resolved_reason = 'bank verification pending')
       LEFT JOIN advertisers adv ON adv.id = ag.advertiser_id
       LEFT JOIN (
         SELECT

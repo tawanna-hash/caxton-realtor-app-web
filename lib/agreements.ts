@@ -142,6 +142,7 @@ export interface AgreementWithAdvertiser extends Agreement {
   payment_setup_sent_to?: string | null;
   payment_setup_requested_at?: string | null;
   payment_setup_reminders?: number | null;
+  payment_setup_verification_pending?: boolean | null;
 }
 
 // Allow-list for PATCH endpoint
