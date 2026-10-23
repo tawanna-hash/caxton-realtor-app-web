@@ -637,6 +637,9 @@ export default function SignWizard({
   // Nothing is preselected: the client chooses how they pay.
   const [paymentType, setPaymentType] = useState<string>('');
   // ACH: the client connects their bank account (Stripe) before signing.
+  const [achWhen, setAchWhen] = useState<'now' | 'later'>('now');
+  const [apEmail, setApEmail] = useState('');
+  const [achLaterTo, setAchLaterTo] = useState<string | null>(null);
   const [ach, setAch] = useState<{ label: string; last4: string | null; status: string } | null>(null);
 
   // ── Sign step ──────────────────────────────────────────────────────────────
@@ -724,6 +727,7 @@ export default function SignWizard({
               if (typeof d.paymentType === 'string' && (checkAllowed || d.paymentType !== 'Check')) {
                 setPaymentType(d.paymentType);
               }
+              if (typeof d.achLaterTo === 'string') setAchLaterTo(d.achLaterTo);
               if (d.ach && typeof d.ach === 'object') setAch(d.ach as { label: string; last4: string | null; status: string });
               if (typeof d.confirmedPaymentIntentId === 'string') {
                 setConfirmedPaymentIntentId(d.confirmedPaymentIntentId);
@@ -749,7 +753,7 @@ export default function SignWizard({
           adSize, frequency, adRate, discount, adPremium, pagePosition, applyPagePremium,
           timing, markets: [...markets],
           lineStarts, emailLineAlternates, placementStart, singleEmailAlternates,
-          billTo, billingEmail, billingContactName, billingContactPhone, paymentType, ach,
+          billTo, billingEmail, billingContactName, billingContactPhone, paymentType, ach, achLaterTo,
           confirmedPaymentIntentId,
         }),
       );
@@ -759,7 +763,7 @@ export default function SignWizard({
     step, companyName, repName, advertiserEmail, advertiserPhone, address, city, stateVal, zip,
     adSize, frequency, adRate, discount, adPremium, pagePosition, applyPagePremium,
     timing, markets, lineStarts, emailLineAlternates, placementStart, singleEmailAlternates,
-    billTo, billingEmail, billingContactName, billingContactPhone, paymentType, ach,
+    billTo, billingEmail, billingContactName, billingContactPhone, paymentType, ach, achLaterTo,
     confirmedPaymentIntentId,
   ]);
 
@@ -943,7 +947,26 @@ export default function SignWizard({
       }
     }
     // ACH: connect the bank account with Stripe before the client can sign.
-    if (step === 4 && paymentType === 'ACH' && !ach) {
+    if (step === 4 && paymentType === 'ACH' && !ach && achWhen === 'later' && !achLaterTo) {
+      setSaving(true);
+      setError(null);
+      try {
+        const email = (apEmail || billingEmail).trim();
+        const res = await fetch(`/api/ad-sign/${token}/ach-setup`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'later', email }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j.error || `HTTP ${res.status}`);
+        setAchLaterTo(email);
+        setStep((x) => x + 1);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not send the setup link.');
+      }
+      setSaving(false);
+      return;
+    }
+    if (step === 4 && paymentType === 'ACH' && !ach && achWhen === 'now' && !achLaterTo) {
       setSaving(true);
       setError(null);
       try {
@@ -1771,8 +1794,8 @@ export default function SignWizard({
         nextLabel={
           paymentType === 'Credit Card'
             ? (stripeReady ? 'Authorize Card →' : 'Loading payment form…')
-            : paymentType === 'ACH' && !ach
-              ? 'Connect Bank Account →'
+            : paymentType === 'ACH' && !ach && !achLaterTo
+              ? (achWhen === 'later' ? 'Email Setup Link & Continue →' : 'Connect Bank Account →')
               : 'Next →'
         }
         nextDisabled={ccNotReady || !paymentType || achBusy}
@@ -1866,12 +1889,31 @@ export default function SignWizard({
               billing address securely; server populates DB fields from the
               PaymentMethod when the webhook fires. */}
           {paymentType === 'ACH' && (
-            <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 leading-relaxed">
-              A 1% ACH processing fee applies to each payment, up to $5.00. Nothing is charged now.{' '}
-              {ach
-                ? <strong className="text-green-800">{ach.label}{ach.last4 ? ` ending in ${ach.last4}` : ''} is connected.</strong>
-                : 'Next, you will connect your bank account securely with Stripe, then return here to sign.'}
-              {ach?.status === 'pending' && ' Stripe will send a small deposit in 1–2 business days to verify it; we will email you a link to confirm.'}
+            <div className="space-y-3 rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 leading-relaxed">
+              <p>A 1% ACH processing fee applies to each payment, up to $5.00. Nothing is charged now.</p>
+              {ach ? (
+                <p><strong className="text-green-800">{ach.label}{ach.last4 ? ` ending in ${ach.last4}` : ''} is connected.</strong>{ach.status === 'pending' ? ' Stripe will send a small deposit in 1–2 business days to verify it; we will email you a link to confirm.' : ''}</p>
+              ) : achLaterTo ? (
+                <p><strong className="text-green-800">Setup link sent to {achLaterTo}.</strong> You can sign now. The bank account will be connected when they open the link (valid 14 days).</p>
+              ) : (
+                <fieldset className="space-y-2">
+                  <legend className="font-medium text-gray-900">Connect your bank account</legend>
+                  <label className="flex items-start gap-2">
+                    <input type="radio" name="achWhen" className="mt-1" checked={achWhen === 'now'} onChange={() => setAchWhen('now')} />
+                    <span><strong>Set up now.</strong> Securely connect your bank account with Stripe, then return here to sign.</span>
+                  </label>
+                  <label className="flex items-start gap-2">
+                    <input type="radio" name="achWhen" className="mt-1" checked={achWhen === 'later'} onChange={() => setAchWhen('later')} />
+                    <span><strong>Set up later.</strong> Email the secure setup link to your accounts payable team, and sign now.</span>
+                  </label>
+                  {achWhen === 'later' && (
+                    <div className="pl-6">
+                      <label className="block text-xs text-gray-600 mb-1" htmlFor="ap-email">Accounts payable email</label>
+                      <input id="ap-email" type="email" value={apEmail || billingEmail} onChange={(e) => setApEmail(e.target.value)} placeholder="ap@company.com" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                    </div>
+                  )}
+                </fieldset>
+              )}
             </div>
           )}
 

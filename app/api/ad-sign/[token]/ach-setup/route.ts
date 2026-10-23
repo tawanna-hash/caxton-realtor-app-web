@@ -1,11 +1,17 @@
 // /api/ad-sign/[token]/ach-setup — public, authorised by the signing token.
-// A client who picks ACH connects their bank account BEFORE signing:
+// A client who picks ACH connects their bank account before signing, or sends
+// the setup link to accounts payable to do it:
+//   { action: 'later', email }       -> emails the secure setup link to that address
 //   { action: 'start', returnPath }  -> { url }  Stripe Checkout (setup mode, bank only)
 //   { action: 'confirm', sessionId } -> { status, label, last4 }  saved on the agreement + client
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/sign-token';
 import { loadSetupTarget, createSetupCheckoutSession, saveFromCheckoutSession } from '@/lib/server/payment-setup';
 import { isStripeConfigured } from '@/lib/stripe';
+import { signPaymentSetupToken, paymentSetupUrl } from '@/lib/payment-setup-token';
+import { renderPaymentMethodHtml, renderPaymentMethodText, type PaymentMethodFields } from '@/lib/agreements-v2/payment-method-template';
+import { sendEmail } from '@/lib/email';
+import { logClientSetup } from '@/lib/server/payment-setup';
 import { rateLimited, clientIp } from '@/lib/server/simple-rate-limit';
 
 export const runtime = 'nodejs';
@@ -34,6 +40,34 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       const saved = await saveFromCheckoutSession(t, sessionId);
       if ('error' in saved) return NextResponse.json({ error: saved.error }, { status: 400 });
       return NextResponse.json({ status: saved.status, label: saved.label, last4: saved.last4 });
+    }
+
+    if (body.action === 'later') {
+      // Accounts payable connects the bank account: email them the secure setup link.
+      const email = typeof body.email === 'string' ? body.email.trim() : '';
+      if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(email)) return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 });
+      const { token: setupTok, expiresAt } = signPaymentSetupToken({ kind: 'agreement', id: parsed.agreementId });
+      const url = paymentSetupUrl(setupTok);
+      const ag = t.agreement;
+      const monthly = ag?.total_monthly_rate_cents ?? null;
+      const fields: PaymentMethodFields = {
+        client_first_name: 'there',
+        agreement_name_or_number: ag ? ([t.company, ag.ad_size].filter(Boolean).join(' \u2014 ') || `Agreement ${ag.id.slice(0, 8)}`) : 'your advertising agreement',
+        payment_terms: monthly != null ? `${(monthly / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })} per month` : 'the amounts in the advertising agreement',
+        billing_schedule: monthly != null ? 'Monthly' : 'the billing schedule in the advertising agreement',
+        payment_setup_url: url,
+      };
+      const out = renderPaymentMethodHtml(t.brand.market, fields);
+      const sent = await sendEmail({ from: out.from, to: email, subject: out.subject, html: out.html, text: renderPaymentMethodText(t.brand.market, fields), replyTo: out.brand.billing_contact_email });
+      if (!sent.ok) return NextResponse.json({ error: 'Could not send the email. Please check the address and try again.' }, { status: 502 });
+      if (t.advertiser) {
+        await logClientSetup({
+          advertiserId: t.advertiser.id, event: 'request_sent', actor: 'client (sign wizard)', market: out.brand.market,
+          fromEmail: out.from, to: [email], cc: [], subject: out.subject, html: out.html, setupUrl: url,
+          linkExpiresAt: expiresAt, agreementId: ag?.id ?? null, details: 'Client chose ACH and asked to set it up later (accounts payable)',
+        });
+      }
+      return NextResponse.json({ ok: true, email });
     }
 
     // start
