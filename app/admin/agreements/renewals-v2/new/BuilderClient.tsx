@@ -125,7 +125,7 @@ export default function BuilderClient() {
         const id = draft || tpl;
         if (id) {
           const j = await fetch(`/api/admin/agreements-v2/builder?id=${id}`, { credentials: 'include' }).then((r) => r.json());
-          if (j.draft) { setDoc({ ...EMPTY_DOC, ...j.draft.doc, payment: { ...DEFAULT_PAYMENT, ...(j.draft.doc.payment ?? {}) } }); if (draft) setDraftId(draft); }
+          if (j.draft) { setDoc({ ...EMPTY_DOC, ...j.draft.doc, name: j.draft.doc.name || j.draft.name || '', payment: { ...DEFAULT_PAYMENT, ...(j.draft.doc.payment ?? {}) } }); if (draft) setDraftId(draft); }
         } else {
           setDoc((d) => ({ ...d, intro: b.intros.new_partner, expires_days: b.expiry_days ?? 30 }));
         }
