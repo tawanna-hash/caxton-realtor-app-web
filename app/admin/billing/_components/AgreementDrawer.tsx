@@ -957,6 +957,38 @@ export function AgreementDrawer({
     }
   };
 
+  const [partnerMenu, setPartnerMenu] = useState(false);
+  const partnerMatches = useMemo(() => {
+    const q = form.company_name.trim().toLowerCase();
+    return advertisers
+      .filter((a) => !q || a.name.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [advertisers, form.company_name]);
+  const applyPartner = (a: AdvertiserOption) => {
+    setForm((cur) => {
+      const next = { ...cur, company_name: a.name };
+      const fill = (k: keyof AgForm, v: string | null | undefined) => {
+        if (v && !String(cur[k] ?? "").trim()) (next as Record<string, unknown>)[k] = v;
+      };
+      next.advertiser_id = a.id;
+      next.publication = a.publication as PublicationScope;
+      fill("rep_name", [a.first_name, a.last_name].filter(Boolean).join(" "));
+      fill("phone", a.phone ? formatPhoneInput(a.phone) : null);
+      fill("email", a.contact_email);
+      fill("address", a.address);
+      fill("city", a.city);
+      fill("state", a.state);
+      fill("zip", a.zip);
+      fill("billing_email", a.billing_email ?? a.contact_email);
+      fill("billing_contact_name", a.billing_contact_name);
+      fill(
+        "billing_contact_phone",
+        a.billing_contact_phone ? formatPhoneInput(a.billing_contact_phone) : null,
+      );
+      return next;
+    });
+  };
+
   return (
     <DrawerShell
       title={
@@ -1050,48 +1082,41 @@ export function AgreementDrawer({
         <Field label="Company Name *">
           <input
             value={form.company_name}
-            list="agreement-partners-on-file"
+            autoComplete="off"
+            onFocus={() => setPartnerMenu(true)}
+            onBlur={() => setTimeout(() => setPartnerMenu(false), 150)}
             onChange={(e) => {
-              const name = e.target.value;
-              const match = isCreate
-                ? advertisers.filter(
-                    (a) => a.name.trim().toLowerCase() === name.trim().toLowerCase(),
-                  )
-                : [];
-              const a = match.length === 1 ? match[0] : null;
-              setForm((cur) => {
-                const next = { ...cur, company_name: name };
-                if (!a) return next;
-                const fill = (k: keyof AgForm, v: string | null | undefined) => {
-                  if (v && !String(cur[k] ?? "").trim()) (next as Record<string, unknown>)[k] = v;
-                };
-                next.advertiser_id = a.id;
-                next.publication = a.publication as PublicationScope;
-                fill("rep_name", [a.first_name, a.last_name].filter(Boolean).join(" "));
-                fill("phone", a.phone ? formatPhoneInput(a.phone) : null);
-                fill("email", a.contact_email);
-                fill("address", a.address);
-                fill("city", a.city);
-                fill("state", a.state);
-                fill("zip", a.zip);
-                fill("billing_email", a.billing_email ?? a.contact_email);
-                fill("billing_contact_name", a.billing_contact_name);
-                fill(
-                  "billing_contact_phone",
-                  a.billing_contact_phone ? formatPhoneInput(a.billing_contact_phone) : null,
-                );
-                return next;
-              });
+              setPartnerMenu(true);
+              upd("company_name", e.target.value);
             }}
             className={INPUT}
             placeholder="Partner company name"
           />
-          <datalist id="agreement-partners-on-file">
-            {isCreate &&
-              advertisers.map((a) => (
-                <option key={a.id} value={a.name} label={`${a.name} · ${a.publication} (on file)`} />
-              ))}
-          </datalist>
+          {isCreate && partnerMenu && partnerMatches.length > 0 && (
+            <div className="relative">
+              <ul className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-[#D9CFF0] bg-white shadow-lg">
+                <li className="px-3 py-1 text-[11px] uppercase tracking-wide text-gray-500">
+                  Partners on file
+                </li>
+                {partnerMatches.map((a) => (
+                  <li key={a.id}>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        applyPartner(a);
+                        setPartnerMenu(false);
+                      }}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-[#F6F3FB]"
+                    >
+                      <span className="font-medium text-gray-900">{a.name}</span>
+                      <span className="ml-2 text-xs text-gray-500">{a.publication}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {isCreate && form.advertiser_id != null &&
             advertisers.some((a) => a.id === form.advertiser_id && a.name === form.company_name) && (
               <div className="mt-1 text-xs text-emerald-700">
