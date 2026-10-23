@@ -18,6 +18,7 @@ import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
 import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 import type { Agreement } from '@/lib/agreements';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
+import { ensurePaymentSetupRequestsSchema } from '@/lib/server/payment-setup-reminders';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
@@ -33,6 +34,7 @@ export async function GET() {
 
   try {
     await ensureSchema();
+    await ensurePaymentSetupRequestsSchema();
     const sql = getSql();
     // Use a single LEFT JOIN to invoices with conditional SUMs instead of
     // two correlated subqueries per agreement row (which were running N*2
@@ -43,8 +45,12 @@ export async function GET() {
         ag.*,
         adv.name AS advertiser_name,
         COALESCE(inv.invoiced_cents, 0)::int AS invoiced_cents,
-        COALESCE(inv.paid_cents, 0)::int     AS paid_cents
+        COALESCE(inv.paid_cents, 0)::int     AS paid_cents,
+        psr.sent_to        AS payment_setup_sent_to,
+        psr.requested_at   AS payment_setup_requested_at,
+        psr.reminders_sent AS payment_setup_reminders
       FROM agreements ag
+      LEFT JOIN payment_setup_requests psr ON psr.agreement_id = ag.id AND psr.resolved_at IS NULL
       LEFT JOIN advertisers adv ON adv.id = ag.advertiser_id
       LEFT JOIN (
         SELECT

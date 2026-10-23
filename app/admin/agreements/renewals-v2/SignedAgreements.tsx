@@ -221,7 +221,7 @@ export default function SignedAgreements() {
             {rows.map((a) => { const s = stOf(a) as St; return (
               <tr key={a.id}>
                 <td><input type="checkbox" aria-label={`Select ${nameOf(a)}`} checked={sel.includes(a.id)} onChange={() => setSel((c) => (c.includes(a.id) ? c.filter((x) => x !== a.id) : [...c, a.id]))} className="h-4 w-4 accent-[color:var(--ds-primary)]" /></td>
-                <td><div className="font-semibold text-[color:var(--ds-ink)]">{nameOf(a)}</div><div className="text-xs text-[color:var(--ds-body)]">Agreement{a.ad_size ? ` · ${a.ad_size}` : ''}</div></td>
+                <td><div className="font-semibold text-[color:var(--ds-ink)]">{nameOf(a)}</div><div className="text-xs text-[color:var(--ds-body)]">Agreement{a.ad_size ? ` · ${a.ad_size}` : ''}</div>{a.payment_setup_requested_at ? <div role="alert" className="mt-1 inline-block rounded-full border border-amber-400 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900">Payment method needed · link sent to {String(a.payment_setup_sent_to ?? 'AP')}</div> : null}</td>
                 <td><span className={`rounded-full border px-2 py-0.5 text-xs ${ST_STYLE[s]}`}>{ST_LABEL[s]}</span></td>
                 <td className="text-[color:var(--ds-ink)]">{who(a.created_by)}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(a.start_date ?? a.signed_at)}</td>

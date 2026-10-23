@@ -99,8 +99,9 @@ export function renderPaymentMethodTemplate(market: string | null | undefined, f
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /** Branded HTML email: real button for the setup link, market brand in header and footer. */
-export function renderPaymentMethodHtml(market: string | null | undefined, fields: PaymentMethodFields = {}) {
+export function renderPaymentMethodHtml(market: string | null | undefined, fields: PaymentMethodFields = {}, opts: { reminder?: boolean } = {}) {
   const r = renderPaymentMethodTemplate(market, fields);
+  if (opts.reminder) r.subject = `Reminder: ${r.subject}`;
   const b = r.brand;
   const v = (k: keyof PaymentMethodFields) => (fields[k]?.trim() ? esc(fields[k]!.trim()) : `{{${k}}}`);
   const hasAg = !!fields.agreement_name_or_number?.trim();
@@ -117,7 +118,7 @@ export function renderPaymentMethodHtml(market: string | null | undefined, field
 <tr><td style="background:#301D5D;padding:22px 28px;color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.01em;">${esc(b.brand)}</td></tr>
 <tr><td style="padding:28px;">
 <p style="${p}">Hi ${v('client_first_name')},</p>
-<p style="${p}">Please add a card or bank account (ACH) for your ${esc(b.brand)} advertising account using the secure button below. It opens Stripe, our payment processor, so you can finish in one step.</p>
+${opts.reminder ? `<p style="${p}"><strong>A quick reminder:</strong> we have not yet received a payment method for this account. It takes about a minute.</p>\n` : ''}<p style="${p}">Please add a card or bank account (ACH) for your ${esc(b.brand)} advertising account using the secure button below. It opens Stripe, our payment processor, so you can finish in one step.</p>
 <p style="${p}">You will not be charged during this setup. Future payments will follow the amounts and billing schedule ${hasAg ? 'in your advertising agreement' : 'stated below'}. If you choose a bank account, Stripe may send a small deposit within 1&ndash;2 business days to verify it, and we will email you a link to confirm.</p>
 <div style="margin:24px 0;text-align:center;">${button}</div>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-top:1px solid #E2DFEC;border-bottom:1px solid #E2DFEC;width:100%;padding:8px 0;">
@@ -139,6 +140,7 @@ export function unresolvedPlaceholders(market: string | null | undefined, fields
 }
 
 /** Plain-text alternative for the HTML email (setup link included). */
-export function renderPaymentMethodText(market: string | null | undefined, fields: PaymentMethodFields = {}): string {
-  return renderPaymentMethodTemplate(market, fields).body;
+export function renderPaymentMethodText(market: string | null | undefined, fields: PaymentMethodFields = {}, opts: { reminder?: boolean } = {}): string {
+  const body = renderPaymentMethodTemplate(market, fields).body;
+  return opts.reminder ? `A quick reminder: we have not yet received a payment method for this account.\n\n${body}` : body;
 }

@@ -12,6 +12,7 @@ import { signPaymentSetupToken, paymentSetupUrl } from '@/lib/payment-setup-toke
 import { renderPaymentMethodHtml, renderPaymentMethodText, type PaymentMethodFields } from '@/lib/agreements-v2/payment-method-template';
 import { sendEmail } from '@/lib/email';
 import { logClientSetup } from '@/lib/server/payment-setup';
+import { recordSetupRequest } from '@/lib/server/payment-setup-reminders';
 import { rateLimited, clientIp } from '@/lib/server/simple-rate-limit';
 
 export const runtime = 'nodejs';
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       const out = renderPaymentMethodHtml(t.brand.market, fields);
       const sent = await sendEmail({ from: out.from, to: email, subject: out.subject, html: out.html, text: renderPaymentMethodText(t.brand.market, fields), replyTo: out.brand.billing_contact_email });
       if (!sent.ok) return NextResponse.json({ error: 'Could not send the email. Please check the address and try again.' }, { status: 502 });
+      await recordSetupRequest(parsed.agreementId, email, t.brand.market);
       if (t.advertiser) {
         await logClientSetup({
           advertiserId: t.advertiser.id, event: 'request_sent', actor: 'client (sign wizard)', market: out.brand.market,

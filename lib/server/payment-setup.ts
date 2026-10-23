@@ -371,6 +371,7 @@ export async function persistSetupIntent(t: SetupTarget, si: Stripe.SetupIntent)
     const updated = await loadAgreement(ag.id);
     if (updated) { try { await syncAgreementToAdvertiser(updated); } catch (e) { console.warn('[payment-setup] advertiser sync failed', e); } }
   }
+  if (t.agreement) void import('@/lib/server/payment-setup-reminders').then((m) => m.resolveSetupRequest(t.agreement!.id, 'payment method saved'));
   const firstSave = await logOutcomeOnce(t, 'method_saved', si.id, { label, last4, details: t.agreement ? 'Saved on the client and the current agreement' : 'Saved on the client' });
   if (firstSave) await notifyMethodSaved(t, label, last4, !!prevId && prevId !== pm.id);
   return saved;

@@ -138,6 +138,10 @@ export interface AgreementWithAdvertiser extends Agreement {
   invoiced_cents: number;
   /** Total of paid invoice totals tied to this agreement (cents). */
   paid_cents: number;
+  /** Open "set up ACH later" request (accounts payable has the link, no method saved yet). */
+  payment_setup_sent_to?: string | null;
+  payment_setup_requested_at?: string | null;
+  payment_setup_reminders?: number | null;
 }
 
 // Allow-list for PATCH endpoint
