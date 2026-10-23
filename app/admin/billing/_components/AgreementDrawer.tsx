@@ -1013,6 +1013,38 @@ export function AgreementDrawer({
         </div>
       )}
 
+      {/* ── Agreement kind: Print / Digital / Website ── */}
+      <div role="radiogroup" aria-label="Agreement kind" className="flex gap-2">
+        {([
+          { label: "Print", value: "print_ad" },
+          { label: "Digital", value: "app_ad" },
+          { label: "Website", value: "sponsored_content" },
+        ] as { label: string; value: AgreementType }[]).map((o) => {
+          const active =
+            o.value === "print_ad"
+              ? form.type === "print_ad" || form.type === "package"
+              : o.value === "app_ad"
+                ? form.type === "app_ad" || form.type === "eblast"
+                : form.type === "sponsored_content" || form.type === "other";
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => upd("type", o.value)}
+              className={`flex-1 rounded-md border px-3 py-2 text-sm font-semibold ${
+                active
+                  ? "border-[#301D5D] bg-[#301D5D] text-white"
+                  : "border-[#D9CFF0] bg-white text-[#301D5D] hover:bg-[#F6F3FB]"
+              }`}
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* ── Partner Information ── */}
       <Section title="Partner Information">
         <Field label="Company Name *">

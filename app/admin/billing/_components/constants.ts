@@ -25,6 +25,7 @@ export const INV_STATUS: { value: InvoiceStatus; label: string; tone: string }[]
 export const AG_TYPES: { value: AgreementType; label: string }[] = [
   { value: 'print_ad',          label: 'Print ad' },
   { value: 'eblast',            label: 'Eblast' },
+  { value: 'app_ad',            label: 'App ad' },
   { value: 'sponsored_content', label: 'Sponsored content' },
   { value: 'package',           label: 'Package' },
   { value: 'other',             label: 'Other' },
