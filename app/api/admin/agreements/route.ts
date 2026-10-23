@@ -51,7 +51,7 @@ export async function GET() {
         CASE WHEN psr.resolved_at IS NULL THEN psr.reminders_sent END AS payment_setup_reminders,
         (psr.resolved_reason = 'bank verification pending') AS payment_setup_verification_pending
       FROM agreements ag
-      LEFT JOIN payment_setup_requests psr ON psr.agreement_id = ag.id AND (psr.resolved_at IS NULL OR psr.resolved_reason = 'bank verification pending')
+      LEFT JOIN payment_setup_requests psr ON psr.agreement_id = ag.id::text AND (psr.resolved_at IS NULL OR psr.resolved_reason = 'bank verification pending')
       LEFT JOIN advertisers adv ON adv.id = ag.advertiser_id
       LEFT JOIN (
         SELECT
