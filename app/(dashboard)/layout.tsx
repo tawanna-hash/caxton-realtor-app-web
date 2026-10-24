@@ -62,7 +62,7 @@ export default async function DashboardLayout({
         />
         {/* Main headline for search engines and screen readers. The dashboard
             views render their own visible headings. */}
-        <h1 className="sr-only">Realty News Now: Texas real estate news, events and tools</h1>
+        <h1 className="sr-only">Realty News Now: Real estate news, all in one app</h1>
         {children}
       </AppShell>
     </PublicationProvider>
