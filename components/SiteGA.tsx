@@ -90,7 +90,7 @@ export default function SiteGA() {
   }, [id, pathname]);
 
   if (!id) return null;
-  return <Script src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`} strategy="afterInteractive" />;
+  return <Script src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`} strategy="lazyOnload" />;
 }
 
 /**

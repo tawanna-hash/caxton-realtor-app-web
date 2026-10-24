@@ -51,10 +51,27 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       // 'Script error.' with no stack and no message — which is what was
       // landing in the /admin/activity alert email.
       cross_subdomain_cookie: false,
+      // Surveys are not used; skip downloading their script on every visit.
+      disable_surveys: true,
+      // The recorder is the heaviest PostHog script. Start it on the first
+      // interaction (or after 15s for visitors who only read) instead of
+      // during page load. maskAllInputs stays on.
+      disable_session_recording: true,
       session_recording: {
         maskAllInputs: true,
       },
       loaded: (ph) => {
+        const startRecording = () => {
+          cleanup();
+          try { ph.startSessionRecording(); } catch { /* recorder unavailable */ }
+        };
+        const events = ["pointerdown", "keydown", "scroll", "touchstart"] as const;
+        const recTimer = window.setTimeout(startRecording, 15000);
+        const cleanup = () => {
+          window.clearTimeout(recTimer);
+          events.forEach((e) => window.removeEventListener(e, startRecording));
+        };
+        events.forEach((e) => window.addEventListener(e, startRecording, { once: true, passive: true }));
         if (process.env.NODE_ENV === "development") {
           ph.debug();
         }
