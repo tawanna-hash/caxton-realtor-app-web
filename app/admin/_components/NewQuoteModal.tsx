@@ -62,6 +62,13 @@ interface AdvertiserRow {
   contact_email: string | null;
   billing_email: string | null;
   publication: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
 }
 
 interface CreatedAgreement {
@@ -1212,6 +1219,17 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     <span className="text-[#42277C] ml-2">
                       {selectedAdvertiser.contact_email ?? 'no email'}
                     </span>
+                    {(() => {
+                      const a = selectedAdvertiser;
+                      const rep = [a.first_name, a.last_name].filter(Boolean).join(' ');
+                      const addr = [a.address, a.city, [a.state, a.zip].filter(Boolean).join(' ')]
+                        .filter(Boolean)
+                        .join(', ');
+                      const bits = [rep, a.phone, addr].filter(Boolean);
+                      return bits.length ? (
+                        <span className="block text-[#301D5D]">{bits.join(' · ')}</span>
+                      ) : null;
+                    })()}
                     {selectedAdvertiser.billing_email &&
                     selectedAdvertiser.billing_email !== selectedAdvertiser.contact_email ? (
                       <span className="block text-[#301D5D]">
@@ -1269,6 +1287,33 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   onChange={(e) => setNewName(e.target.value)}
                   className="mt-1 w-full px-2 py-2 border border-gray-300 rounded-md text-sm"
                 />
+                {newName.trim().length >= 2 &&
+                  advertisers.some((a) => a.name.toLowerCase().includes(newName.trim().toLowerCase())) && (
+                    <ul className="mt-1 max-h-32 overflow-y-auto rounded-md border border-[#B9ADD6] bg-white text-sm divide-y divide-gray-100">
+                      <li className="px-2 py-1 text-[11px] uppercase tracking-wide text-gray-500">
+                        Already on file. Use existing
+                      </li>
+                      {advertisers
+                        .filter((a) => a.name.toLowerCase().includes(newName.trim().toLowerCase()))
+                        .slice(0, 5)
+                        .map((a) => (
+                          <li key={a.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCreateNew(false);
+                                setSelectedAdvertiserId(a.id);
+                                setAdvertiserSearch(a.name);
+                              }}
+                              className="w-full px-2 py-2 text-left hover:bg-[#EFEAF8]"
+                            >
+                              <span className="font-medium text-gray-900">{a.name}</span>
+                              <span className="ml-2 text-xs text-gray-500">{a.contact_email ?? 'no email'}</span>
+                            </button>
+                          </li>
+                        ))}
+                    </ul>
+                  )}
               </label>
               <label className="text-xs text-gray-700">
                 Contact email
