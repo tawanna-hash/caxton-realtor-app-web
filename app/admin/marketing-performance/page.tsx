@@ -45,9 +45,10 @@ interface SourceStatus {
   posthog: { connected: boolean };
   ga4: { configured: boolean; connected: boolean; email: string | null; propertyId: string | null; propertyName: string | null; error: string | null };
   mailchimp: { configured: boolean; connected: boolean; accountName: string | null; error: string | null };
-  meta: { configured: boolean; connected: boolean; pages: Array<{ pub: 'austin' | 'san_antonio'; id: string; name: string; handle: string | null; followers: number | null }>; error: string | null };
+  meta: { configured: boolean; connected: boolean; pages: Array<{ pub: 'austin' | 'san_antonio'; id: string; name: string; handle: string | null; followers: number | null }>; instagram: Array<{ pub: 'austin' | 'san_antonio'; id: string; username: string; followers: number | null }>; error: string | null };
 }
 interface MetaMonth { month: string; views: number; engagements: number }
+interface InstagramMonth { month: string; views: number; interactions: number }
 type PubBucket = 'austin' | 'san_antonio' | 'other';
 type PubFilter = 'all' | PubBucket;
 interface SpendEntry { id: string; month: string; channel: Channel; amount_cents: number; notes: string | null; updated_at: string; publication: 'all' | PubBucket }
@@ -62,6 +63,7 @@ interface MarketingPerformance {
   mailchimp: MailchimpMonth[];
   mailchimpByPublication: Record<PubBucket, MailchimpMonth[]>;
   meta: MetaMonth[];
+  instagram: InstagramMonth[];
   sources: SourceStatus;
   warnings: string[];
 }
@@ -591,7 +593,7 @@ export default function MarketingPerformancePage() {
           </section>
 
           {/* Connections */}
-          <Connections sources={data.sources} pub={pub} mailchimp={data.mailchimp.filter((m) => view.monthsSel.includes(m.month))} byPub={data.mailchimpByPublication} meta={data.meta.filter((m) => view.monthsSel.includes(m.month))} monthsSel={view.monthsSel} onChanged={reload} />
+          <Connections sources={data.sources} pub={pub} mailchimp={data.mailchimp.filter((m) => view.monthsSel.includes(m.month))} byPub={data.mailchimpByPublication} meta={data.meta.filter((m) => view.monthsSel.includes(m.month))} instagram={data.instagram.filter((m) => view.monthsSel.includes(m.month))} monthsSel={view.monthsSel} onChanged={reload} />
 
           {/* Spend */}
           <SpendPanel months={data.months} entries={data.spend} pub={pub} onSaved={reload} />
@@ -788,7 +790,7 @@ function SpendPanel({ months, entries, pub, onSaved }: { months: string[]; entri
   );
 }
 
-function Connections({ sources, pub, mailchimp, byPub, meta, monthsSel, onChanged }: { sources: SourceStatus; pub: PubFilter; mailchimp: MailchimpMonth[]; byPub: Record<PubBucket, MailchimpMonth[]>; meta: MetaMonth[]; monthsSel: string[]; onChanged: () => void }) {
+function Connections({ sources, pub, mailchimp, byPub, meta, instagram, monthsSel, onChanged }: { sources: SourceStatus; pub: PubFilter; mailchimp: MailchimpMonth[]; byPub: Record<PubBucket, MailchimpMonth[]>; meta: MetaMonth[]; instagram: InstagramMonth[]; monthsSel: string[]; onChanged: () => void }) {
   const [props, setProps] = useState<Array<{ id: string; name: string; account: string }> | null>(null);
   const [propError, setPropError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -959,6 +961,28 @@ function Connections({ sources, pub, mailchimp, byPub, meta, monthsSel, onChange
               <p>Add <code className="rounded bg-gray-100 px-1 text-xs">META_ACCESS_TOKEN</code> (system-user token with access to facebook.com/myrealtyline and facebook.com/newslinesa) to the Vercel project, then redeploy.</p>
               {sources.meta.error && <p className="text-xs text-[#661102]">{sources.meta.error}</p>}
             </div>
+          )}
+        </Card>
+
+        <Card title="Instagram" right={status(sources.meta.instagram.length > 0, sources.meta.instagram.length > 0 ? 'Connected' : sources.meta.connected ? 'Not linked' : 'Not connected')}>
+          {sources.meta.instagram.length > 0 ? (
+            <div className="space-y-2 text-sm">
+              <ul className="space-y-0.5">
+                {sources.meta.instagram.map((a) => (
+                  <li key={a.id} className="flex justify-between text-gray-600">
+                    <span>{PUB_LABEL[a.pub]} · @{a.username}</span>
+                    <span className="tabular-nums">{a.followers != null ? `${fmtInt(a.followers)} followers` : ''}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="grid grid-cols-2 gap-2 tabular-nums">
+                <div><p className="text-xs text-gray-500">Views</p><p className="font-semibold">{fmtInt(instagram.reduce((n, m) => n + m.views, 0))}</p></div>
+                <div><p className="text-xs text-gray-500">Interactions</p><p className="font-semibold">{fmtInt(instagram.reduce((n, m) => n + m.interactions, 0))}</p></div>
+              </div>
+              <p className="text-xs text-gray-500">{pub === 'all' ? 'Both accounts' : pub === 'other' ? 'No account for Shared / other' : PUB_LABEL[pub]} · last 6 months within the selected range.</p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600">Instagram appears once the connected Meta token can read the Instagram account linked to each Facebook page.</p>
           )}
         </Card>
       </div>

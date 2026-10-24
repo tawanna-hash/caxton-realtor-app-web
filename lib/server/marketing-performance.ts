@@ -27,7 +27,7 @@
 import { query } from '@/lib/server/db/neon';
 import { logger } from '@/lib/server/logger';
 import { fetchGa4Monthly, getGa4Connection, isGa4OAuthConfigured } from '@/lib/server/ga4-client';
-import { fetchMetaSummary, isMetaConfigured, type MetaMonth, type MetaPageInfo } from '@/lib/server/meta-pages';
+import { fetchMetaSummary, isMetaConfigured, type MetaMonth, type MetaPageInfo, type InstagramMonth, type InstagramAccountInfo } from '@/lib/server/meta-pages';
 import { fetchMailchimpSummary, isMailchimpConfigured, type MailchimpMonth } from '@/lib/server/mailchimp';
 
 // ---------------------------------------------------------------------------
@@ -121,7 +121,7 @@ export interface SourceStatus {
   posthog: { connected: boolean };
   ga4: { configured: boolean; connected: boolean; email: string | null; propertyId: string | null; propertyName: string | null; error: string | null };
   mailchimp: { configured: boolean; connected: boolean; accountName: string | null; error: string | null };
-  meta: { configured: boolean; connected: boolean; pages: MetaPageInfo[]; error: string | null };
+  meta: { configured: boolean; connected: boolean; pages: MetaPageInfo[]; instagram: InstagramAccountInfo[]; error: string | null };
 }
 
 export interface SpendEntry {
@@ -148,6 +148,7 @@ export interface MarketingPerformance {
   mailchimpByPublication: Record<PubBucket, MailchimpMonth[]>;
   /** Facebook page views + engagements for the selected publication scope. */
   meta: MetaMonth[];
+  instagram: InstagramMonth[];
   sources: SourceStatus;
   warnings: string[];
 }
@@ -490,7 +491,7 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
     posthog: { connected: Boolean(process.env.POSTHOG_PERSONAL_API_KEY) },
     ga4: { configured: isGa4OAuthConfigured(), connected: false, email: null, propertyId: null, propertyName: null, error: null },
     mailchimp: { configured: isMailchimpConfigured(), connected: false, accountName: null, error: null },
-    meta: { configured: isMetaConfigured(), connected: false, pages: [], error: null },
+    meta: { configured: isMetaConfigured(), connected: false, pages: [], instagram: [], error: null },
   };
 
   const ga4Promise = (async () => {
@@ -521,7 +522,7 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
     if (!sources.meta.configured) return null;
     try {
       const summary = await fetchMetaSummary(MONTHS_BACK);
-      sources.meta = { ...sources.meta, connected: true, pages: summary.pages };
+      sources.meta = { ...sources.meta, connected: true, pages: summary.pages, instagram: summary.instagram };
       warnings.push(...summary.warnings);
       return summary;
     } catch (err) {
@@ -588,6 +589,15 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
       metaMonths.set(m.month, t);
     }
   }
+  const igMonths = new Map<string, InstagramMonth>();
+  for (const b of ['austin', 'san_antonio'] as const) {
+    if (!inPub(b)) continue;
+    for (const m of meta?.instagramByPublication[b] ?? []) {
+      const t = igMonths.get(m.month) ?? { month: m.month, views: 0, interactions: 0 };
+      t.views += m.views; t.interactions += m.interactions;
+      igMonths.set(m.month, t);
+    }
+  }
   const mcAudience = (mailchimp?.byAudience ?? []).filter((m) => inPub(m.listId, 'audience'));
   for (const m of mcAudience) {
     const c = cell(m.month, 'email');
@@ -625,6 +635,7 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
 
   return {
     publication: pub,
+    instagram: Array.from(igMonths.values()).filter((m) => months.includes(m.month)).sort((a, b) => a.month.localeCompare(b.month)),
     meta: Array.from(metaMonths.values()).filter((m) => months.includes(m.month)).sort((a, b) => a.month.localeCompare(b.month)),
     asOf: new Date().toISOString(),
     months,
