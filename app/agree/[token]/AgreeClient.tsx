@@ -64,7 +64,9 @@ export default function AgreeClient({ token }: { token: string }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [fields, setFields] = useState<Fields>({});
-  const [pay, setPay] = useState<'check' | 'card' | 'bank_now' | 'bank_invoice'>('check');
+  const [pay, setPay] = useState<'check' | 'card' | 'bank_now' | 'bank_invoice' | 'ap'>('check');
+  const [apEmail, setApEmail] = useState('');
+  const [apSentTo, setApSentTo] = useState('');
   const [name, setName] = useState('');
   const [agree, setAgree] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -178,6 +180,24 @@ export default function AgreeClient({ token }: { token: string }) {
         setStep(2);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Your bank payment could not be started.');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+    if (pay === 'ap') {
+      const email = apEmail.trim();
+      if (apSentTo && apSentTo === email) return setStep(2);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError('Enter the email address of the person who will add the payment method.');
+      setSubmitting(true);
+      try {
+        const r = await fetch(`/api/ad-sign/${encodeURIComponent(token)}/ach-setup`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'later', email }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || 'Could not send the request.');
+        setApSentTo(email);
+        setStep(2);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not send the request.');
       } finally {
         setSubmitting(false);
       }
@@ -526,7 +546,7 @@ export default function AgreeClient({ token }: { token: string }) {
             {data.prepay_required && !data.allow_check && (
               <div className="rounded-[10px] border border-[color:var(--ds-line)] p-4 text-sm text-[color:var(--ds-body)]">
                 {data.check_request === 'requested' || checkAsked ? (
-                  <p>Your request to pay by check was sent. We will let you know once it is approved. You can also pay now by bank account or credit card.</p>
+                  <p>Your request to pay by check was sent. We will let you know once it is approved. Your service will not be scheduled until your check is received. You can also pay now by bank account or credit card.</p>
                 ) : (
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <span>Need to pay by check? Ask for approval first.</span>
@@ -535,7 +555,22 @@ export default function AgreeClient({ token }: { token: string }) {
                 )}
               </div>
             )}
-            {data.prepay_required && data.allow_check && data.check_request === 'approved' && <p className="text-xs text-[color:var(--ds-body)]">Check payment was approved. Services start when your check is received.</p>}
+            {data.prepay_required && data.allow_check && data.check_request === 'approved' && <p className="text-xs text-[color:var(--ds-body)]">Check payment was approved. Your service will not be scheduled until your check is received.</p>}
+            {(data.card_available || data.bank_now_available) && (
+              <div className={`rounded-[10px] border p-4 text-sm ${pay === 'ap' ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)]' : 'border-[color:var(--ds-line)]'}`}>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input type="radio" name="pay" checked={pay === 'ap'} disabled={cardPaid} onChange={() => setPay('ap')} className="accent-[color:var(--ds-primary)]" />
+                  <span>Ask someone else to add a card or bank account <span className="text-[color:var(--ds-body)]">(for example, Accounts Payable)</span></span>
+                </label>
+                {pay === 'ap' && (
+                  <div className="mt-3 pl-7">
+                    <label className="mb-1 block text-xs text-[color:var(--ds-body)]" htmlFor="ap-email">Their email address</label>
+                    <input id="ap-email" type="email" value={apEmail} onChange={(e) => setApEmail(e.target.value)} placeholder="ap@company.com" className="w-full rounded-[10px] border border-[color:var(--ds-line)] px-3 py-2 text-sm" />
+                    <p className="mt-2 text-xs text-[color:var(--ds-body)]">We will email them a secure link. {data.prepay_required ? 'Your service will not be scheduled until payment is received.' : ''}</p>
+                  </div>
+                )}
+              </div>
+            )}
             {data.bank_invoice_available && (
               <label className={`flex cursor-pointer items-center gap-3 rounded-[10px] border p-4 text-sm ${pay === 'bank_invoice' ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)]' : 'border-[color:var(--ds-line)]'}`}>
                 <input type="radio" name="pay" checked={pay === 'bank_invoice'} disabled={cardPaid} onChange={() => setPay('bank_invoice')} className="accent-[color:var(--ds-primary)]" />
@@ -561,7 +596,7 @@ export default function AgreeClient({ token }: { token: string }) {
           {error && <p className="mt-3 rounded-[10px] bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <div className="mt-5 flex gap-3">
             <button type="button" onClick={() => { setStep(0); setInter('additional'); }} className={ghost}>Back</button>
-            <button type="button" onClick={nextFromPay} disabled={submitting || (pay === 'card' && !cardPaid && !cardReady) || (pay === 'bank_now' && !bankPi && !bankReady)} className={pill}>{submitting ? 'Processing…' : pay === 'card' && !cardPaid ? `Pay ${money(data.card_charge_cents)} and continue` : pay === 'bank_now' && !bankPi ? `Pay ${money(data.bank_charge_cents ?? null)} by bank and continue` : 'Continue to sign'}</button>
+            <button type="button" onClick={nextFromPay} disabled={submitting || (pay === 'ap' && !apEmail.trim()) || (pay === 'card' && !cardPaid && !cardReady) || (pay === 'bank_now' && !bankPi && !bankReady)} className={pill}>{submitting ? 'Processing…' : pay === 'card' && !cardPaid ? `Pay ${money(data.card_charge_cents)} and continue` : pay === 'bank_now' && !bankPi ? `Pay ${money(data.bank_charge_cents ?? null)} by bank and continue` : 'Continue to sign'}</button>
           </div>
         </div>
       )}

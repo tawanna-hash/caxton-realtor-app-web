@@ -241,6 +241,10 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
 
     const mode = typeof body.paymentMode === 'string' ? body.paymentMode : '';
     let bankIntentId: string | null = null;
+    if (mode === 'ap') {
+      const sent = (await sql`SELECT 1 FROM payment_setup_requests WHERE agreement_id = ${String(id)} LIMIT 1`.catch(() => [])) as unknown[];
+      if (sent.length === 0) return NextResponse.json({ error: 'Send the payment request to your accounts payable contact first.' }, { status: 400 });
+    }
     if (mode === 'bank_now') {
       if (!isStripeConfigured()) return NextResponse.json({ error: 'Bank payment is not available right now.' }, { status: 402 });
       if (meta?.payment?.bank_now !== true) return NextResponse.json({ error: 'Bank payment is not available for this agreement.' }, { status: 400 });
@@ -284,7 +288,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         return NextResponse.json({ error: 'We could not confirm your card payment. Please try again.' }, { status: 402 });
       }
     }
-    if (mode !== 'check' && mode !== 'card' && mode !== 'bank_now' && mode !== 'bank_invoice') {
+    if (mode !== 'check' && mode !== 'card' && mode !== 'bank_now' && mode !== 'bank_invoice' && mode !== 'ap') {
       return NextResponse.json({ error: 'Please choose how you would like to pay.' }, { status: 400 });
     }
     if (mode === 'card' && meta?.payment?.card === false) {
@@ -297,7 +301,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ error: prepay ? 'Paying by check needs approval first. Please ask for approval, or pay by bank account or credit card.' : 'Check payment is not available for this agreement.' }, { status: 400 });
     }
 
-    const patches: Record<string, unknown> = { payment_mode: mode === 'bank_now' || mode === 'bank_invoice' ? 'invoice' : mode };
+    const patches: Record<string, unknown> = { payment_mode: mode === 'bank_now' || mode === 'bank_invoice' || mode === 'ap' ? 'invoice' : mode };
     const given = (body.fields ?? {}) as Record<string, unknown>;
     for (const k of EDITABLE) {
       const v = given[k];
@@ -349,7 +353,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) return NextResponse.json(data, { status: res.status });
 
-    await recordNewPartnerEvent(sql, id, 'newpartner_v2_accepted', `Signed via the new-partner flow by "${signerName}" (${mode === 'bank_now' ? 'bank payment now' : mode === 'bank_invoice' ? 'invoiced, pay by bank' : mode})`);
+    await recordNewPartnerEvent(sql, id, 'newpartner_v2_accepted', `Signed via the new-partner flow by "${signerName}" (${mode === 'bank_now' ? 'bank payment now' : mode === 'bank_invoice' ? 'invoiced, pay by bank' : mode === 'ap' ? 'payment requested from accounts payable' : mode})`);
     if (bankIntentId) {
       await recordNewPartnerEvent(sql, id, 'newpartner_v2_bank_payment', `Bank (ACH) payment started at signing: ${bankIntentId}. The first amount is already covered, so skip or adjust the first invoice when reviewing the draft billing schedule.`);
     }

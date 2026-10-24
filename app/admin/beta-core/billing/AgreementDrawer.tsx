@@ -989,6 +989,7 @@ export function AgreementDrawer({
     }
   };
 
+  const partnerLabel = (a: AdvertiserOption) => (a.company ?? "").trim() || a.name;
   const [partnerMenu, setPartnerMenu] = useState(false);
   const partnerMatches = useMemo(() => {
     const q = form.company_name.trim().toLowerCase();
@@ -997,6 +998,7 @@ export function AgreementDrawer({
         (a) =>
           !q ||
           a.name.toLowerCase().includes(q) ||
+          (a.company ?? "").toLowerCase().includes(q) ||
           (a.contact_email ?? "").toLowerCase().includes(q) ||
           [a.first_name, a.last_name].filter(Boolean).join(" ").toLowerCase().includes(q),
       )
@@ -1004,7 +1006,7 @@ export function AgreementDrawer({
   }, [advertisers, form.company_name]);
   const applyPartner = (a: AdvertiserOption) => {
     setForm((cur) => {
-      const next = { ...cur, company_name: a.name };
+      const next = { ...cur, company_name: partnerLabel(a) };
       const fill = (k: keyof AgForm, v: string | null | undefined) => {
         if (v && !String(cur[k] ?? "").trim()) (next as Record<string, unknown>)[k] = v;
       };
@@ -1116,8 +1118,9 @@ export function AgreementDrawer({
                       }}
                       className="block w-full px-3 py-2 text-left text-sm hover:bg-[#F6F3FB]"
                     >
-                      <span className="font-medium text-gray-900">{a.name}</span>
-                      <span className="ml-2 text-xs text-gray-500">{a.publication}</span>
+                      <span className="font-medium text-gray-900">{partnerLabel(a)}</span>
+                      {partnerLabel(a) !== a.name && <span className="ml-2 text-xs text-gray-600">{a.name}</span>}
+                      <span className="ml-2 text-xs text-gray-500">{a.contact_email ?? a.publication}</span>
                     </button>
                   </li>
                 ))}
@@ -1125,7 +1128,7 @@ export function AgreementDrawer({
             </div>
           )}
           {isCreate && form.advertiser_id != null &&
-            advertisers.some((a) => a.id === form.advertiser_id && a.name === form.company_name) && (
+            advertisers.some((a) => a.id === form.advertiser_id && partnerLabel(a) === form.company_name) && (
               <div className="mt-1 text-xs text-emerald-700">
                 Partner on file. Empty fields were filled in from their record.
               </div>

@@ -9,6 +9,7 @@ export type AdvertiserOption = {
   publication: string;
   contact_email: string | null;
   billing_email: string | null;
+  company?: string | null;
   first_name?: string | null;
   last_name?: string | null;
   phone?: string | null;
