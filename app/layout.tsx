@@ -69,11 +69,13 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: `${SITE_NAME} — Texas real estate, daily.`,
     description: SITE_DESCRIPTION,
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Realty News Now: Texas real estate, daily." }],
   },
   twitter: {
     card: "summary_large_image",
     title: `${SITE_NAME} — Texas real estate, daily.`,
     description: SITE_DESCRIPTION,
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
