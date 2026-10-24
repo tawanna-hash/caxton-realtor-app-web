@@ -13,8 +13,6 @@ import { A, EmptyState, FilterChip, RowMenu, SearchBox } from '@/components/anch
 import { SortTh } from '../clients/StatusFilter';
 import { day, money, useJson, type Inv } from '../clients/data';
 import { AgreementDrawer } from '@/app/admin/beta-core/billing/AgreementDrawer';
-import NewQuoteModal from '@/app/admin/beta-core/NewQuoteModal';
-import { BuilderPopup, UseTemplatePicker } from './BuilderPopup';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { AdCampaignOption, AdvertiserOption } from '@/app/admin/beta-core/billing/types';
 
@@ -86,9 +84,6 @@ export default function SignedAgreements() {
   const [drawer, setDrawer] = useState<null | 'new' | AgreementWithAdvertiser>(null);
   const [renewing, setRenewing] = useState<AgreementWithAdvertiser | null>(null);
   const [handled, setHandled] = useState(false);
-  const [quote, setQuote] = useState(false);
-  const [pick, setPick] = useState(false);
-  const [pop, setPop] = useState<string | null>(null);
   const [dErr, setDErr] = useState<string | null>(null);
   const advs = useJson('/api/admin/advertisers', (j) => (j.advertisers ?? []) as AdvertiserOption[], [] as AdvertiserOption[]);
   useEffect(() => {
@@ -193,9 +188,6 @@ export default function SignedAgreements() {
         <div className={`ml-auto ${chosen.length === 0 ? "opacity-50" : ""}`}><Menu label="Bulk actions" items={[{ label: `Export selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => exportCsv(chosen) }, { label: `Terminate selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => terminate(chosen) }]} /></div>
       </div>
       {notice && <div className={A.notice}>{notice}</div>}
-      {pick && <UseTemplatePicker onClose={() => setPick(false)} onPick={(id) => { setPick(false); setPop(id); }} />}
-      {pop && <BuilderPopup query={`&template=${pop}`} title="Use a template" onClose={(to) => { setPop(null); if (to && (to === '/admin' || to.includes('tab=sent'))) { window.location.href = to; return; } setVersion((v) => v + 1); }} />}
-      <NewQuoteModal open={quote} onClose={() => setQuote(false)} />
       {(drawer || renewing) && (
         <AgreementDrawer
           existing={drawer && drawer !== 'new' ? drawer : undefined}

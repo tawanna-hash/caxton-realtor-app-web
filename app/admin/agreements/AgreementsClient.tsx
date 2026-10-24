@@ -18,7 +18,6 @@ import { AgreementList } from '@/app/admin/billing/_components/AgreementList';
 import { RenewalsPanel } from '@/app/admin/billing/_components/RenewalsPanel';
 import { AgreementDrawer } from '@/app/admin/billing/_components/AgreementDrawer';
 import PageTitle from '@/components/ui/PageTitle';
-import NewQuoteModal from '@/app/admin/_components/NewQuoteModal';
 
 import type {
   AdvertiserOption,
@@ -86,7 +85,6 @@ export default function AgreementsClient({
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createAg, setCreateAg] = useState(false);
-  const [newQuoteOpen, setNewQuoteOpen] = useState(false);
   const [editAg, setEditAg] = useState<AgreementWithAdvertiser | null>(null);
   const [renewalSeed, setRenewalSeed] = useState<AgreementWithAdvertiser | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -318,7 +316,6 @@ export default function AgreementsClient({
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) { void handleUploadFile(f); } e.target.value = ''; }}
                 />
                 <button onClick={handleUploadClick} title="Upload manually signed agreement (pdf, jpeg)" className="inline-flex h-9 items-center whitespace-nowrap rounded border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50">Upload signed</button>
-                <button onClick={() => setNewQuoteOpen(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">New proposal</button>
                 <button onClick={() => setCreateAg(true)} className="inline-flex h-9 items-center whitespace-nowrap rounded border border-[#42277C] bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">New agreement</button>
               </>
           }
@@ -529,10 +526,6 @@ export default function AgreementsClient({
       )}
 
       {/* Drawers */}
-      <NewQuoteModal
-        open={newQuoteOpen}
-        onClose={() => setNewQuoteOpen(false)}
-      />
       {createAg && (
         <AgreementDrawer
           advertisers={advertisers}
