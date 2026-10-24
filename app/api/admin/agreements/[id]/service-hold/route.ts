@@ -7,6 +7,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { appendAudit, type Agreement } from '@/lib/agreements';
+import { payAwaitingCheckInvoices } from '@/lib/agreements-v2/service-invoice';
 import { SERVICE_PAYMENT_RELEASED_EVENT, getServiceHold } from '@/lib/agreements-v2/service-hold';
 
 export const runtime = 'nodejs';
@@ -39,12 +40,13 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     const sql = getSql();
     const rows = (await sql`SELECT * FROM agreements WHERE id = ${id}`) as unknown as Agreement[];
     if (!rows[0]) return NextResponse.json({ error: 'not found' }, { status: 404 });
+    const paidCount = await payAwaitingCheckInvoices(sql, id, admin.email ?? null);
     const note = typeof body.note === 'string' ? body.note.trim().slice(0, 300) : '';
     const log = appendAudit(rows[0].audit_log, {
       event: SERVICE_PAYMENT_RELEASED_EVENT,
       timestamp: new Date().toISOString(),
       user_email: admin.email ?? undefined,
-      details: `Payment confirmed by ${admin.email ?? 'admin'}; services released for scheduling.${note ? ` Note: ${note}` : ''}`,
+      details: `Payment confirmed by ${admin.email ?? 'admin'}; services released for scheduling.${paidCount ? ` ${paidCount} invoice(s) marked paid.` : ''}${note ? ` Note: ${note}` : ''}`,
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(log)}::jsonb, updated_at = NOW() WHERE id = ${id}`;
     return NextResponse.json({ ok: true });

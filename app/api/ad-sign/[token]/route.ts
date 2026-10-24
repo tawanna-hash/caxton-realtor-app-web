@@ -5,6 +5,7 @@
 // POST — Apply digital signature to agreement (with optional patches).
 // PATCH — Update advertiser/billing/order fields (allowlisted).
 
+import { ensureServiceInvoiceAfterSign } from '@/lib/agreements-v2/service-invoice';
 import { checkRequestState, prepayRequired } from '@/lib/agreements-v2/prepay';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
@@ -375,6 +376,23 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       }
     }
 
+    // Digital / app / eBlast: always leave an invoice behind (paid receipt for a
+    // card, "awaiting check payment" for an approved check).
+    try {
+      const fresh = (await sql`SELECT * FROM agreements WHERE id = ${id}`) as unknown as Agreement[];
+      if (fresh[0]) {
+        const outcome = await ensureServiceInvoiceAfterSign(sql, fresh[0]);
+        const invLog = appendAudit(fresh[0].audit_log, {
+          event: 'service_invoice',
+          timestamp: new Date().toISOString(),
+          details: `Service invoice: ${outcome}`,
+        });
+        await sql`UPDATE agreements SET audit_log = ${JSON.stringify(invLog)}::jsonb WHERE id = ${id}`;
+      }
+    } catch (e) {
+      console.error('[api/sign POST] ensureServiceInvoiceAfterSign failed', e instanceof Error ? e.message : String(e));
+    }
+
     // Auto-create renewal reminder 30 days before expiration.
     if (updatedRows.length > 0 && updatedRows[0].exp_date) {
       await autoCreateForAgreement(updatedRows[0]).catch((e: unknown) => {
@@ -462,7 +480,12 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     const channel = isAdChannel(rows[0].channel)
       ? rows[0].channel
       : deriveChannelFromAgreementType(rows[0].type);
-    if (body.payment_mode === 'check' && !allowsCheckPayment(channel)) {
+    const patchLineChannels = (await sql`SELECT channel FROM agreement_line_items WHERE agreement_id = ${id}`.catch(() => [])) as unknown as Array<{ channel: string | null }>;
+    const patchPrepay = prepayRequired(channel, patchLineChannels.map((l) => l.channel));
+    const patchCheckOk = patchPrepay
+      ? checkRequestState((await sql`SELECT audit_log FROM agreements WHERE id = ${id}` as unknown as Array<{ audit_log: never }>)[0]?.audit_log) === 'approved'
+      : allowsCheckPayment(channel);
+    if (body.payment_mode === 'check' && !patchCheckOk) {
       return NextResponse.json(
         { error: 'check payment is only available for print agreements' },
         { status: 400 },

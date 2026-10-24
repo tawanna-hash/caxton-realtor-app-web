@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
 import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { assertCampaignNotOnHold } from '@/lib/agreements-v2/campaign-hold';
+import { getSql } from '@/lib/db';
 import { toggleCampaign } from '@/lib/server/ads-store';
 import { logAudit } from '@/lib/server/audit';
 import { idParamSchema } from '@/lib/server/schemas/ads';
@@ -19,6 +21,8 @@ export const POST = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const { id } = idParamSchema.parse(await ctx.params);
 
+  const cur = (await getSql()`SELECT active FROM ad_campaigns WHERE id = ${id}`) as unknown as Array<{ active: boolean }>;
+  if (cur[0] && !cur[0].active) await assertCampaignNotOnHold(id);
   const updated = await toggleCampaign(id);
   if (!updated) throw new ApiError(404, 'Campaign not found');
 

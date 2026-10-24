@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
 import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { assertCampaignNotOnHold } from '@/lib/agreements-v2/campaign-hold';
 import { approveSelfServeCampaign } from '@/lib/server/ads-store';
 import { logAudit } from '@/lib/server/audit';
 import { idParamSchema } from '@/lib/server/schemas/ads';
@@ -25,6 +26,7 @@ export const POST = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const { id } = idParamSchema.parse(await ctx.params);
 
+  await assertCampaignNotOnHold(id);
   const { campaign, state } = await approveSelfServeCampaign(id);
 
   if (state === 'not_found') throw new ApiError(404, 'Campaign not found');

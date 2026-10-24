@@ -4,6 +4,7 @@
  *   DELETE — hard delete
  */
 
+import { assertCampaignNotOnHold } from '@/lib/agreements-v2/campaign-hold';
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
 import { ApiError } from '@/lib/server/error';
@@ -22,6 +23,7 @@ export const PATCH = withAdminTracking(async (req: Request, ctx: Ctx) => {
   const { id } = idParamSchema.parse(await ctx.params);
   const body = updateCampaignSchema.parse(await req.json());
 
+  if ((body as { active?: boolean }).active === true) await assertCampaignNotOnHold(id);
   const updated = await updateCampaign(id, body);
   if (!updated) throw new ApiError(404, 'Campaign not found');
 

@@ -332,6 +332,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   // Financial history must survive a CRM deletion. The delete endpoint clears
   // this reference inside the same transaction before removing the advertiser.
   await step(() => sql`ALTER TABLE invoices ALTER COLUMN advertiser_id DROP NOT NULL`);
+  await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS awaiting_check boolean NOT NULL DEFAULT false`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_advertiser_id ON invoices(advertiser_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_agreement_id  ON invoices(agreement_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_status        ON invoices(status)`);

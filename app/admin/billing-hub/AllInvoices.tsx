@@ -54,7 +54,7 @@ const daysOver = (i: Inv, now: number) => {
   return Math.max(1, Math.round((t.getTime() - new Date(`${iso(i.due_date)}T00:00:00`).getTime()) / 86_400_000));
 };
 const statusText = (i: Inv, now: number) =>
-  i.is_overdue ? `Overdue ${daysOver(i, now)} days` : i.status === 'paid' ? 'Paid' : i.status === 'sent' ? 'Open' : i.status[0].toUpperCase() + i.status.slice(1);
+  i.is_overdue ? `Overdue ${daysOver(i, now)} days` : (i as { awaiting_check?: boolean }).awaiting_check && i.status !== 'paid' ? 'Awaiting check payment' : i.status === 'paid' ? 'Paid' : i.status === 'sent' ? 'Open' : i.status[0].toUpperCase() + i.status.slice(1);
 const isReceipt = (i: Inv) => Boolean(i.number?.startsWith('SR-'));
 const memoOf = (i: Inv) => i.line_items?.map((l) => l.description?.trim()).filter(Boolean).join('; ') || i.memo || '';
 type MailRow = { to: string[]; subject: string; created_at: string; last_event: string };
