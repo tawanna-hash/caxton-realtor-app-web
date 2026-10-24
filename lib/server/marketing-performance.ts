@@ -27,6 +27,7 @@
 import { query } from '@/lib/server/db/neon';
 import { logger } from '@/lib/server/logger';
 import { fetchGa4Monthly, getGa4Connection, isGa4OAuthConfigured } from '@/lib/server/ga4-client';
+import { fetchMetaSummary, isMetaConfigured, type MetaMonth, type MetaPageInfo } from '@/lib/server/meta-pages';
 import { fetchMailchimpSummary, isMailchimpConfigured, type MailchimpMonth } from '@/lib/server/mailchimp';
 
 // ---------------------------------------------------------------------------
@@ -120,6 +121,7 @@ export interface SourceStatus {
   posthog: { connected: boolean };
   ga4: { configured: boolean; connected: boolean; email: string | null; propertyId: string | null; propertyName: string | null; error: string | null };
   mailchimp: { configured: boolean; connected: boolean; accountName: string | null; error: string | null };
+  meta: { configured: boolean; connected: boolean; pages: MetaPageInfo[]; error: string | null };
 }
 
 export interface SpendEntry {
@@ -144,6 +146,8 @@ export interface MarketingPerformance {
   mailchimp: MailchimpMonth[];
   /** Mailchimp delivered/sent by publication (unfiltered), for the connection card. */
   mailchimpByPublication: Record<PubBucket, MailchimpMonth[]>;
+  /** Facebook page views + engagements for the selected publication scope. */
+  meta: MetaMonth[];
   sources: SourceStatus;
   warnings: string[];
 }
@@ -486,6 +490,7 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
     posthog: { connected: Boolean(process.env.POSTHOG_PERSONAL_API_KEY) },
     ga4: { configured: isGa4OAuthConfigured(), connected: false, email: null, propertyId: null, propertyName: null, error: null },
     mailchimp: { configured: isMailchimpConfigured(), connected: false, accountName: null, error: null },
+    meta: { configured: isMetaConfigured(), connected: false, pages: [], error: null },
   };
 
   const ga4Promise = (async () => {
@@ -512,16 +517,30 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
     }
   })();
 
+  const metaPromise = (async () => {
+    if (!sources.meta.configured) return null;
+    try {
+      const summary = await fetchMetaSummary(MONTHS_BACK);
+      sources.meta = { ...sources.meta, connected: true, pages: summary.pages };
+      warnings.push(...summary.warnings);
+      return summary;
+    } catch (err) {
+      sources.meta.error = err instanceof Error ? err.message : String(err);
+      return null;
+    }
+  })();
+
   // External sources run alongside the database/PostHog queries and are
   // capped so a slow third party can't time out the whole dashboard.
   const capped = <T,>(p: Promise<T | null>, ms: number, onTimeout: () => void): Promise<T | null> =>
     Promise.race([p, new Promise<null>((resolve) => setTimeout(() => { onTimeout(); resolve(null); }, ms))]);
   const externals = Promise.all([
+    capped(metaPromise, 15_000, () => { if (!sources.meta.connected) sources.meta.error ??= 'Meta took too long to respond.'; }),
     capped(ga4Promise, 15_000, () => { sources.ga4.error ??= 'Google Analytics took too long to respond.'; }),
     capped(mcPromise, 15_000, () => { if (!sources.mailchimp.connected) sources.mailchimp.error ??= 'Mailchimp took too long to respond; try Refresh in a minute.'; }),
   ]);
 
-  const [[ga4, mailchimp], [traffic, inquiries, qualified, signed, revenue, delivered, spend]] = await Promise.all([externals, Promise.all([
+  const [[meta, ga4, mailchimp], [traffic, inquiries, qualified, signed, revenue, delivered, spend]] = await Promise.all([externals, Promise.all([
     settle('PostHog traffic', fetchTraffic(), []),
     settle('Ad inquiries', fetchInquiries(since), []),
     settle('Agreements (qualified)', fetchQualified(since), []),
@@ -555,6 +574,19 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
     c.ga4_pageviews += g.pageviews;
     c.ga4_key_events += g.keyEvents;
     if (g.sessions > 0 && (!firstGa4Month || g.month < firstGa4Month)) firstGa4Month = g.month;
+  }
+  // Facebook page views count as Social impressions. Only the two publication
+  // pages exist, so Shared / other has none.
+  const metaMonths = new Map<string, MetaMonth>();
+  for (const b of ['austin', 'san_antonio'] as const) {
+    if (!inPub(b)) continue;
+    for (const m of meta?.byPublication[b] ?? []) {
+      const c = cell(m.month, 'social');
+      if (c) c.impressions += m.views;
+      const t = metaMonths.get(m.month) ?? { month: m.month, views: 0, engagements: 0 };
+      t.views += m.views; t.engagements += m.engagements;
+      metaMonths.set(m.month, t);
+    }
   }
   const mcAudience = (mailchimp?.byAudience ?? []).filter((m) => inPub(m.listId, 'audience'));
   for (const m of mcAudience) {
@@ -593,6 +625,7 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
 
   return {
     publication: pub,
+    meta: Array.from(metaMonths.values()).filter((m) => months.includes(m.month)).sort((a, b) => a.month.localeCompare(b.month)),
     asOf: new Date().toISOString(),
     months,
     rows: Array.from(grid.values()),

@@ -45,7 +45,9 @@ interface SourceStatus {
   posthog: { connected: boolean };
   ga4: { configured: boolean; connected: boolean; email: string | null; propertyId: string | null; propertyName: string | null; error: string | null };
   mailchimp: { configured: boolean; connected: boolean; accountName: string | null; error: string | null };
+  meta: { configured: boolean; connected: boolean; pages: Array<{ pub: 'austin' | 'san_antonio'; id: string; name: string; handle: string | null; followers: number | null }>; error: string | null };
 }
+interface MetaMonth { month: string; views: number; engagements: number }
 type PubBucket = 'austin' | 'san_antonio' | 'other';
 type PubFilter = 'all' | PubBucket;
 interface SpendEntry { id: string; month: string; channel: Channel; amount_cents: number; notes: string | null; updated_at: string; publication: 'all' | PubBucket }
@@ -59,6 +61,7 @@ interface MarketingPerformance {
   firstGa4Month: string | null;
   mailchimp: MailchimpMonth[];
   mailchimpByPublication: Record<PubBucket, MailchimpMonth[]>;
+  meta: MetaMonth[];
   sources: SourceStatus;
   warnings: string[];
 }
@@ -588,7 +591,7 @@ export default function MarketingPerformancePage() {
           </section>
 
           {/* Connections */}
-          <Connections sources={data.sources} pub={pub} mailchimp={data.mailchimp.filter((m) => view.monthsSel.includes(m.month))} byPub={data.mailchimpByPublication} monthsSel={view.monthsSel} onChanged={reload} />
+          <Connections sources={data.sources} pub={pub} mailchimp={data.mailchimp.filter((m) => view.monthsSel.includes(m.month))} byPub={data.mailchimpByPublication} meta={data.meta.filter((m) => view.monthsSel.includes(m.month))} monthsSel={view.monthsSel} onChanged={reload} />
 
           {/* Spend */}
           <SpendPanel months={data.months} entries={data.spend} pub={pub} onSaved={reload} />
@@ -785,7 +788,7 @@ function SpendPanel({ months, entries, pub, onSaved }: { months: string[]; entri
   );
 }
 
-function Connections({ sources, pub, mailchimp, byPub, monthsSel, onChanged }: { sources: SourceStatus; pub: PubFilter; mailchimp: MailchimpMonth[]; byPub: Record<PubBucket, MailchimpMonth[]>; monthsSel: string[]; onChanged: () => void }) {
+function Connections({ sources, pub, mailchimp, byPub, meta, monthsSel, onChanged }: { sources: SourceStatus; pub: PubFilter; mailchimp: MailchimpMonth[]; byPub: Record<PubBucket, MailchimpMonth[]>; meta: MetaMonth[]; monthsSel: string[]; onChanged: () => void }) {
   const [props, setProps] = useState<Array<{ id: string; name: string; account: string }> | null>(null);
   const [propError, setPropError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -860,9 +863,9 @@ function Connections({ sources, pub, mailchimp, byPub, monthsSel, onChanged }: {
 
   return (
     <section>
-      <SectionHead id="connections" title="Data connections" sub="PostHog, Google Analytics 4, and Mailchimp" />
+      <SectionHead id="connections" title="Data connections" sub="PostHog, Google Analytics 4, Mailchimp, and Facebook" />
       {notice && <p className="mb-3 rounded border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700">{notice}</p>}
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
         <Card title="PostHog" right={status(sources.posthog.connected, sources.posthog.connected ? 'Connected' : 'Not configured')}>
           <p className="text-sm text-gray-600">Sessions, pageviews, and channel types from the public app.</p>
         </Card>
@@ -929,6 +932,32 @@ function Connections({ sources, pub, mailchimp, byPub, monthsSel, onChanged }: {
             <div className="space-y-1 text-sm text-gray-600">
               <p>Add <code className="rounded bg-gray-100 px-1 text-xs">MAILCHIMP_API_KEY</code> to the Vercel project (Production), then redeploy.</p>
               {sources.mailchimp.error && <p className="text-xs text-[#661102]">{sources.mailchimp.error}</p>}
+            </div>
+          )}
+        </Card>
+
+        <Card title="Facebook pages" right={status(sources.meta.connected, sources.meta.connected ? 'Connected' : sources.meta.error ? 'Error' : 'Not connected')}>
+          {sources.meta.connected ? (
+            <div className="space-y-2 text-sm">
+              <ul className="space-y-0.5">
+                {sources.meta.pages.map((p) => (
+                  <li key={p.id} className="flex justify-between text-gray-600">
+                    <span>{PUB_LABEL[p.pub]}</span>
+                    <span className="tabular-nums">{p.followers != null ? `${fmtInt(p.followers)} followers` : p.name}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="grid grid-cols-2 gap-2 tabular-nums">
+                <div><p className="text-xs text-gray-500">Page views</p><p className="font-semibold">{fmtInt(meta.reduce((n, m) => n + m.views, 0))}</p></div>
+                <div><p className="text-xs text-gray-500">Engagements</p><p className="font-semibold">{fmtInt(meta.reduce((n, m) => n + m.engagements, 0))}</p></div>
+              </div>
+              <p className="text-xs text-gray-500">{pub === 'all' ? 'Both pages' : pub === 'other' ? 'No page for Shared / other' : PUB_LABEL[pub]} · selected range · page views count toward Social impressions.</p>
+              {sources.meta.error && <p className="text-xs text-[#661102]">{sources.meta.error}</p>}
+            </div>
+          ) : (
+            <div className="space-y-1 text-sm text-gray-600">
+              <p>Add <code className="rounded bg-gray-100 px-1 text-xs">META_ACCESS_TOKEN</code> (system-user token with access to facebook.com/myrealtyline and facebook.com/newslinesa) to the Vercel project, then redeploy.</p>
+              {sources.meta.error && <p className="text-xs text-[#661102]">{sources.meta.error}</p>}
             </div>
           )}
         </Card>
