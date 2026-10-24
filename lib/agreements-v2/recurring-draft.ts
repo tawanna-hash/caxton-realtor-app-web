@@ -90,7 +90,7 @@ export function planDraftSchedule(
       first_run_date: firstRun,
       end_date: end,
       day_of_month: startDay,
-      due_days: defaults?.due_days ?? 15,
+      due_days: defaults?.due_days ?? 20,
       bill_to_name: ag.billing_name ?? company,
       bill_to_email: ag.billing_email || ag.advertiser_email || null,
       description: ag.ad_size ? `Advertising: ${ag.ad_size}` : 'Advertising',

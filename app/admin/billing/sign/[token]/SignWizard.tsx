@@ -446,10 +446,14 @@ export default function SignWizard({
   ag,
   token,
   lineItems = [],
+  prepay = false,
+  checkState = null,
 }: {
   ag: Agreement;
   token: string;
   lineItems?: SignWizardLineItem[];
+  prepay?: boolean;
+  checkState?: 'approved' | 'requested' | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -633,7 +637,11 @@ export default function SignWizard({
   const [billingContactPhone, setBillingContactPhone] = useState(formatPhone(ag.billing_contact_phone ?? ''));
   // Digital/e-Blast/App require prepayment by credit card before placement;
   // Check is only offered for print agreements.
-  const checkAllowed = allowsCheckPayment(channel);
+  // Print is invoiced (due within 20 days). eBlast / app / digital are paid
+  // before service is scheduled; a check there needs admin approval first.
+  const checkAllowed = !prepay || checkState === 'approved';
+  const [checkAsked, setCheckAsked] = useState(checkState === 'requested');
+  const [cardWhen, setCardWhen] = useState<'now' | 'later'>('now');
   // Nothing is preselected: the client chooses how they pay.
   const [paymentType, setPaymentType] = useState<string>('');
   // ACH: the client connects their bank account (Stripe) before signing.
@@ -683,7 +691,7 @@ export default function SignWizard({
                 let s = d.step as number;
                 // Never imply payment is complete: if CC was chosen but the
                 // payment intent wasn't captured, don't restore past Step 4.
-                if (s > 4 && d.paymentType === 'Credit Card' && !d.confirmedPaymentIntentId) s = 4;
+                if (s > 4 && d.paymentType === 'Credit Card' && !d.confirmedPaymentIntentId && !d.achLaterTo) s = 4;
                 // Same for ACH: bank connected or setup link sent is required first.
                 if (s > 4 && d.paymentType === 'ACH' && !d.ach && !d.achLaterTo) s = 4;
                 setStep(s);
@@ -726,7 +734,7 @@ export default function SignWizard({
               applyStr('billingEmail', setBillingEmail);
               applyStr('billingContactName', setBillingContactName);
               applyStr('billingContactPhone', setBillingContactPhone);
-              if (typeof d.paymentType === 'string' && (checkAllowed || d.paymentType !== 'Check')) {
+              if (typeof d.paymentType === 'string' && true) {
                 setPaymentType(d.paymentType);
               }
               if (typeof d.achLaterTo === 'string') setAchLaterTo(d.achLaterTo);
@@ -917,7 +925,26 @@ export default function SignWizard({
     // Special case: leaving Step 4 with Credit Card selected → authorize the
     // card NOW while StripePaymentBlock is still mounted. The actual capture
     // happens server-side via the payment_intent.succeeded webhook.
-    if (step === 4 && paymentType === 'Credit Card') {
+    if (step === 4 && paymentType === 'Credit Card' && cardWhen === 'later' && !achLaterTo) {
+      setSaving(true);
+      setError(null);
+      try {
+        const email = (apEmail || billingEmail).trim();
+        const res = await fetch(`/api/ad-sign/${token}/ach-setup`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'later', email }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j.error || `HTTP ${res.status}`);
+        setAchLaterTo(email);
+        setStep((x) => x + 1);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not send the payment request.');
+      }
+      setSaving(false);
+      return;
+    }
+    if (step === 4 && paymentType === 'Credit Card' && !achLaterTo) {
       setSaving(true);
       setError(null);
       try {
@@ -1035,7 +1062,7 @@ export default function SignWizard({
       //    we MUST have a confirmedPaymentIntentId here — hard-fail otherwise.
       let stripePaymentIntentId: string | null = null;
       if (paymentType === 'Credit Card') {
-        if (!confirmedPaymentIntentId) {
+        if (!confirmedPaymentIntentId && !achLaterTo) {
           setError('Card was not authorized in the previous step. Go back to Billing & Payment and re-enter your card.');
           setSaving(false);
           return;
@@ -1787,7 +1814,8 @@ export default function SignWizard({
   // ─── Step 4: Billing & Payment ────────────────────────────────────────────
 
   if (step === 4) {
-    const ccNotReady = paymentType === 'Credit Card' && !stripeReady;
+    const ccNotReady = paymentType === 'Credit Card' && cardWhen === 'now' && !achLaterTo && !stripeReady;
+    const checkBlocked = paymentType === 'Check' && !checkAllowed;
     return (
       <Shell
         step={4}
@@ -1795,12 +1823,12 @@ export default function SignWizard({
         onNext={handleNext}
         nextLabel={
           paymentType === 'Credit Card'
-            ? (stripeReady ? 'Authorize Card →' : 'Loading payment form…')
+            ? (achLaterTo ? 'Next →' : cardWhen === 'later' ? 'Email Request & Continue →' : stripeReady ? 'Authorize Card →' : 'Loading payment form…')
             : paymentType === 'ACH' && !ach && !achLaterTo
               ? (achWhen === 'later' ? 'Email Setup Link & Continue →' : 'Connect Bank Account →')
               : 'Next →'
         }
-        nextDisabled={ccNotReady || !paymentType || achBusy}
+        nextDisabled={ccNotReady || !paymentType || achBusy || checkBlocked}
         saving={saving}
       >
         <div className="space-y-4">
@@ -1860,7 +1888,7 @@ export default function SignWizard({
           <div>
             <Eyebrow>Payment Type</Eyebrow>
             <div className="flex gap-4">
-              {PAYMENT_TYPES.filter((p) => checkAllowed || p !== 'Check').map((p) => {
+              {PAYMENT_TYPES.map((p) => {
                 return (
                   <label key={p} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -1876,10 +1904,45 @@ export default function SignWizard({
                 );
               })}
             </div>
-            {!checkAllowed && (
+            {prepay && (
               <p className="text-xs text-gray-500 mt-1">
-                Check is available for print agreements only. Digital, e-Blast, and App placements are paid by ACH or credit card.
+                e-Blast, digital and app services are paid by credit card or ACH before your service is scheduled. Services will not be scheduled until payment is received.
               </p>
+            )}
+            {paymentType === 'Check' && !prepay && (
+              <p className="text-xs text-gray-700 mt-2 rounded-md border border-gray-200 bg-gray-50 p-3">
+                Print advertising is invoiced. Payment is due within 20 days of the invoice date.
+              </p>
+            )}
+            {paymentType === 'Check' && prepay && checkAllowed && (
+              <p className="text-xs text-[#645600] mt-2 rounded-md border border-[#FAD800]/50 bg-[#FEF8CC] p-3">
+                Check payment has been approved. Your service will not be scheduled until your check is received.
+              </p>
+            )}
+            {paymentType === 'Check' && prepay && !checkAllowed && (
+              <div className="text-sm text-gray-700 mt-2 rounded-md border border-gray-200 bg-gray-50 p-3 space-y-2">
+                <p>Paying by check on e-Blast, digital or app services requires approval from Realty News Now. Your service will not be scheduled until your check is received.</p>
+                {checkAsked ? (
+                  <p className="text-green-800 font-medium">Approval requested. We will email you once it is approved, or you can choose credit card or ACH instead.</p>
+                ) : (
+                  <button
+                    type="button"
+                    className="px-3 py-2 rounded-md bg-[#301D5D] text-white text-sm"
+                    onClick={async () => {
+                      setError(null);
+                      try {
+                        const r = await fetch(`/api/agree-v2/${token}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'request_check' }) });
+                        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                        setCheckAsked(true);
+                      } catch (e) {
+                        setError(e instanceof Error ? e.message : 'Could not send the request.');
+                      }
+                    }}
+                  >
+                    Request check approval
+                  </button>
+                )}
+              </div>
             )}
             {!paymentType && (
               <p className="text-xs text-gray-500 mt-1">Please choose how you would like to pay.</p>
@@ -1919,7 +1982,30 @@ export default function SignWizard({
             </div>
           )}
 
-          {paymentType === 'Credit Card' && (
+          {paymentType === 'Credit Card' && !achLaterTo && (
+            <fieldset className="space-y-2 rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+              <label className="flex items-start gap-2">
+                <input type="radio" name="cardWhen" className="mt-1" checked={cardWhen === 'now'} onChange={() => setCardWhen('now')} />
+                <span><strong>Enter a card now.</strong></span>
+              </label>
+              <label className="flex items-start gap-2">
+                <input type="radio" name="cardWhen" className="mt-1" checked={cardWhen === 'later'} onChange={() => setCardWhen('later')} />
+                <span><strong>Send a request to someone else</strong> (for example, Accounts Payable) to add a card or bank account. Your service will not be scheduled until payment is received.</span>
+              </label>
+              {cardWhen === 'later' && (
+                <div className="pl-6">
+                  <label className="block text-xs text-gray-600 mb-1" htmlFor="ap-email-card">Accounts Payable email</label>
+                  <input id="ap-email-card" type="email" value={apEmail || billingEmail} onChange={(e) => setApEmail(e.target.value)} placeholder="ap@company.com" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                </div>
+              )}
+            </fieldset>
+          )}
+          {paymentType === 'Credit Card' && achLaterTo && (
+            <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+              <strong className="text-green-800">Payment request sent to {achLaterTo}.</strong> You can sign now. Your service will not be scheduled until payment is received (link valid 14 days).
+            </div>
+          )}
+          {paymentType === 'Credit Card' && cardWhen === 'now' && !achLaterTo && (
             <div className="space-y-4 rounded-md border border-[#FAD800]/30 bg-[#FEF8CC] p-4">
               {ccSurchargeTotal != null && (
                 <div className="text-sm text-[#645600] rounded-md border border-[#FAD800]/50 bg-[#FEF8CC] p-3">

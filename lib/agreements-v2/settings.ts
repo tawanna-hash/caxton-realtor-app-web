@@ -24,7 +24,7 @@ export const DEFAULT_INTRO_RENEWAL =
   'Your advertising agreement is coming up for renewal. We pre-filled everything, so renewing takes about a minute.';
 
 export const FALLBACK_DEFAULTS: AgreementDefaults = {
-  due_days: 15,
+  due_days: 20,
   billing_day: 'start',
   proposal_expiry_days: null,
   intro_new: DEFAULT_INTRO_NEW,

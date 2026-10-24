@@ -5,6 +5,7 @@
 // POST — Apply digital signature to agreement (with optional patches).
 // PATCH — Update advertiser/billing/order fields (allowlisted).
 
+import { checkRequestState, prepayRequired } from '@/lib/agreements-v2/prepay';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { verifyToken } from '@/lib/sign-token';
@@ -218,13 +219,25 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       }
     }
 
+    // A card that is not entered now must be handed to accounts payable.
+    if (paymentChoice === 'Credit Card' && typeof body.stripePaymentIntentId !== 'string') {
+      await ensurePaymentSetupRequestsSchema();
+      const ok = (await sql`
+        SELECT 1 FROM payment_setup_requests r WHERE r.agreement_id = ${String(id)} LIMIT 1`) as unknown[];
+      if (ok.length === 0) {
+        return NextResponse.json({ error: 'Authorize your card, or send the payment request to accounts payable, before signing.' }, { status: 400 });
+      }
+    }
+
     const storedChannel = (ag as Agreement & { channel?: string | null }).channel;
     const channel = isAdChannel(storedChannel)
       ? storedChannel
       : deriveChannelFromAgreementType(ag.type);
-    if (patches?.payment_mode === 'check' && !allowsCheckPayment(channel)) {
+    const lineChannels = (await sql`SELECT channel FROM agreement_line_items WHERE agreement_id = ${id}`.catch(() => [])) as unknown as Array<{ channel: string | null }>;
+    const needsPrepay = prepayRequired(channel, lineChannels.map((l) => l.channel));
+    if ((patches?.payment_mode === 'check' || paymentChoice === 'Check') && needsPrepay && checkRequestState(ag.audit_log) !== 'approved') {
       return NextResponse.json(
-        { error: 'check payment is only available for print agreements' },
+        { error: 'Paying by check on e-Blast, digital or app services needs approval first. Please request approval or choose credit card or ACH.' },
         { status: 400 },
       );
     }
