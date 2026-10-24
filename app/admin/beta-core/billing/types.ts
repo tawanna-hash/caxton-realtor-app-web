@@ -9,6 +9,15 @@ export type AdvertiserOption = {
   publication: string;
   contact_email: string | null;
   billing_email: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  billing_contact_name?: string | null;
+  billing_contact_phone?: string | null;
   /**
    * Read-only card-on-file mirror kept in sync FROM the signed agreement by
    * lib/server/billing-crm-sync.ts. Used only to *display* which card is on
