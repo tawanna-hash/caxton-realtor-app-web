@@ -1,7 +1,7 @@
 'use client';
 
-// Client file card: every Payment Method Setup request sent to this client
-// (with a copy of the email) and the client's setup outcomes.
+// Client file card: every Payment Method Setup request sent to this partner
+// (with a copy of the email) and the partner's setup outcomes.
 
 import { useEffect, useState } from 'react';
 import { A } from '@/components/anchor/ui';

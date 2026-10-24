@@ -47,7 +47,7 @@ function PortalAccessBody({ advertiserId, email, activatedAt }: { advertiserId: 
     if (tab) tab.location.href = j.url ?? '/portal'; else window.location.href = j.url ?? '/portal';
   }
   async function sendLink() {
-    if (!email) { setMsg('Add an email to this client first.'); return; }
+    if (!email) { setMsg('Add an email to this partner first.'); return; }
     if (!window.confirm(`Email a secure portal sign-in link to ${email}?`)) return;
     setBusy(true); setMsg(null);
     const r = await fetch('/api/admin/portal-links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ advertiser_id: advertiserId, purpose: 'login' }) });
@@ -87,14 +87,14 @@ function PartialPaymentsBody({ advertiserId }: { advertiserId: number }) {
     setBusy(true); setMsg(null);
     const r = await fetch(`/api/admin/advertisers/${advertiserId}/partial-payments`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ allow: next }) });
     setBusy(false);
-    if (r.ok) { setAllow(next); setMsg(next ? 'This client can now pay any amount up to the balance.' : 'This client must pay invoices in full.'); } else setMsg('Could not save the change.');
+    if (r.ok) { setAllow(next); setMsg(next ? 'This partner can now pay any amount up to the balance.' : 'This partner must pay invoices in full.'); } else setMsg('Could not save the change.');
   }
   return (
     <div className="space-y-3 text-sm text-[color:var(--ds-ink)]">
       <div className="flex items-center gap-2">
         <span className={allow ? 'rounded-full border border-[#047857] px-2 py-0.5 text-xs text-[#065F46]' : pill}>{allow === null ? 'Loading…' : allow ? 'Any amount allowed' : 'Pay in full only'}</span>
       </div>
-      <p className="text-xs text-[color:var(--ds-body)]">When on, this client can pay a different amount than the full invoice or the full outstanding balance in the client portal. Leave off for everyone else.</p>
+      <p className="text-xs text-[color:var(--ds-body)]">When on, this partner can pay a different amount than the full invoice or the full outstanding balance in the client portal. Leave off for everyone else.</p>
       <div><button type="button" className={A.small} onClick={flip} disabled={busy || allow === null}>{busy ? 'Saving…' : allow ? 'Require payment in full' : 'Allow partial payments'}</button></div>
       {msg && <p className="text-xs text-[color:var(--ds-body)]">{msg}</p>}
     </div>
@@ -135,7 +135,7 @@ export default function ClientDetail({ id }: { id: number }) {
   const nextTotal = nextLines.reduce((n, s) => n + s.amount_cents + (s.tax_cents ?? 0), 0);
 
   if (adv.loading) return <p className="text-sm text-[color:var(--ds-body)]">Loading…</p>;
-  if (!a) return <div className={A.error}>That client was not found. <Link href="/admin/agreements/clients" className={link}>Back to clients</Link></div>;
+  if (!a) return <div className={A.error}>That partner was not found. <Link href="/admin/agreements/clients" className={link}>Back to partners</Link></div>;
 
   const allContacts = [mainOf(a), ...othersOf(a)].filter((p): p is NonNullable<ReturnType<typeof mainOf>> => !!p);
   const payMissing = !a.records.some((r) => r.card_last4) && !a.records.some((r) => r.payment_mode === 'card');
@@ -166,7 +166,7 @@ export default function ClientDetail({ id }: { id: number }) {
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <Link href="/admin/agreements/clients" aria-label="Back to clients" className="mt-1 text-xl text-[color:var(--ds-ink)]">&lsaquo;</Link>
+          <Link href="/admin/agreements/clients" aria-label="Back to partners" className="mt-1 text-xl text-[color:var(--ds-ink)]">&lsaquo;</Link>
           <div>
             <h2 className="flex flex-wrap items-center gap-2 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[color:var(--ds-ink)]">{a.name}<span className="rounded-full border border-[#047857] bg-[#E6F6EF] px-2.5 py-0.5 text-xs font-medium text-[#065F46]">{GROUP_LABEL[a.group]}</span>{a.markets.map((m) => <span key={m} className="rounded-full border border-[color:var(--ds-line)] px-2.5 py-0.5 text-xs font-medium text-[color:var(--ds-body)]">{m}</span>)}</h2>
             <p className="text-xs text-[color:var(--ds-body)]">{a.type === 'individual' ? 'Individual' : 'Business'} · Created on {day(a.created_at)}</p>
@@ -175,7 +175,7 @@ export default function ClientDetail({ id }: { id: number }) {
         <RowMenu items={[{ label: 'Create agreement', href: '/admin/agreements/renewals-v2?new=1' }, { label: 'Open billing', href: `/admin/billing-hub?clientId=${id}` }]} />
       </div>
 
-      <div role="tablist" aria-label="Client" className="flex gap-2 overflow-x-auto border-b border-[color:var(--ds-line)]">
+      <div role="tablist" aria-label="Partner" className="flex gap-2 overflow-x-auto border-b border-[color:var(--ds-line)]">
         {TABS.map(([k, label]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} style={{ border: 0, borderBottom: '2px solid', borderRadius: 0, boxShadow: 'none', background: 'transparent', color: tab === k ? 'var(--ds-ink)' : 'var(--ds-body)', borderColor: tab === k ? 'var(--ds-primary)' : 'transparent' }} className="-mb-px whitespace-nowrap px-3 pb-3 pt-2 text-[15px]">{label}</button>
         ))}
@@ -214,7 +214,7 @@ export default function ClientDetail({ id }: { id: number }) {
             </Card>
           </div>
           <div className="space-y-5">
-            <Card title="Client details" action={<button type="button" className={link} style={{ border: 0, background: 'transparent' }} onClick={() => setEditing(true)}>Edit client</button>}>
+            <Card title="Partner details" action={<button type="button" className={link} style={{ border: 0, background: 'transparent' }} onClick={() => setEditing(true)}>Edit partner</button>}>
               <div className="space-y-1 text-sm text-[color:var(--ds-ink)]">
                 <p><span className="text-[color:var(--ds-body)]">Billing email: </span>{a.billing_email ?? a.records.find((r) => r.billing_email)?.billing_email ?? <button type="button" onClick={() => setEditing(true)} style={{ border: 0, background: 'transparent' }} className={link}>Add billing email</button>}</p>
                 {address ? <p>{address}</p> : <button type="button" onClick={() => setEditing(true)} style={{ border: 0, background: 'transparent' }} className={`${link} inline-flex items-center gap-2`}><span aria-hidden="true" className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-current leading-none">+</span>Add address</button>}
@@ -261,7 +261,7 @@ export default function ClientDetail({ id }: { id: number }) {
             <Link href="/admin/agreements/renewals-v2" className={A.outline}>Billing Control</Link>
           </div>
           {upcomingRows.length === 0 ? (
-            <p className="py-8 text-center text-sm text-[color:var(--ds-ink)]">There are no scheduled invoices to show.<br />Open Billing Control to review how this client is billed.</p>
+            <p className="py-8 text-center text-sm text-[color:var(--ds-ink)]">There are no scheduled invoices to show.<br />Open Billing Control to review how this partner is billed.</p>
           ) : (
             <div className="overflow-x-auto">
               <SortTable rows={upcomingRows} cols={[{ label: 'Service', get: (r) => r.name }, { label: 'Installment', get: (r) => r.label }, { label: 'Issue date', get: (r) => r.date }, { label: 'Status', get: (r) => r.status }, { label: 'Total', get: (r) => r.amount, className: 'text-right' }]} className={`${A.table} min-w-[560px]`}>

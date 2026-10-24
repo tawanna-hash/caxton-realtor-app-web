@@ -13,7 +13,7 @@ async function patch(id: number, body: Record<string, unknown>) {
   window.dispatchEvent(new Event('focus')); // reloads the client lists
 }
 
-// Mobile slide-up drawer (matches the Anchor "Edit client" sheet): grab handle, close X,
+// Mobile slide-up drawer (matches the Anchor "Edit partner" sheet): grab handle, close X,
 // centered title, full-width Save. Becomes a centered dialog from the sm breakpoint up.
 function Modal({ title, onClose, onSave, saving, error, children, saveLabel = 'Save' }: { title: string; onClose: () => void; onSave: () => void; saving: boolean; error: string | null; children: React.ReactNode; saveLabel?: string }) {
   return (
@@ -63,7 +63,7 @@ export function EditClientModal({ client, onClose }: { client: Adv; onClose: () 
   const [saving, setSaving] = useState(false); const [error, setError] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (v: string) => setF((p) => ({ ...p, [k]: v }));
   const save = async () => {
-    if (!f.company.trim()) { setError('Client name is required.'); return; }
+    if (!f.company.trim()) { setError('Partner name is required.'); return; }
     setSaving(true); setError(null);
     try {
       // `type` on the record is the Partners category, so the Business/Individual toggle is not written to it.
@@ -71,16 +71,16 @@ export function EditClientModal({ client, onClose }: { client: Adv; onClose: () 
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not save.'); setSaving(false); }
   };
   return (
-    <Modal title="Edit client" onClose={onClose} onSave={save} saving={saving} error={error}>
+    <Modal title="Edit partner" onClose={onClose} onSave={save} saving={saving} error={error}>
       <div className="mb-6 flex items-center justify-between gap-3">
-        <span className="text-base font-semibold text-[color:var(--ds-ink)]">Client type</span>
-        <div role="radiogroup" aria-label="Client type" className="flex w-[246px] max-w-[62%] rounded-full bg-[#ECECF1] p-[3px]">
+        <span className="text-base font-semibold text-[color:var(--ds-ink)]">Partner type</span>
+        <div role="radiogroup" aria-label="Partner type" className="flex w-[246px] max-w-[62%] rounded-full bg-[#ECECF1] p-[3px]">
           {(['business', 'individual'] as const).map((k) => (
             <button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => setKind(k)} style={{ border: kind === k ? '1px solid #D5D3DE' : '1px solid transparent' }} className={`h-10 flex-1 rounded-full text-sm ${kind === k ? 'bg-white font-semibold text-[color:var(--ds-ink)] shadow-sm' : 'bg-transparent font-medium text-[color:var(--ds-body)]'}`}>{k === 'business' ? 'Business' : 'Individual'}</button>
           ))}
         </div>
       </div>
-      <Field label="Client name" value={f.company} onChange={set('company')} />
+      <Field label="Partner name" value={f.company} onChange={set('company')} />
       <Field label="Billing email" type="email" value={f.billing_email} onChange={set('billing_email')} />
       <label className="relative mb-5 block">
         <span className="absolute -top-2 left-3 bg-[#fcfcfc] px-1 text-xs leading-4 text-[color:var(--ds-body)]">Status</span>
@@ -154,7 +154,7 @@ export function ContactModal({ client, target, current, onClose }: { client: Adv
       <Field label="Email" type="email" value={email} onChange={setEmail} />
       <Field label="Phone" value={phone} onChange={setPhone} />
       {(target.kind === 'extra' || target.kind === 'billing') && <button type="button" disabled={saving} onClick={() => { if (window.confirm('Remove this contact?')) void run(true); }} style={{ border: 0, background: 'transparent' }} className="text-sm font-medium text-red-700 hover:underline">Remove contact</button>}
-      {target.kind === 'main' && <p className="text-xs text-[color:var(--ds-body)]">This is the client&apos;s main contact. Change it here and it updates in Partners.</p>}
+      {target.kind === 'main' && <p className="text-xs text-[color:var(--ds-body)]">This is the partner&apos;s main contact. Change it here and it updates in Partners.</p>}
     </Modal>
   );
 }

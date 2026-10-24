@@ -8,7 +8,7 @@ import SortTable from '@/components/anchor/SortTable';
 
 // Statement summary for the selected issued invoices. Sending creates one
 // payment link per invoice plus a Pay Balance in Full link, then emails the
-// statement (with a PDF copy) to the client.
+// statement (with a PDF copy) to the partner.
 export default function StatementDialog({ client, invoices: allInvoices, onClose }: { client: Adv; invoices: Inv[]; onClose: () => void }) {
   // Statements only cover overdue invoices.
   const today = new Date().toISOString().slice(0, 10);
@@ -39,7 +39,7 @@ export default function StatementDialog({ client, invoices: allInvoices, onClose
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[12px] bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Statement summary</h2>
         <p className="mt-1 text-sm text-[color:var(--ds-body)]">{client.name}</p>
-        {invoices.length === 0 && <p className="mt-3 text-sm text-[#661102]">This client has no overdue invoices, so a statement is not available.</p>}
+        {invoices.length === 0 && <p className="mt-3 text-sm text-[#661102]">This partner has no overdue invoices, so a statement is not available.</p>}
         <SortTable rows={invoices} cols={[{ label: 'Invoice', get: (r) => r.number }, { label: 'Due', get: (r) => r.due_date }, { label: 'Total', get: (r) => r.total_cents, className: 'text-right' }, { label: 'Balance', get: (r) => r.balance_cents, className: 'text-right' }]} className={`${A.table} mt-4`}>
 {(rws) => (<>
             {rws.map((i) => (

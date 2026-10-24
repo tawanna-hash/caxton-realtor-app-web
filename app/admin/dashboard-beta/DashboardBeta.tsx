@@ -142,7 +142,7 @@ export default function DashboardBeta() {
           </div>
           <div className="h-fit space-y-1 rounded-[10px] bg-white p-4 text-sm">
             <p className="mb-2 font-medium text-[color:var(--ds-ink)]">Shortcuts</p>
-            {([['Clients', '/admin/agreements/clients'], ['Billing', '/admin/billing-hub'], ['Services', '/admin/services-beta'], ['Reports', '/admin/reports-beta'], ['Integrations', '/admin/integrations-beta']] as const).map(([l, h]) => <Link key={h} href={h} className="block rounded-full px-2 py-1.5 text-[color:var(--ds-primary)] hover:bg-[color:var(--ds-selected)]">{l}</Link>)}
+            {([['Partners', '/admin/agreements/clients'], ['Billing', '/admin/billing-hub'], ['Services', '/admin/services-beta'], ['Reports', '/admin/reports-beta'], ['Integrations', '/admin/integrations-beta']] as const).map(([l, h]) => <Link key={h} href={h} className="block rounded-full px-2 py-1.5 text-[color:var(--ds-primary)] hover:bg-[color:var(--ds-selected)]">{l}</Link>)}
           </div>
         </div>
       )}

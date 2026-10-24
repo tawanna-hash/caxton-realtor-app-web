@@ -55,14 +55,14 @@ export default function ContactsList() {
     <div className="space-y-5">
       <div>
         <h1 className={A.title}>Contacts</h1>
-        <p className="mt-1 text-sm text-[color:var(--ds-body)]">Other people inside each client organization. The main contact is on the client.</p>
+        <p className="mt-1 text-sm text-[color:var(--ds-body)]">Other people inside each partner organization. The main contact is on the partner.</p>
       </div>
       {error && <div className={A.error}>{error}</div>}
       <div className="flex flex-wrap items-center gap-3"><SearchBox value={q} onChange={setQ} label="Search contacts" /><StatusSelect title="Contact status" value={st} onChange={setSt} /></div>
       {loading ? <p className="text-sm text-[color:var(--ds-body)]">Loading…</p> : (
         <div className="overflow-x-auto">
           <table className={`${A.table} min-w-[640px]`}>
-            <thead><tr>{th('client', 'Client name')}{th('status', 'Status')}{th('name', 'Contact name')}<th className="!font-medium !text-[color:var(--ds-body)]">Contact details</th><th /></tr></thead>
+            <thead><tr>{th('client', 'Partner name')}{th('status', 'Status')}{th('name', 'Contact name')}<th className="!font-medium !text-[color:var(--ds-body)]">Contact details</th><th /></tr></thead>
             <tbody>
               {rows.slice(0, 300).map((c) => (
                 <tr key={c.key}>
@@ -70,7 +70,7 @@ export default function ContactsList() {
                   <td className="font-semibold text-[color:var(--ds-ink)]">{c.status}</td>
                   <td className="text-[color:var(--ds-ink)]">{c.name}</td>
                   <td className="text-[color:var(--ds-ink)]">{c.email ?? '—'}<div className="text-xs text-[color:var(--ds-body)]">{c.phone ?? ''}</div></td>
-                  <td className="text-right"><RowMenu items={[{ label: 'View client', href: `/admin/agreements/clients/${c.clientId}` }]} /></td>
+                  <td className="text-right"><RowMenu items={[{ label: 'View partner', href: `/admin/agreements/clients/${c.clientId}` }]} /></td>
                 </tr>
               ))}
               {rows.length === 0 && <tr><td colSpan={5} className="py-10 text-center text-[color:var(--ds-body)]">No contacts match.</td></tr>}

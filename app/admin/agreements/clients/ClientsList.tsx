@@ -28,14 +28,14 @@ export default function ClientsList() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className={A.title}>Clients</h1>
+        <h1 className={A.title}>Partners</h1>
         <p className="mt-1 hidden text-sm text-[color:var(--ds-body)] md:block">The main contact person for each client. Other people in the organization are under Contacts.</p>
       </div>
       {error && <div className={A.error}>{error}</div>}
-      <div className="hidden flex-wrap items-center gap-3 md:flex"><SearchBox value={q} onChange={setQ} label="Search clients" /><StatusSelect title="Client status" value={st} onChange={setSt} /></div>
+      <div className="hidden flex-wrap items-center gap-3 md:flex"><SearchBox value={q} onChange={setQ} label="Search partners" /><StatusSelect title="Client status" value={st} onChange={setSt} /></div>
       <div className="md:hidden">
         <div className="flex items-center gap-4">
-          <div className="min-w-0 flex-1"><SearchBox value={q} onChange={setQ} label="Search clients" /></div>
+          <div className="min-w-0 flex-1"><SearchBox value={q} onChange={setQ} label="Search partners" /></div>
           <button type="button" onClick={() => setFilterOpen((o) => !o)} style={{ border: 0, background: 'transparent' }} className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-[color:var(--ds-primary)]">
             <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 5h16M2 10h16M2 15h16" /><circle cx="7" cy="5" r="2" fill="#F3F4F7" /><circle cx="13" cy="10" r="2" fill="#F3F4F7" /><circle cx="6" cy="15" r="2" fill="#F3F4F7" /></svg>Filter ({st.length})
           </button>
@@ -62,7 +62,7 @@ export default function ClientsList() {
                     <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${a.group === 'active' ? 'border-[#047857] text-[#047857]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{GROUP_LABEL[a.group]}</span>
                     {a.markets.map((m) => <span key={m} className="rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[11px] text-[color:var(--ds-body)]">{m}</span>)}
                   </div>
-                  <div className="-mr-2 -mt-1 rotate-90 [&_button]:!min-h-8 [&_button]:!h-8 [&_button]:!w-8 [&_button]:!border-0 [&_button]:!bg-transparent [&_button]:!text-[color:var(--ds-body)]"><RowMenu items={[{ label: 'View client', href: `/admin/agreements/clients/${a.id}` }]} /></div>
+                  <div className="-mr-2 -mt-1 rotate-90 [&_button]:!min-h-8 [&_button]:!h-8 [&_button]:!w-8 [&_button]:!border-0 [&_button]:!bg-transparent [&_button]:!text-[color:var(--ds-body)]"><RowMenu items={[{ label: 'View partner', href: `/admin/agreements/clients/${a.id}` }]} /></div>
                 </div>
                 <p className="mt-1 text-sm text-[color:var(--ds-body)]">{a.type === 'individual' ? 'Individual' : 'Business'}</p>
                 <p className="mt-1 text-sm text-[color:var(--ds-body)]">{who ? `${who}${more > 0 ? `, +${more} more` : ''}` : '—'}</p>
@@ -71,11 +71,11 @@ export default function ClientsList() {
               </li>
             );
           })}
-          {rows.length === 0 && <li className="py-10 text-center text-sm text-[color:var(--ds-body)]">No clients match.</li>}
+          {rows.length === 0 && <li className="py-10 text-center text-sm text-[color:var(--ds-body)]">No partners match.</li>}
         </ul>
         <div className="hidden overflow-x-auto md:block">
           <table className={`${A.table} min-w-[640px]`}>
-            <thead><tr>{th('name', 'Client name')}{th('status', 'Status')}{th('contact', 'Main contact')}<th className="!font-medium !text-[color:var(--ds-body)]">Contact details</th><th /></tr></thead>
+            <thead><tr>{th('name', 'Partner name')}{th('status', 'Status')}{th('contact', 'Main contact')}<th className="!font-medium !text-[color:var(--ds-body)]">Contact details</th><th /></tr></thead>
             <tbody>
               {rows.map((a) => (
                 <tr key={a.id}>
@@ -83,10 +83,10 @@ export default function ClientsList() {
                   <td className="font-semibold text-[color:var(--ds-ink)]">{GROUP_LABEL[a.group]}</td>
                   <td className="text-[color:var(--ds-ink)]">{person(a) || '—'}</td>
                   <td className="text-[color:var(--ds-ink)]">{a.contact_email ?? '—'}<div className="text-xs text-[color:var(--ds-body)]">{a.phone ?? ''}</div>{a.billing_email && <div className="text-xs text-[color:var(--ds-body)]">Billing: {a.billing_email}</div>}</td>
-                  <td className="text-right"><RowMenu items={[{ label: 'View client', href: `/admin/agreements/clients/${a.id}` }]} /></td>
+                  <td className="text-right"><RowMenu items={[{ label: 'View partner', href: `/admin/agreements/clients/${a.id}` }]} /></td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={5} className="py-10 text-center text-[color:var(--ds-body)]">No clients match.</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={5} className="py-10 text-center text-[color:var(--ds-body)]">No partners match.</td></tr>}
             </tbody>
           </table>
         </div>
