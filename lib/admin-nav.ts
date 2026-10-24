@@ -175,6 +175,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Client Reports',     href: '/admin/reports',   description: 'Shareable article, event & advertiser recaps' },
       { label: 'Site Analytics',     href: '/admin/analytics', description: 'PostHog traffic & user behavior' },
       { label: 'Marketing Performance', href: '/admin/marketing-performance', description: 'Channel attribution, funnel, CAC & ROAS' },
+      { label: 'Social Link Builder', href: '/admin/link-builder', description: 'Tagged links for Facebook & Instagram posts' },
       { label: 'URL Analytics',      href: '/admin/analytics/urls', description: 'Clicks grouped by destination URL' },
     ],
   },
