@@ -23,16 +23,17 @@ type Agr = {
   total_monthly_rate_cents: number | null; ad_rate_cents: number | null; audit_log: Array<{ action?: string; event?: string }> | null;
   [k: string]: unknown;
 };
-type St = 'active' | 'completed' | 'terminated';
-const ST_LABEL: Record<St, string> = { active: 'Active', completed: 'Completed', terminated: 'Terminated' };
-const ST_STYLE: Record<St, string> = { active: 'border-green-600 text-green-700', completed: 'border-[color:var(--ds-body)] text-[color:var(--ds-body)]', terminated: 'border-red-500 text-red-600' };
+type St = 'active' | 'on_hold' | 'completed' | 'terminated';
+const ST_LABEL: Record<St, string> = { active: 'Active', on_hold: 'On hold: awaiting payment', completed: 'Completed', terminated: 'Terminated' };
+const ST_STYLE: Record<St, string> = { active: 'border-green-600 text-green-700', on_hold: 'border-amber-500 bg-amber-50 text-amber-800', completed: 'border-[color:var(--ds-body)] text-[color:var(--ds-body)]', terminated: 'border-red-500 text-red-600' };
 const today = () => new Date().toISOString().slice(0, 10);
 
 function stOf(a: Agr): St | null {
   const s = String(a.status).toLowerCase();
   if (s === 'cancelled' || s === 'canceled' || s === 'terminated') return 'terminated';
   if (s === 'expired') return 'completed';
-  if (s === 'signed' || s === 'active' || a.signed_at) return a.end_date && a.end_date.slice(0, 10) < today() ? 'completed' : 'active';
+  if (s === 'signed' || s === 'active' || a.signed_at) if (a.end_date && a.end_date.slice(0, 10) < today()) return 'completed';
+    return (a as { service_hold?: boolean }).service_hold ? 'on_hold' : 'active';
   return null;
 }
 const nameOf = (a: Agr) => a.company_name || a.advertiser_name || 'Unnamed client';
@@ -72,7 +73,7 @@ export default function SignedAgreements() {
   const agr = useJson(`/api/admin/agreements?v=${version}`, (j) => (j.agreements ?? []) as Agr[], [] as Agr[]);
   const inv = useJson('/api/admin/invoices', (j) => (j.invoices ?? []) as Inv[], [] as Inv[]);
   const [q, setQ] = useState('');
-  const [sts, setSts] = useState<St[]>(['active']);
+  const [sts, setSts] = useState<St[]>(['active', 'on_hold']);
   const [extra, setExtra] = useState<FilterKey[]>([]);
   const [eff, setEff] = useState({ from: '', to: '' }); const [bill, setBill] = useState({ from: '', to: '' });
   const [pay, setPay] = useState(''); const [amended, setAmended] = useState('yes');
@@ -207,7 +208,7 @@ export default function SignedAgreements() {
           onGenerateInvoice={() => { setDrawer(null); window.location.href = '/admin/billing-hub'; }}
         />
       )}
-      {imp && <ImportDialog onClose={() => setImp(false)} onDone={() => { setSts(['active', 'completed', 'terminated']); setVersion((v) => v + 1); }} />}
+      {imp && <ImportDialog onClose={() => setImp(false)} onDone={() => { setSts(['active', 'on_hold', 'completed', 'terminated']); setVersion((v) => v + 1); }} />}
       <div className="text-sm text-[color:var(--ds-body)]">{agr.loading ? 'Loading…' : `${rows.length} agreement${rows.length === 1 ? '' : 's'}`}</div>
       <div className="overflow-x-auto">
         <table className={`${A.table} min-w-[820px]`}>
@@ -220,8 +221,8 @@ export default function SignedAgreements() {
             {rows.map((a) => { const s = stOf(a) as St; return (
               <tr key={a.id}>
                 <td><input type="checkbox" aria-label={`Select ${nameOf(a)}`} checked={sel.includes(a.id)} onChange={() => setSel((c) => (c.includes(a.id) ? c.filter((x) => x !== a.id) : [...c, a.id]))} className="h-4 w-4 accent-[color:var(--ds-primary)]" /></td>
-                <td><div className="font-semibold text-[color:var(--ds-ink)]">{nameOf(a)}</div><div className="text-xs text-[color:var(--ds-body)]">Agreement{a.ad_size ? ` · ${a.ad_size}` : ''}</div><PaymentSetupAlert ag={a} variant="chip" />{(a as unknown as { service_hold?: boolean }).service_hold && <div className="mt-1 text-xs font-medium text-amber-700">On hold: awaiting payment before scheduling</div>}</td>
-                <td><span className={`rounded-full border px-2 py-0.5 text-xs ${ST_STYLE[s]}`}>{ST_LABEL[s]}</span></td>
+                <td><div className="font-semibold text-[color:var(--ds-ink)]">{nameOf(a)}</div><div className="text-xs text-[color:var(--ds-body)]">Agreement{a.ad_size ? ` · ${a.ad_size}` : ''}</div><PaymentSetupAlert ag={a} variant="chip" />{s === 'on_hold' && <div className="mt-1 text-xs text-amber-700">Services will not be scheduled until payment is received.</div>}</td>
+                <td><span className={`rounded-full border px-2 py-0.5 text-xs ${ST_STYLE[s]}`}>{s === 'on_hold' ? 'On hold' : ST_LABEL[s]}</span></td>
                 <td className="text-[color:var(--ds-ink)]">{who(a.created_by)}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(a.start_date ?? a.signed_at)}</td>
                 <td className="text-[color:var(--ds-ink)]">{payOf(a) || '—'}</td>
