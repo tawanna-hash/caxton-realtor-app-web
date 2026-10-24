@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { getServiceHold } from '@/lib/agreements-v2/service-hold';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -67,6 +68,17 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     const agExists = await sql`SELECT 1 FROM agreements WHERE id = ${id}` as unknown as unknown[];
     if (agExists.length === 0) {
       return NextResponse.json({ error: 'agreement not found' }, { status: 404 });
+    }
+
+    // Digital services are not scheduled until payment is received.
+    if (campaignId) {
+      const hold = await getServiceHold(sql, id);
+      if (hold?.held) {
+        return NextResponse.json(
+          { error: 'Payment has not been received. Confirm payment (Mark payment received) before scheduling this service.', code: 'payment_hold' },
+          { status: 409 },
+        );
+      }
     }
 
     // Clear any prior campaigns linked to this agreement.

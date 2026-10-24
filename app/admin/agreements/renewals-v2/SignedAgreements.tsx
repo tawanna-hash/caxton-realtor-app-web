@@ -149,11 +149,17 @@ export default function SignedAgreements() {
     if (!r.ok || !j.url) { setNotice('Could not create the link.'); return; }
     try { await navigator.clipboard.writeText(j.url); setNotice('Direct link copied.'); } catch { setNotice(j.url); }
   }
+  async function releaseHold(a: Agr) {
+    if (!window.confirm(`Confirm payment was received for ${nameOf(a)}? Services can then be scheduled.`)) return;
+    const res = await fetch(`/api/admin/agreements/${a.id}/service-hold`, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'release' }) });
+    if (res.ok) setVersion((v) => v + 1); else window.alert('Could not release the hold. Please try again.');
+  }
   const menu = (a: Agr) => [
     { label: 'Edit agreement', onClick: () => setDrawer(a as unknown as AgreementWithAdvertiser) },
     { label: 'Duplicate agreement', onClick: () => duplicate(a) },
     { label: 'Download PDF', href: `/api/admin/agreements/${a.id}/pdf` },
     { label: 'Share direct link', onClick: () => link(a) },
+    ...(((a as unknown as { service_hold?: boolean }).service_hold) ? [{ label: 'Mark payment received (release hold)', onClick: () => releaseHold(a) }] : []),
     { label: 'Manage billing', href: `/admin/billing-hub?agreementId=${a.id}&tab=agreement` },
     { label: 'View invoices', href: `/admin/billing-hub?agreementId=${a.id}&tab=invoices` },
     { label: 'View activity log', href: `/admin/billing-hub?agreementId=${a.id}&tab=activity` },
@@ -214,7 +220,7 @@ export default function SignedAgreements() {
             {rows.map((a) => { const s = stOf(a) as St; return (
               <tr key={a.id}>
                 <td><input type="checkbox" aria-label={`Select ${nameOf(a)}`} checked={sel.includes(a.id)} onChange={() => setSel((c) => (c.includes(a.id) ? c.filter((x) => x !== a.id) : [...c, a.id]))} className="h-4 w-4 accent-[color:var(--ds-primary)]" /></td>
-                <td><div className="font-semibold text-[color:var(--ds-ink)]">{nameOf(a)}</div><div className="text-xs text-[color:var(--ds-body)]">Agreement{a.ad_size ? ` · ${a.ad_size}` : ''}</div><PaymentSetupAlert ag={a} variant="chip" /></td>
+                <td><div className="font-semibold text-[color:var(--ds-ink)]">{nameOf(a)}</div><div className="text-xs text-[color:var(--ds-body)]">Agreement{a.ad_size ? ` · ${a.ad_size}` : ''}</div><PaymentSetupAlert ag={a} variant="chip" />{(a as unknown as { service_hold?: boolean }).service_hold && <div className="mt-1 text-xs font-medium text-amber-700">On hold: awaiting payment before scheduling</div>}</td>
                 <td><span className={`rounded-full border px-2 py-0.5 text-xs ${ST_STYLE[s]}`}>{ST_LABEL[s]}</span></td>
                 <td className="text-[color:var(--ds-ink)]">{who(a.created_by)}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(a.start_date ?? a.signed_at)}</td>

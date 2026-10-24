@@ -103,7 +103,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     return NextResponse.json({ error: errMessage(error) }, { status: 400 });
   }
   const taxCents = typeof body.tax_cents === 'number' ? body.tax_cents : 0;
-  const dueDays = typeof body.due_days === 'number' && body.due_days >= 0 ? Math.floor(body.due_days) : 15;
+  const dueDays = typeof body.due_days === 'number' && body.due_days >= 0 ? Math.floor(body.due_days) : 20;
   const createDaysInAdvance =
     typeof body.create_days_in_advance === 'number' && body.create_days_in_advance >= 0
       ? Math.floor(body.create_days_in_advance)

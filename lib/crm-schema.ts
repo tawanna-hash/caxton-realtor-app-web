@@ -543,7 +543,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       bill_to_email            text,
       bill_to_address          text,
       auto_send                boolean NOT NULL DEFAULT true,   -- auto status='sent' + email on generation
-      due_days                 integer NOT NULL DEFAULT 15,     -- due_date = issued_at + due_days
+      due_days                 integer NOT NULL DEFAULT 20,     -- due_date = issued_at + due_days
       create_days_in_advance   integer NOT NULL DEFAULT 0,      -- generate before the scheduled invoice date
       template_mode            text NOT NULL DEFAULT 'scheduled',
       include_unbilled_charges boolean NOT NULL DEFAULT false,

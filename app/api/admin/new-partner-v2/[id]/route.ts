@@ -33,8 +33,9 @@ export const POST = withAdminTracking(async function POST(
     const sql = getSql();
     const rows = await sql`SELECT id, signed_at, is_renewal FROM agreements WHERE id = ${id}` as unknown as Array<{ id: string; signed_at: string | null; is_renewal: boolean | null }>;
     if (!rows[0]) return NextResponse.json({ error: 'not found' }, { status: 404 });
-    if (rows[0].is_renewal) return NextResponse.json({ error: 'Renewals use the Renewals tab.' }, { status: 422 });
     if (rows[0].signed_at) return NextResponse.json({ error: 'Already signed.' }, { status: 409 });
+    // Check approval applies to every unsigned agreement, renewals included.
+    if (body.action !== 'approve_check' && rows[0].is_renewal) return NextResponse.json({ error: 'Renewals use the Renewals tab.' }, { status: 422 });
 
     if (body.action === 'approve_check') {
       await recordNewPartnerEvent(sql, id, CHECK_APPROVED_EVENT, 'Admin approved paying by check. Services start when the check is received.', admin.email ?? null);

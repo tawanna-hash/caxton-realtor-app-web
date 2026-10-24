@@ -46,6 +46,13 @@ export async function GET() {
         adv.name AS advertiser_name,
         COALESCE(inv.invoiced_cents, 0)::int AS invoiced_cents,
         COALESCE(inv.paid_cents, 0)::int     AS paid_cents,
+        (ag.signed_at IS NOT NULL
+          AND COALESCE(ag.status, '') NOT IN ('cancelled', 'terminated')
+          AND (COALESCE(ag.channel, CASE WHEN ag.type IN ('print_ad', 'package') THEN 'print' ELSE 'digital' END) <> 'print'
+               OR EXISTS (SELECT 1 FROM agreement_line_items li WHERE li.agreement_id = ag.id AND li.channel <> 'print'))
+          AND ag.paid_at IS NULL
+          AND COALESCE(inv.paid_cents, 0) = 0
+          AND NOT (COALESCE(ag.audit_log, '[]'::jsonb) @> '[{"event":"service_payment_released"}]'::jsonb)) AS service_hold,
         psr.sent_to        AS payment_setup_sent_to,
         CASE WHEN psr.resolved_at IS NULL THEN psr.requested_at END   AS payment_setup_requested_at,
         CASE WHEN psr.resolved_at IS NULL THEN psr.reminders_sent END AS payment_setup_reminders,

@@ -368,7 +368,7 @@ export async function generateInsertionOrderPdfBuffer(
     color: TEXT_MUTED,
   });
   const terms = [
-    'Payment due net 30 from invoice date unless otherwise noted.',
+    'Print invoices are due within 20 days of the invoice date. e-Blast and app services are paid before service is scheduled.',
     'Placements are non-refundable once the flight has begun.',
     'Cancellations require 14 days written notice before the flight start date.',
     'Realty News Now reserves the right to reject ad content that violates editorial standards.',

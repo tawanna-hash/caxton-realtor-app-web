@@ -88,7 +88,8 @@ export async function listNewPartnerCandidates(sql: Sql): Promise<NewPartnerCand
       (SELECT COALESCE(SUM(li.amount_cents), 0)::int FROM agreement_line_items li WHERE li.agreement_id = ag.id) AS lines_total,
       (SELECT COALESCE(SUM(li.amount_cents), 0)::int FROM agreement_line_items li WHERE li.agreement_id = ag.id AND li.pay_now = true) AS pay_now_total
       FROM agreements ag
-     WHERE COALESCE(ag.is_renewal, false) = false
+     WHERE (COALESCE(ag.is_renewal, false) = false
+            OR COALESCE(ag.audit_log, '[]'::jsonb) @> '[{"event":"newpartner_v2_check_request"}]'::jsonb)
        AND ag.signed_at IS NULL
        AND ag.status IN ('draft', 'proposal_sent', 'proposal_approved', 'sent')
      ORDER BY ag.created_at DESC

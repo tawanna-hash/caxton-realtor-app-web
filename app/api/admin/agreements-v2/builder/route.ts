@@ -116,7 +116,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       const { start } = docDates(doc, sign);
       const defaults = await getDefaults(sql);
       const pay = cleanPayment(doc.payment);
-      const dueDays = pay.due_days ?? defaults.due_days ?? 15;
+      const dueDays = pay.due_days ?? defaults.due_days ?? 20;
       const billingDay = typeof defaults.billing_day === 'number' ? defaults.billing_day : Math.min(28, Math.max(1, Number(start.slice(8, 10)) || 1));
       const plans = doc.services.map((sv) =>
         planServiceBilling({ label: sv.name || 'Service', total_cents: sv.price_cents, billing: { ...cleanBilling(sv.billing), term_months: termMonths(sv) } }, { start, billing_day: billingDay, increase_pct: pay.annual_increase_pct }));

@@ -97,7 +97,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     const startIso = ag.start_date ? new Date(ag.start_date as unknown as string).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
     const svcPlans = meta ? plansForLines(lines as unknown as Array<{ line_no: number; package_label: string; amount_cents: number }>, meta.services, { start: startIso, billing_day: typeof defaults.billing_day === 'number' ? defaults.billing_day : 1, increase_pct: payOpts.annual_increase_pct }) : null;
     if (svcPlans) {
-      const rows = invoiceRows(svcPlans, payOpts.due_days ?? defaults.due_days ?? 15);
+      const rows = invoiceRows(svcPlans, payOpts.due_days ?? defaults.due_days ?? 20);
       const manual = svcPlans.filter((p) => p.manual).map((p) => p.label);
       perService = {
         ok: true,

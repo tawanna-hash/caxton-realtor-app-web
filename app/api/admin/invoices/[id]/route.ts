@@ -177,6 +177,12 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
 
       if (body.status === 'sent' && current.status === 'draft' && !('issued_at' in body)) {
         body.issued_at = new Date().toISOString();
+        // Print invoices are net 20: stamp the due date when none was set.
+        if (!('due_date' in body) && !current.due_date) {
+          const d = new Date(body.issued_at as string);
+          d.setUTCDate(d.getUTCDate() + 20);
+          body.due_date = d.toISOString().slice(0, 10);
+        }
       }
 
       const amountCents = 'amount_cents' in body ? Number(body.amount_cents) : Number(current.amount_cents);
