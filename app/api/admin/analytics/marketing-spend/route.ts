@@ -22,6 +22,7 @@ export const dynamic = 'force-dynamic';
 const spendSchema = z.object({
   month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use YYYY-MM'),
   channel: z.enum(CHANNELS),
+  publication: z.enum(['all', 'austin', 'san_antonio', 'other']).default('all'),
   amount_cents: z.coerce.number().int().min(0).max(2_000_000_000),
   notes: z.string().trim().max(500).optional().nullable(),
 });
@@ -40,14 +41,14 @@ export const POST = withAdminTracking(async (req: Request) => {
   await ensureMarketingSpendSchema();
   const createdBy = admin.email ?? null;
   const rows = await query<{ id: string }>(
-    `INSERT INTO marketing_spend (month, channel, amount_cents, notes, created_by)
-     VALUES ($1::date, $2, $3, $4, $5)
-     ON CONFLICT (month, channel)
+    `INSERT INTO marketing_spend (month, channel, amount_cents, notes, created_by, publication)
+     VALUES ($1::date, $2, $3, $4, $5, $6)
+     ON CONFLICT (month, channel, publication)
      DO UPDATE SET amount_cents = EXCLUDED.amount_cents,
                    notes        = EXCLUDED.notes,
                    updated_at   = now()
      RETURNING id`,
-    [`${body.month}-01`, body.channel, body.amount_cents, body.notes || null, createdBy],
+    [`${body.month}-01`, body.channel, body.amount_cents, body.notes || null, createdBy, body.publication],
   );
   return NextResponse.json({ ok: true, id: rows[0]?.id });
 });

@@ -16,9 +16,17 @@ export interface MailchimpMonth {
   unsubscribes: number;
 }
 
+export interface MailchimpAudienceMonth extends MailchimpMonth {
+  /** Mailchimp audience (list) id the campaigns were sent to. */
+  listId: string;
+}
+
 export interface MailchimpSummary {
   accountName: string | null;
+  /** Account-wide totals by month (all audiences). */
   months: MailchimpMonth[];
+  /** Same numbers split by audience, so callers can scope to a publication. */
+  byAudience: MailchimpAudienceMonth[];
 }
 
 export function isMailchimpConfigured(): boolean {
@@ -54,6 +62,8 @@ function chicagoMonth(iso: string): string {
 
 interface ReportsResponse {
   reports: Array<{
+    list_id?: string;
+    recipients?: { list_id?: string };
     send_time: string;
     emails_sent: number;
     bounces?: { hard_bounces?: number; soft_bounces?: number; syntax_errors?: number };
@@ -67,6 +77,8 @@ interface ReportsResponse {
 // Only the fields the dashboard uses — full report objects are large and slow.
 const REPORT_FIELDS = [
   'total_items',
+  'reports.list_id',
+  'reports.recipients.list_id',
   'reports.send_time',
   'reports.emails_sent',
   'reports.bounces',
@@ -94,10 +106,9 @@ export async function fetchMailchimpSummary(sinceIso: string): Promise<Mailchimp
   const reports = [first, ...rest].flatMap((r) => r.reports ?? []);
 
   const byMonth = new Map<string, MailchimpMonth>();
-  for (const r of reports) {
-    if (!r.send_time) continue;
-    const month = chicagoMonth(r.send_time);
-    const m = byMonth.get(month) ?? { month, campaigns: 0, sent: 0, delivered: 0, uniqueOpens: 0, uniqueClicks: 0, unsubscribes: 0 };
+  const byAud = new Map<string, MailchimpAudienceMonth>();
+  const blank = (month: string): MailchimpMonth => ({ month, campaigns: 0, sent: 0, delivered: 0, uniqueOpens: 0, uniqueClicks: 0, unsubscribes: 0 });
+  const add = (m: MailchimpMonth, r: ReportsResponse['reports'][number]) => {
     const bounced = (r.bounces?.hard_bounces ?? 0) + (r.bounces?.soft_bounces ?? 0) + (r.bounces?.syntax_errors ?? 0);
     m.campaigns += 1;
     m.sent += r.emails_sent ?? 0;
@@ -105,11 +116,22 @@ export async function fetchMailchimpSummary(sinceIso: string): Promise<Mailchimp
     m.uniqueOpens += r.opens?.unique_opens ?? 0;
     m.uniqueClicks += r.clicks?.unique_subscriber_clicks ?? 0;
     m.unsubscribes += r.unsubscribed ?? 0;
+  };
+  for (const r of reports) {
+    if (!r.send_time) continue;
+    const month = chicagoMonth(r.send_time);
+    const listId = r.list_id || r.recipients?.list_id || '';
+    const m = byMonth.get(month) ?? blank(month);
+    add(m, r);
     byMonth.set(month, m);
+    const a = byAud.get(`${month}|${listId}`) ?? { ...blank(month), listId };
+    add(a, r);
+    byAud.set(`${month}|${listId}`, a);
   }
   const value: MailchimpSummary = {
     accountName: account.account_name ?? null,
     months: Array.from(byMonth.values()).sort((a, b) => a.month.localeCompare(b.month)),
+    byAudience: Array.from(byAud.values()).sort((a, b) => a.month.localeCompare(b.month)),
   };
   cache = { key: sinceIso, at: Date.now(), value };
   return value;

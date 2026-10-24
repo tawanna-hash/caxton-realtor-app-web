@@ -7,14 +7,15 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
-import { buildMarketingPerformance } from '@/lib/server/marketing-performance';
+import { buildMarketingPerformance, isPubFilter } from '@/lib/server/marketing-performance';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-export const GET = withAdminTracking(async () => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
-  const data = await buildMarketingPerformance();
+  const pub = new URL(req.url).searchParams.get('pub');
+  const data = await buildMarketingPerformance(isPubFilter(pub) ? pub : 'all');
   return NextResponse.json({ ok: true, data });
 });

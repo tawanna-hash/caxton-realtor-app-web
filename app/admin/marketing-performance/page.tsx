@@ -46,8 +46,11 @@ interface SourceStatus {
   ga4: { configured: boolean; connected: boolean; email: string | null; propertyId: string | null; propertyName: string | null; error: string | null };
   mailchimp: { configured: boolean; connected: boolean; accountName: string | null; error: string | null };
 }
-interface SpendEntry { id: string; month: string; channel: Channel; amount_cents: number; notes: string | null; updated_at: string }
+type PubBucket = 'austin' | 'san_antonio' | 'other';
+type PubFilter = 'all' | PubBucket;
+interface SpendEntry { id: string; month: string; channel: Channel; amount_cents: number; notes: string | null; updated_at: string; publication: 'all' | PubBucket }
 interface MarketingPerformance {
+  publication: PubFilter;
   asOf: string;
   months: string[];
   rows: ChannelMonthRow[];
@@ -55,6 +58,7 @@ interface MarketingPerformance {
   firstTrafficMonth: string | null;
   firstGa4Month: string | null;
   mailchimp: MailchimpMonth[];
+  mailchimpByPublication: Record<PubBucket, MailchimpMonth[]>;
   sources: SourceStatus;
   warnings: string[];
 }
@@ -73,6 +77,14 @@ const METRIC_LABEL: Record<Metric, string> = {
   conversions: 'Conversions', revenue_cents: 'Revenue', spend_cents: 'Spend',
 };
 const BRAND = '#301D5D';
+
+const PUBS: Array<{ id: PubFilter; label: string }> = [
+  { id: 'all', label: 'All publications' },
+  { id: 'austin', label: 'RealtyLine Austin' },
+  { id: 'san_antonio', label: 'Newsline San Antonio' },
+  { id: 'other', label: 'Shared / other' },
+];
+const PUB_LABEL: Record<PubFilter, string> = Object.fromEntries(PUBS.map((p) => [p.id, p.label])) as Record<PubFilter, string>;
 
 type RangeKey = '3' | '6' | '12' | 'ytd' | 'all' | 'custom';
 
@@ -170,6 +182,7 @@ export default function MarketingPerformancePage() {
   const [data, setData] = useState<MarketingPerformance | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [pub, setPub] = useState<PubFilter>('all');
 
   const [range, setRange] = useState<RangeKey>('6');
   const [customFrom, setCustomFrom] = useState<string>('');
@@ -188,7 +201,7 @@ export default function MarketingPerformancePage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/admin/analytics/marketing-performance', { credentials: 'include', cache: 'no-store' });
+        const res = await fetch(`/api/admin/analytics/marketing-performance?pub=${pub}`, { credentials: 'include', cache: 'no-store' });
         const body = (await res.json().catch(() => null)) as { ok?: boolean; data?: MarketingPerformance; error?: string } | null;
         if (cancelled) return;
         if (!res.ok || !body?.ok || !body.data) {
@@ -202,7 +215,7 @@ export default function MarketingPerformancePage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [reloadKey]);
+  }, [reloadKey, pub]);
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
@@ -282,6 +295,7 @@ export default function MarketingPerformancePage() {
           <PageTitle size="md">Marketing Performance</PageTitle>
           <p className="mt-1 max-w-2xl text-sm text-gray-600">
             Attribution, funnel, and efficiency from live PostHog traffic, ad inquiries, agreements, and paid invoices.
+            {data && pub !== 'all' && <> Showing <b className="font-semibold text-gray-900">{PUB_LABEL[pub]}</b> only.</>}
           </p>
         </div>
         <nav className="flex flex-wrap gap-1 text-sm" aria-label="Sections">
@@ -336,6 +350,13 @@ export default function MarketingPerformancePage() {
                   </div>
                 )}
               </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Publication</p>
+              <select aria-label="Publication" value={pub} onChange={(e) => setPub(e.target.value as PubFilter)}
+                className="rounded border border-gray-300 bg-white px-2 py-1.5 text-sm font-medium text-gray-900">
+                {PUBS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+              </select>
             </div>
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Channels</p>
@@ -567,10 +588,10 @@ export default function MarketingPerformancePage() {
           </section>
 
           {/* Connections */}
-          <Connections sources={data.sources} mailchimp={data.mailchimp.filter((m) => view.monthsSel.includes(m.month))} onChanged={reload} />
+          <Connections sources={data.sources} pub={pub} mailchimp={data.mailchimp.filter((m) => view.monthsSel.includes(m.month))} byPub={data.mailchimpByPublication} monthsSel={view.monthsSel} onChanged={reload} />
 
           {/* Spend */}
-          <SpendPanel months={data.months} entries={data.spend} onSaved={reload} />
+          <SpendPanel months={data.months} entries={data.spend} pub={pub} onSaved={reload} />
 
           <details className="rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
             <summary className="cursor-pointer font-medium text-gray-900">How these numbers are calculated</summary>
@@ -646,7 +667,9 @@ function FunnelBars({ t }: { t: Totals }) {
   );
 }
 
-function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: SpendEntry[]; onSaved: () => void }) {
+function SpendPanel({ months, entries, pub, onSaved }: { months: string[]; entries: SpendEntry[]; pub: PubFilter; onSaved: () => void }) {
+  const [spendPub, setSpendPub] = useState<'all' | PubBucket>(pub === 'all' ? 'all' : pub);
+  useEffect(() => { setSpendPub(pub === 'all' ? 'all' : pub); }, [pub]);
   const [month, setMonth] = useState(months[months.length - 1]);
   const [channel, setChannel] = useState<Channel>('paid');
   const [amount, setAmount] = useState('');
@@ -661,7 +684,7 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
     try {
       const res = await fetch('/api/admin/analytics/marketing-spend', {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ month, channel, amount_cents: Math.round(dollars * 100), notes: notes.trim() || null }),
+        body: JSON.stringify({ month, channel, amount_cents: Math.round(dollars * 100), notes: notes.trim() || null, publication: spendPub }),
       });
       const body = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
       if (!res.ok || !body?.ok) throw new Error(body?.error || `Save failed (${res.status})`);
@@ -698,6 +721,15 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
               </select>
             </label>
             <label className="block">
+              <span className="text-xs font-medium text-gray-500">Publication</span>
+              <select value={spendPub} onChange={(e) => setSpendPub(e.target.value as 'all' | PubBucket)} className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-2">
+                <option value="all">Shared across publications</option>
+                <option value="austin">RealtyLine Austin</option>
+                <option value="san_antonio">Newsline San Antonio</option>
+                <option value="other">Shared / other</option>
+              </select>
+            </label>
+            <label className="block">
               <span className="text-xs font-medium text-gray-500">Channel</span>
               <select value={channel} onChange={(e) => setChannel(e.target.value as Channel)} className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-2">
                 {CHANNELS.map((c) => <option key={c.id} value={c.id}>{c.label} — {c.hint}</option>)}
@@ -715,7 +747,7 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
               className="w-full rounded-md bg-[#301D5D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#42277C] disabled:cursor-not-allowed disabled:opacity-50">
               {busy ? 'Saving…' : 'Save spend'}
             </button>
-            <p className="text-xs text-gray-500">Saving the same month and channel replaces the earlier amount.</p>
+            <p className="text-xs text-gray-500">Saving the same month, channel, and publication replaces the earlier amount. When a single publication is selected above, only spend entered for that publication counts; shared spend appears under All publications.</p>
             {msg && <p className={`text-xs ${msg.kind === 'ok' ? 'text-[#005A00]' : 'text-[#661102]'}`}>{msg.text}</p>}
           </div>
         </Card>
@@ -727,13 +759,14 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-white">
                   <tr className="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-                    <th className="py-2 pr-3">Month</th><th className="py-2 pr-3">Channel</th><th className="py-2 pr-3 text-right">Amount</th><th className="py-2 pr-3">Notes</th><th className="py-2" />
+                    <th className="py-2 pr-3">Month</th><th className="py-2 pr-3">Publication</th><th className="py-2 pr-3">Channel</th><th className="py-2 pr-3 text-right">Amount</th><th className="py-2 pr-3">Notes</th><th className="py-2" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {entries.map((e) => (
                     <tr key={e.id}>
                       <td className="py-2 pr-3 text-gray-700">{monthLabel(e.month, true)}</td>
+                      <td className="py-2 pr-3 text-gray-700">{e.publication === 'all' ? 'Shared' : PUB_LABEL[e.publication]}</td>
                       <td className="py-2 pr-3"><span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: CH[e.channel].color }} />{CH[e.channel].label}</span></td>
                       <td className="py-2 pr-3 text-right font-medium tabular-nums">{fmtCents(e.amount_cents, true)}</td>
                       <td className="max-w-[220px] truncate py-2 pr-3 text-gray-500" title={e.notes ?? ''}>{e.notes || '—'}</td>
@@ -752,7 +785,7 @@ function SpendPanel({ months, entries, onSaved }: { months: string[]; entries: S
   );
 }
 
-function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus; mailchimp: MailchimpMonth[]; onChanged: () => void }) {
+function Connections({ sources, pub, mailchimp, byPub, monthsSel, onChanged }: { sources: SourceStatus; pub: PubFilter; mailchimp: MailchimpMonth[]; byPub: Record<PubBucket, MailchimpMonth[]>; monthsSel: string[]; onChanged: () => void }) {
   const [props, setProps] = useState<Array<{ id: string; name: string; account: string }> | null>(null);
   const [propError, setPropError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -876,7 +909,21 @@ function Connections({ sources, mailchimp, onChanged }: { sources: SourceStatus;
                 <div><p className="text-xs text-gray-500">Open rate</p><p className="font-semibold">{fmtPct(div(mcTotals.opens, mcTotals.delivered))}</p></div>
                 <div><p className="text-xs text-gray-500">Click rate</p><p className="font-semibold">{fmtPct(div(mcTotals.clicks, mcTotals.delivered))}</p></div>
               </div>
-              <p className="text-xs text-gray-500">Selected range · delivered emails count toward Email impressions.</p>
+              <div className="border-t border-gray-100 pt-2">
+                <p className="text-xs font-medium text-gray-500">Delivered by audience (selected range)</p>
+                <ul className="mt-1 space-y-0.5 tabular-nums">
+                  {(['austin', 'san_antonio', 'other'] as PubBucket[]).map((b) => {
+                    const d = byPub[b].filter((m) => monthsSel.includes(m.month)).reduce((n, m) => n + m.delivered, 0);
+                    if (b === 'other' && d === 0) return null;
+                    return (
+                      <li key={b} className={`flex justify-between ${pub === b ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
+                        <span>{PUB_LABEL[b]}</span><span>{fmtInt(d)}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+              <p className="text-xs text-gray-500">{pub === 'all' ? 'All audiences' : PUB_LABEL[pub]} · delivered emails count toward Email impressions.</p>
             </div>
           ) : (
             <div className="space-y-1 text-sm text-gray-600">

@@ -191,7 +191,7 @@ export async function disconnectGa4(): Promise<void> {
   await query(`DELETE FROM ga4_oauth_tokens`);
 }
 
-export interface Ga4MonthRow { month: string; channelGroup: string; sessions: number; pageviews: number; keyEvents: number }
+export interface Ga4MonthRow { month: string; channelGroup: string; sessions: number; pageviews: number; keyEvents: number; propertyId: string; propertyName: string }
 
 /** Monthly sessions / pageviews / key events by default channel group. */
 export async function fetchGa4Monthly(startDate: string): Promise<{ propertyName: string | null; rows: Ga4MonthRow[] } | null> {
@@ -208,9 +208,14 @@ export async function fetchGa4Monthly(startDate: string): Promise<{ propertyName
       limit: '10000',
     },
   })));
-  const rows: Ga4MonthRow[] = reports.flatMap((res) => res.data.rows ?? []).map((r) => {
+  // Names are stored in the same order as ids (commas inside names were
+  // replaced on save), so they pair up by index.
+  const names = (auth.row.property_name ?? '').split(',').map((x) => x.trim());
+  const rows: Ga4MonthRow[] = reports.flatMap((res, idx) => (res.data.rows ?? []).map((r) => ({ r, idx }))).map(({ r, idx }) => {
     const ym = r.dimensionValues?.[0]?.value ?? '';
     return {
+      propertyId: ids[idx],
+      propertyName: names[idx] ?? '',
       month: `${ym.slice(0, 4)}-${ym.slice(4, 6)}`,
       channelGroup: r.dimensionValues?.[1]?.value ?? '',
       sessions: Number(r.metricValues?.[0]?.value) || 0,
