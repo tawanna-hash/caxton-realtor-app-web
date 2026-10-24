@@ -979,7 +979,7 @@ function Connections({ sources, pub, mailchimp, byPub, meta, instagram, monthsSe
                 <div><p className="text-xs text-gray-500">Views</p><p className="font-semibold">{fmtInt(instagram.reduce((n, m) => n + m.views, 0))}</p></div>
                 <div><p className="text-xs text-gray-500">Interactions</p><p className="font-semibold">{fmtInt(instagram.reduce((n, m) => n + m.interactions, 0))}</p></div>
               </div>
-              <p className="text-xs text-gray-500">{pub === 'all' ? 'Both accounts' : pub === 'other' ? 'No account for Shared / other' : PUB_LABEL[pub]} · last 6 months within the selected range.</p>
+              <p className="text-xs text-gray-500">{pub === 'all' ? 'Both accounts' : pub === 'other' ? 'No account for Shared / other' : PUB_LABEL[pub]} · last 6 months within the selected range · views count toward Social impressions.</p>
             </div>
           ) : (
             <p className="text-sm text-gray-600">Instagram appears once the connected Meta token can read the Instagram account linked to each Facebook page.</p>

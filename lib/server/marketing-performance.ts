@@ -576,7 +576,7 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
     c.ga4_key_events += g.keyEvents;
     if (g.sessions > 0 && (!firstGa4Month || g.month < firstGa4Month)) firstGa4Month = g.month;
   }
-  // Facebook page views count as Social impressions. Only the two publication
+  // Facebook page views and Instagram views count as Social impressions. Only the two publication
   // pages exist, so Shared / other has none.
   const metaMonths = new Map<string, MetaMonth>();
   for (const b of ['austin', 'san_antonio'] as const) {
@@ -593,6 +593,8 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
   for (const b of ['austin', 'san_antonio'] as const) {
     if (!inPub(b)) continue;
     for (const m of meta?.instagramByPublication[b] ?? []) {
+      const c = cell(m.month, 'social');
+      if (c) c.impressions += m.views;
       const t = igMonths.get(m.month) ?? { month: m.month, views: 0, interactions: 0 };
       t.views += m.views; t.interactions += m.interactions;
       igMonths.set(m.month, t);
