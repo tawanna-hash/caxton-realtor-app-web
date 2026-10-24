@@ -154,7 +154,7 @@ export default function BillingHub() {
 
 /* ---------------- Agreement tab ---------------- */
 function AgreementTab({ client, agreement }: { client: Adv; agreement: Agr | null }) {
-  if (!agreement) return <p className="py-10 text-center text-sm text-[color:var(--ds-ink)]">This client has no agreement yet.</p>;
+  if (!agreement) return <p className="py-10 text-center text-sm text-[color:var(--ds-ink)]">This partner has no agreement yet.</p>;
   const approved = (agreement.audit_log ?? []).find((e) => /sign|approv|upload/i.test(e.event)) ?? null;
   const main = [client.first_name, client.last_name].filter(Boolean).join(' ');
   const services: Array<{ name: string; desc: string; price: number | null; note: string }> = [];
@@ -304,7 +304,7 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
   const th = (k: typeof sort.k, l: string, right = false) => <th className={right ? 'text-right' : ''}><button type="button" style={{ border: 0, background: 'transparent', padding: 0 }} className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--ds-body)]" onClick={() => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : 1 }))}>{l}<SortCaret dir={sort.k === k ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} /></button></th>;
   const scopeSwitch = (
     <div role="group" aria-label="Invoice scope" className="flex items-center gap-2">
-      {([['client', 'This client'], ['all', 'All clients']] as const).map(([k, l]) => (
+      {([['client', 'This partner'], ['all', 'All partners']] as const).map(([k, l]) => (
         <button key={k} type="button" aria-pressed={scope === k} onClick={() => setScope(k)} className={`rounded-full border px-4 py-1.5 text-sm ${scope === k ? 'border-[color:var(--ds-primary)]' : 'bg-white border-[color:var(--ds-line)] text-[color:var(--ds-body)] hover:bg-[color:var(--ds-selected)] hover:text-[color:var(--ds-primary)]'}`}>{l}</button>
       ))}
     </div>
@@ -315,6 +315,13 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
       {scopeSwitch}
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search invoices" />
+        <div role="group" aria-label="Open or closed invoices" className="flex items-center gap-2">
+          {([['open', 'Open'], ['closed', 'Closed']] as const).map(([k, l]) => {
+            const on = k === 'open' ? st.length > 0 && st.every((x) => !['paid', 'void'].includes(x)) : st.length > 0 && st.every((x) => ['paid', 'void'].includes(x));
+            const vals = statuses.map((x) => x.value).filter((v) => (k === 'closed') === ['paid', 'void'].includes(v));
+            return <button key={k} type="button" aria-pressed={on} onClick={() => setSt(on ? [] : vals)} className={`rounded-full border px-4 py-1.5 text-sm ${on ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)] text-[color:var(--ds-ink)]' : 'border-[color:var(--ds-line)] bg-white text-[color:var(--ds-body)] hover:bg-[color:var(--ds-selected)]'}`}>{l}</button>;
+          })}
+        </div>
         <FilterChip<string> title="Invoice status" options={statuses} value={st} onApply={setSt} summary="Invoice status" />
         <div className="relative">
           <button type="button" onClick={() => setAddOpen((o) => !o)} style={{ background: 'transparent' }} className="rounded-full border border-dashed border-[color:var(--ds-body)] px-4 py-2 text-sm text-[color:var(--ds-body)]">Add filter &#8853;</button>

@@ -26,7 +26,7 @@ export type InvoiceIntent = {
 
 type Inv = InvoiceWithAdvertiser;
 type DateFilter = 'all' | 'today' | '30-days' | '3-months' | '12-months';
-type StatusFilter = 'all' | 'scheduled' | 'draft' | 'open' | 'overdue' | 'paid' | 'void';
+type StatusFilter = 'all' | 'scheduled' | 'draft' | 'open' | 'closed' | 'overdue' | 'paid' | 'void';
 type ErrorFilter = 'all' | 'missing-email' | 'past-due';
 type TypeFilter = 'all' | 'invoice' | 'receipt';
 type Batch = 'issue' | 'send' | 'remind' | 'print' | 'void' | 'delete';
@@ -295,6 +295,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
       if (!inRange(i, dates, ref)) return false;
       if ((status === 'draft' || status === 'scheduled') && i.status !== 'draft') return false;
       if (status === 'open' && !['sent', 'overdue'].includes(i.status)) return false;
+      if (status === 'closed' && !['paid', 'void'].includes(i.status)) return false;
       if (status === 'overdue' && !i.is_overdue) return false;
       if (status === 'paid' && i.status !== 'paid') return false;
       if (status === 'void' && i.status !== 'void') return false;
@@ -464,7 +465,15 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
 
       {(msg || err) && <div role="status" className={err ? A.error : A.notice}>{err || msg}</div>}
 
-      {searchSlot && createPortal(<SearchBox value={q} onChange={(v) => reset(() => setQ(v))} label="Search invoices" />, searchSlot)}
+      {searchSlot && createPortal(
+        <>
+          <SearchBox value={q} onChange={(v) => reset(() => setQ(v))} label="Search invoices" />
+          <div role="group" aria-label="Open or closed invoices" className="flex items-center gap-2">
+            {([['open', 'Open'], ['closed', 'Closed']] as const).map(([k, l]) => (
+              <button key={k} type="button" aria-pressed={status === k} onClick={() => reset(() => setStatus(status === k ? 'all' : k))} className={`rounded-full border px-4 py-1.5 text-sm ${status === k ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)] text-[color:var(--ds-ink)]' : 'border-[color:var(--ds-line)] bg-white text-[color:var(--ds-body)] hover:bg-[color:var(--ds-selected)]'}`}>{l}</button>
+            ))}
+          </div>
+        </>, searchSlot)}
 
       {createSlot && createPortal(
         <button type="button" className={A.outline} onClick={() => setCreating({ advertiser_id: null, agreement_id: '', amount_cents: null })}>Create invoice</button>
