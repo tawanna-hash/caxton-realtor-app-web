@@ -593,7 +593,8 @@ export function AgreementDrawer({
   // Admin shortcut signing is allowed ONLY when payment is Check (or no payment).
   // Credit Card must go through the public Sign Wizard so Stripe actually charges —
   // signing here would mark the agreement paid-on-paper without ever hitting Stripe.
-  const cardRequiresSigningLink = form.payment_type === "Credit Card";
+  const cardRequiresSigningLink =
+    form.payment_type === "Credit Card" || form.payment_type === "ACH";
   const canSign =
     form.terms_accepted &&
     form.signer_name.trim() !== "" &&
@@ -689,7 +690,35 @@ export function AgreementDrawer({
     return sparsePatch(payload, initialEditPayload);
   };
 
+  // A brand-new agreement is created once. Any later save, send, test or
+  // copy-link from the same open form updates that row instead of inserting
+  // a duplicate (and, through it, a duplicate partner/client).
+  const createdRef = useRef<{ id: string; payload: Record<string, unknown> } | null>(null);
+
+  const validateIdentity = (): string | null => {
+    if (!form.company_name.trim()) return "Company name is required";
+    if (!form.rep_name.trim()) return "Representative name is required";
+    return null;
+  };
+
   const persistAgreement = async (isSigning: boolean) => {
+    const invalid = isCreate ? validateIdentity() : null;
+    if (invalid) throw new Error(invalid);
+    const full = buildPayload(isSigning);
+    if (isCreate && createdRef.current) {
+      const patch = sparsePatch(full, createdRef.current.payload);
+      const id = createdRef.current.id;
+      if (Object.keys(patch).length > 0) {
+        const r = await fetch(`/api/admin/agreements/${id}`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(patch),
+        });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        createdRef.current.payload = full;
+      }
+      return { agreement: { id } };
+    }
     const payload = buildRequestPayload(isSigning);
     if (!isCreate && Object.keys(payload).length === 0) {
       return { agreement: existing };
@@ -703,7 +732,11 @@ export function AgreementDrawer({
       body: JSON.stringify(payload),
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return response.json();
+    const json = await response.json();
+    if (isCreate && json?.agreement?.id) {
+      createdRef.current = { id: json.agreement.id, payload: full };
+    }
+    return json;
   };
 
   const save = async (isSigning: boolean) => {
@@ -827,12 +860,11 @@ export function AgreementDrawer({
   };
 
   const copySigningLink = async () => {
-    if (!existing?.id) {
-      onError("Save the agreement first");
-      return;
-    }
     try {
-      const res = await fetch(`/api/admin/agreements/${existing.id}/sign-link`);
+      const id: string =
+        existing?.id ?? (await persistAgreement(false)).agreement?.id ?? "";
+      if (!id) throw new Error("No agreement ID after save");
+      const res = await fetch(`/api/admin/agreements/${id}/sign-link`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const { url } = await res.json();
       await navigator.clipboard.writeText(url);
@@ -2115,7 +2147,7 @@ export function AgreementDrawer({
           className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           title={
             cardRequiresSigningLink
-              ? `Credit Card payments must be signed via the public Sign Wizard so Stripe can charge the card. Use ${sendStageLabel} instead.`
+              ? `Credit Card and ACH payments must be signed via the public Sign Wizard so Stripe can collect the payment method. Use ${sendStageLabel} instead.`
               : !canSign
                 ? "Accept terms, enter signer name and sign date first"
                 : ""
