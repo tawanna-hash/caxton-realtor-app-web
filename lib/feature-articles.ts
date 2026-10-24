@@ -234,3 +234,28 @@ export async function deleteFeatureArticle(id: number): Promise<boolean> {
   const rows = await sql`DELETE FROM feature_articles WHERE id = ${id} RETURNING id`;
   return rows.length > 0;
 }
+
+export type PinnedFeature = FeatureArticle & { advertiserName: string; advertiserSlug: string };
+
+/**
+ * Published feature articles whose partner runs in the given market
+ * ('both' partners appear in every market). Newest first. Used to pin
+ * featured articles to the top of each market's feed.
+ */
+export async function listPinnedFeatureArticles(
+  publication: 'austin' | 'san_antonio',
+  limit = 3,
+): Promise<PinnedFeature[]> {
+  await ensureFeatureArticlesSchema();
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT f.*, a.name AS advertiser_name, a.slug AS advertiser_slug
+    FROM feature_articles f
+    JOIN advertisers a ON a.id = f.advertiser_id
+    WHERE f.status = 'published'
+      AND (a.publication = ${publication} OR a.publication = 'both')
+    ORDER BY f.published_at DESC, f.id DESC
+    LIMIT ${Math.min(limit, 10)}
+  `) as unknown as Array<FeatureArticleRow & { advertiser_name: string; advertiser_slug: string }>;
+  return rows.map((r) => ({ ...rowToArticle(r), advertiserName: r.advertiser_name, advertiserSlug: r.advertiser_slug }));
+}

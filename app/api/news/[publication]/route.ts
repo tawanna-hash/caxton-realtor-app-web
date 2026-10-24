@@ -7,7 +7,8 @@
 
 import { NextResponse } from 'next/server';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
-import { getNews, type Publication } from '@/lib/server/wp-news';
+import { getNews, type Publication, type NewsArticle } from '@/lib/server/wp-news';
+import { listPinnedFeatureArticles } from '@/lib/feature-articles';
 
 export const runtime = 'nodejs';
 
@@ -37,9 +38,44 @@ export const GET = withErrorHandling(async (req: Request, ctx: Ctx) => {
   // cards only need headline/summary/image; the article view fetches the
   // full payload when an article is opened.
   const listOnly = new URL(req.url).searchParams.get('fields') === 'list';
-  const outArticles = listOnly
+  const baseArticles = listOnly
     ? articles.map((a) => ({ ...a, contentHtml: '' }))
     : articles;
+
+  // Featured partner articles are pinned to the top of each market's feed.
+  let pinned: Array<NewsArticle & { pinned: true; featured: true }> = [];
+  try {
+    const feats = await listPinnedFeatureArticles(publication as Publication);
+    const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    pinned = feats.map((f) => {
+      const summary = (f.excerpt || f.content || '').replace(/\s+/g, ' ').trim();
+      const sum = summary.length > 240 ? `${summary.slice(0, 240).replace(/\s+\S*$/, '')}…` : summary;
+      const link = f.articleUrl || `/partners/${f.advertiserSlug}#feature-articles`;
+      const date = new Date(f.publishedAt);
+      return {
+        id: `feature-${f.id}`,
+        publication: publication as Publication,
+        cat: 'Featured',
+        head: f.title,
+        sum,
+        link,
+        publishedAt: f.publishedAt,
+        imageUrl: f.imageUrl,
+        time: Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }),
+        contentHtml: listOnly || !f.content ? '' : f.content.split(/\n+/).filter(Boolean).map((p) => `<p>${esc(p)}</p>`).join(''),
+        excerpt: sum,
+        author: f.author ? { name: f.author, avatar: f.authorAvatar ?? undefined } : undefined,
+        dateIso: f.publishedAt,
+        tags: [f.advertiserName],
+        pinned: true as const,
+        featured: true as const,
+      };
+    });
+  } catch {
+    pinned = [];
+  }
+  const pinnedLinks = new Set(pinned.map((p) => p.link.toLowerCase()));
+  const outArticles = [...pinned, ...baseArticles.filter((a) => !pinnedLinks.has((a.link || '').toLowerCase()))];
 
   return NextResponse.json(
     {

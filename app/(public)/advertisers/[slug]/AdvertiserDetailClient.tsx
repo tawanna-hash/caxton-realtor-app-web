@@ -913,6 +913,10 @@ function FeatureArticlesSection({ articles }: { articles: FeatureArticle[] }) {
 function FeatureArticleCard({ article }: { article: FeatureArticle }) {
   const [expanded, setExpanded] = useState(false);
   const href = normalizeUrl(article.articleUrl);
+  const fullText = (article.content || article.excerpt || '').trim();
+  const flat = (article.excerpt || article.content || '').replace(/\s+/g, ' ').trim();
+  const summary = flat.length > 240 ? `${flat.slice(0, 240).replace(/\s+\S*$/, '')}…` : flat;
+  const hasMore = fullText.length > summary.length;
   const byline = [article.author, formatArticleDate(article.publishedAt)]
     .filter(Boolean)
     .join(' · ');
@@ -941,39 +945,36 @@ function FeatureArticleCard({ article }: { article: FeatureArticle }) {
             <span>{byline}</span>
           </div>
         )}
-        {article.excerpt && (
-          <p className="mt-2 text-sm text-gray-700 font-light leading-relaxed">
-            {article.excerpt}
+        {fullText && (
+          <p className="mt-2 text-sm text-gray-700 font-light leading-relaxed whitespace-pre-line">
+            {expanded ? fullText : summary}
           </p>
         )}
 
-        {expanded && article.content && (
-          <p className="mt-3 text-sm text-gray-800 font-light leading-relaxed whitespace-pre-line">
-            {article.content}
-          </p>
-        )}
-
-        {href ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 mt-3 text-sm font-medium underline underline-offset-2 hover:no-underline"
-            style={{ color: BRAND_PURPLE }}
-          >
-            Read article →
-          </a>
-        ) : article.content ? (
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-            className="inline-flex items-center gap-1 mt-3 text-sm font-medium underline underline-offset-2 hover:no-underline"
-            style={{ color: BRAND_PURPLE }}
-          >
-            {expanded ? 'Show less' : 'Read article →'}
-          </button>
-        ) : null}
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1">
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              className="inline-flex items-center gap-1 text-sm font-medium underline underline-offset-2 hover:no-underline"
+              style={{ color: BRAND_PURPLE }}
+            >
+              {expanded ? 'Show less' : 'Read more'}
+            </button>
+          )}
+          {href && (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm font-medium underline underline-offset-2 hover:no-underline"
+              style={{ color: BRAND_PURPLE }}
+            >
+              Read article →
+            </a>
+          )}
+        </div>
       </div>
     </article>
   );
