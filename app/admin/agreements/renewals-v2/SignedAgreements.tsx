@@ -32,8 +32,10 @@ function stOf(a: Agr): St | null {
   const s = String(a.status).toLowerCase();
   if (s === 'cancelled' || s === 'canceled' || s === 'terminated') return 'terminated';
   if (s === 'expired') return 'completed';
-  if (s === 'signed' || s === 'active' || a.signed_at) if (a.end_date && a.end_date.slice(0, 10) < today()) return 'completed';
+  if (s === 'signed' || s === 'active' || a.signed_at) {
+    if (a.end_date && a.end_date.slice(0, 10) < today()) return 'completed';
     return (a as { service_hold?: boolean }).service_hold ? 'on_hold' : 'active';
+  }
   return null;
 }
 const nameOf = (a: Agr) => a.company_name || a.advertiser_name || 'Unnamed client';

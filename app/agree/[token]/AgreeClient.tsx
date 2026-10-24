@@ -549,7 +549,7 @@ export default function AgreeClient({ token }: { token: string }) {
                   <p>Your request to pay by check was sent. We will let you know once it is approved. Your service will not be scheduled until your check is received. You can also pay now by bank account or credit card.</p>
                 ) : (
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span>Need to pay by check? Ask for approval first.</span>
+                    <span>Need to pay by check? Ask for approval first. Your service will not be scheduled until your check is received.</span>
                     <button type="button" onClick={requestCheck} disabled={submitting} className="rounded-[10px] border border-[color:var(--ds-line)] bg-white px-4 py-2 text-sm font-medium text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)] disabled:opacity-60">Ask to pay by check</button>
                   </div>
                 )}
