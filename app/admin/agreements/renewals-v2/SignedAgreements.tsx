@@ -172,7 +172,7 @@ export default function SignedAgreements() {
       {dErr && <div className={A.error}>{dErr}</div>}
       {slot && createPortal(<div className="flex flex-wrap items-center gap-3 [&_*]:!normal-case">
         <Menu label="More Actions" items={[{ label: 'Import agreements', onClick: () => setImp(true) }, { label: 'Export agreements', onClick: () => exportCsv(rows) }]} />
-        <Menu primary label="Create Agreement" items={[{ label: 'Use a template', onClick: () => setPick(true) }, { label: 'Start from scratch', onClick: () => setDrawer('new') }, { label: 'New quote', onClick: () => setQuote(true) }, { label: 'Import with AI', disabled: true }]} />
+        <Menu primary label="Create Agreement" items={[{ label: 'Start from scratch', onClick: () => setDrawer('new') }, { label: 'Import with AI', disabled: true }]} />
       </div>, slot)}
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search agreements" />
