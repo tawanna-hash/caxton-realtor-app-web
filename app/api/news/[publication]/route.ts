@@ -45,7 +45,7 @@ export const GET = withErrorHandling(async (req: Request, ctx: Ctx) => {
   // Featured partner articles are pinned to the top of each market's feed.
   let pinned: Array<NewsArticle & { pinned: true; featured: true }> = [];
   try {
-    const feats = await listPinnedFeatureArticles(publication as Publication);
+    const feats = await listPinnedFeatureArticles(publication as Publication, 1);
     const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     pinned = feats.map((f) => {
       const summary = (f.excerpt || f.content || '').replace(/\s+/g, ' ').trim();

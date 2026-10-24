@@ -240,11 +240,11 @@ export type PinnedFeature = FeatureArticle & { advertiserName: string; advertise
 /**
  * Published feature articles whose partner runs in the given market
  * ('both' partners appear in every market). Newest first. Used to pin
- * featured articles to the top of each market's feed.
+ * the most recent featured article to the top of each market's feed.
  */
 export async function listPinnedFeatureArticles(
   publication: 'austin' | 'san_antonio',
-  limit = 3,
+  limit = 1,
 ): Promise<PinnedFeature[]> {
   await ensureFeatureArticlesSchema();
   const sql = getSql();
