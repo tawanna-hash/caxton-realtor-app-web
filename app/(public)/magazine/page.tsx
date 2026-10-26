@@ -45,6 +45,8 @@ export default async function MagazinePage() {
         the San Antonio and South Texas real estate magazine founded in 1982.
         Both are published by Caxton Publications, Inc.
       </p>
+      {/* The cover images live on Vercel Blob; open the connection early. */}
+      <link rel="preconnect" href="https://b2lqsyyhvbkewrwf.public.blob.vercel-storage.com" crossOrigin="" />
       <MagazineGA measurementId={austinId} />
       <MagazineGA measurementId={sanAntonioId} />
       <MagazineClient />

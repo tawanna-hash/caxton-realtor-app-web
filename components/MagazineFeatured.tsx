@@ -97,7 +97,7 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
           <div className="relative w-full max-w-sm mx-auto md:mx-0 aspect-[17/22] overflow-hidden shadow-2xl group-hover:shadow-3xl transition-shadow bg-white">
             {magazine.cover_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={magazine.cover_url} alt={`${magazine.issue_label} cover`} className="w-full h-full object-contain" />
+              <img src={magazine.cover_url} alt={`${magazine.issue_label} cover`} className="w-full h-full object-contain" fetchPriority="high" decoding="async" />
             ) : (
               <div className="flex items-center justify-center w-full h-full text-white/60 text-xs uppercase tracking-wider">No cover</div>
             )}
