@@ -13,7 +13,8 @@
 // `caxton_pub`). Austin and San Antonio are separate products.
 
 import { Suspense } from 'react';
-import { listBuilderInventoryCached, toBrowserRow } from '@/lib/builder-inventory';
+import { listBuilderInventorySlimCached } from '@/lib/builder-inventory';
+import { compactRow } from '@/lib/inventory-compact';
 import { getServerPub } from '@/lib/publication';
 import { parseFilters } from '@/lib/inventory-filters';
 import InventoryBrowser from '@/components/inventory/InventoryBrowser';
@@ -40,16 +41,13 @@ type Filters = ReturnType<typeof parseFilters>;
 async function HomesList({ filters, sort }: { filters: Filters['filters']; sort: Filters['sort'] }) {
   const initialFilters = { ...filters, kind: 'promotion' as const };
   const pub = await getServerPub();
-  // Fetch BOTH kinds (listings + promotions) for the active market. The
-  // client browser filters by kind and every other dimension.
-  const rows = await listBuilderInventoryCached({
-    status: 'active',
-    publication: pub,
-    limit: 1000,
-  });
+  // This page is locked to kind=promotion, so only promotions are sent (in the
+  // compact wire format); the listings stay on /inventory.
+  const all = await listBuilderInventorySlimCached(pub, 1000);
+  const rows = all.filter((r) => r.kind === 'promotion');
   return (
     <InventoryBrowser
-      rows={rows.map(toBrowserRow)}
+      compactRows={rows.map(compactRow)}
       initialFilters={initialFilters}
       initialSort={sort}
       surface="promotions"
