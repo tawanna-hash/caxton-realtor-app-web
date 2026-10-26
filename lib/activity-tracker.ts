@@ -14,7 +14,7 @@
 // Both kinds are throttled per-page-load to avoid floods: max 3 errors
 // per page load, max 5 form submits per page load.
 
-import posthog from 'posthog-js';
+import type { PostHog } from 'posthog-js';
 
 let installed = false;
 
@@ -63,7 +63,7 @@ function sendAlert(payload: AlertPayload): void {
 }
 
 function captureToPostHog(event: string, props: Record<string, unknown>): void {
-  try { posthog.capture(event, props); } catch { /* swallow */ }
+  try { (window as unknown as { posthog?: PostHog }).posthog?.capture(event, props); } catch { /* swallow */ }
 }
 
 // Well-known browser-extension and plugin noise. None of these are real app

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 
@@ -89,8 +89,24 @@ export default function SiteGA() {
     return () => window.clearTimeout(t);
   }, [id, pathname]);
 
-  if (!id) return null;
-  return <Script src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`} strategy="lazyOnload" />;
+  // Page views queue in dataLayer, so gtag.js can wait: load it on the first interaction,
+  // or after 6 seconds for visitors who only read.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!id || ready) return;
+    const events = ['pointerdown', 'keydown', 'scroll', 'touchstart'] as const;
+    const go = () => { cleanup(); setReady(true); };
+    const timer = window.setTimeout(go, 6000);
+    const cleanup = () => {
+      window.clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, go));
+    };
+    events.forEach((e) => window.addEventListener(e, go, { once: true, passive: true }));
+    return cleanup;
+  }, [id, ready]);
+
+  if (!id || !ready) return null;
+  return <Script src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`} strategy="afterInteractive" />;
 }
 
 /**

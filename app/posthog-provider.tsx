@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import posthog from "posthog-js";
+import type { PostHog } from "posthog-js";
 import { usePathname } from "next/navigation";
 import { installActivityTracker } from "@/lib/activity-tracker";
 
 let initialized = false;
+// posthog-js (about 215 KB) is loaded on demand after the page is idle so it never
+// competes with first render; every helper below is a no-op until it is ready.
+let posthog: PostHog;
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -17,7 +20,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     const w = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
     let timer: ReturnType<typeof setTimeout> | undefined;
     let idleId: number | undefined;
-    const boot = () => {
+    const boot = async () => {
     if (initialized) return;
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
@@ -25,6 +28,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       console.warn("[PostHog] NEXT_PUBLIC_POSTHOG_KEY not set; analytics disabled");
       return;
     }
+    if (!posthog) posthog = (await import("posthog-js")).default;
+    if (initialized) return;
     posthog.init(key, {
       api_host: host,
       capture_pageview: false,
@@ -107,8 +112,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     });
     posthog.capture('$pageview', { $current_url: window.location.href });
     };
-    if (w.requestIdleCallback) idleId = w.requestIdleCallback(boot, { timeout: 4000 });
-    else timer = setTimeout(boot, 2500);
+    if (w.requestIdleCallback) idleId = w.requestIdleCallback(() => { void boot(); }, { timeout: 4000 });
+    else timer = setTimeout(() => { void boot(); }, 2500);
     return () => { if (timer) clearTimeout(timer); if (idleId !== undefined && w.cancelIdleCallback) w.cancelIdleCallback(idleId); };
   }, []);
 
