@@ -30,15 +30,35 @@ export default function ArticlePage() {
 
   useEffect(() => {
     let alive = true;
-    fetch(`/api/news/${market}`, { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((data) => {
+    const load = (bust: boolean) =>
+      fetch(`/api/news/${market}${bust ? `?_=${Date.now()}` : ''}`, { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+        .then((data) => (Array.isArray(data?.articles) ? (data.articles as Article[]) : []));
+    // The CDN caches the list briefly, so a card the feed just showed (e.g. a pinned Featured
+    // article) can be missing here. Retry once past the cache, then fall back to the clicked card.
+    const clicked = (): Article | null => {
+      try {
+        const raw = sessionStorage.getItem('caxton_nav_article');
+        const a = raw ? (JSON.parse(raw) as Article) : null;
+        return a && String(a.id) === id ? a : null;
+      } catch {
+        return null;
+      }
+    };
+    load(false)
+      .catch(() => [] as Article[])
+      .then((list) => (list.some((a) => String(a?.id) === id) ? list : load(true).catch(() => list)))
+      .then((list) => {
         if (!alive) return;
-        const list = Array.isArray(data?.articles) ? data.articles : [];
-        setArticles(list);
-        setState(list.some((a: Article) => String(a?.id) === id) ? 'ready' : 'missing');
-      })
-      .catch(() => alive && setState('missing'));
+        if (list.some((a) => String(a?.id) === id)) {
+          setArticles(list);
+          setState('ready');
+          return;
+        }
+        const fallback = clicked();
+        setArticles(fallback ? [fallback, ...list] : list);
+        setState(fallback ? 'ready' : 'missing');
+      });
     return () => {
       alive = false;
     };

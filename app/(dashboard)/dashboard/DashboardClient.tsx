@@ -1077,6 +1077,9 @@ export default function DashboardClient({ signedOut = false }: { signedOut?: boo
         trackEvent('article_opened', { article_id: article?.id, article_title: article?.title, article_cat: article?.cat, pub: article?.pub });
         // Articles are full pages (/news/<id>) like Builders and Calendar.
         if (article?.id) {
+          // Keep the clicked card so the article page can still open it if the news list
+          // it fetches (cached separately) no longer includes it, e.g. a pinned Featured item.
+          try { sessionStorage.setItem('caxton_nav_article', JSON.stringify(article)); } catch { /* storage unavailable */ }
           router.push(`/news/${encodeURIComponent(String(article.id))}`);
         } else {
           setSelectedArticle(article);
