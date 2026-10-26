@@ -1096,7 +1096,7 @@ function TagsRow({ article, pubColor }: { article: any; pubColor: string }) {
 // Sticky bottom action bar — Save / Share / Copy
 // ─────────────────────────────────────────────────────────────────────────
 
-function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onLatest }: { article: any; pubColor: string; saved: boolean; onBack: () => void; onSaveToggle: () => void; onShare: () => void; onCopy: () => void; onLatest?: () => void }) {
+function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onLatest, variant = 'floating', autoHide = false }: { variant?: 'floating' | 'inline'; autoHide?: boolean; article: any; pubColor: string; saved: boolean; onBack: () => void; onSaveToggle: () => void; onShare: () => void; onCopy: () => void; onLatest?: () => void }) {
   // BUG-04: AdPopup (z-50) sits at bottom-20 right-4 and was visually
   // covering the Latest/Share pills, so taps on those buttons hit the ad
   // instead. Bump this bar above the popup (z-60) so navigation always
@@ -1112,30 +1112,24 @@ function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onLatest }: { 
   // offset elsewhere in the app.
   // Reading: slide the bar away while scrolling down so it never sits on top
   // of the article text; bring it back on any upward scroll or near the top.
-  const [hidden, setHidden] = useState(false);
+  // In page mode the bar starts hidden (an inline copy sits under the byline)
+  // and only floats back in when the reader scrolls up past the top section.
+  const [hidden, setHidden] = useState(autoHide);
   useEffect(() => {
+    if (variant === 'inline' || !autoHide) return;
     let lastY = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
       const dy = y - lastY;
       if (Math.abs(dy) < 8) return;
-      setHidden(dy > 0 && y > 200);
+      setHidden(!(dy < 0 && y > 400));
       lastY = y;
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [variant, autoHide]);
 
-  return (
-    <div
-      className="fixed left-1/2 -translate-x-1/2 z-[60] pointer-events-none transition-all duration-200"
-      style={{
-        bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
-        opacity: hidden ? 0 : 1,
-        transform: hidden ? 'translate(-50%, 16px)' : 'translate(-50%, 0)',
-      }}
-      aria-hidden={hidden}
-    >
+  const pills = (
       <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-2 shadow-lg">
         <ActionPillButton onClick={onBack} label="Back">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -1150,6 +1144,20 @@ function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onLatest }: { 
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v13"/><path d="M16 6l-4-4-4 4"/><rect x="4" y="9" width="16" height="13" rx="2"/></svg>
         </ActionPillButton>
       </div>
+  );
+  if (variant === 'inline') return <div className="flex mb-6">{pills}</div>;
+  return (
+    <div
+      className="fixed left-1/2 -translate-x-1/2 z-[60] pointer-events-none transition-all duration-200"
+      style={{
+        bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+        opacity: hidden ? 0 : 1,
+        transform: hidden ? 'translate(-50%, 16px)' : 'translate(-50%, 0)',
+        visibility: hidden ? 'hidden' : 'visible',
+      }}
+      aria-hidden={hidden}
+    >
+      {pills}
     </div>
   );
 }
@@ -1418,6 +1426,20 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
               </div>
             )}
 
+            {asPage && (
+              <ArticleActionBar
+                variant="inline"
+                article={article}
+                pubColor={info.color}
+                saved={saved}
+                onBack={onBack}
+                onSaveToggle={onSaveToggle}
+                onShare={onShare}
+                onCopy={onCopy}
+                onLatest={() => { trackEvent('article_latest_pill_clicked', { article_id: article.id, pub }); if (onLatest) onLatest(); else onBack(); }}
+              />
+            )}
+
             {/* Article body — chunked with mid-article ads if long enough */}
             {cleanedHtml ? (
               showMidAds ? (
@@ -1485,6 +1507,7 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
 
       {/* Sticky action bar */}
       <ArticleActionBar
+        autoHide={asPage}
         article={article}
         pubColor={info.color}
         saved={saved}
