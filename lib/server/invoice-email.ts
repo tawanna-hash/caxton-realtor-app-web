@@ -21,7 +21,7 @@
 // That is why it takes the pooled tagged-template `sql` client (or defaults to
 // getSql()) rather than a PoolClient bound to a live transaction.
 
-import { isAdvertiserInactive } from '@/lib/server/inactive-guard';
+import { isBillingEmailBlocked } from '@/lib/server/inactive-guard';
 import { Resend } from 'resend';
 import { getSql } from '@/lib/db';
 import {
@@ -104,7 +104,8 @@ export async function sendInvoiceEmail(
   const reminder = params.reminder === true;
 
   if (!params.advertiserId) return { status: 'no_advertiser' };
-  if (await isAdvertiserInactive(params.advertiserId)) return { status: 'skipped' };
+  // Archived clients that still owe money must still receive invoice and payment emails.
+  if (await isBillingEmailBlocked(params.advertiserId)) return { status: 'skipped' };
 
   const sendTo = params.billToEmail?.trim() ? params.billToEmail.trim() : null;
   if (!sendTo) return { status: 'no_email' };
