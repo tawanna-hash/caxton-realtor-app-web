@@ -1,8 +1,4 @@
 @import "tailwindcss";
-@import "@astrouxds/tokens/dist/css/base.reference.css";
-@import "@astrouxds/tokens/dist/css/base.system.css";
-@import "@astrouxds/tokens/dist/css/base.component.css";
-@import "@astrouxds/tokens/dist/css/theme.light.css";
 
 /* The app is built for a light surface only (bg-white, text-gray-900).
    `color-scheme: light` above pins UA defaults, but it does NOT stop
