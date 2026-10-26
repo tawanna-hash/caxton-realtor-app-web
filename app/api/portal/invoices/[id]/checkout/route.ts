@@ -184,8 +184,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     let session;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         session = await stripe.checkout.sessions.create(sessionParams as any);
       } catch (firstErr) {
         // A saved Stripe customer id can go stale (deleted, or from another mode/account).
@@ -194,6 +194,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         if (sessionParams.customer && (code === 'resource_missing' || /no such customer/i.test(String((firstErr as Error)?.message)))) {
           delete sessionParams.customer;
           sessionParams.customer_email = stripeSafeEmail(inv.bill_to_email);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           session = await stripe.checkout.sessions.create(sessionParams as any);
         } else {
           throw firstErr;

@@ -27,7 +27,8 @@ before(async () => {
     CREATE TABLE agreements (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), advertiser_id integer REFERENCES advertisers(id),
       company_name text, ad_size text, total_monthly_rate_cents int, signed_at timestamptz, stripe_customer_id text,
       stripe_payment_method_id text, payment_mode text, audit_log jsonb DEFAULT '[]', status text DEFAULT 'active',
-      publication text, updated_at timestamptz DEFAULT NOW());
+      publication text, channel text, type text, paid_at timestamptz, created_at timestamptz DEFAULT NOW(), updated_at timestamptz DEFAULT NOW());
+    CREATE TABLE agreement_line_items (id serial PRIMARY KEY, agreement_id uuid REFERENCES agreements(id), channel text);
     CREATE TABLE invoices (id serial PRIMARY KEY, agreement_id uuid REFERENCES agreements(id), status text, total_cents int);`);
   await rem.ensurePaymentSetupRequestsSchema();
 });

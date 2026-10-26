@@ -243,16 +243,16 @@ test('8. reminders: day-3 reminder goes to AP, day-10 alert goes to billing, not
   assert.match(alert.subject, /Still no payment method/); assert.ok(!alert.to.includes('ap@ticor.test'), 'internal alert goes to billing, not AP');
 });
 
-test('9. expired or tampered links never reach Stripe', async () => {
+test('9. tampered links never reach Stripe; past-dated links still work (never expire)', async () => {
   const before = fake.sessions.size;
   const good = setupTok.signPaymentSetupToken({ kind: 'client', id: 1 }).token;
   const tampered = good.replace(/\.[^.]+$/, '.AAAA');
   const r1 = await payRoute.GET(req(`https://app.test/api/pay/setup/${tampered}`), ctx(tampered));
   assert.match(r1.headers.get('location'), /error=invalid/);
-  const expired = setupTok.signPaymentSetupToken({ kind: 'client', id: 1 }, -1).token;
-  const r2 = await payRoute.GET(req(`https://app.test/api/pay/setup/${expired}`), ctx(expired));
-  assert.match(r2.headers.get('location'), /error=expired/);
   assert.equal(fake.sessions.size, before);
+  const old = setupTok.signPaymentSetupToken({ kind: 'client', id: 1 }, -1).token;
+  const r2 = await payRoute.GET(req(`https://app.test/api/pay/setup/${old}`), ctx(old));
+  assert.doesNotMatch(r2.headers.get('location'), /error=/);
 });
 
 test('10. nothing left the machine: no real email, no Stripe network call', () => {
