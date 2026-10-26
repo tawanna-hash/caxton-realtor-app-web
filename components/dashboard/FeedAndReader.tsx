@@ -1353,8 +1353,8 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
 
       {/* Featured article ad — shown before the editorial image so paid
           placement remains the first content unit beneath the app header. */}
-      <div className={asPage ? "px-4 sm:px-8" : "px-4"}>
-        <div className={asPage ? "max-w-7xl mx-auto" : "max-w-2xl mx-auto"}>
+      <div className={asPage ? "" : "px-4"}>
+        <div className={asPage ? "max-w-7xl mx-auto px-4 sm:px-8" : "max-w-2xl mx-auto"}>
           <AdLeaderboard pub={pub} articleId={articleId} />
         </div>
       </div>
@@ -1381,8 +1381,8 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
           ~62px pill) plus the BottomNav underneath, with breathing room.
           Was pb-44 — the bar overlapped the last paragraph on short
           articles and the "Read on website" link (BUG-18). */}
-      <div className={asPage ? "px-4 pt-8 pb-40 sm:px-8 sm:pt-12" : "px-4 pt-6 pb-52"}>
-        <div className={asPage ? "mx-auto flex max-w-7xl items-start gap-10" : "mx-auto flex max-w-[1040px] items-start justify-center gap-8"}>
+      <div className={asPage ? "pt-8 pb-40 sm:pt-12" : "px-4 pt-6 pb-52"}>
+        <div className={asPage ? "mx-auto flex max-w-7xl items-start gap-10 px-4 sm:px-8" : "mx-auto flex max-w-[1040px] items-start justify-center gap-8"}>
           <div className={asPage ? "w-full min-w-0 flex-1" : "w-full min-w-0 max-w-2xl"}>
             {/* Eyebrow */}
             {(article.cat || article.category) && (
