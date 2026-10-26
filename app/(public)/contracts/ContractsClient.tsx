@@ -78,7 +78,8 @@ export default function ContractsClient({
   function needAccount(): boolean {
     if (!guest) return false;
     if (window.confirm('You need a free account to add contracts and get deadline alerts. Create your account now?')) {
-      window.location.href = '/login?next=%2Fcontracts';
+      try { localStorage.setItem('caxton_return_to', '/contracts'); } catch {}
+      window.location.href = '/dashboard?auth=signup';
     }
     return true;
   }

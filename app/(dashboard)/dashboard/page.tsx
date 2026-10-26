@@ -876,6 +876,19 @@ function AuthGate({
   );
 }
 
+// Send a freshly signed-in (non-guest) user back to the page that asked them
+// to create an account, e.g. /contracts. Stored by the guest prompts.
+function returnToPendingPage(u: { guest?: boolean } | null | undefined) {
+  if (typeof window === 'undefined' || !u || u.guest) return;
+  try {
+    const to = localStorage.getItem('caxton_return_to');
+    if (to && to.startsWith('/') && !to.startsWith('//')) {
+      localStorage.removeItem('caxton_return_to');
+      window.location.assign(to);
+    }
+  } catch {}
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [phase, setPhase] = useState('splash');
@@ -930,6 +943,7 @@ export default function DashboardPage() {
         if (cancelled) return;
         if (data?.realtor) {
           setUser(data.realtor); identifyUser(data.realtor?.id || null, { email: data.realtor?.email });
+          returnToPendingPage(data.realtor);
           // Only force feed when there's no real content phase to restore.
           // Auth-flow phases (splash/select/auth) should fall through to feed;
           // content phases (feed/article) stay put. (magazines moved to /magazine in S23.)
@@ -1179,6 +1193,7 @@ export default function DashboardPage() {
         setUser(u);
         identifyUser(u?.id || null, { email: u?.email });
         trackEvent('auth_completed', { is_guest: !!u?.guest, pub });
+        returnToPendingPage(u);
         if (isPubKey(pub)) {
           setPhase('feed');
         } else {
