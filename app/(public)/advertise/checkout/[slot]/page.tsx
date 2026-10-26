@@ -101,7 +101,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
   return (
     <div className="min-h-screen bg-white">
       <TrackPageView event="advertise_checkout_page_viewed" properties={{ slot: slug }} />
-      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-14">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <div className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             {slot.tier} placement · {slot.zone}

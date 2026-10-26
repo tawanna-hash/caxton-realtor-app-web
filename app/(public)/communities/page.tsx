@@ -115,7 +115,7 @@ export default async function Page({ searchParams }: PageProps) {
     <>
       <BuildersBreadcrumb />
       <div className="min-h-screen bg-white">
-        <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+        <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
           <header className="mb-8">
             <PageTitle size="md">New Home Communities</PageTitle>
             <p className="text-base text-gray-700 font-light leading-relaxed mt-4">

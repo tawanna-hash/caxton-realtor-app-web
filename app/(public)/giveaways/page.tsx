@@ -46,7 +46,7 @@ export default async function Page() {
   return (
     <div className="min-h-screen bg-white">
       <TrackPageView event="giveaway_page_viewed" />
-      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <header className="mb-8 sm:mb-10">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             {giveaways.length > 0 ? 'Enter to win' : 'Coming soon'}

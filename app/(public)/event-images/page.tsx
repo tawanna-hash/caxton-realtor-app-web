@@ -26,7 +26,7 @@ export default async function EventImagesPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <header className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Event Images</h1>
           <p className="text-base text-gray-700 font-light leading-relaxed mt-3 max-w-2xl">

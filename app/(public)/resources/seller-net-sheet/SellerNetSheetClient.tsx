@@ -171,7 +171,7 @@ export default function SellerNetSheetClient() {
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
+    <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8 pb-44 print:pb-12">
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle size="md">Seller Net Sheet</PageTitle>

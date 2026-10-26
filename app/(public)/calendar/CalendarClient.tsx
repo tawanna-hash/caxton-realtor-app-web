@@ -137,7 +137,7 @@ export default function CalendarClient() {
       // here is the private Dallas/Ft. Worth preview toggle.
       topBanner={
         dallasAllowed && !pubIsDallas ? (
-          <div className="max-w-7xl mx-auto px-4 sm:px-8 mb-4">
+          <div className="max-w-3xl mx-auto px-4 mb-4">
             <div role="group" aria-label="Calendar market" className="inline-flex rounded-full border border-gray-200 p-1 text-sm">
               <button
                 type="button"

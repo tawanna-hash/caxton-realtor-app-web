@@ -40,7 +40,7 @@ export default async function EblastOrderPage({ searchParams }: PageProps) {
     <>
       <TrackPageView event="advertise_eblast_order_page_viewed" />
       <div className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
+        <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
           <header className="mb-7">
             <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">
               Self-Service · e-Blast

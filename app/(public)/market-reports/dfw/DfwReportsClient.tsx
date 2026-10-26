@@ -49,7 +49,7 @@ export default function DfwReportsClient() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
       <h1 className="text-2xl font-semibold text-gray-900">Dallas/Ft. Worth Market Reports (Preview)</h1>
       <p className="mt-1 text-sm text-gray-600">Monthly housing numbers by board, county and zip code.</p>
 

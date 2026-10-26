@@ -1365,7 +1365,7 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
       {/* Featured article ad — shown before the editorial image so paid
           placement remains the first content unit beneath the app header. */}
       <div className={asPage ? "" : "px-4"}>
-        <div className={asPage ? "max-w-7xl mx-auto px-4 sm:px-8" : "max-w-2xl mx-auto"}>
+        <div className={asPage ? "max-w-3xl mx-auto px-4" : "max-w-2xl mx-auto"}>
           <AdLeaderboard pub={pub} articleId={articleId} />
         </div>
       </div>
@@ -1376,7 +1376,7 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
           look blurry). max-h cap prevents very tall portraits from dominating. */}
       {article.imageUrl && (
         <div className="w-full bg-gray-100">
-          <div className={asPage ? "max-w-7xl mx-auto px-4 sm:px-8" : "max-w-2xl mx-auto"}>
+          <div className={asPage ? "max-w-3xl mx-auto px-4" : "max-w-2xl mx-auto"}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={article.imageUrl}
@@ -1392,8 +1392,8 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
           ~62px pill) plus the BottomNav underneath, with breathing room.
           Was pb-44 — the bar overlapped the last paragraph on short
           articles and the "Read on website" link (BUG-18). */}
-      <div className={asPage ? "pt-8 pb-40 sm:pt-12" : "px-4 pt-6 pb-52"}>
-        <div className={asPage ? "mx-auto flex max-w-7xl items-start gap-10 px-4 sm:px-8" : "mx-auto flex max-w-[1040px] items-start justify-center gap-8"}>
+      <div className={asPage ? "pt-8 pb-40" : "px-4 pt-6 pb-52"}>
+        <div className={asPage ? "mx-auto flex max-w-3xl items-start px-4" : "mx-auto flex max-w-[1040px] items-start justify-center gap-8"}>
           <div className={asPage ? "w-full min-w-0 flex-1" : "w-full min-w-0 max-w-2xl"}>
             {/* Eyebrow */}
             {(article.cat || article.category) && (
@@ -1494,7 +1494,7 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
           {/* Desktop article-sidebar inventory. The bare variant preserves the
               uploaded creative's natural aspect ratio instead of stretching it
               to fill the rail. Hidden on mobile and tablet by design. */}
-          <aside className="hidden w-[320px] shrink-0 lg:block" aria-label="Article advertising partner">
+          <aside className={asPage ? "hidden" : "hidden w-[320px] shrink-0 lg:block"} aria-label="Article advertising partner">
             <div className="sticky top-24">
               <AdSlotComponent slug="article_sidebar_desktop" variant="bare" />
             </div>

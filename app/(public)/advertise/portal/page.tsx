@@ -44,7 +44,7 @@ export default function SelfServicePortalPage() {
     <>
       <TrackPageView event="advertise_portal_page_viewed" />
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         {/* Header */}
         <header className="mb-8 text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-[#42277C] font-semibold mb-3">

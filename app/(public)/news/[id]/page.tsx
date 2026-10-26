@@ -66,7 +66,7 @@ export default function ArticlePage() {
 
   if (state === 'loading') {
     return (
-      <div className="animate-pulse space-y-4 p-6 max-w-2xl mx-auto" aria-busy="true">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8 animate-pulse space-y-4" aria-busy="true">
         <div className="h-4 w-40 rounded bg-gray-200" />
         <div className="h-8 w-full rounded bg-gray-200" />
         <div className="h-64 rounded bg-gray-100" />

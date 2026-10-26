@@ -78,7 +78,7 @@ export default function PrintDeadlinesPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <header className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             {data.name}

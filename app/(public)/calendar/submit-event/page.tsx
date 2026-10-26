@@ -13,7 +13,7 @@ export const metadata = {
 export default function SubmitCalendarEventPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <Link href="/calendar" className="text-sm text-gray-600 hover:text-gray-900">
           ← Back to Calendar
         </Link>

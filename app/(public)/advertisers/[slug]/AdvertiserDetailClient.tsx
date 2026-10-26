@@ -169,7 +169,7 @@ export default function AdvertiserDetailClient({
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <Link
           href={backHref}
           className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mb-6"

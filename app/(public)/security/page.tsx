@@ -23,7 +23,7 @@ const NOT_YET = [
 
 export default function SecurityPage() {
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 text-[#1B1726]">
+    <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8 text-[#1B1726]">
       <h1 className="font-serif text-3xl text-[#301D5D]">Security</h1>
       <p className="mt-3 text-[15px] text-[#4A4757]">Closing Time handles contracts, dates and client contact details. This page lists what protects them today and what we do not claim yet.</p>
 

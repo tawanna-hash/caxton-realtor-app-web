@@ -25,7 +25,7 @@ function Code({ children }: { children: string }) {
 
 export default function DevelopersPage() {
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 text-[#1B1726]">
+    <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8 text-[#1B1726]">
       <h1 className="font-serif text-3xl text-[#301D5D]">API Documentation</h1>
       <p className="mt-3 text-[15px] text-[#4A4757]">Read your deals, and get a message when a deal changes. Everything uses HTTPS and JSON. Documents and private notes are never included.</p>
 

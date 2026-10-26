@@ -36,7 +36,7 @@ export default async function TestimonialShowcasePage({ params }: Ctx) {
   return (
     <div className="bg-[#faf8f4]">
       <section className="border-b border-stone-200 bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
+        <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
             {profile.headshot_url ? (
               // Profile images are owner-supplied Blob URLs with dynamic hosts.
@@ -67,7 +67,7 @@ export default async function TestimonialShowcasePage({ params }: Ctx) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-5xl px-4 py-8 sm:px-8 sm:py-14">
+      <section className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-950">What Clients Say</h2>

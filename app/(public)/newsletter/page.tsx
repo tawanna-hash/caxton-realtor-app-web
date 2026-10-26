@@ -16,7 +16,7 @@ export const metadata = {
 
 export default function NewsletterLandingPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
       <TrackPageView event="newsletter_page_viewed" />
       <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
         Weekly Email
