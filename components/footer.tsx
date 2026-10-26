@@ -30,24 +30,24 @@ export function Footer({ showAustinPartners = false }: { showAustinPartners?: bo
           <div>
             <h2 className="text-sm font-semibold text-gray-900 mb-3">Content</h2>
             <ul className="space-y-2 text-xs text-gray-600">
-              <li><Link href="/magazine" className="hover:text-gray-900 transition-colors">Issues</Link></li>
-              <li><Link href="/calendar" className="hover:text-gray-900 transition-colors">Calendar</Link></li>
-              <li><Link href="/builders" className="hover:text-gray-900 transition-colors">Builders</Link></li>
-              <li><Link href="/inventory" className="hover:text-gray-900 transition-colors">Inventory &amp; Promotions</Link></li>
-              <li><Link href="/giveaways" className="hover:text-gray-900 transition-colors">Giveaways</Link></li>
-              <li><Link href="/newsletter" className="hover:text-gray-900 transition-colors">Email</Link></li>
-              <li><Link href="/subscribe" className="hover:text-gray-900 transition-colors">Subscribe</Link></li>
+              <li><Link href="/magazine" className="inline-block py-2 hover:text-gray-900 transition-colors">Issues</Link></li>
+              <li><Link href="/calendar" className="inline-block py-2 hover:text-gray-900 transition-colors">Calendar</Link></li>
+              <li><Link href="/builders" className="inline-block py-2 hover:text-gray-900 transition-colors">Builders</Link></li>
+              <li><Link href="/inventory" className="inline-block py-2 hover:text-gray-900 transition-colors">Inventory &amp; Promotions</Link></li>
+              <li><Link href="/giveaways" className="inline-block py-2 hover:text-gray-900 transition-colors">Giveaways</Link></li>
+              <li><Link href="/newsletter" className="inline-block py-2 hover:text-gray-900 transition-colors">Email</Link></li>
+              <li><Link href="/subscribe" className="inline-block py-2 hover:text-gray-900 transition-colors">Subscribe</Link></li>
             </ul>
           </div>
           <div>
             <h2 className="text-sm font-semibold text-gray-900 mb-3">Company</h2>
             <ul className="space-y-2 text-xs text-gray-600">
-              <li><Link href="/about" className="hover:text-gray-900 transition-colors">About Us</Link></li>
-              <li><Link href="/advertise" className="hover:text-gray-900 transition-colors">Advertise</Link></li>
-              <li><Link href="/faq" className="hover:text-gray-900 transition-colors">FAQs</Link></li>
-              <li><Link href="/support" className="hover:text-gray-900 transition-colors">Support</Link></li>
-              <li><Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-gray-900 transition-colors">Terms of Use</Link></li>
+              <li><Link href="/about" className="inline-block py-2 hover:text-gray-900 transition-colors">About Us</Link></li>
+              <li><Link href="/advertise" className="inline-block py-2 hover:text-gray-900 transition-colors">Advertise</Link></li>
+              <li><Link href="/faq" className="inline-block py-2 hover:text-gray-900 transition-colors">FAQs</Link></li>
+              <li><Link href="/support" className="inline-block py-2 hover:text-gray-900 transition-colors">Support</Link></li>
+              <li><Link href="/privacy" className="inline-block py-2 hover:text-gray-900 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="inline-block py-2 hover:text-gray-900 transition-colors">Terms of Use</Link></li>
             </ul>
           </div>
         </div>

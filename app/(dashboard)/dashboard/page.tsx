@@ -727,9 +727,9 @@ function AuthGate({
               <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: info.color }}>
                 Realty News Now
               </p>
-              <h1 className="text-center text-3xl font-semibold tracking-tight text-gray-900">
+              <h2 className="text-center text-3xl font-semibold tracking-tight text-gray-900">
                 Welcome Back
-              </h1>
+              </h2>
               <p className="mb-6 mt-2 text-center text-sm font-light leading-relaxed text-gray-500">
                 Sign in for your saved profile, preferences, and subscriptions.
               </p>
@@ -762,7 +762,7 @@ function AuthGate({
                   onClick={() => {
                     if (typeof window !== 'undefined') window.location.href = '/auth/forgot-password';
                   }}
-                  className="text-xs font-medium text-[#301D5D] hover:underline"
+                  className="py-2 text-xs font-medium text-[#301D5D] hover:underline"
                 >
                   Forgot password?
                 </button>

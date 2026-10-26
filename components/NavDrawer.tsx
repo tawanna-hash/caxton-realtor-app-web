@@ -342,7 +342,7 @@ export default function NavDrawer({
               </Link>
               <div className="mt-4 flex flex-wrap gap-2">
                 {([['Contracts', '/contracts'], ['TREC Forms', '/contracts/forms'], ['Run Numbers', '/contracts/calculators']] as const).map(([label, href]) => (
-                  <Link key={href} href={href} onClick={onClose} className="rounded-lg border border-white/25 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.11em] text-white transition hover:border-[#F4D06F] hover:bg-white/10 hover:text-[#F4D06F]">{label}</Link>
+                  <Link key={href} href={href} onClick={onClose} className="rounded-lg border border-white/25 px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.11em] text-white transition hover:border-[#F4D06F] hover:bg-white/10 hover:text-[#F4D06F]">{label}</Link>
                 ))}
               </div>
             </div>

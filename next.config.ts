@@ -4,9 +4,8 @@ import { OPTIMIZABLE_IMAGE_HOSTS } from './lib/optimizable-image-hosts';
 // ─────────────────────────────────────────────────────────────────────────────
 // Security headers (F-03 from prod audit)
 //
-// CSP is shipped in Report-Only mode first so production traffic isn't broken
-// by an over-tight policy. After a week of clean violation reports we can flip
-// the header name to `Content-Security-Policy` (enforced).
+// CSP is enforced. Scripts are limited to the hosts below, plugins are
+// blocked, and framing of our pages is denied.
 //
 // Allowlist rationale:
 //   - js.stripe.com, *.stripe.com  — Stripe Elements + 3DS challenge iframes
@@ -30,29 +29,27 @@ const cspDirectives: Record<string, string[]> = {
     'https://us.i.posthog.com',
     'https://us-assets.i.posthog.com',
     'https://*.posthog.com',
+    'https://www.googletagmanager.com',   // Google Analytics (gtag.js)
+    'https://unpkg.com',                  // pdf.js worker in the magazine admin
   ],
-  'style-src': ["'self'", "'unsafe-inline'"],
+  'worker-src': ["'self'", 'blob:', 'https://unpkg.com'],
+  'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
   'img-src': [
     "'self'",
     'data:',
     'blob:',
     'https:',                 // article hero images come from many WP CDNs
   ],
-  'font-src': ["'self'", 'data:'],
-  'connect-src': [
-    "'self'",
-    'https://api.stripe.com',
-    'https://us.i.posthog.com',
-    'https://us-assets.i.posthog.com',
-    'https://*.posthog.com',
-    'https://vitals.vercel-insights.com',
-    'https://*.blob.vercel-storage.com',
-  ],
+  'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
+  // Outbound requests stay open to https/wss: the designer, magazine tools and
+  // analytics fetch from many hosts. Script, object, base and frame-ancestors
+  // rules below are the enforced protections.
+  'connect-src': ["'self'", 'blob:', 'data:', 'https:', 'wss:'],
   'frame-src': [
     "'self'",
-    'https://js.stripe.com',
-    'https://hooks.stripe.com',
-    'https://*.stripe.com',
+    'blob:',
+    'data:',
+    'https:',                 // Stripe, Google Maps, YouTube, SoundCloud, PDF previews
   ],
   'media-src': ["'self'", 'https:', 'blob:'],
   'object-src': ["'none'"],
@@ -66,8 +63,7 @@ const cspString = Object.entries(cspDirectives)
   .map(([k, v]) => (v.length ? `${k} ${v.join(' ')}` : k))
   .join('; ');
 
-// Report-Only policies ignore upgrade-insecure-requests and log a console error for it, so leave it out there.
-const reportOnlyCsp = cspString.replace('; upgrade-insecure-requests', '');
+const enforcedCsp = cspString;
 
 const securityHeaders = [
   // HSTS — pin HTTPS for 2 years, include subdomains.
@@ -93,12 +89,7 @@ const securityHeaders = [
       'gyroscope=()',
     ].join(', '),
   },
-  // Ship CSP in Report-Only first. Flip to `Content-Security-Policy` once
-  // Vercel logs are clean for a week.
-  {
-    key: 'Content-Security-Policy-Report-Only',
-    value: reportOnlyCsp,
-  },
+  { key: 'Content-Security-Policy', value: enforcedCsp },
 ];
 
 const nextConfig: NextConfig = {
@@ -238,8 +229,8 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           {
-            key: 'Content-Security-Policy-Report-Only',
-            value: reportOnlyCsp.replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
+            key: 'Content-Security-Policy',
+            value: enforcedCsp.replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
           },
         ],
       },
@@ -250,8 +241,8 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           {
-            key: 'Content-Security-Policy-Report-Only',
-            value: reportOnlyCsp.replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
+            key: 'Content-Security-Policy',
+            value: enforcedCsp.replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
           },
         ],
       },

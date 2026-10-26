@@ -156,10 +156,10 @@ export default function NewsletterCTA({
           </div>
           {error && <p className="text-center text-sm text-[#661102] mt-3">{error}</p>}
           <div className="flex items-center justify-center gap-6 mt-4 text-xs uppercase tracking-wider text-gray-600 font-medium">
-            <a href="/newsletter" className="border-b border-gray-400 pb-0.5">
+            <a href="/newsletter" className="inline-block border-b border-gray-400 py-2">
               All Emails
             </a>
-            <a href="/privacy" className="border-b border-gray-400 pb-0.5">
+            <a href="/privacy" className="inline-block border-b border-gray-400 py-2">
               Privacy Policy
             </a>
           </div>

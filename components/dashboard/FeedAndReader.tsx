@@ -1479,7 +1479,7 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
                   href={article.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm uppercase tracking-wider font-medium"
+                  className="inline-block py-2 text-sm uppercase tracking-wider font-medium"
                   style={{ color: info.color }}
                 >
                   Read on {info.name} →
