@@ -62,9 +62,14 @@ export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
+  // Fixed time zone so server and browser render the same text (otherwise
+  // React hydration fails when the viewer is not in UTC). Date-only values
+  // and midnight-UTC stamps are calendar dates, so they stay in UTC.
+  const calendarDate = /^\d{4}-\d{2}-\d{2}(T00:00:00(\.000)?Z?)?$/.test(iso);
   return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: calendarDate ? 'UTC' : 'America/Chicago',
   });
 }
