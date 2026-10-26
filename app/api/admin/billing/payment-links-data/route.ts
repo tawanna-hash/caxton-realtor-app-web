@@ -16,5 +16,13 @@ export async function GET() {
     sql`SELECT i.*, adv.name AS advertiser_name, false AS is_overdue FROM invoices i LEFT JOIN advertisers adv ON adv.id = i.advertiser_id ORDER BY i.created_at DESC`.catch(() => [] as unknown[]),
     sql`SELECT id, name, publication, contact_email, billing_email FROM advertisers ORDER BY name ASC`.catch(() => [] as unknown[]),
   ]);
-  return NextResponse.json({ invoices, advertisers });
+  // The long remit-to memo and audit log are not used by the Payment links tab
+  // and made up roughly half of this response; drop them.
+  const slim = (invoices as Array<Record<string, unknown>>).map((r) => {
+    const o = { ...r };
+    delete o.memo;
+    delete o.audit_log;
+    return o;
+  });
+  return NextResponse.json({ invoices: slim, advertisers });
 }

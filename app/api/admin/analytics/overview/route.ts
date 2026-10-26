@@ -17,17 +17,16 @@
 import { NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { listSubscribers } from '@/lib/server/subscribers-store';
+import { query } from '@/lib/server/db/neon';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
-import { PUBLICATION_IDS, type PublicationId } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 15;
 
-// Fetch subscriber total from the droplet. pageSize=1 keeps the payload tiny;
-// the response still carries the full `total`. Per-market counts come from two
-// more cheap calls (market filter is supported by the list endpoint).
+// Subscriber totals in a single grouped query (previously five listSubscribers
+// calls = ten queries, which made this endpoint take ~3s). email_verifications
+// is keyed by email, so the old join never changed the counts.
 async function fetchSubscriberCounts(): Promise<{
   total: number | null;
   austin: number | null;
@@ -35,25 +34,21 @@ async function fetchSubscriberCounts(): Promise<{
   houston: number | null;
   dallas: number | null;
 }> {
-  async function countFor(market?: PublicationId): Promise<number | null> {
-    try {
-      const result = await listSubscribers({ page: 1, pageSize: 1, market });
-      return result.total;
-    } catch {
-      return null;
-    }
+  try {
+    const rows = await query<{ total: number; austin: number; san_antonio: number; houston: number; dallas: number }>(
+      `SELECT COUNT(*)::int AS total,
+              COUNT(*) FILTER (WHERE market = 'austin')::int AS austin,
+              COUNT(*) FILTER (WHERE market = 'san_antonio')::int AS san_antonio,
+              COUNT(*) FILTER (WHERE market = 'houston')::int AS houston,
+              COUNT(*) FILTER (WHERE market = 'dallas')::int AS dallas
+         FROM realtors`,
+      [],
+    );
+    const r = rows[0];
+    return { total: r?.total ?? null, austin: r?.austin ?? null, san_antonio: r?.san_antonio ?? null, houston: r?.houston ?? null, dallas: r?.dallas ?? null };
+  } catch {
+    return { total: null, austin: null, san_antonio: null, houston: null, dallas: null };
   }
-  const [total, ...marketCounts] = await Promise.all([
-    countFor(),
-    ...PUBLICATION_IDS.map((market) => countFor(market)),
-  ]);
-  return {
-    total,
-    austin: marketCounts[0] ?? null,
-    san_antonio: marketCounts[1] ?? null,
-    houston: marketCounts[2] ?? null,
-    dallas: marketCounts[3] ?? null,
-  };
 }
 
 export const GET = withAdminTracking(async () => {
