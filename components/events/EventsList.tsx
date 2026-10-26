@@ -76,7 +76,7 @@ export function EventsList({ pub, events, loading, error, onBack, onSelect, topB
 
       {/* Top banner promoted slot — calendar_top_banner. */}
       <div className="bg-white border-b border-gray-200">
-        <div className="py-3 px-4">
+        <div className="py-3 px-4 max-w-3xl mx-auto">
           <AdSlot slug="calendar_top_banner" variant="bare" />
         </div>
       </div>
@@ -101,6 +101,7 @@ export function EventsList({ pub, events, loading, error, onBack, onSelect, topB
           <AdSlot slug="calendar_event_sponsor" className="mt-6" />
         </div>
         {topBanner}
+        <div className="max-w-3xl mx-auto">
         {/* S22 view toggle — only render if month-view props are wired */}
         {view !== undefined && onViewChange && (
           <EventsViewToggle pub={pub as PubKey} value={view} onChange={onViewChange} />
@@ -170,6 +171,7 @@ export function EventsList({ pub, events, loading, error, onBack, onSelect, topB
         ))}
           </>
         )}
+        </div>
       </div>
     </div>
   );
