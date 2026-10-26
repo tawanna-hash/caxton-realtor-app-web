@@ -281,6 +281,80 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
     }
   }
 
+  // Split two-page spread images into single pages. Each wide image becomes a
+  // left and right page; single-page images are kept. Same magazine id, so
+  // hotspots (keyed by page_idx) are untouched and line up when the issue was
+  // authored page by page.
+  async function handleSplitSpreads() {
+    if (!confirm('Split every two-page spread image into two single pages? Page order and links are kept by page number.')) return;
+    setError(null);
+    setReuploadNote(null);
+    setBusy('split');
+    try {
+      const load = (src: string) =>
+        new Promise<HTMLImageElement>((resolve, reject) => {
+          const im = new Image();
+          im.crossOrigin = 'anonymous';
+          im.onload = () => resolve(im);
+          im.onerror = () => reject(new Error('Could not load a page image'));
+          im.src = src;
+        });
+      const toBlob = (c: HTMLCanvasElement) =>
+        new Promise<Blob>((resolve, reject) =>
+          c.toBlob((b) => (b ? resolve(b) : reject(new Error('canvas.toBlob returned null'))), 'image/jpeg', 0.92),
+        );
+      const stamp = Date.now();
+      const out: string[] = [];
+      const srcOf: number[] = [];
+      for (let i = 0; i < pageUrls.length; i++) {
+        setReuploadStatus(`Splitting image ${i + 1} of ${pageUrls.length}…`);
+        const im = await load(pageUrls[i]);
+        if (im.naturalWidth / im.naturalHeight < 1.5) {
+          out.push(pageUrls[i]);
+          srcOf.push(i);
+          continue;
+        }
+        const half = Math.floor(im.naturalWidth / 2);
+        for (let side = 0; side < 2; side++) {
+          const c = document.createElement('canvas');
+          c.width = side === 0 ? half : im.naturalWidth - half;
+          c.height = im.naturalHeight;
+          const ctx = c.getContext('2d');
+          if (!ctx) throw new Error('Canvas 2D context unavailable');
+          ctx.drawImage(im, side === 0 ? 0 : half, 0, c.width, c.height, 0, 0, c.width, c.height);
+          const blob = await upload(
+            `magazine-pages/${id}/single-${stamp}-${String(out.length + 1).padStart(3, '0')}.jpg`,
+            await toBlob(c),
+            { access: 'public', handleUploadUrl: '/api/admin/magazines/upload-token' },
+          );
+          c.width = 0;
+          c.height = 0;
+          out.push(blob.url);
+          srcOf.push(i);
+        }
+      }
+      if (out.length === pageUrls.length) {
+        setReuploadNote('No two-page spreads found; nothing changed.');
+        return;
+      }
+      const body: Record<string, unknown> = { page_urls: out, page_count: out.length };
+      const cur = await fetch(`/api/admin/magazines/${id}`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      const texts: string[] | undefined = cur?.page_texts ?? cur?.magazine?.page_texts;
+      if (Array.isArray(texts) && texts.length === pageUrls.length) {
+        body.page_texts = srcOf.map((k) => texts[k] ?? '');
+      }
+      await patch(body);
+      const before = pageUrls.length;
+      setPageUrls(out);
+      setReuploadNote(`Split into single pages (${before} → ${out.length}). Links stay on their page numbers.`);
+    } catch (err: unknown) {
+      setError(errMessage(err));
+    } finally {
+      setReuploadStatus(null);
+      setBusy(null);
+    }
+  }
+
   async function handleReExtract() {
     if (!readerUrl) {
       setError('No PDF on this issue — upload one first.');
@@ -509,6 +583,13 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
           />
           {busy === 'pdf' && <p className="text-xs text-[#301D5D] mt-1">Uploading…</p>}
           <div className="mt-3 pt-3 border-t border-gray-100">
+            <button
+              onClick={handleSplitSpreads}
+              disabled={busy !== null || pageUrls.length === 0}
+              className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-900 px-3 py-2 rounded-md disabled:opacity-50 font-medium mr-2"
+            >
+              {busy === 'split' ? 'Splitting…' : 'Split spreads into single pages'}
+            </button>
             <button
               onClick={handleReExtract}
               disabled={busy !== null || !readerUrl}
