@@ -20,7 +20,7 @@
 // /inventory/submit and /inventory/[id]; those routes are untouched.
 
 import { Suspense } from 'react';
-import { listBuilderInventoryCached, type PromoType } from '@/lib/builder-inventory';
+import { listBuilderInventorySlimCached, type PromoType } from '@/lib/builder-inventory';
 import { compactRow } from '@/lib/inventory-compact';
 import { getServerPub } from '@/lib/publication';
 import { matchesFilter, parseFilters, sortRows } from '@/lib/inventory-filters';
@@ -52,11 +52,7 @@ async function HomesList({ filters, sort }: { filters: Filters['filters']; sort:
   const pub = await getServerPub();
   // Fetch BOTH kinds (listings + promotions) for the active market. The
   // client browser filters by kind and every other dimension.
-  const rows = await listBuilderInventoryCached({
-    status: 'active',
-    publication: pub,
-    limit: 1000,
-  });
+  const rows = await listBuilderInventorySlimCached(pub, 1000);
   // Send only the first screenful (already filtered and sorted for this URL)
   // plus the filter menu options; the browser fetches the full compact set
   // from /api/inventory/browser once it is interactive.

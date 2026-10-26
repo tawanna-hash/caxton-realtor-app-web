@@ -763,6 +763,48 @@ export const listBuilderInventoryCached = unstable_cache(
 );
 
 /**
+ * Slim, cached variant for the public inventory browser. Selects only the
+ * columns the list view uses (skips gallery_urls, description, extra_details,
+ * community_data), so the DB read and the cache payload stay small. Same
+ * ordering and visibility rules as listBuilderInventory.
+ */
+async function listBuilderInventorySlim(
+  pub: Publication | 'all',
+  limit: number,
+): Promise<BuilderInventoryRow[]> {
+  await ensureBuilderInventorySchema();
+  const rows = (await sql`
+    SELECT b.id, b.created_at, b.kind, b.status, b.featured, b.publication,
+           b.builder_name, b.title, b.city, b.state,
+           b.beds_min, b.beds_max, b.baths_min, b.baths_max,
+           b.sqft_min, b.sqft_max, b.price_min, b.price_max,
+           b.promo_type, b.starts_at, b.expires_at, b.source_url,
+           b.flyer_pdf_url, b.thumbnail_url, b.ready_date, b.plan_name,
+           b.community_name, b.home_type, b.developer_name
+    FROM builder_inventory b
+    LEFT JOIN builder_page_visibility v ON v.builder_name = b.builder_name
+    WHERE b.status = 'active'
+      AND (${pub} = 'all'
+        OR b.publication = ${pub}::text
+        OR b.publication = 'both')
+      AND COALESCE(v.public_enabled, true) = true
+    ORDER BY
+      b.featured DESC NULLS LAST,
+      b.builder_name ASC,
+      b.community_name ASC NULLS LAST,
+      b.created_at DESC
+    LIMIT ${limit}
+  `) as Record<string, unknown>[];
+  return rows.map(rowToBuilderInventoryRow);
+}
+
+export const listBuilderInventorySlimCached = unstable_cache(
+  (pub: Publication | 'all', limit: number) => listBuilderInventorySlim(pub, limit),
+  ['builder-inventory', 'slim'],
+  { revalidate: 120, tags: ['builder-inventory'] },
+);
+
+/**
  * Best-effort cache invalidation for the public builder-inventory listings.
  * Wrapped in try/catch: revalidateTag throws when called outside a request
  * context (e.g. from a cron/script), and a cache bust failing should never
