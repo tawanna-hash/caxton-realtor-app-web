@@ -500,7 +500,21 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
       if (!conn) return null;
       sources.ga4 = { ...sources.ga4, connected: true, email: conn.emailAddress, propertyId: conn.propertyId, propertyName: conn.propertyName };
       if (!conn.propertyId) return null;
-      return await fetchGa4Monthly(since);
+      // Retry on timeout/transient failure: the first Google call after a cold
+      // start is often slow, and a second attempt usually succeeds quickly.
+      let lastErr: unknown;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          return await Promise.race([
+            fetchGa4Monthly(since),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('GA4 attempt timed out')), 9_000)),
+          ]);
+        } catch (e) {
+          lastErr = e;
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      }
+      throw lastErr;
     } catch (err) {
       sources.ga4.error = err instanceof Error ? err.message : String(err);
       return null;
