@@ -2473,3 +2473,8 @@ textarea.anchor-input { border-radius: 14px !important; padding: 0.75rem 1rem !i
   [data-admin-ui='true'] :is(div, nav):has(> .anchor-tab) { flex-wrap: wrap !important; overflow-x: visible !important; column-gap: 20px; }
   [data-admin-ui='true'] .anchor-tab { white-space: nowrap; }
 }
+
+/* Back-to-top clears the fixed mobile tab bar (about 72px) plus the iOS home-indicator inset. */
+body:has(nav[aria-label="Mobile tabs"]) button[aria-label="Back to top"] {
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
