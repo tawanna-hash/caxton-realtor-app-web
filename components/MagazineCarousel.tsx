@@ -43,11 +43,15 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
 
   useEffect(() => {
     if (skipFetchRef.current) {
-      // First run uses the server-rendered issues; later runs (pull to
-      // refresh, switching publication) fetch as before.
+      // First run uses the server-rendered (Austin) issues; later runs (pull
+      // to refresh, switching publication) fetch as before. If the visitor's
+      // stored publication is already Newsline by the time this runs, the
+      // seed does not apply and we fetch right away.
       skipFetchRef.current = false;
-      if (initialMagazines && loadedCbRef.current) loadedCbRef.current(initialMagazines);
-      return;
+      if (initialMagazines && (publication === 'realtyline' || publication === 'austin')) {
+        if (loadedCbRef.current) loadedCbRef.current(initialMagazines);
+        return;
+      }
     }
     let cancelled = false;
     // setState calls are batched inside an async chain (not
