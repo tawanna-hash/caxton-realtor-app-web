@@ -1,13 +1,35 @@
 import PageTitle from '@/components/ui/PageTitle';
+import JsonLd from '@/components/seo/JsonLd';
+import { siteGraph, webPage, breadcrumbs } from '@/lib/structured-data';
 export const metadata = {
   title: 'About Us — Realty News Now',
   description:
-    'Realty News Now puts a face on real estate. Publishers of RealtyLine Austin and Newsline San Antonio.',
+    'Realty News Now puts a face on real estate. Published by Caxton Publications, Inc., an independent family-run publisher of RealtyLine Austin (since 1995) and Newsline San Antonio (since 1982).',
+  alternates: { canonical: '/about' },
 };
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
+      <JsonLd
+        data={[
+          {
+            '@context': 'https://schema.org',
+            '@graph': siteGraph(),
+          },
+          webPage({
+            path: '/about',
+            name: 'About Us — Realty News Now',
+            description:
+              'Realty News Now is published by Caxton Publications, Inc., an independent, family-run publisher of RealtyLine Austin and Newsline San Antonio.',
+            type: 'AboutPage',
+          }),
+          breadcrumbs([
+            { name: 'Home', path: '/' },
+            { name: 'About', path: '/about' },
+          ]),
+        ]}
+      />
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
       <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">

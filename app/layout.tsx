@@ -22,7 +22,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 const SITE_URL = "https://realtynewsnow.app";
 const SITE_NAME = "Realty News Now";
 const SITE_DESCRIPTION =
-  "Free REALTOR® app for Texas real estate professionals — daily news, event calendars, rate cards, and pro tools for RealtyLine (Austin), Newsline (San Antonio), Houston, and Dallas.";
+  "Free Texas real estate news app from Caxton Publications, Inc. — daily news, event calendars, digital magazine issues, builder inventory, and pro tools for RealtyLine (Austin) and Newsline San Antonio.";
 
 // Body sans-serif for the whole app. Inter at weights 400/500/600/700 covers
 // every UI surface: body, eyebrows, button labels, admin tables, portal nav.

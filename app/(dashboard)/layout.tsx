@@ -2,43 +2,16 @@ import type { Metadata } from 'next';
 import AppShell from '@/components/AppShell';
 import { PublicationProvider } from '@/lib/publication-provider';
 import { getServerPub } from '@/lib/publication';
+import { siteStructuredData } from '@/lib/structured-data';
 
-// The homepage (`/` redirects here). Canonical points at /dashboard (the final URL after the / redirect) so
-// /dashboard and /?article=... variants consolidate onto one URL, matching the
-// sitemap and og:url.
+// The signed-in feed. `/` now serves a public landing page for signed-out
+// visitors and redirects signed-in users here. This page keeps its own
+// canonical so /dashboard?article=... variants consolidate onto one URL.
 export const metadata: Metadata = {
   alternates: { canonical: 'https://realtynewsnow.app/dashboard' },
 };
 
-const SITE_URL = 'https://realtynewsnow.app';
-const STRUCTURED_DATA = {
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'Organization',
-      '@id': `${SITE_URL}/#organization`,
-      name: 'Realty News Now',
-      url: SITE_URL,
-      logo: `${SITE_URL}/icon-512.png`,
-      description:
-        'Free REALTOR app for Texas real estate professionals: daily news, event calendars, rate cards, and pro tools for RealtyLine (Austin) and Newsline (San Antonio).',
-      sameAs: [
-        'https://www.facebook.com/myrealtyline',
-        'https://www.instagram.com/myrealtyline',
-        'https://www.facebook.com/newslinesa',
-        'https://www.instagram.com/newsline_sanantonio',
-      ],
-    },
-    {
-      '@type': 'WebSite',
-      '@id': `${SITE_URL}/#website`,
-      url: SITE_URL,
-      name: 'Realty News Now',
-      inLanguage: 'en-US',
-      publisher: { '@id': `${SITE_URL}/#organization` },
-    },
-  ],
-};
+const STRUCTURED_DATA = siteStructuredData();
 
 // Previously this layout rendered only <div>, which left /dashboard (the
 // destination of the root `/` redirect) without any site navigation. A

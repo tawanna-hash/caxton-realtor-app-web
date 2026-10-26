@@ -21,6 +21,8 @@ import { listBuilderInventoryCached } from '@/lib/builder-inventory';
 import { summarizeBuilders } from '@/lib/builder-summary';
 import { getServerPub } from '@/lib/publication';
 import BuilderDeveloperFloater from '@/components/builders/BuilderDeveloperFloater';
+import JsonLd from '@/components/seo/JsonLd';
+import { webPage } from '@/lib/structured-data';
 import { canOptimizeImage } from '@/lib/optimizable-image-hosts';
 
 export const dynamic = 'force-dynamic';
@@ -29,6 +31,7 @@ export const metadata = {
   title: 'Builders & Developers — Realty News Now',
   description:
     'New home communities, move-in ready homes, and promotions from local builders and developers.',
+  alternates: { canonical: '/builders' },
 };
 
 async function BuildersContent() {
@@ -138,6 +141,15 @@ async function BuildersContent() {
 export default function BuildersHubPage() {
   return (
     <div className="min-h-screen bg-white">
+      <JsonLd
+        data={webPage({
+          path: '/builders',
+          name: 'Builders & Developers — Realty News Now',
+          description:
+            'New home communities, move-in ready homes, and promotions from Austin and San Antonio builders and developers.',
+          type: 'CollectionPage',
+        })}
+      />
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <header className="mb-8">
           <Link

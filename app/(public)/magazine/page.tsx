@@ -1,8 +1,15 @@
 import MagazineClient from './MagazineClient';
 import { MagazineGA } from '@/components/MagazineGA';
 import { getMeasurementId } from '@/lib/publication-settings';
+import JsonLd from '@/components/seo/JsonLd';
+import { webPage } from '@/lib/structured-data';
 
-export const metadata = { title: 'Issues — Realty News Now' };
+export const metadata = {
+  title: 'Issues — Realty News Now',
+  description:
+    'Read digital issues of RealtyLine (Austin) and Newsline San Antonio, the Texas real estate magazines from Caxton Publications, Inc.',
+  alternates: { canonical: '/magazine' },
+};
 // Magazine issues are published a few times a week by admins; the index
 // itself does no per-visitor personalization (GA tags are injected for
 // both publications unconditionally; MagazineClient reads the active pub
@@ -20,6 +27,24 @@ export default async function MagazinePage() {
   ]);
   return (
     <>
+      <JsonLd
+        data={webPage({
+          path: '/magazine',
+          name: 'Magazine Issues — RealtyLine Austin and Newsline San Antonio',
+          description:
+            'Digital issues of RealtyLine (Austin) and Newsline San Antonio.',
+          type: 'CollectionPage',
+        })}
+      />
+      <h1 className="sr-only">
+        RealtyLine Austin and Newsline San Antonio: digital magazine issues
+      </h1>
+      <p className="sr-only">
+        Read current and past issues of RealtyLine, the Austin and Central
+        Texas real estate magazine founded in 1995, and Newsline San Antonio,
+        the San Antonio and South Texas real estate magazine founded in 1982.
+        Both are published by Caxton Publications, Inc.
+      </p>
       <MagazineGA measurementId={austinId} />
       <MagazineGA measurementId={sanAntonioId} />
       <MagazineClient />

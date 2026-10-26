@@ -1,13 +1,17 @@
 import PageTitle from '@/components/ui/PageTitle';
+import JsonLd from '@/components/seo/JsonLd';
+import { faqPage } from '@/lib/structured-data';
 export const metadata = {
   title: 'Frequently Asked Questions — Realty News Now',
   description:
     'Common questions about signing in, notifications, account, and troubleshooting for Realty News Now by Caxton Publications.',
+  alternates: { canonical: '/faq' },
 };
 
 export default function FaqPage() {
   return (
     <div className="min-h-screen bg-white">
+      <JsonLd data={faqPage()} />
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
       <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
