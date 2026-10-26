@@ -60,6 +60,8 @@ export default function MarketOnboardingPicker() {
     // Magazine share links (/magazine/<id>) lock the publication to the
     // issue's own market, so the picker would only cover the issue.
     if (/^\/magazine\/\d+/.test(window.location.pathname)) return;
+    // Shared article links already name their market; never gate them.
+    if (window.location.pathname.startsWith('/news/')) return;
     // Skip the onboarding picker when opened for printing (?print=1).
     // The in-app Safari (SFSafariViewController) doesn't share localStorage
     // with the native app, so the picker would intercept the page load.

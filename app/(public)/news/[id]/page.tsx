@@ -44,6 +44,15 @@ export default function ArticlePage() {
     };
   }, [id, market]);
 
+  // A shared link names its market; remember it so the rest of the site matches.
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('caxton_pub')) localStorage.setItem('caxton_pub', pub);
+    } catch {
+      /* storage unavailable */
+    }
+  }, [pub]);
+
   const article = articles.find((a) => String(a?.id) === id) ?? null;
 
   useEffect(() => {
