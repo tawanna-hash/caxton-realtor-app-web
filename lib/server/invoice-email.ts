@@ -4,7 +4,7 @@
 //
 // This is the logic that used to live inline inside
 // app/api/admin/invoices/[id]/payment-link/route.ts. It:
-//   1. Mints a single-use `pay_invoice` portal magic link for the advertiser
+//   1. Mints a reusable, non-expiring `pay_invoice` portal magic link for the advertiser
 //      (portal_magic_links) pointing at /portal/consume?token=...
 //   2. Sends the invoice (or reminder) email through Resend, using the
 //      per-domain Resend key that owns the From address.

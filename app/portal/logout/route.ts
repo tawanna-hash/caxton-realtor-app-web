@@ -22,6 +22,7 @@ async function endSession(): Promise<void> {
             revoked_at = NOW(),
             revoked_reason = COALESCE(revoked_reason, 'user logout')
         WHERE id = ${linkId}
+          AND purpose IS DISTINCT FROM 'pay_invoice'  -- emailed invoice links must keep working after sign-out
       `;
     } catch (err) {
       console.error('portal logout cleanup failed', err);
