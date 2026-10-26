@@ -714,7 +714,7 @@ textarea::placeholder {
 [data-admin-ui='true'] table tbody td { padding-block: 0.4rem; }
 
 /* Tabs: purple underline, regular weight inactive text. */
-[data-admin-ui='true'] button[class*='border-b-2'][class*='border-[#301D5D]'] {
+[data-admin-ui='true'] button[class*='border-b-2'][class*='border-[var(--rnn-purple-500)]'] {
   color: var(--rnn-purple-700);
   font-weight: 600;
 }
@@ -828,7 +828,7 @@ textarea::placeholder {
 ):not(:has(> :is(div, table, form, ul, ol, p))),
 [data-admin-ui='true'] button[class*='ring-1'][class*='rounded']:not([class*='rounded-l']):not([class*='rounded-r']),
 [data-admin-ui='true'] button[class~='rounded-md'][class*='bg-gray-100'],
-[data-admin-ui='true'] button[class~='rounded-md'][class*='bg-[#301D5D]'][class~='py-1'],
+[data-admin-ui='true'] button[class~='rounded-md'][class*='bg-[var(--rnn-purple-500)]'][class~='py-1'],
 [data-admin-ui='true'] button[class~='rounded'][class*='bg-gray-100'] {
   border-radius: var(--admin-pill-radius);
 }
@@ -961,7 +961,7 @@ textarea::placeholder {
 
   /* Brand purple headings for print */
   h1, h2, h3 {
-    color: #301D5D !important;
+    color: var(--rnn-purple-500) !important;
   }
 
   /* Deposit report: use the full sheet and keep every detail column inside
@@ -973,7 +973,7 @@ textarea::placeholder {
 
   .deposit-detail-table {
     table-layout: fixed !important;
-    font-size: 9px !important;
+    font-size: 11px !important;
     line-height: 1.25 !important;
   }
 
@@ -1005,7 +1005,7 @@ textarea::placeholder {
 
   .deposit-ledger-table {
     table-layout: fixed !important;
-    font-size: 9px !important;
+    font-size: 11px !important;
     line-height: 1.25 !important;
   }
 
@@ -1168,9 +1168,9 @@ textarea::placeholder {
   }
 
   .content-admin-shell :is(input, select, textarea):focus {
-    border-color: var(--color-orange-500);
+    border-color: var(--rnn-purple-500);
     outline: none;
-    box-shadow: 0 0 0 2px var(--color-orange-100);
+    box-shadow: 0 0 0 3px rgb(48 29 93 / 0.12);
   }
 
   .content-admin-shell table {
@@ -1283,7 +1283,7 @@ input[type='date'] {
 }
 
 input[type='date']:focus {
-  border-color: #301D5D !important;
+  border-color: var(--rnn-purple-500) !important;
   outline: 2px solid rgb(48 29 93 / 18%) !important;
   outline-offset: 1px !important;
 }
@@ -1389,12 +1389,12 @@ input[type='date']::-webkit-calendar-picker-indicator {
 .article-body-rich,
 .caxton-article-prose {
   overflow-wrap: anywhere;
-  color: #301D5D;
+  color: var(--rnn-purple-500);
   font-size: 1.0625rem;
   line-height: 1.7;
 }
 .article-body-rich {
-  color: #301D5D;
+  color: var(--rnn-purple-500);
   font-size: 1rem;
   line-height: 1.7;
 }
@@ -1455,14 +1455,14 @@ input[type='date']::-webkit-calendar-picker-indicator {
 .caxton-article-prose li { margin-bottom: 0.35em; }
 .article-body-rich blockquote,
 .caxton-article-prose blockquote {
-  border-left: 3px solid #301D5D;
+  border-left: 3px solid var(--rnn-purple-500);
   padding-left: 1em;
   margin: 1.2em 0;
   font-style: italic;
 }
 .article-body-rich a,
 .caxton-article-prose a {
-  color: #301D5D;
+  color: var(--rnn-purple-500);
   text-decoration: underline;
 }
 .article-body-rich img,
@@ -1568,8 +1568,8 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .uppercase[class*='text-[#7059A8]'], #agent-desk p.uppercase.text-gray-500 { color: var(--d-muted); font-weight: 600; letter-spacing: 0.08em; }
 #agent-desk a:not([class*='bg-']):not([class*='border']) { color: var(--d-purple); }
 #agent-desk input[type='checkbox'], #agent-desk input[type='radio'] { accent-color: var(--d-purple); }
-#agent-desk button[class*='bg-[#301D5D]'], #agent-desk a[class*='bg-[#301D5D]'] { background-color: var(--d-purple); border-color: var(--d-purple); color: #FFFFFF; }
-#agent-desk button[class*='bg-[#301D5D]']:hover:not(:disabled) { background-color: var(--d-purple-hover); }
+#agent-desk button[class*='bg-[var(--rnn-purple-500)]'], #agent-desk a[class*='bg-[var(--rnn-purple-500)]'] { background-color: var(--d-purple); border-color: var(--d-purple); color: #FFFFFF; }
+#agent-desk button[class*='bg-[var(--rnn-purple-500)]']:hover:not(:disabled) { background-color: var(--d-purple-hover); }
 #agent-desk button[aria-expanded] { background-color: #FFFFFF; border: 1px solid var(--d-line); color: var(--d-purple); }
 #agent-desk :is(input, select, textarea)::placeholder { color: #A3A0AF; }
 
@@ -1635,10 +1635,10 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-stat-num { margin: 0.75rem 0 0; font-size: 1.75rem; line-height: 1; font-weight: 600; color: var(--d-ink); }
 #agent-desk .ds-stat-sub { margin: 0.375rem 0 0; font-size: 0.8125rem; color: var(--d-text); }
 #agent-desk .ds-stat-icon { display: inline-flex; height: 2rem; width: 2rem; flex: none; align-items: center; justify-content: center; border-radius: 8px; }
-#agent-desk .ds-i-purple { background: #EFEAF8; color: #301D5D; }
-#agent-desk .ds-i-green { background: #EFEAF8; color: #301D5D; }
-#agent-desk .ds-i-blue { background: #EFEAF8; color: #301D5D; }
-#agent-desk .ds-i-amber { background: #EFEAF8; color: #301D5D; }
+#agent-desk .ds-i-purple { background: #EFEAF8; color: var(--rnn-purple-500); }
+#agent-desk .ds-i-green { background: #EFEAF8; color: var(--rnn-purple-500); }
+#agent-desk .ds-i-blue { background: #EFEAF8; color: var(--rnn-purple-500); }
+#agent-desk .ds-i-amber { background: #EFEAF8; color: var(--rnn-purple-500); }
 #agent-desk:not(:has([data-desk-view='overview'])) .ds-stats { display: none; }
 
 /* Cards */
@@ -1659,9 +1659,9 @@ input[type='date']::-webkit-calendar-picker-indicator {
 
 /* Controls */
 #agent-desk button, #agent-desk a[class*='min-h-['] { border-radius: 8px; }
-#agent-desk button[class*='bg-[#301D5D]'], #agent-desk a[class*='bg-[#301D5D]'] { font-weight: 600; }
-#agent-desk button[class*='border']:not([class*='bg-[#301D5D]']):not([class*='border-b-2']) { border-color: var(--d-line); color: var(--d-ink); font-weight: 500; }
-#agent-desk button[class*='border']:not([class*='bg-[#301D5D]']):not([class*='border-b-2']):hover:not(:disabled) { background-color: var(--d-hover); border-color: #E6E5EC; }
+#agent-desk button[class*='bg-[var(--rnn-purple-500)]'], #agent-desk a[class*='bg-[var(--rnn-purple-500)]'] { font-weight: 600; }
+#agent-desk button[class*='border']:not([class*='bg-[var(--rnn-purple-500)]']):not([class*='border-b-2']) { border-color: var(--d-line); color: var(--d-ink); font-weight: 500; }
+#agent-desk button[class*='border']:not([class*='bg-[var(--rnn-purple-500)]']):not([class*='border-b-2']):hover:not(:disabled) { background-color: var(--d-hover); border-color: #E6E5EC; }
 #agent-desk :is(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select, textarea) { border-color: var(--d-line); border-radius: 8px; }
 #agent-desk :is(input, select, textarea):focus { border-color: var(--d-purple); box-shadow: 0 0 0 3px rgb(48 29 93 / 0.12); }
 
@@ -1693,9 +1693,9 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-table-wrap tbody td { padding: 0.875rem 0.5rem; }
 #agent-desk .ds-table-wrap tbody tr { border-top: 1px solid var(--d-line); }
 #agent-desk .ds-table-wrap tbody tr:first-child { border-top: 0; }
-#agent-desk .ds-table-wrap tbody tr:hover, #agent-desk .ds-table-wrap tbody tr:focus-visible { background: var(--d-rail); outline: none; }
+#agent-desk .ds-table-wrap tbody tr:hover, #agent-desk .ds-table-wrap tbody tr:focus-visible { background: var(--d-rail); }
 #agent-desk .ds-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.125rem 0.625rem; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-#agent-desk .ds-chip-purple { background: var(--d-lav-soft); color: #301D5D; }
+#agent-desk .ds-chip-purple { background: var(--d-lav-soft); color: var(--rnn-purple-500); }
 #agent-desk .ds-bar { display: inline-block; width: 72px; height: 6px; border-radius: 999px; background: #E6E5EC; overflow: hidden; }
 #agent-desk .ds-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--d-purple); }
 
@@ -1735,8 +1735,8 @@ input[type='date']::-webkit-calendar-picker-indicator {
   transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 #agent-desk :is(button, a[class*='min-h-['], a[class*='rounded-lg'][class*='px-'], a[class*='rounded-md'][class*='px-']):not(.ds-navbtn):not(.ds-deal):not(.ds-tab):not(.ds-back):not(.ds-provider-tile):not(.ds-link-row):not([role='tab']):not([aria-current]):not([class*='border-b-2']):not([class*='h-6 w-6']):not([class*='h-7 w-7']):not([class*='h-5 w-5']):not([class*='h-9 w-9']):hover:not(:disabled) {
-  background-color: #301D5D;
-  border-color: #301D5D;
+  background-color: var(--rnn-purple-500);
+  border-color: var(--rnn-purple-500);
   color: #FFFFFF;
 }
 #agent-desk :is(button, a):not(.ds-navbtn):not(.ds-deal):not(.ds-tab):disabled { opacity: 0.5; }
@@ -1768,7 +1768,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 /* Tool rows: white text on the dark hover */
 #agent-desk .ds-tool-row:hover :is(h3, p, span) { color: #FFFFFF !important; opacity: 1 !important; }
 /* Purple focus ring instead of the browser's blue */
-#agent-desk :focus-visible { outline: 2px solid #301D5D; outline-offset: 2px; }
+#agent-desk :focus-visible { outline: 2px solid var(--rnn-purple-500); outline-offset: 2px; }
 /* Email signature on desk calculators */
 @media screen {
   #agent-desk .ds-embed aside.ds-signature { display: flex !important; align-items: center; gap: 1rem; margin-top: 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--d-line); border-left: 3px solid var(--d-purple); border-radius: 12px; background: #fff; }
@@ -1900,15 +1900,15 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-dealnav-group:last-child { padding-right: 0; }
 #agent-desk .ds-dealnav-label { align-self: center; margin-right: 0.375rem; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #7A7787; }
 #agent-desk .ds-dealnav button { height: 2rem; min-height: 0; padding: 0 0.625rem; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: #4A4757; font-size: 0.8125rem; font-weight: 500; margin-bottom: -1px; }
-#agent-desk .ds-dealnav button:hover { background: transparent; color: #301D5D; border-bottom-color: #D9CFF0; }
-#agent-desk .ds-dealnav button[aria-current='page'] { background: transparent; color: #301D5D; font-weight: 600; border-bottom-color: #301D5D; }
+#agent-desk .ds-dealnav button:hover { background: transparent; color: var(--rnn-purple-500); border-bottom-color: #D9CFF0; }
+#agent-desk .ds-dealnav button[aria-current='page'] { background: transparent; color: var(--rnn-purple-500); font-weight: 600; border-bottom-color: var(--rnn-purple-500); }
 
 #agent-desk .ds-dealnav-menu { position: absolute; left: 0; top: 100%; z-index: 20; min-width: 10rem; padding: 0.25rem; background: #fff; border: 1px solid var(--d-line); border-radius: 10px; display: flex; flex-direction: column; }
 #agent-desk .ds-dealnav .ds-dealnav-menu button { height: 2rem; margin: 0; width: 100%; justify-content: flex-start; text-align: left; border: 0; border-radius: 6px; padding: 0 0.625rem; }
-#agent-desk .ds-dealnav .ds-dealnav-menu button:hover { background: #EFEAF8; color: #301D5D; border: 0; }
+#agent-desk .ds-dealnav .ds-dealnav-menu button:hover { background: #EFEAF8; color: var(--rnn-purple-500); border: 0; }
 #agent-desk .ds-dealnav button[aria-expanded] { background: transparent; border: 0; border-bottom: 2px solid transparent; color: #4A4757; }
-#agent-desk .ds-dealnav button[aria-expanded='true'] { color: #301D5D; }
-#agent-desk .ds-dealnav button[aria-expanded][aria-current='page'] { border-bottom-color: #301D5D; color: #301D5D; font-weight: 600; }
+#agent-desk .ds-dealnav button[aria-expanded='true'] { color: var(--rnn-purple-500); }
+#agent-desk .ds-dealnav button[aria-expanded][aria-current='page'] { border-bottom-color: var(--rnn-purple-500); color: var(--rnn-purple-500); font-weight: 600; }
 
 #agent-desk .ds-nav-child { margin: 0.125rem 0 0.25rem 1.5rem; padding: 0 0 0 0.5rem; list-style: none; border-left: 1px solid var(--d-line); }
 #agent-desk .ds-nav-child .ds-navbtn { font-size: 0.8125rem; }
@@ -1920,18 +1920,18 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-main[data-desk-view='integrations'] > [data-section-key='integrations'] { order: -2; }
 #agent-desk .ds-main[data-desk-view='integrations'] > .ds-back { order: -1; align-self: flex-start; margin-top: 1rem; }
 #agent-desk .ds-cal-tile button { border-color: #E6E5EC; }
-#agent-desk .ds-cal-tile div button { border: 0; background: transparent; padding: 0; height: auto; min-height: 0; color: #301D5D; font-weight: 600; }
-#agent-desk .ds-cal-tile div button:hover { background: transparent; color: #301D5D; }
+#agent-desk .ds-cal-tile div button { border: 0; background: transparent; padding: 0; height: auto; min-height: 0; color: var(--rnn-purple-500); font-weight: 600; }
+#agent-desk .ds-cal-tile div button:hover { background: transparent; color: var(--rnn-purple-500); }
 
 /* Integrations tiles: light purple hover */
-#agent-desk [data-section-key='integrations'] li > button:hover:not(:disabled) { background-color: #EFEAF8 !important; border-color: #D9CFF0 !important; color: #301D5D !important; }
-#agent-desk .ds-cal-tile div button, #agent-desk .ds-cal-tile div button:hover:not(:disabled) { border: 0 !important; background: transparent !important; padding: 0 !important; height: auto !important; min-height: 0 !important; color: #301D5D !important; font-size: 0.75rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+#agent-desk [data-section-key='integrations'] li > button:hover:not(:disabled) { background-color: #EFEAF8 !important; border-color: #D9CFF0 !important; color: var(--rnn-purple-500) !important; }
+#agent-desk .ds-cal-tile div button, #agent-desk .ds-cal-tile div button:hover:not(:disabled) { border: 0 !important; background: transparent !important; padding: 0 !important; height: auto !important; min-height: 0 !important; color: var(--rnn-purple-500) !important; font-size: 0.75rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 
 /* Documents: per-row Upload and Open, upload menu */
 #agent-desk .ds-row-btn { display: inline-flex; align-items: center; gap: 0.375rem; height: 2rem; padding: 0 0.75rem; font-size: 0.8125rem; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
 #agent-desk .ds-upload-opt { display: flex; align-items: center; gap: 0.75rem; width: 100%; margin-bottom: 0.375rem; padding: 0.5rem 0.625rem; border: 1px solid #E6E5EC; border-radius: 12px; background: #fff; color: #1B1726; font-size: 0.9375rem; font-weight: 500; text-align: left; }
-#agent-desk .ds-upload-opt:hover:not(:disabled) { background: #EFEAF8 !important; border-color: #D9CFF0 !important; color: #301D5D !important; }
-#agent-desk .ds-upload-ico { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; background: #F1EEF8; color: #301D5D; flex-shrink: 0; }
+#agent-desk .ds-upload-opt:hover:not(:disabled) { background: #EFEAF8 !important; border-color: #D9CFF0 !important; color: var(--rnn-purple-500) !important; }
+#agent-desk .ds-upload-ico { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; background: #F1EEF8; color: var(--rnn-purple-500); flex-shrink: 0; }
 
 /* Agent Desk typography: one scale for every field, label and value */
 #agent-desk :is(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select, textarea) { font-family: inherit; font-size: 0.875rem; font-weight: 500; font-style: normal; letter-spacing: normal; }
@@ -1959,7 +1959,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 .tip-host:not(input):not(textarea):not(select):hover { background-color: rgba(246, 243, 251, 0.7); }
 #tip-float {
   position: fixed; z-index: 2000; width: max-content; max-width: min(320px, 90vw);
-  background: #301D5D; color: #fff; font: 500 12px/1.4 Inter, system-ui, sans-serif;
+  background: var(--rnn-purple-500); color: #fff; font: 500 12px/1.4 Inter, system-ui, sans-serif;
   padding: 8px 10px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .12s ease;
 }
 
@@ -2018,7 +2018,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 :is(.rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl):not(.rounded-full) { border-radius: 4px !important; }
 :is(button, input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):not([role='switch']):not([class*='rounded-full']) { border-radius: 4px; }
 #agent-desk .ds-card, #agent-desk .ds-navbtn, #agent-desk .ds-deal, #agent-desk .ds-new { border-radius: 4px; }
-:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid #301D5D; outline-offset: 2px; }
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--rnn-purple-500); outline-offset: 2px; }
 table:not([role='presentation']) thead th { background: #F6F3FB; color: #1B1726; font-weight: 600; border-bottom: 1px solid #D9CFF0; }
 table:not([role='presentation']) tbody td { border-bottom-color: #E6E5EC; }
 table:not([role='presentation']) tbody tr:hover > td { background: #F6F3FB; }
@@ -2033,11 +2033,11 @@ svg:is(.w-3, .w-3\.5):not([class*='w-2']) { width: 16px; }
 
 /* On/off switches: keep the track and knob shape regardless of the global button style. */
 button.ct-switch { min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 9999px !important; background: #E6E5EC !important; box-shadow: none !important; }
-button.ct-switch[aria-checked='true'] { background: #301D5D !important; }
+button.ct-switch[aria-checked='true'] { background: var(--rnn-purple-500) !important; }
 button.ct-switch:hover { background: #C9C5D6 !important; }
 button.ct-switch[aria-checked='true']:hover { background: #42277C !important; }
 button.ct-switch > span { background: #fff !important; border-radius: 9999px !important; }
-button.ct-switch:focus-visible { outline: 2px solid #301D5D; outline-offset: 2px; }
+button.ct-switch:focus-visible { outline: 2px solid var(--rnn-purple-500); outline-offset: 2px; }
 button.ct-switch { display: inline-block !important; flex-shrink: 0; }
 button.ct-switch.h-5 { height: 20px !important; }
 button.ct-switch.h-6 { height: 24px !important; }
@@ -2081,7 +2081,7 @@ input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder)
 #agent-desk .ds-dealnav-group { flex-wrap: wrap; }
 
 /* Closing Time left rail: own scroll, pinned to the full viewport (no site header above it). */
-#agent-desk .ds-rail { top: 0 !important; height: 100vh !important; height: 100dvh !important; overflow-y: auto !important; overscroll-behavior: contain; align-self: start; }
+#agent-desk .ds-rail { top: 0 !important; height: 100dvh !important; overflow-y: auto !important; overscroll-behavior: contain; align-self: start; }
 
 /* Contract page: field delete buttons appear on hover or focus so the form reads cleanly. */
 #agent-desk [data-testid="contract-page"] button[aria-label="Delete field"], #agent-desk [data-testid="contract-page"] button[aria-label="Remove field"] { opacity: 0; transition: opacity 0.15s; }
@@ -2131,7 +2131,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) { flex-direction: row !important; min-width: 0 !important; min-height: 32px !important; height: 32px; padding: 0 12px !important; gap: 6px; border-radius: 8px !important; background: #fff !important; border: 1px solid var(--d-line) !important; font-size: 13px; font-weight: 500; }
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) span { font-size: 13px !important; text-transform: none !important; letter-spacing: 0 !important; margin: 0 !important; font-weight: 500; }
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) svg { width: 14px; height: 14px; }
-#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a):hover { background: #EFEAF8 !important; color: #301D5D !important; border-color: #E6E5EC !important; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a):hover { background: #EFEAF8 !important; color: var(--rnn-purple-500) !important; border-color: #E6E5EC !important; }
 /* Calculators: actions flush right, Save Now row right-aligned, no narrow paragraph wrap */
 #agent-desk .ds-embed div[class*='fixed'][class*='pointer-events-none'] { left: 0 !important; right: 0 !important; width: auto !important; max-width: none !important; padding: 0 !important; justify-content: flex-end !important; }
 #agent-desk .ds-embed header > div:has(> button) { justify-content: flex-end; }
@@ -2145,14 +2145,14 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 }
 
 /* One checkbox size everywhere on the desk: 18px square, 4px corners, brand purple. */
-#agent-desk input[type='checkbox']:not(.sr-only) { width: 18px !important; height: 18px !important; min-width: 18px; min-height: 18px; margin: 0; flex: none; border-radius: 4px; accent-color: #301D5D; cursor: pointer; }
+#agent-desk input[type='checkbox']:not(.sr-only) { width: 18px !important; height: 18px !important; min-width: 18px; min-height: 18px; margin: 0; flex: none; border-radius: 4px; accent-color: var(--rnn-purple-500); cursor: pointer; }
 
 /* Checkboxes: plain white box, no hover color; a purple check mark appears only when checked. */
 #agent-desk input[type='checkbox']:not(.sr-only) { -webkit-appearance: none; appearance: none; background: #fff; border: 1px solid #B9B6C4; display: inline-grid; place-content: center; transition: none; }
 #agent-desk input[type='checkbox']:not(.sr-only):hover { background: #fff; border-color: #B9B6C4; }
 #agent-desk input[type='checkbox']:not(.sr-only):checked { background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23301D5D' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E") center / 14px 14px no-repeat; border-color: #B9B6C4; }
 #agent-desk input[type='checkbox']:not(.sr-only):disabled { opacity: 0.5; cursor: not-allowed; }
-#agent-desk input[type='checkbox']:not(.sr-only):focus-visible { outline: 2px solid #301D5D; outline-offset: 2px; }
+#agent-desk input[type='checkbox']:not(.sr-only):focus-visible { outline: 2px solid var(--rnn-purple-500); outline-offset: 2px; }
 
 /* Deal items in the left rail: show the full address and countdown (Astro 4.1.2) */
 #agent-desk button.ds-deal { height: auto !important; min-height: 36px; overflow: visible; }
@@ -2172,10 +2172,10 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   font-family: var(--font-lato), 'Lato', system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #301D5D;
+  color: var(--rnn-purple-500);
 }
 [data-portal-shell='true'] .rounded-md { border-radius: 0.75rem; }
-[data-portal-shell='true'] :is(button, a)[class*='bg-[#301D5D]']:not([class*='rounded-xl']):not([class*='rounded-2xl']),
+[data-portal-shell='true'] :is(button, a)[class*='bg-[var(--rnn-purple-500)]']:not([class*='rounded-xl']):not([class*='rounded-2xl']),
 [data-portal-shell='true'] button[class*='border-gray-300'][class*='rounded-md'] {
   border-radius: var(--admin-pill-radius);
 }
@@ -2196,8 +2196,8 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 }
 [data-portal-shell='true'] :is(input, select, textarea):focus {
   outline: none;
-  border-color: #6D3FD6;
-  box-shadow: 0 0 0 3px rgba(109, 63, 214, 0.12);
+  border-color: var(--rnn-purple-500);
+  box-shadow: 0 0 0 3px rgb(48 29 93 / 0.12);
 }
 [data-portal-shell='true'] .text-xs.uppercase { letter-spacing: 0.08em; }
 [data-portal-shell='true'] a.text-\[\#42277C\] { color: #6D3FD6; }
@@ -2211,13 +2211,13 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 }
 
 /* Closing Time (limited edition): serif page titles like the Realty News Now pages (Builders, Guides). */
-#agent-desk.ct-lite :is(h1, h2) { font-family: var(--font-serif) !important; font-weight: 400 !important; color: #301D5D !important; letter-spacing: -0.01em !important; }
+#agent-desk.ct-lite :is(h1, h2) { font-family: var(--font-serif) !important; font-weight: 400 !important; color: var(--rnn-purple-500) !important; letter-spacing: -0.01em !important; }
 #agent-desk.ct-lite h1 { font-size: 2.25rem !important; line-height: 1.15 !important; }
 #agent-desk.ct-lite h2 { font-size: 1.5rem !important; line-height: 1.25 !important; }
 @media (min-width: 1024px) { #agent-desk.ct-lite h1 { font-size: 2.75rem !important; } }
 /* Same text color as the Realty News Now pages: deep indigo for titles and copy, light weight for paragraphs. */
-#agent-desk.ct-lite, #agent-desk.ct-lite :is(h3, h4, p, li, dt, dd, label, td, th, legend, summary) { color: #301D5D; }
-#agent-desk.ct-lite :is(p, dd)[class*='text-'] , #agent-desk.ct-lite :is(span, div, li, label, a)[class*='text-slate-'], #agent-desk.ct-lite :is(span, div, li, label, p, a)[class*='text-gray-'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#5B5470]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#4A4757]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#1B1726]'] { color: #301D5D !important; }
+#agent-desk.ct-lite, #agent-desk.ct-lite :is(h3, h4, p, li, dt, dd, label, td, th, legend, summary) { color: var(--rnn-purple-500); }
+#agent-desk.ct-lite :is(p, dd)[class*='text-'] , #agent-desk.ct-lite :is(span, div, li, label, a)[class*='text-slate-'], #agent-desk.ct-lite :is(span, div, li, label, p, a)[class*='text-gray-'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#5B5470]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#4A4757]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#1B1726]'] { color: var(--rnn-purple-500) !important; }
 #agent-desk.ct-lite p:not([class*='font-semibold']):not([class*='font-bold']):not([class*='uppercase']) { font-weight: 300; }
 #agent-desk.ct-lite :is(.text-red-700, [class*='text-red-']) { color: #B42318 !important; }
 
