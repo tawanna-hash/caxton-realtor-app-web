@@ -22,7 +22,7 @@ type Entry = {
 
 // Top of funnel — homepage + marketing landers
 const PRIMARY: Entry[] = [
-  { path: '/',                    changeFrequency: 'daily',   priority: 1.0 },
+  { path: '/dashboard',                   changeFrequency: 'daily',   priority: 1.0 },
   { path: '/about',               changeFrequency: 'monthly', priority: 0.7 },
   { path: '/faq',                 changeFrequency: 'monthly', priority: 0.6 },
 ];

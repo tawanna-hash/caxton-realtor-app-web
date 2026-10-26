@@ -3,11 +3,11 @@ import AppShell from '@/components/AppShell';
 import { PublicationProvider } from '@/lib/publication-provider';
 import { getServerPub } from '@/lib/publication';
 
-// The homepage (`/` redirects here). Canonical points at the root address so
+// The homepage (`/` redirects here). Canonical points at /dashboard (the final URL after the / redirect) so
 // /dashboard and /?article=... variants consolidate onto one URL, matching the
 // sitemap and og:url.
 export const metadata: Metadata = {
-  alternates: { canonical: 'https://realtynewsnow.app/' },
+  alternates: { canonical: 'https://realtynewsnow.app/dashboard' },
 };
 
 const SITE_URL = 'https://realtynewsnow.app';
