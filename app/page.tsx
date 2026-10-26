@@ -33,6 +33,8 @@ const SECTIONS = [
   { href: '/builders', title: 'Builders & developers', body: 'New home communities, move-in ready homes, and builder promotions.' },
   { href: '/partners', title: 'Partners', body: 'The local businesses that support RealtyLine and Newsline San Antonio.' },
   { href: '/giveaways', title: 'Giveaways', body: 'Prizes and offers for subscribers.' },
+  { href: '/advertise-to-realtors/austin', title: 'Advertise to Austin realtors', body: 'RealtyLine Austin: audience numbers and ways to reach Austin real estate professionals.' },
+  { href: '/advertise-to-realtors/san-antonio', title: 'Advertise to San Antonio realtors', body: 'Newsline San Antonio: audience numbers and ways to reach San Antonio real estate professionals.' },
   { href: '/advertise', title: 'Advertise with us', body: 'Audience reach and print, digital, email, and mobile advertising options.' },
 ];
 
