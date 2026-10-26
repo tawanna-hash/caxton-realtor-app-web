@@ -110,7 +110,7 @@
   --color-foreground: var(--foreground);
 
   /* ==========================================================================
-     Brand tokens (canonical) — use these instead of raw #301D5D hex literals.
+     Brand tokens (canonical) — use these instead of raw var(--rnn-purple-500) hex literals.
      `bg-brand-700`, `text-brand-700`, `border-brand-700`, `ring-brand-700`,
      etc. all resolve to the brand purple. `brand` alone maps to 700.
      ========================================================================== */
@@ -145,7 +145,7 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Brand override: collapse the darkest grays in Tailwind's palette to the
-     brand navy (#301D5D). Applies app-wide across RealtyLine + Newsline so all
+     brand navy (var(--rnn-purple-500)). Applies app-wide across RealtyLine + Newsline so all
      primary text (headings, body, labels, buttons) reads as navy. Muted text
      (gray-500/400/300) is intentionally NOT remapped — hierarchy still works.
      If a component needs literal neutral dark gray, use `text-neutral-900`
@@ -1585,7 +1585,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
   background-color: #FFFFFF; font-size: 14px; -webkit-font-smoothing: antialiased;
 }
 /* Rail */
-#agent-desk .ds-rail { height: calc(100vh - 4rem); overflow-y: auto; background: #FFFFFF; border-right: 1px solid var(--d-line); padding: 0 0.5rem 1rem; }
+#agent-desk .ds-rail { height: calc(100vh - 4rem); height: calc(100dvh - 4rem); overflow-y: auto; background: #FFFFFF; border-right: 1px solid var(--d-line); padding: 0 0.5rem 1rem; }
 #agent-desk .ds-brand { display: flex; align-items: center; gap: 0.625rem; padding: 1rem 0.5rem; margin: 0 -0.5rem 0.5rem; border-bottom: 1px solid var(--d-line); padding-left: 1rem; }
 #agent-desk .ds-brand-mark { display: inline-flex; height: 1.5rem; width: 1.5rem; align-items: center; justify-content: center; border-radius: 6px; background: var(--d-purple); color: #fff; flex: none; }
 #agent-desk .ds-brand-name { font-size: 1rem; font-weight: 600; color: var(--d-ink); white-space: nowrap; }
@@ -1685,6 +1685,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 #agent-desk .ds-tab-count { margin-left: 0.25rem; font-size: 0.75rem; color: var(--d-muted); }
 #agent-desk .ds-filters { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
 #agent-desk .ds-search { display: flex; align-items: center; gap: 0.5rem; min-width: 260px; flex: 0 1 360px; height: 40px; padding: 0 0.75rem; border: 1px solid var(--d-line); border-radius: 8px; background: #fff; color: var(--d-muted); }
+#agent-desk .ds-search:focus-within { border-color: var(--d-purple); box-shadow: 0 0 0 2px #EFEAF8; }
 #agent-desk .ds-search input { flex: 1; min-width: 0; border: 0 !important; box-shadow: none !important; outline: none; background: transparent !important; color: var(--d-ink); }
 #agent-desk .ds-select { height: 40px; min-width: 130px; padding: 0 0.75rem; }
 #agent-desk .ds-table-wrap { overflow-x: auto; border: 1px solid var(--d-line); border-radius: 12px; background: #fff; }
@@ -1964,7 +1965,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 }
 
 /* Phones: keep Closing Time usable without zooming or sideways scrolling. */
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   #agent-desk input:not([type='checkbox']):not([type='radio']):not([type='file']),
   #agent-desk textarea,
   #agent-desk select { font-size: 16px; }
@@ -2090,7 +2091,7 @@ input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder)
 @media (hover: none) { #agent-desk [data-testid="contract-page"] button[aria-label="Delete field"], #agent-desk [data-testid="contract-page"] button[aria-label="Remove field"] { opacity: 1; } }
 
 /* Contract page on phones: 16px inputs stop iOS zoom, 44px touch targets, no sideways scroll. */
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   #agent-desk [data-testid="contract-page"] input:not(.cf-label), #agent-desk [data-testid="contract-page"] textarea { font-size: 16px !important; }
   #agent-desk [data-testid="contract-page"] [role="tab"] { min-height: 44px; }
   #agent-desk [data-testid="contract-page"] summary button, #agent-desk [data-testid="contract-page"] section button { min-height: 40px; }
@@ -2100,7 +2101,7 @@ input::placeholder, textarea::placeholder { color: var(--astro-text-placeholder)
 /* Back-to-top sits above the Help button instead of covering it. */
 body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 16px; }
 
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   body:has(.ct-help-btn) button[aria-label="Back to top"] { width: 36px !important; height: 36px !important; bottom: 64px; right: 8px; opacity: 0.85; }
   body:has(.ct-help-btn) button[aria-label="Back to top"] svg { width: 16px; height: 16px; }
 }
@@ -2473,4 +2474,14 @@ textarea.anchor-input { border-radius: 14px !important; padding: 0.75rem 1rem !i
 /* Back-to-top clears the fixed mobile tab bar (about 72px) plus the iOS home-indicator inset. */
 body:has(nav[aria-label="Mobile tabs"]) button[aria-label="Back to top"] {
   bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Global reduced-motion guard: honor the OS setting for all animation/transition. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
