@@ -1096,7 +1096,7 @@ function TagsRow({ article, pubColor }: { article: any; pubColor: string }) {
 // Sticky bottom action bar — Save / Share / Copy
 // ─────────────────────────────────────────────────────────────────────────
 
-function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onLatest, variant = 'floating', autoHide = false }: { variant?: 'floating' | 'inline'; autoHide?: boolean; article: any; pubColor: string; saved: boolean; onBack: () => void; onSaveToggle: () => void; onShare: () => void; onCopy: () => void; onLatest?: () => void }) {
+function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onLatest, pubColor, variant = 'floating', autoHide = false, docked = false }: { variant?: 'floating' | 'inline'; autoHide?: boolean; docked?: boolean; article: any; pubColor: string; saved: boolean; onBack: () => void; onSaveToggle: () => void; onShare: () => void; onCopy: () => void; onLatest?: () => void }) {
   // BUG-04: AdPopup (z-50) sits at bottom-20 right-4 and was visually
   // covering the Latest/Share pills, so taps on those buttons hit the ad
   // instead. Bump this bar above the popup (z-60) so navigation always
@@ -1130,22 +1130,33 @@ function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onLatest, vari
   }, [variant, autoHide]);
 
   const pills = (
-      <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-2 shadow-lg">
-        <ActionPillButton onClick={onBack} label="Back">
+      <div className={docked ? "pointer-events-auto flex w-full items-stretch justify-around bg-white border-t border-gray-300 px-2 py-1" : "pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-2 shadow-lg"} style={docked ? { color: pubColor } : undefined}>
+        <ActionPillButton docked={docked} onClick={onBack} label="Back">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </ActionPillButton>
-        <ActionPillButton onClick={onSaveToggle} label={saved ? 'Saved' : 'Save'} active={saved}>
+        <ActionPillButton docked={docked} onClick={onSaveToggle} label={saved ? 'Saved' : 'Save'} active={saved}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
         </ActionPillButton>
-        <ActionPillButton onClick={onLatest} label="Latest">
+        <ActionPillButton docked={docked} onClick={onLatest} label="Latest">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8M10 10h8"/></svg>
         </ActionPillButton>
-        <ActionPillButton onClick={onShare} label="Share">
+        <ActionPillButton docked={docked} onClick={onShare} label="Share">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v13"/><path d="M16 6l-4-4-4 4"/><rect x="4" y="9" width="16" height="13" rx="2"/></svg>
         </ActionPillButton>
       </div>
   );
   if (variant === 'inline') return <div className="flex mb-6">{pills}</div>;
+  if (docked) {
+    // Full-width strip sitting directly on top of the mobile tab bar (about 72px).
+    return (
+      <div
+        className="fixed left-0 right-0 z-[45]"
+        style={{ bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}
+      >
+        {pills}
+      </div>
+    );
+  }
   return (
     <div
       className="fixed left-1/2 -translate-x-1/2 z-[60] pointer-events-none transition-all duration-200"
@@ -1162,12 +1173,12 @@ function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onLatest, vari
   );
 }
 
-function ActionPillButton({ children, label, onClick, active }: { children: React.ReactNode; label: string; onClick?: () => void; active?: boolean }) {
+function ActionPillButton({ children, label, onClick, active, docked = false }: { children: React.ReactNode; label: string; onClick?: () => void; active?: boolean; docked?: boolean }) {
   return (
     <button
       onClick={onClick}
       aria-label={label}
-      className={`flex flex-col items-center justify-center min-w-[60px] px-2 py-2 rounded-md transition-colors ${active ? 'text-white bg-white/15' : 'text-white/85 hover:text-white active:bg-white/10'}`}
+      className={`flex flex-col items-center justify-center px-2 py-2 rounded-md transition-colors ${docked ? 'flex-1 hover:bg-gray-50 active:bg-gray-100' : 'min-w-[60px] ' + (active ? 'text-white bg-white/15' : 'text-white/85 hover:text-white active:bg-white/10')}`}
     >
       {children}
       <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">{label}</span>
@@ -1493,6 +1504,7 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
 
       {/* Sticky action bar */}
       <ArticleActionBar
+        docked={asPage}
         article={article}
         pubColor={info.color}
         saved={saved}
