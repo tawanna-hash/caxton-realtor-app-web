@@ -196,14 +196,12 @@
 @media (max-width: 900px) { #agent-desk .ds-embed { padding-top: 64px; } }
 #agent-desk .ds-embed div[class*='pointer-events-auto'] { background: #fff; backdrop-filter: none; border: 1px solid var(--d-line); border-radius: 10px; box-shadow: none; gap: 0.375rem; padding: 0.375rem; }
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) { color: var(--d-ink); background: #fff; border: 1px solid var(--d-line); border-radius: 8px; }
-#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a):hover { background: #EFEAF8; color: var(--d-purple); border-color: #EFEAF8; }
 #agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a)[aria-label='Back'] { display: none; }
 @media print {
   #agent-desk .ds-rail, #agent-desk .ds-header, #agent-desk .ds-back, #agent-desk .ds-toolbar { display: none; }
   #agent-desk .ds-main { margin: 0; padding: 0; border: 0; }
 }
 #agent-desk .ds-embed :is(h1, h2, h3, .font-serif) { font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; color: var(--d-ink); }
-#agent-desk .ds-embed h1 { font-size: 1.75rem; line-height: 1.15; font-weight: 600; }
 #agent-desk .ds-embed :is(input, select, textarea) { border-color: var(--d-line); border-radius: 8px; }
 #agent-desk .ds-embed :is(input, select, textarea):focus { border-color: var(--d-purple); outline: none; box-shadow: 0 0 0 2px #EFEAF8; }
 #agent-desk .ds-embed [class*='rounded'][class*='border'] { border-color: var(--d-line); border-radius: 12px; }
@@ -229,7 +227,6 @@
 #agent-desk :is(h3, h4)[class*='text-sm'] { font-weight: 600; color: var(--d-ink); }
 #agent-desk :is(h3, h4, p).uppercase { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; color: var(--d-muted); }
 #agent-desk .font-bold, #agent-desk .font-extrabold, #agent-desk .font-black { font-weight: 600; }
-#agent-desk .ds-header .ds-title { font-size: 1.375rem; }
 #agent-desk .ds-embed h1 { font-size: 1.125rem; line-height: 1.35; font-weight: 600; }
 #agent-desk .ds-review-btn { height: 1.75rem; padding: 0 0.625rem; font-size: 0.75rem; }
 /* Deal page: summary strip, progress stepper, parties */
@@ -371,7 +368,6 @@
 #agent-desk .ds-stat-num, #agent-desk .ds-kpi-num { font-size: 1.5rem; font-weight: 600; line-height: 1.2; color: var(--d-ink); }
 #agent-desk .ds-compact :is(h1, h2, h3).ds-title { font-size: 1.375rem; line-height: 1.2; font-weight: 600; margin-top: 0.25rem; }
 #agent-desk :is(h3, h4, p).uppercase { font-weight: 500; }
-#agent-desk .ds-subtitle { color: var(--d-muted); }
 #agent-desk input.cf-label { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--d-muted); }
 /* Phones: keep Closing Time usable without zooming or sideways scrolling. */
 @media (max-width: 639px) {

@@ -10,6 +10,7 @@
    utility becomes inert and the whole app renders light everywhere. */
 @custom-variant dark (&:where(.dark, .dark *));
 :root {
+  --admin-pill-radius: 9999px;
   --background: #ffffff;
   --foreground: #1B1726;
   /* Native iOS keyboard inset — kept at 0 on web and updated in real time
@@ -785,7 +786,6 @@ textarea::placeholder {
    toggle is fully rounded, whatever per-page radius class it carries
    (rounded, rounded-sm, rounded-md, rounded-lg). Segmented controls
    (rounded-l/r/t/b-*) and form fields are excluded. */
-:root { --admin-pill-radius: 9999px; }
 @layer overrides {
 [data-admin-ui='true'] :is(span, a, button, label, div, li)[class*='rounded']:not([class*='rounded-full']):not([class*='rounded-l']):not([class*='rounded-r']):not([class*='rounded-t']):not([class*='rounded-b']):not([class*='rounded-xl']):not([class*='rounded-2xl']):not([class*='rounded-3xl']):is(
   [class~='text-xs'], [class~='text-[10px]'], [class~='text-[11px]'], [class~='text-[12px]'], [class~='text-[0.7rem]']
