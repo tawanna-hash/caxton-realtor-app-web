@@ -27,7 +27,6 @@ import { getSql } from '@/lib/db';
 import {
   generateMagicLinkToken,
   hashMagicLinkToken,
-  PORTAL_LINK_TTL_MS,
 } from '@/lib/portal';
 import {
   EMAIL_SENDERS,
@@ -112,7 +111,7 @@ export async function sendInvoiceEmail(
 
   const raw = generateMagicLinkToken();
   const tokenHash = hashMagicLinkToken(raw);
-  const linkExpires = new Date(Date.now() + PORTAL_LINK_TTL_MS).toISOString();
+  const linkExpires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 36500).toISOString(); // invoice links never expire
   await sql`
     INSERT INTO portal_magic_links (advertiser_id, token_hash, purpose, link_expires_at, sent_to_email, created_by, entity_id)
     VALUES (${params.advertiserId}, ${tokenHash}, 'pay_invoice', ${linkExpires}, ${sendTo}, ${params.createdBy ?? null}, ${params.invoiceId})

@@ -5,7 +5,7 @@
 // created on the spot and they are sent to Stripe.
 import crypto from 'node:crypto';
 
-const TTL_DAYS = 180;
+const TTL_DAYS = 36500; // ~100 years; links never expire
 
 function secret(): string {
   const s = process.env.SIGN_SECRET;
@@ -39,7 +39,7 @@ export function verifyStatementPayToken(token: string): { ok: true; subject: Sta
   const expected = Buffer.from(mac(`${id}.${expStr}`));
   const given = Buffer.from(sig);
   if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) return { ok: false, reason: 'invalid' };
-  if (Number(expStr) * 1000 < Date.now()) return { ok: false, reason: 'expired' };
+  // Pay links never expire (owner rule): the signature alone is the proof. The exp field is kept only for URL compatibility.
   const inv = /^i_([0-9a-f-]{36})$/i.exec(id);
   if (inv) return { ok: true, subject: { kind: 'invoice', invoiceId: inv[1] } };
   const st = /^s_(\d{1,12})_(overdue|all)$/.exec(id);

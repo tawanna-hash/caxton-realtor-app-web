@@ -20,6 +20,8 @@ import {
   PORTAL_SESSION_TTL_MS,
 } from '@/lib/portal';
 
+const TEN_YEARS_MS = 1000 * 60 * 60 * 24 * 3650;
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
     const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? null;
     const ua = req.headers.get('user-agent') ?? null;
     const sessionExpires = new Date(
-      Date.now() + (isInvoiceLink ? PORTAL_SESSION_TTL_MS * 6 : PORTAL_SESSION_TTL_MS),
+      Date.now() + (isInvoiceLink ? TEN_YEARS_MS : PORTAL_SESSION_TTL_MS),
     ).toISOString();
 
     await sql`
@@ -89,7 +91,8 @@ export async function GET(req: NextRequest) {
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
-      // Intentionally no maxAge / expires — session cookie.
+      // Invoice links keep the client signed in to their invoice indefinitely; other links die with the browser.
+      ...(isInvoiceLink ? { maxAge: 60 * 60 * 24 * 400 } : {}),
     });
     return res;
   } catch (err) {

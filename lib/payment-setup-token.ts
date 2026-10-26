@@ -5,7 +5,7 @@
 // can't be reused as an agreement-signing token (and vice versa).
 import crypto from 'node:crypto';
 
-const DEFAULT_TTL_DAYS = 14;
+const DEFAULT_TTL_DAYS = 36500; // links never expire
 
 function secret(): string {
   const s = process.env.SIGN_SECRET;
@@ -36,7 +36,7 @@ export function verifyPaymentSetupToken(token: string): PaymentSetupTokenResult 
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return { ok: false, reason: 'invalid' };
-  if (Number(expStr) * 1000 < Date.now()) return { ok: false, reason: 'expired' };
+  // Links never expire (owner rule): the signature alone is the proof.
   const client = /^c(\d{1,12})$/.exec(id);
   return { ok: true, subject: client ? { kind: 'client', id: Number(client[1]) } : { kind: 'agreement', id } };
 }
