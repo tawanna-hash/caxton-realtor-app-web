@@ -355,6 +355,65 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
     }
   }
 
+  // Split two-page spreads inside the issue PDF (the reader renders the PDF
+  // itself). Vector content is kept; each wide page becomes left + right pages.
+  async function handleSplitPdf() {
+    if (!readerUrl) {
+      setError('No PDF on this issue.');
+      return;
+    }
+    if (!confirm('Replace the issue PDF with a version where every two-page spread is split into two single pages?')) return;
+    setError(null);
+    setReuploadNote(null);
+    setBusy('splitpdf');
+    try {
+      const { PDFDocument } = await import('pdf-lib');
+      setReuploadStatus('Reading PDF…');
+      const res = await fetch(readerUrl);
+      if (!res.ok) throw new Error(`PDF fetch failed (${res.status})`);
+      const src = await PDFDocument.load(await res.arrayBuffer());
+      const out = await PDFDocument.create();
+      const pages = src.getPages();
+      let changed = false;
+      for (const p of pages) {
+        const { width: w, height: h } = p.getSize();
+        if (w / h < 1.5) {
+          const [e] = await out.embedPages([p]);
+          out.addPage([w, h]).drawPage(e, { x: 0, y: 0 });
+          continue;
+        }
+        changed = true;
+        const half = w / 2;
+        const [l, r] = await out.embedPages([p, p], [
+          { left: 0, bottom: 0, right: half, top: h },
+          { left: half, bottom: 0, right: w, top: h },
+        ]);
+        out.addPage([half, h]).drawPage(l, { x: 0, y: 0 });
+        out.addPage([w - half, h]).drawPage(r, { x: 0, y: 0 });
+      }
+      if (!changed) {
+        setReuploadNote('PDF has no two-page spreads; nothing changed.');
+        return;
+      }
+      setReuploadStatus('Uploading PDF…');
+      const bytes = await out.save();
+      const file = new Blob([bytes as BlobPart], { type: 'application/pdf' });
+      const blob = await upload(`magazine-pdfs/${id}/single-pages-${Date.now()}.pdf`, file, {
+        access: 'public',
+        handleUploadUrl: '/api/admin/magazines/upload-token',
+        multipart: true,
+      });
+      await patch({ reader_url: blob.url });
+      setReaderUrl(blob.url);
+      setReuploadNote(`PDF split into ${out.getPageCount()} single pages. Click Re-extract page text to refresh search.`);
+    } catch (err: unknown) {
+      setError(errMessage(err));
+    } finally {
+      setReuploadStatus(null);
+      setBusy(null);
+    }
+  }
+
   async function handleReExtract() {
     if (!readerUrl) {
       setError('No PDF on this issue — upload one first.');
@@ -583,6 +642,13 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
           />
           {busy === 'pdf' && <p className="text-xs text-[#301D5D] mt-1">Uploading…</p>}
           <div className="mt-3 pt-3 border-t border-gray-100">
+            <button
+              onClick={handleSplitPdf}
+              disabled={busy !== null || !readerUrl}
+              className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-900 px-3 py-2 rounded-md disabled:opacity-50 font-medium mr-2"
+            >
+              {busy === 'splitpdf' ? 'Splitting PDF…' : 'Split PDF spreads'}
+            </button>
             <button
               onClick={handleSplitSpreads}
               disabled={busy !== null || pageUrls.length === 0}
