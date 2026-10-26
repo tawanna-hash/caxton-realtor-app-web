@@ -147,7 +147,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
         ) : (
         <div className={`mt-4 grid gap-3 md:grid-cols-2 ${embedded ? 'max-h-[340px] overflow-y-auto overscroll-contain pr-1' : ''}`}>
           {pagedForms.map((form) => (
-            <article key={form.formFamily} className={`flex min-w-0 flex-col justify-between gap-4 rounded-xl border border-slate-200 p-4 ${'bg-white'}`}>
+            <article key={form.formFamily} className={`@container flex min-w-0 flex-col justify-between gap-4 rounded-xl border border-slate-200 p-4 ${'bg-white'}`}>
               <div className="flex min-w-0 items-start gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EFEAF8] text-[#301D5D]">
                   <FileText className="h-5 w-5" aria-hidden="true" />
@@ -161,7 +161,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                   <p className="mt-1 text-xs text-slate-500">Effective {formatEffectiveDate(form.effectiveDate)}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 @[16rem]:grid-cols-2">
                 <a
                   href={openAsPdf
                     ? (fillable(form.formFamily)
@@ -169,7 +169,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                       : `/api/agent-command-center/form-pdf?src=${encodeURIComponent(form.pdfUrl)}&name=${encodeURIComponent(`TREC-${form.formNumber.replace(/\s+/g, '-')}`)}`)
                     : form.category === 'TR Forms' ? form.pdfUrl : `/agents/closing-time?form=${encodeURIComponent(form.formFamily)}#trec-form-workspace`}
                   {...((openAsPdf && !fillable(form.formFamily)) || (!openAsPdf && form.category === 'TR Forms') ? { target: '_blank', rel: 'noreferrer' } : {})}
-                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-3 text-sm font-bold text-white transition hover:bg-[#42277C]"
+                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#301D5D] px-3 text-sm font-bold text-white transition hover:bg-[#42277C]"
                 >
                   <PencilLine className="h-4 w-4 shrink-0" aria-hidden="true" />
                   {openAsPdf && !fillable(form.formFamily) ? 'Open' : 'Open & Fill'}
@@ -179,7 +179,7 @@ export default function TrecFormsLibrary({ versions, embedded = false, dealConte
                   download
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 transition hover:bg-[#F6F3FB]"
+                  className="inline-flex h-[42px] min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 transition hover:bg-[#F6F3FB]"
                 >
                   <Download className="rnn-inline-icon" aria-hidden="true" />
                   Download
