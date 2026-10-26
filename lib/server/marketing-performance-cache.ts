@@ -6,7 +6,7 @@
 import type { buildMarketingPerformance } from './marketing-performance';
 
 type Data = Awaited<ReturnType<typeof buildMarketingPerformance>>;
-type Entry = { data: Data; at: number; refreshing?: boolean };
+type Entry = { data: Data; at: number; refreshingAt?: number };
 
 export const FRESH_MS = 15 * 60 * 1000;
 export const STALE_MS = 6 * 60 * 60 * 1000;
@@ -32,7 +32,9 @@ export function clearMarketingPerformanceCache(): void {
 /** Returns true if the caller should start a refresh (and marks one in flight). */
 export function claimRefresh(key: string): boolean {
   const e = store.get(key);
-  if (!e || e.refreshing) return false;
-  e.refreshing = true;
+  if (!e) return false;
+  // A claim expires after 2 min so a failed or degraded refresh can be retried.
+  if (e.refreshingAt && Date.now() - e.refreshingAt < 2 * 60 * 1000) return false;
+  e.refreshingAt = Date.now();
   return true;
 }

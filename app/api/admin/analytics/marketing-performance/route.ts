@@ -17,6 +17,13 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+// A rollup where any connected source timed out or errored is "degraded":
+// it is shown once but never cached, and never replaces a good cached copy.
+function isDegraded(data: Awaited<ReturnType<typeof buildMarketingPerformance>>): boolean {
+  const s = data.sources;
+  return Boolean(s.ga4.error || s.mailchimp.error || s.meta.error);
+}
+
 export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const sp = new URL(req.url).searchParams;
@@ -29,7 +36,10 @@ export const GET = withAdminTracking(async (req: Request) => {
     if (hit) {
       if (hit.ageMs > FRESH_MS && claimRefresh(key)) {
         after(async () => {
-          try { putCached(key, await buildMarketingPerformance(pub)); } catch { /* keep stale copy */ }
+          try {
+            const fresh = await buildMarketingPerformance(pub);
+            if (!isDegraded(fresh)) putCached(key, fresh);
+          } catch { /* keep stale copy */ }
         });
       }
       return NextResponse.json({ ok: true, data: hit.data, cached: true, age_s: Math.round(hit.ageMs / 1000) });
@@ -37,6 +47,6 @@ export const GET = withAdminTracking(async (req: Request) => {
   }
 
   const data = await buildMarketingPerformance(pub);
-  putCached(key, data);
+  if (!isDegraded(data)) putCached(key, data);
   return NextResponse.json({ ok: true, data });
 });

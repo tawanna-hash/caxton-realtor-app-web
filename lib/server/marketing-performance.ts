@@ -537,7 +537,7 @@ export async function buildMarketingPerformance(pub: PubFilter = 'all'): Promise
     Promise.race([p, new Promise<null>((resolve) => setTimeout(() => { onTimeout(); resolve(null); }, ms))]);
   const externals = Promise.all([
     capped(metaPromise, 15_000, () => { if (!sources.meta.connected) sources.meta.error ??= 'Meta took too long to respond.'; }),
-    capped(ga4Promise, 15_000, () => { sources.ga4.error ??= 'Google Analytics took too long to respond.'; }),
+    capped(ga4Promise, 30_000, () => { sources.ga4.error ??= 'Google Analytics took too long to respond.'; }),
     capped(mcPromise, 15_000, () => { if (!sources.mailchimp.connected) sources.mailchimp.error ??= 'Mailchimp took too long to respond; try Refresh in a minute.'; }),
   ]);
 
