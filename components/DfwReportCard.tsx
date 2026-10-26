@@ -66,8 +66,8 @@ function statsFor(board: DfwBoard, m: DfwMetrics): Stat[] {
       { key: 'closed', en: 'Closed Sales', es: 'Ventas Cerradas', value: m.closedSales, delta: m.closedSalesYoY },
       { key: 'active', en: 'Active Listings', es: 'Listados Activos', value: m.activeListings, delta: m.activeListingsYoY },
       { key: 'moi', en: 'Months of Inventory', es: 'Meses de Inventario', value: m.monthsInventory },
-      { key: 'dom', en: 'Days on Market', es: 'Dias en el Mercado', value: m.daysOnMarket },
-      { key: 'dtc', en: 'Days to Close', es: 'Dias para Cerrar', value: m.daysToClose },
+      { key: 'dom', en: 'Days on Market', es: 'Días en el Mercado', value: m.daysOnMarket },
+      { key: 'dtc', en: 'Days to Close', es: 'Días para Cerrar', value: m.daysToClose },
       {
         key: 'share',
         en: m.marketShareBand ? `Market Share ${m.marketShareBand}` : 'Top Price Range Share',
@@ -84,7 +84,7 @@ function statsFor(board: DfwBoard, m: DfwMetrics): Stat[] {
     { key: 'active', en: 'Active Listings', es: 'Listados Activos', value: m.activeListings },
     { key: 'pending', en: 'Pending Sales', es: 'Ventas Pendientes', value: m.pendingSales },
     { key: 'avg', en: 'Average Sales Price', es: 'Precio Promedio de Venta', value: m.averagePrice, delta: m.averagePriceYoY },
-    { key: 'dom', en: 'Average Days on Market', es: 'Dias Promedio en el Mercado', value: m.daysOnMarket },
+    { key: 'dom', en: 'Average Days on Market', es: 'Días Promedio en el Mercado', value: m.daysOnMarket },
     { key: 'ctl', en: 'Close to Original List Price', es: 'Cerca al Precio de Lista Original', value: m.closeToListPrice },
   ];
 }
@@ -99,19 +99,19 @@ export default function DfwReportCard({ report, id }: { report: DfwMarketReport;
   const heroDelta = isMetro ? m.medianPriceYoY : m.dollarVolume ? m.dollarVolumeYoY : m.medianPriceYoY;
   const heroDir = dirOf(heroDelta);
   const heroLabel = isMetro
-    ? es ? 'Precio mediano \u00b7 ano tras ano' : 'Median sales price \u00b7 YoY'
+    ? es ? 'Precio mediano \u00b7 año tras año' : 'Median sales price \u00b7 YoY'
     : m.dollarVolume
-      ? es ? 'Volumen total de ventas \u00b7 residencial \u00b7 ano tras ano' : 'Sales dollar volume \u00b7 residential \u00b7 YoY'
-      : es ? 'Precio mediano \u00b7 ano tras ano' : 'Median sales price \u00b7 YoY';
+      ? es ? 'Volumen total de ventas \u00b7 residencial \u00b7 año tras año' : 'Sales dollar volume \u00b7 residential \u00b7 YoY'
+      : es ? 'Precio mediano \u00b7 año tras año' : 'Median sales price \u00b7 YoY';
 
   const boardShort = isMetro ? 'MetroTex' : 'GFWAR';
   const area = report.areaLabel;
   const subtitle = isMetro
     ? es
-      ? `El cambio porcentual refleja una comparacion ano tras ano. Indicadores del mercado de ${area} de MetroTex Association of REALTORS y el Texas Real Estate Research Center de Texas A&M.`
+      ? `El cambio porcentual refleja una comparación año tras año. Indicadores del mercado de ${area} de MetroTex Association of REALTORS y el Texas Real Estate Research Center de Texas A&M.`
       : `Percent change reflects a year-over-year comparison. ${area} market indicators from MetroTex Association of REALTORS and the Texas Real Estate Research Center at Texas A&M.`
     : es
-      ? `El cambio porcentual refleja una comparacion ano tras ano. Indicadores residenciales (unifamiliar, condominio, casa adosada) de ${area}, nuevos y existentes, del Greater Fort Worth Association of REALTORS.`
+      ? `El cambio porcentual refleja una comparación año tras año. Indicadores residenciales (unifamiliar, condominio, casa adosada) de ${area}, nuevos y existentes, del Greater Fort Worth Association of REALTORS.`
       : `Percent change reflects a year-over-year comparison. ${area} residential indicators (single-family, condo, townhome), new and existing, from the Greater Fort Worth Association of REALTORS.`;
 
   const stats = statsFor(report.board, m).filter((s) => s.value);

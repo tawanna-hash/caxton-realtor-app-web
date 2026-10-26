@@ -45,7 +45,7 @@ function canonicalShareUrl(article?: { id?: string | number | null; link?: strin
   const base = 'https://realtynewsnow.app/';
   const id = article?.id;
   if (id !== undefined && id !== null && String(id).length > 0) {
-    return `${base}?article=${encodeURIComponent(String(id))}`;
+    return `${base}news/${encodeURIComponent(String(id))}`;
   }
   // Fallback: no id available — try to keep the link usable but rooted on app host.
   const link = article?.link;
@@ -753,6 +753,8 @@ interface ArticleReaderProps {
   onBack: () => void;
   onLatest?: () => void;
   onSelectArticle?: (a: any) => void;
+  /** Render as a normal page (window scroll, inside the site shell) instead of a fixed overlay. */
+  asPage?: boolean;
 }
 
 
@@ -1108,10 +1110,31 @@ function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onLatest }: { 
   // the BottomNav by combining a fixed 80px BottomNav clearance with the
   // iOS safe-area inset via calc(). 80px matches FloaterPill's default
   // offset elsewhere in the app.
+  // Reading: slide the bar away while scrolling down so it never sits on top
+  // of the article text; bring it back on any upward scroll or near the top.
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const dy = y - lastY;
+      if (Math.abs(dy) < 8) return;
+      setHidden(dy > 0 && y > 200);
+      lastY = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     <div
-      className="fixed left-1/2 -translate-x-1/2 z-[60] pointer-events-none"
-      style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
+      className="fixed left-1/2 -translate-x-1/2 z-[60] pointer-events-none transition-all duration-200"
+      style={{
+        bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
+        opacity: hidden ? 0 : 1,
+        transform: hidden ? 'translate(-50%, 16px)' : 'translate(-50%, 0)',
+      }}
+      aria-hidden={hidden}
     >
       <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-2 shadow-lg">
         <ActionPillButton onClick={onBack} label="Back">
@@ -1148,7 +1171,7 @@ function ActionPillButton({ children, label, onClick, active }: { children: Reac
 // ArticleReader — the polished v2a top-level component
 // ─────────────────────────────────────────────────────────────────────────
 
-export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectArticle }: ArticleReaderProps) {
+export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectArticle, asPage = false }: ArticleReaderProps) {
   const info = PUB_META[pub as PubKey] || PUB_META.realtyline;
   const [saved, setSaved] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -1307,15 +1330,17 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
   return (
     <div
       ref={swipeRef as React.Ref<HTMLDivElement>}
-      className="fixed inset-0 bg-white z-30 overflow-y-auto"
-      style={{ ...SW, ...swipeStyle }}
+      className={asPage ? 'relative bg-white' : 'fixed inset-0 bg-white z-30 overflow-y-auto'}
+      style={asPage ? undefined : { ...SW, ...swipeStyle }}
     >
-      {/* Header */}
-      <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
-        <div className="flex items-center justify-end px-4 py-4">
-          <span className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">{info.name}</span>
+      {/* Header (overlay mode only; page mode uses the site header) */}
+      {!asPage && (
+        <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
+          <div className="flex items-center justify-end px-4 py-4">
+            <span className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">{info.name}</span>
+          </div>
         </div>
-      </div>
+      )}
 
 
       {/* Featured article ad — shown before the editorial image so paid

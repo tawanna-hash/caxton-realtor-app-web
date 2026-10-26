@@ -877,6 +877,7 @@ function AuthGate({
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [phase, setPhase] = useState('splash');
   // caxton-article-reader-b1-state
   const [selectedArticle, setSelectedArticle] = useState<any | null>(null);
@@ -1058,12 +1059,18 @@ export default function DashboardPage() {
       const article = e?.detail;
       if (article && typeof article === 'object') {
         trackEvent('article_opened', { article_id: article?.id, article_title: article?.title, article_cat: article?.cat, pub: article?.pub });
-        setSelectedArticle(article);
-        setPhase('article');
+        // Articles are full pages (/news/<id>) like Builders and Calendar.
+        if (article?.id) {
+          router.push(`/news/${encodeURIComponent(String(article.id))}`);
+        } else {
+          setSelectedArticle(article);
+          setPhase('article');
+        }
       }
     };
     window.addEventListener('caxton:openArticle', onOpenArticle as EventListener);
     return () => window.removeEventListener('caxton:openArticle', onOpenArticle as EventListener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // share-deep-link: if URL has ?article=<id>, open that article in the reader
@@ -1079,15 +1086,10 @@ export default function DashboardPage() {
     if (match) {
       deepLinkConsumedRef.current = wantId;
       trackEvent('article_opened', { article_id: match?.id, article_title: match?.title, article_cat: match?.cat, pub: match?.pub, source: 'share_link' });
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: deep-link from URL query param into reader once data loads
-      setSelectedArticle(match);
-      setPhase('article');
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.delete('article');
-        window.history.replaceState({}, '', url.toString());
-      } catch {}
+      // Old share links (?article=<id>) land on the full article page.
+      router.replace(`/news/${encodeURIComponent(String(match.id))}`);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalArticles]);
 
   // Returning from an article always lands at the top of the feed. The feed

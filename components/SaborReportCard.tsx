@@ -19,6 +19,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { SaborReport, DeltaDirection } from '@/lib/sabor-mls';
+import { esText, cleanDelta, hasValue } from '@/lib/mls-display';
 
 interface Props {
   variant?: 'hero' | 'inline';
@@ -103,14 +104,14 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
 
   const d = data ?? FALLBACK;
 
-  const monthLabel = lang === 'es' ? d.month_label_es : d.month_label;
-  const subtitle = lang === 'es' ? d.subtitle_es : d.subtitle_en;
-  const headlineLabel = lang === 'es' ? d.headline_label_es : d.headline_label_en;
+  const monthLabel = lang === 'es' ? esText(d.month_label_es === d.month_label ? d.month_label : d.month_label_es) : d.month_label;
+  const subtitle = lang === 'es' ? esText(d.subtitle_es) : d.subtitle_en;
+  const headlineLabel = lang === 'es' ? esText(d.headline_label_es) : d.headline_label_en;
   const summaryWord = lang === 'es' ? 'Resumen MLS' : 'MLS Summary';
   const sectionLabels = useMemo(
     () =>
       lang === 'es'
-        ? { listings: 'Listados', priceBands: 'Por rango de precio (% de ventas)', members: 'Los miembros de SABOR pueden', signInLink: 'iniciar sesion para descargar el informe completo' }
+        ? { listings: 'Listados', priceBands: 'Por rango de precio (% de ventas)', members: 'Los miembros de SABOR pueden', signInLink: 'iniciar sesión para descargar el informe completo' }
         : { listings: 'Listings', priceBands: 'By price band (share of sales)', members: 'SABOR members can', signInLink: 'sign in to download the full Market Stats report' },
     [lang],
   );
@@ -217,18 +218,18 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
             className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-3 py-3 mb-3"
             style={{ borderTop: '1px dashed #E6E5EC' }}
           >
-            {d.indicator_stats.map((s) => (
+            {d.indicator_stats.filter(hasValue).map((s) => (
               <div key={s.key || s.label_en}>
                 <div className="flex items-baseline gap-1">
                   <div className="text-[15px] font-bold text-gray-900 leading-tight">{s.value}</div>
-                  {s.delta && (
+                  {cleanDelta(s.delta, s.delta_direction) && (
                     <div className="text-[10px] font-bold" style={{ color: dirColor(s.delta_direction) }}>
                       {dirGlyph(s.delta_direction)} {s.delta}
                     </div>
                   )}
                 </div>
                 <div className="text-[10px] uppercase tracking-[0.10em] text-gray-500 mt-0.5 leading-tight">
-                  {lang === 'es' ? s.label_es : s.label_en}
+                  {lang === 'es' ? esText(s.label_es) : s.label_en}
                 </div>
               </div>
             ))}
@@ -242,18 +243,18 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
             className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-3 py-3 mb-3"
             style={{ borderTop: '1px dashed #E6E5EC' }}
           >
-            {d.listing_counts.map((s) => (
+            {d.listing_counts.filter(hasValue).map((s) => (
               <div key={s.key || s.label_en}>
                 <div className="flex items-baseline gap-1">
                   <div className="text-[15px] font-bold text-gray-900 leading-tight">{s.value}</div>
-                  {s.delta && (
+                  {cleanDelta(s.delta, s.delta_direction) && (
                     <div className="text-[10px] font-bold" style={{ color: dirColor(s.delta_direction) }}>
                       {dirGlyph(s.delta_direction)} {s.delta}
                     </div>
                   )}
                 </div>
                 <div className="text-[10px] uppercase tracking-[0.10em] text-gray-500 mt-0.5 leading-tight">
-                  {lang === 'es' ? s.label_es : s.label_en}
+                  {lang === 'es' ? esText(s.label_es) : s.label_en}
                 </div>
               </div>
             ))}
@@ -271,7 +272,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
               <div key={b.key || b.label_en}>
                 <div className="text-[15px] font-bold text-gray-900 leading-tight">{b.share}</div>
                 <div className="text-[10px] uppercase tracking-[0.10em] text-gray-500 mt-0.5 leading-tight">
-                  {lang === 'es' ? b.label_es : b.label_en}
+                  {lang === 'es' ? esText(b.label_es) : b.label_en}
                 </div>
               </div>
             ))}
