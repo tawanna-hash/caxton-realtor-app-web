@@ -19,6 +19,9 @@ const config: CapacitorConfig = {
   appId: 'app.realtynewsnow',
   appName: 'Realty News Now',
   webDir: 'public', // unused when server.url is set, but required by the CLI
+  // Lets the server recognize the native shell (see lib/native-user-agent.ts)
+  // so `/` skips the public landing page. Applies to builds made after this.
+  appendUserAgent: 'RealtyNewsNowApp',
   server: {
     url: 'https://realtynewsnow.app',
     cleartext: false,

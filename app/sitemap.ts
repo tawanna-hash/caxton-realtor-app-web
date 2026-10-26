@@ -9,6 +9,8 @@
 // with real dates where one exists. Each DB lookup is isolated so a failure
 // degrades to the static list instead of failing the sitemap.
 //
+// Events: upcoming, visible Austin and San Antonio events only.
+//
 // Intentionally excluded: /dashboard (signed-in feed, canonicalized to
 // itself but not a landing target), /profile (account page), and checkout,
 // signing, portal, and admin paths (also disallowed in robots.ts).
@@ -99,6 +101,31 @@ async function partnerEntries(): Promise<MetadataRoute.Sitemap> {
   }
 }
 
+async function eventEntries(): Promise<MetadataRoute.Sitemap> {
+  try {
+    const sql = getSql();
+    // Upcoming, visible events in the two live public markets only.
+    const rows = (await sql`
+      SELECT id, publication, start_date FROM events
+      WHERE hidden = false
+        AND publication IN ('austin', 'san_antonio')
+        AND COALESCE(end_date, start_date) >=
+            date_trunc('day', NOW() AT TIME ZONE 'America/Chicago')
+              AT TIME ZONE 'America/Chicago'
+      ORDER BY start_date ASC NULLS LAST
+      LIMIT 1000
+    `) as DbRow[];
+    return rows.map((r) => ({
+      url: `${SITE_URL}/calendar/${r.publication}/${r.id}`,
+      changeFrequency: 'weekly' as const,
+      priority: 0.5,
+    }));
+  } catch (err) {
+    console.error('[sitemap] events failed', err);
+    return [];
+  }
+}
+
 async function builderEntries(): Promise<MetadataRoute.Sitemap> {
   try {
     const sql = getSql();
@@ -131,15 +158,16 @@ async function builderEntries(): Promise<MetadataRoute.Sitemap> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [magazines, partners, builders] = await Promise.all([
+  const [magazines, partners, builders, events] = await Promise.all([
     magazineEntries(),
     partnerEntries(),
     builderEntries(),
+    eventEntries(),
   ]);
   const staticUrls: MetadataRoute.Sitemap = STATIC_ENTRIES.map((e) => ({
     url: e.path === '/' ? SITE_URL : `${SITE_URL}${e.path}`,
     changeFrequency: e.changeFrequency,
     priority: e.priority,
   }));
-  return [...staticUrls, ...magazines, ...builders, ...partners];
+  return [...staticUrls, ...magazines, ...builders, ...partners, ...events];
 }

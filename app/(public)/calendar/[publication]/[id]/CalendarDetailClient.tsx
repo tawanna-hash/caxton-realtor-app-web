@@ -13,17 +13,23 @@ function pubFromMarket(market: string): Pub {
   return market === 'san_antonio' ? 'newsline' : 'realtyline';
 }
 
-export default function CalendarDetailClient() {
+export default function CalendarDetailClient({
+  initialEvent = null,
+}: {
+  initialEvent?: CalendarEvent | null;
+}) {
   const router = useRouter();
   const params = useParams<{ publication: string; id: string }>();
   const publication = params.publication;
   const id = Number(params.id);
 
-  const [event, setEvent] = useState<CalendarEvent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [event, setEvent] = useState<CalendarEvent | null>(initialEvent);
+  const [loading, setLoading] = useState(!initialEvent);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
+    // Server already rendered this event; no client fetch needed.
+    if (initialEvent && initialEvent.id === id) return;
     if (
       (publication !== 'austin' && publication !== 'san_antonio' && publication !== 'dallas') ||
       !Number.isFinite(id) ||
@@ -60,7 +66,7 @@ export default function CalendarDetailClient() {
     return () => {
       cancelled = true;
     };
-  }, [publication, id]);
+  }, [publication, id, initialEvent]);
 
   if (loading) {
     return (

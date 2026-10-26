@@ -169,3 +169,115 @@ export function breadcrumbs(items: Array<{ name: string; path: string }>) {
     })),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Events
+// ---------------------------------------------------------------------------
+
+type EventLike = {
+  id: number;
+  title: string;
+  description: string;
+  publication: string;
+  startDate: string | null;
+  endDate: string | null;
+  location: string | null;
+  organizer: string | null;
+  website: string | null;
+  link: string;
+  format: string | null;
+  memberPrice: string | null;
+  nonmemberPrice: string | null;
+  imageUrl: string | null;
+  lat: number | null;
+  lng: number | null;
+  instructor: string | null;
+};
+
+function parsePrice(raw: string | null): number | null {
+  if (!raw) return null;
+  const t = raw.trim().toLowerCase();
+  if (t === 'free' || t === '$0' || t === '0') return 0;
+  const m = t.match(/^\$?\s*(\d+(?:\.\d{1,2})?)$/);
+  return m ? Number(m[1]) : null;
+}
+
+function plainText(html: string, max = 500): string {
+  const t = html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&#?\w+;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return t.length > max ? `${t.slice(0, max - 1).trimEnd()}…` : t;
+}
+
+export function eventPath(publication: string, id: number) {
+  return `/calendar/${publication}/${id}`;
+}
+
+export function eventDescription(e: Pick<EventLike, 'description' | 'title'>) {
+  return plainText(e.description || '', 300) || e.title;
+}
+
+/** schema.org Event for a public calendar event (omits fields we do not have). */
+export function eventJsonLd(e: EventLike) {
+  const url = `${SITE_URL}${eventPath(e.publication, e.id)}`;
+  const online = /online|virtual|webinar|zoom/i.test(`${e.format ?? ''} ${e.location ?? ''}`);
+  const hasPlace = !!e.location && !/^online/i.test(e.location.trim());
+
+  const prices = [e.memberPrice, e.nonmemberPrice]
+    .map(parsePrice)
+    .filter((p): p is number => p !== null);
+  const offers = prices.length
+    ? {
+        '@type': 'Offer',
+        url: e.website || e.link || url,
+        price: Math.min(...prices),
+        priceCurrency: 'USD',
+        availability: 'https://schema.org/InStock',
+      }
+    : undefined;
+
+  const location = online && !hasPlace
+    ? { '@type': 'VirtualLocation', url: e.website || e.link || url }
+    : hasPlace
+      ? {
+          '@type': 'Place',
+          name: e.location!.split(',')[0].trim(),
+          address: e.location,
+          ...(e.lat != null && e.lng != null
+            ? { geo: { '@type': 'GeoCoordinates', latitude: e.lat, longitude: e.lng } }
+            : {}),
+        }
+      : undefined;
+
+  const out: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    '@id': `${url}#event`,
+    name: e.title,
+    description: eventDescription(e),
+    url,
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: online && !hasPlace
+      ? 'https://schema.org/OnlineEventAttendanceMode'
+      : online
+        ? 'https://schema.org/MixedEventAttendanceMode'
+        : 'https://schema.org/OfflineEventAttendanceMode',
+    inLanguage: 'en-US',
+    publisher: { '@id': ORG_ID },
+  };
+  if (e.startDate) out.startDate = e.startDate;
+  if (e.endDate) out.endDate = e.endDate;
+  if (location) out.location = location;
+  if (e.imageUrl) out.image = [e.imageUrl];
+  if (e.organizer) out.organizer = { '@type': 'Organization', name: e.organizer };
+  if (e.instructor) out.performer = { '@type': 'Person', name: e.instructor };
+  if (offers) {
+    out.offers = offers;
+    out.isAccessibleForFree = Math.max(...prices) === 0;
+  }
+  return out;
+}

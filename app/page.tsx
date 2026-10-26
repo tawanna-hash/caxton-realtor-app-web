@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
+import { isNativeAppUserAgent } from '@/lib/native-user-agent';
 import { redirect } from 'next/navigation';
 import { SESSION_COOKIE_NAME } from '@/lib/auth/cookie-names';
 import JsonLd from '@/components/seo/JsonLd';
@@ -20,8 +21,9 @@ export const metadata: Metadata = {
 
 // Public, server-rendered landing page for `/`.
 //
-// Signed-in users (session cookie present) keep the old behavior and go
-// straight to their feed at /dashboard. Everyone else — including search
+// Signed-in users (session cookie present) and the installed native app
+// (iOS/Android Capacitor webview) keep the old behavior and go straight to
+// /dashboard. Everyone else — including search
 // engine and AI crawlers, which do not run client JavaScript — gets a
 // complete description of what Realty News Now is, which markets it serves,
 // and links to the main sections. Every visitor sees the same HTML.
@@ -37,6 +39,8 @@ const SECTIONS = [
 export default async function HomePage() {
   const jar = await cookies();
   if (jar.get(SESSION_COOKIE_NAME)?.value) redirect('/dashboard');
+  const h = await headers();
+  if (isNativeAppUserAgent(h.get('user-agent'))) redirect('/dashboard');
 
   return (
     <main className="min-h-screen bg-white">
