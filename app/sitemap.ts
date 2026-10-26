@@ -36,7 +36,7 @@ type Entry = {
 };
 
 const STATIC_ENTRIES: Entry[] = [
-  { path: '/',                    changeFrequency: 'daily',   priority: 1.0 },
+  { path: '/dashboard',                   changeFrequency: 'daily',   priority: 1.0 },
   { path: '/about',               changeFrequency: 'monthly', priority: 0.7 },
   { path: '/faq',                 changeFrequency: 'monthly', priority: 0.6 },
   { path: '/magazine',            changeFrequency: 'weekly',  priority: 0.8 },
@@ -69,7 +69,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     eventEntries(),
   ]);
   const staticUrls: MetadataRoute.Sitemap = STATIC_ENTRIES.map((e) => ({
-    url: e.path === '/' ? SITE_URL : `${SITE_URL}${e.path}`,
+    url: `${SITE_URL}${e.path}`,
     changeFrequency: e.changeFrequency,
     priority: e.priority,
   }));
