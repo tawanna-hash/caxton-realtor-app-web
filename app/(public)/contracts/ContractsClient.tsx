@@ -73,8 +73,15 @@ function fromExtraction(w: Record<string, string>): Fields {
 const money = (v: unknown) => String(v ?? '').replace(/[^\d.]/g, '').replace(/^(\d*\.\d*).*$/, '$1').slice(0, 20);
 
 export default function ContractsClient({
-  realtorId, initialContracts, initialAlerts,
-}: { realtorId: string; initialContracts: Contract[]; initialAlerts: Alerts }) {
+  realtorId, initialContracts, initialAlerts, guest = false,
+}: { realtorId: string; initialContracts: Contract[]; initialAlerts: Alerts; guest?: boolean }) {
+  function needAccount(): boolean {
+    if (!guest) return false;
+    if (window.confirm('You need a free account to add contracts and get deadline alerts. Create your account now?')) {
+      window.location.href = '/login?next=%2Fcontracts';
+    }
+    return true;
+  }
   const [contracts, setContracts] = useState(initialContracts);
   const [alerts, setAlerts] = useState(initialAlerts);
   const [draft, setDraft] = useState<Fields | null>(null);
@@ -181,10 +188,10 @@ export default function ContractsClient({
           <div className="mt-4 flex flex-wrap gap-3">
             <label className={`${BTN_PRIMARY} cursor-pointer ${busy ? 'pointer-events-none opacity-50' : ''}`}>
               {busy === 'read' ? 'Reading contract...' : 'Upload contract'}
-              <input ref={fileRef} type="file" accept="application/pdf,image/png,image/jpeg,image/webp" className="sr-only" disabled={busy !== ''}
+              <input ref={fileRef} type="file" onClick={(e) => { if (needAccount()) e.preventDefault(); }} accept="application/pdf,image/png,image/jpeg,image/webp" className="sr-only" disabled={busy !== ''}
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) void readFile(f); }} />
             </label>
-            <button type="button" className={BTN_SECONDARY} onClick={() => setDraft({ ...EMPTY })} disabled={busy !== ''}>
+            <button type="button" className={BTN_SECONDARY} onClick={() => { if (needAccount()) return; setDraft({ ...EMPTY }); }} disabled={busy !== ''}>
               Enter dates myself
             </button>
           </div>

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/server/auth/user';
 import ContractsShell from '../ContractsShell';
 import EmailClient from './EmailClient';
@@ -12,7 +11,16 @@ export const dynamic = 'force-dynamic';
 
 export default async function EmailPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/login?next=%2Fcontracts%2Femail');
+  if (!user) {
+    return (
+      <ContractsShell active="email">
+        <div className="rounded-2xl border border-[#E6E5EC] bg-white p-6 text-sm text-[#4A4757]">
+          You need a free account to connect your email.{' '}
+          <a className="font-semibold text-[#301D5D] underline" href="/login?next=%2Fcontracts%2Femail">Create an account or sign in</a>
+        </div>
+      </ContractsShell>
+    );
+  }
   return (
     <ContractsShell active="email">
       <EmailClient />

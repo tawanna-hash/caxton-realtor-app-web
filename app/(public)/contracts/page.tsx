@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/server/auth/user';
 import { listContracts } from '@/lib/server/contract-dates';
 import ContractsClient from './ContractsClient';
@@ -14,8 +13,9 @@ export const dynamic = 'force-dynamic';
 
 export default async function ContractsPage() {
   const user = await getCurrentUser();
-  if (!user) redirect('/login?next=%2Fcontracts');
-  const { contracts, alerts } = await listContracts(user.realtorId);
+  const { contracts, alerts } = user
+    ? await listContracts(user.realtorId)
+    : { contracts: [], alerts: { emailEnabled: false, pushEnabled: false, reminderOffsets: [1, 3] as Array<0 | 1 | 3 | 7> } };
   return (
     <ContractsShell
       active="dates"
@@ -24,7 +24,7 @@ export default async function ContractsPage() {
       subtitle="Stay Ahead Of Deadlines."
       description="Upload a Texas TREC contract. We read the dates, you confirm them, and we alert you by email or push before each one is due. Always check dates against the contract."
     >
-      <ContractsClient realtorId={user.realtorId} initialContracts={contracts} initialAlerts={alerts} />
+      <ContractsClient realtorId={user?.realtorId ?? ''} guest={!user} initialContracts={contracts} initialAlerts={alerts} />
     </ContractsShell>
   );
 }

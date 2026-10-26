@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/server/auth/user';
 import { listContracts } from '@/lib/server/contract-dates';
 import ContractsShell from '../ContractsShell';
@@ -15,8 +14,7 @@ export const dynamic = 'force-dynamic';
 export default async function CalculatorsPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   const { c } = await searchParams;
   const user = await getCurrentUser();
-  if (!user) redirect('/login?next=%2Fcontracts%2Fcalculators');
-  const { contracts } = await listContracts(user.realtorId);
+  const { contracts } = user ? await listContracts(user.realtorId) : { contracts: [] };
   const options = contracts.map((c) => ({ id: c.id, address: c.propertyAddress, closingDate: c.closingDate, price: c.salesPrice, earnest: c.earnestMoney }));
   return (
     <ContractsShell active="calculators">
