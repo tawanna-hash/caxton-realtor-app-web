@@ -471,7 +471,6 @@ export function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub
       {/* Redundant "Welcome, {user} / Select Your Market" banner removed —
           the AppShell header now handles title-as-switcher with the same
           MarketSwitcherSheet, per iOS HIG dedupe pass. */}
-      {tab === 'n' && !showPreLaunch && !isDallasPreview && <FeedTopBanner pub={pub} />}
       {!showPreLaunch && (
         <DashboardHero pub={pub as "realtyline" | "newsline" | "realtyline-dallas" | "realtyline-houston"} />
       )}
@@ -487,6 +486,7 @@ export function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub
       {tab === 'n' && isDallasPreview && <DallasPreviewHome surface="news" />}
       {tab === 'n' && !showPreLaunch && !isDallasPreview && (
         <div>
+          <FeedTopBanner pub={pub} />
           <TrendingTicker market={pub as PubKey} className="mx-4 mt-3" />
           <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-white border-b border-gray-200" style={{ scrollbarWidth: 'none' }}>
             {CATS.map((c) => (
