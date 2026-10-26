@@ -11,6 +11,7 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import Script from 'next/script';
 
 declare global {
@@ -28,7 +29,21 @@ export interface MagazineGAProps {
 }
 
 export function MagazineGA({ measurementId, debug = false }: MagazineGAProps) {
-  if (!measurementId) return null;
+  // Load gtag on the visitor's first interaction (or after 6 s) so the three
+  // tag scripts do not compete with hydration and the first paint.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (ready) return;
+    const events = ['pointerdown', 'keydown', 'scroll', 'touchstart'] as const;
+    const go = () => setReady(true);
+    events.forEach((e) => window.addEventListener(e, go, { once: true, passive: true }));
+    const t = window.setTimeout(go, 6000);
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, go));
+      window.clearTimeout(t);
+    };
+  }, [ready]);
+  if (!measurementId || !ready) return null;
   // Two scripts: the loader (strategy=afterInteractive so it doesn't
   // block first paint) and a small inline init that configures the
   // property. Next.js's <Script> handles deduping across page navs.
