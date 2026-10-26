@@ -1,3 +1,4 @@
+import { stripeSafeEmail } from '@/lib/stripe-email';
 import { randomUUID } from 'node:crypto';
 import { ensureSchema, getSql } from '@/lib/db';
 import { isSafeCents } from '@/lib/invoices';
@@ -14,7 +15,7 @@ import {
   registerInvoiceCheckoutSession,
 } from '@/lib/server/invoice-lifecycle';
 
-const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
+const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://realtynewsnow.app';
 
 export type PartnerStatementInvoice = {
   id: string;
@@ -314,7 +315,7 @@ export async function getOrCreatePartnerStatementOverdueLink(
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         payment_method_types: ['card'],
-        customer_email: statement.recipientEmail ?? undefined,
+        customer_email: stripeSafeEmail(statement.recipientEmail),
         line_items: [
           {
             price_data: {
@@ -485,7 +486,7 @@ export async function refreshPartnerStatementLinks(
       session = await stripe.checkout.sessions.create({
         mode: 'payment',
         payment_method_types: ['card'],
-        customer_email: statement.recipientEmail ?? undefined,
+        customer_email: stripeSafeEmail(statement.recipientEmail),
         line_items: [
           {
             price_data: {

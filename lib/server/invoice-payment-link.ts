@@ -11,6 +11,7 @@
 // that, so a link handed out on day N silently died by day N+1 while the
 // UI kept showing it as live — see the refresh cron for the fix.
 
+import { stripeSafeEmail } from '@/lib/stripe-email';
 import { getSql, ensureSchema } from '@/lib/db';
 import { withNeonTransaction } from '@/lib/server/db/neon';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
@@ -139,7 +140,7 @@ export async function createInvoiceCheckoutSession(
     session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
-      customer_email: inv.bill_to_email ?? undefined,
+      customer_email: stripeSafeEmail(inv.bill_to_email),
       line_items: [
         {
           price_data: {

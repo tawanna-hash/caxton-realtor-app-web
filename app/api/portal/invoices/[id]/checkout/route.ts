@@ -8,6 +8,7 @@
 // Body: { ui_mode?: 'hosted' | 'embedded', payment_method?: 'card' | 'ach' | 'bnpl' }
 // Returns: { url } for hosted, { client_secret } for embedded.
 
+import { stripeSafeEmail } from '@/lib/stripe-email';
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema } from '@/lib/db';
 import { withNeonTransaction } from '@/lib/server/db/neon';
@@ -33,7 +34,7 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://app.myrealtyline.com';
+const APP_BASE_URL = process.env.APP_BASE_URL ?? 'https://realtynewsnow.app';
 
 interface InvoiceRow {
   id: string;
@@ -126,7 +127,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       mode: 'payment' as const,
       payment_method_types: stripePaymentMethodTypes,
       customer: inv.stripe_customer_id ?? undefined,
-      customer_email: inv.stripe_customer_id ? undefined : (inv.bill_to_email ?? undefined),
+      customer_email: inv.stripe_customer_id ? undefined : stripeSafeEmail(inv.bill_to_email),
       line_items: [
         {
           price_data: {
@@ -184,7 +185,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     let session;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      session = await stripe.checkout.sessions.create(sessionParams as any);
+      try {
+        session = await stripe.checkout.sessions.create(sessionParams as any);
+      } catch (firstErr) {
+        // A saved Stripe customer id can go stale (deleted, or from another mode/account).
+        // Retry once by email instead of failing the client's pay click.
+        const code = (firstErr as { code?: string } | null)?.code;
+        if (sessionParams.customer && (code === 'resource_missing' || /no such customer/i.test(String((firstErr as Error)?.message)))) {
+          delete sessionParams.customer;
+          sessionParams.customer_email = stripeSafeEmail(inv.bill_to_email);
+          session = await stripe.checkout.sessions.create(sessionParams as any);
+        } else {
+          throw firstErr;
+        }
+      }
     } catch (stripeErr) {
       if (registryId) {
         await withNeonTransaction((client) => markCheckoutSessionFailed(client, registryId as string));

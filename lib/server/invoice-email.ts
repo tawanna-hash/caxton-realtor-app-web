@@ -202,7 +202,7 @@ export function invoiceEmailText({
       '',
       consumeUrl,
       '',
-      'This link is valid for 24 hours and may only be used once.',
+      'This secure link stays active until the invoice is paid, and you can reopen it any time from this email.',
     ].join('\n');
   }
 
@@ -217,7 +217,7 @@ export function invoiceEmailText({
     '',
     consumeUrl,
     '',
-    'This link is valid for 24 hours and may only be used once.',
+    'This secure link stays active until the invoice is paid, and you can reopen it any time from this email.',
     '',
     'Have a great day!',
     '~ Tawanna',
@@ -259,7 +259,7 @@ export function invoiceEmailHtml({
         View &amp; pay invoice ${escapeEmailHtml(number)}
       </a>
       </p>
-      <p style="font-size:13px;color:#667085">This secure link is valid for 24 hours and may only be used once.</p>
+      <p style="font-size:13px;color:#667085">This secure link stays active until the invoice is paid, and you can reopen it any time from this email.</p>
       ${closing}
     </div>
   </div>`;
