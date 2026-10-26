@@ -58,9 +58,11 @@ function getServerPubSnapshot(): Pub {
 interface MagazineClientProps {
   /** When set, opens the reader directly to this magazine and locks pub to its publication. Used by /magazine/[id] share links. */
   initialMagazine?: Magazine;
+  /** Server-rendered Austin issues (newest first) so the cover is in the first HTML. */
+  initialMagazines?: Magazine[];
 }
 
-export default function MagazineClient({ initialMagazine }: MagazineClientProps = {}) {
+export default function MagazineClient({ initialMagazine, initialMagazines }: MagazineClientProps = {}) {
   const storedPub = useSyncExternalStore(subscribePub, readPub, getServerPubSnapshot);
   // Only render the back chevron when the client was mounted from a
   // /magazine/[id] share link — the chevron used to call router.back(),
@@ -81,7 +83,9 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
   const pathname = usePathname();
 
   const [openMag, setOpenMagState] = useState<Magazine | null>(null);
-  const [currentMag, setCurrentMag] = useState<Magazine | null>(null);
+  const [currentMag, setCurrentMag] = useState<Magazine | null>(() =>
+    !initialMagazine && initialMagazines?.length ? initialMagazines[0] : null,
+  );
   const [autoOpenLatest, setAutoOpenLatest] = useState<boolean>(false);
 
   // Snapshot ?page= from the URL exactly once on mount so both readers seed
@@ -240,14 +244,13 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
               if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white text-xs uppercase tracking-[0.2em] font-medium text-gray-700 hover:bg-gray-50"
-            aria-label="Jump to issues archive"
           >
             <span>Browse Issues Archive</span>
             <span className="text-gray-500">{'\u2193'}</span>
           </button>
         </div>
       )}
-      {currentMag && (
+      {currentMag && (currentMag.publication === 'austin') === (pub === 'realtyline') && (
         <MagazineFeatured
           magazine={currentMag}
           brandColor={info.color}
@@ -261,6 +264,7 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
         <MagazineCarousel
           publication={pub}
           brandColor={info.color}
+          initialMagazines={initialMagazines}
           onOpen={(m: Magazine) => setOpenMag(m)}
           onMagazinesLoaded={(mags: Magazine[]) => { if (mags.length > 0) setCurrentMag(mags[0]); }}
         />

@@ -79,7 +79,6 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
       <button
         onClick={() => { trackEvent('magazine_featured_article_clicked', { magazine_id: magazine.id, article_id: article?.id, label }); onOpenArticle(article); }}
         className="block w-full text-left group px-4 py-4 hover:bg-gray-50 transition-colors rounded-md"
-        aria-label={`Open ${title}`}
       >
         <ArticleFeedCardBody category={label} headline={title} summary={summary} imageUrl={img} />
       </button>
@@ -88,12 +87,12 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
 
   return (
     <section className="bg-white px-4 md:px-8 py-12 border-t border-gray-100">
-      <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-6" style={{ color: brandColor }}>
+      <h2 className="text-xs uppercase tracking-[0.2em] font-semibold mb-6" style={{ color: brandColor }}>
         Current Issue
-      </p>
+      </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
-        <button onClick={onOpenMagazine} className="block w-full group" aria-label={`Open ${magazine.issue_label}`}>
+        <button onClick={onOpenMagazine} className="block w-full group">
           <div className="relative w-full max-w-sm mx-auto md:mx-0 aspect-[17/22] overflow-hidden shadow-2xl group-hover:shadow-3xl transition-shadow bg-white">
             {magazine.cover_url ? (
               // eslint-disable-next-line @next/next/no-img-element

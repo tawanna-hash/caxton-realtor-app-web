@@ -2,6 +2,8 @@ import MagazineClient from './MagazineClient';
 import { MagazineGA } from '@/components/MagazineGA';
 import { getMeasurementId } from '@/lib/publication-settings';
 import JsonLd from '@/components/seo/JsonLd';
+import { getSql } from '@/lib/db';
+import type { Magazine } from '@/lib/magazines';
 import { webPage } from '@/lib/structured-data';
 
 export const metadata = {
@@ -25,6 +27,23 @@ export default async function MagazinePage() {
     getMeasurementId('austin'),
     getMeasurementId('san_antonio'),
   ]);
+  // Server-render the default (Austin) issue list so the current-issue cover
+  // is in the first HTML instead of waiting on hydration plus an API call.
+  // Visitors who browse Newsline San Antonio fetch their list client-side.
+  let initialMagazines: Magazine[] = [];
+  try {
+    const rows = await getSql()`
+      SELECT id, publication, year, month, issue_label,
+             cover_url, reader_url, page_urls, page_count, sort_date
+      FROM magazines
+      WHERE publication = 'austin' AND page_count > 0
+      ORDER BY sort_date DESC
+      LIMIT 200
+    `;
+    initialMagazines = JSON.parse(JSON.stringify(rows)) as Magazine[];
+  } catch {
+    initialMagazines = [];
+  }
   return (
     <>
       <JsonLd
@@ -49,7 +68,7 @@ export default async function MagazinePage() {
       <link rel="preconnect" href="https://b2lqsyyhvbkewrwf.public.blob.vercel-storage.com" crossOrigin="" />
       <MagazineGA measurementId={austinId} />
       <MagazineGA measurementId={sanAntonioId} />
-      <MagazineClient />
+      <MagazineClient initialMagazines={initialMagazines} />
     </>
   );
 }

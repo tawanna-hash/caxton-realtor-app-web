@@ -12,14 +12,18 @@ interface MagazineCarouselProps {
   brandColor: string;
   onOpen: (m: Magazine) => void;
   onMagazinesLoaded?: (mags: Magazine[]) => void;
+  /** Server-rendered issues for the default (Austin) publication. */
+  initialMagazines?: Magazine[];
 }
 
 type Tab = 'current' | 'all';
 type SortOrder = 'newest' | 'oldest';
 
-export default function MagazineCarousel({ publication, brandColor, onOpen, onMagazinesLoaded }: MagazineCarouselProps) {
-  const [magazines, setMagazines] = useState<Magazine[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function MagazineCarousel({ publication, brandColor, onOpen, onMagazinesLoaded, initialMagazines }: MagazineCarouselProps) {
+  const seeded = !!initialMagazines?.length && (publication === 'realtyline' || publication === 'austin');
+  const skipFetchRef = useRef(seeded);
+  const [magazines, setMagazines] = useState<Magazine[]>(seeded ? initialMagazines! : []);
+  const [loading, setLoading] = useState(!seeded);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('all');
   const [search, setSearch] = useState('');
@@ -36,6 +40,13 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   }, [onMagazinesLoaded]);
 
   useEffect(() => {
+    if (skipFetchRef.current) {
+      // First run uses the server-rendered issues; later runs (pull to
+      // refresh, switching publication) fetch as before.
+      skipFetchRef.current = false;
+      if (initialMagazines && loadedCbRef.current) loadedCbRef.current(initialMagazines);
+      return;
+    }
     let cancelled = false;
     // setState calls are batched inside an async chain (not
     // synchronously in the effect body) which is the recommended
@@ -137,7 +148,6 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
             onOpen(magazine);
           }}
           className="group block w-full text-left"
-          aria-label={`Open ${magazine.issue_label}`}
         >
           <div className="relative w-full aspect-[3/4] overflow-hidden border border-gray-200 bg-white shadow-sm transition duration-200 group-hover:-translate-y-1 group-hover:shadow-lg group-focus-visible:ring-2 group-focus-visible:ring-offset-2 active:scale-[0.98]">
             {magazine.cover_url ? (
