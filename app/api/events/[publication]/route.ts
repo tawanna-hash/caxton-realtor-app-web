@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function GET(
-  _req: Request,
+  req: Request,
   context: { params: Promise<{ publication: string }> },
 ) {
   const { publication } = await context.params;
@@ -26,6 +26,14 @@ export async function GET(
         message: 'publication must be a valid active market',
       },
       { status: 400 },
+    );
+  }
+  // Access probe for the calendar page: answers 200 either way so visitors who are not
+  // on the preview list do not trigger a 403 (and a console error) just by opening the calendar.
+  if (publication === 'dallas' && new URL(req.url).searchParams.get('access') === '1') {
+    return Response.json(
+      { allowed: await canViewDallasPreview() },
+      { headers: { 'Cache-Control': 'private, no-store' } },
     );
   }
   if (publication === 'dallas' && !(await canViewDallasPreview())) return dallasForbidden();

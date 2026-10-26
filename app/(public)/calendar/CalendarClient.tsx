@@ -24,14 +24,15 @@ export default function CalendarClient() {
   const { pub } = usePublication();
   // Dallas/Ft. Worth is pre-launch. The server only answers
   // /api/events/dallas for allowlisted accounts (lib/server/dallas-preview),
-  // so a 200 here means this signed-in user may preview it.
+  // and `?access=1` reports whether this user may preview it (always 200).
   const [dallasAllowed, setDallasAllowed] = useState(false);
   const [showDallas, setShowDallas] = useState(false);
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/events/dallas', { credentials: 'include' })
-      .then((r) => {
-        if (cancelled || !r.ok) return;
+    fetch('/api/events/dallas?access=1', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { allowed?: boolean } | null) => {
+        if (cancelled || !d?.allowed) return;
         setDallasAllowed(true);
         try {
           if (sessionStorage.getItem('calendar_dallas_preview') === '1') setShowDallas(true);

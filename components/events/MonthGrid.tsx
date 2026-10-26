@@ -109,7 +109,7 @@ export function MonthGrid({ month, pub, eventsByDate, selectedDay, onSelectDay, 
               : cell.isToday
                 ? "text-gray-900 font-semibold"
                 : "text-gray-900"
-            : "text-gray-300";
+            : "text-gray-500";
 
           // Today-but-not-selected gets a pub-color inset ring; selected state
           // overrides via background fill. Focus styling uses focus-visible so
