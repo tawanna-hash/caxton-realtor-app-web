@@ -16,9 +16,13 @@
 // signing, portal, and admin paths (also disallowed in robots.ts).
 
 import type { MetadataRoute } from 'next';
-import { getSql } from '@/lib/db';
-import { builderNameToSlug } from '@/lib/builder-slug';
-import { eventEntries, magazineEntries } from '@/lib/sitemap-entries';
+import {
+  builderEntries,
+  eventEntries,
+  magazineEntries,
+  partnerEntries,
+  toSitemap,
+} from '@/lib/sitemap-entries';
 
 const SITE_URL = 'https://realtynewsnow.app';
 
@@ -55,63 +59,6 @@ const STATIC_ENTRIES: Entry[] = [
   { path: '/terms',               changeFrequency: 'yearly',  priority: 0.3 },
 ];
 
-type DbRow = Record<string, unknown>;
-
-async function partnerEntries(): Promise<MetadataRoute.Sitemap> {
-  try {
-    const sql = getSql();
-    const rows = (await sql`
-      SELECT slug FROM advertisers
-      WHERE COALESCE(status, 'advertiser') IN ('advertiser', 'active')
-        AND slug IS NOT NULL AND slug <> ''
-        AND NOT EXISTS (
-          SELECT 1 FROM builder_page_visibility v
-          WHERE LOWER(TRIM(v.builder_name)) = LOWER(TRIM(advertisers.name))
-            AND v.public_enabled = false
-        )
-    `) as DbRow[];
-    return rows.map((r) => ({
-      url: `${SITE_URL}/partners/${r.slug}`,
-      changeFrequency: 'monthly' as const,
-      priority: 0.5,
-    }));
-  } catch (err) {
-    console.error('[sitemap] partners failed', err);
-    return [];
-  }
-}
-
-async function builderEntries(): Promise<MetadataRoute.Sitemap> {
-  try {
-    const sql = getSql();
-    // Same eligibility rules as slugToBuilderName(): active inventory,
-    // public page not disabled; builder and developer names both resolve.
-    const rows = (await sql`
-      SELECT DISTINCT name FROM (
-        SELECT b.builder_name AS name
-        FROM builder_inventory b
-        LEFT JOIN builder_page_visibility v ON v.builder_name = b.builder_name
-        WHERE b.status = 'active' AND COALESCE(v.public_enabled, true) = true
-        UNION
-        SELECT b.developer_name AS name
-        FROM builder_inventory b
-        LEFT JOIN builder_page_visibility v ON v.builder_name = b.developer_name
-        WHERE b.status = 'active' AND b.developer_name IS NOT NULL
-          AND COALESCE(v.public_enabled, true) = true
-      ) t WHERE name IS NOT NULL
-    `) as DbRow[];
-    const slugs = new Set(rows.map((r) => builderNameToSlug(String(r.name))).filter(Boolean));
-    return [...slugs].map((slug) => ({
-      url: `${SITE_URL}/builders/${slug}`,
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    }));
-  } catch (err) {
-    console.error('[sitemap] builders failed', err);
-    return [];
-  }
-}
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [magazines, partners, builders, events] = await Promise.all([
     magazineEntries(),
@@ -124,5 +71,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: e.changeFrequency,
     priority: e.priority,
   }));
-  return [...staticUrls, ...magazines, ...builders, ...partners, ...events];
+  return [
+    ...staticUrls,
+    ...toSitemap(magazines),
+    ...toSitemap(builders),
+    ...toSitemap(partners),
+    ...toSitemap(events),
+  ];
 }
