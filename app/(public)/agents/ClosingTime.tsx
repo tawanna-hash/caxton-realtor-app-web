@@ -2603,7 +2603,7 @@ export default function ClosingTime({
   if (panelsOnly) {
     return (
       <section id="agent-deal-tools" className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-8">
+        <div className="max-w-3xl mx-auto px-4 pt-4">
           <div {...collapsible('attention')} className="border border-slate-200 bg-white p-4 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>

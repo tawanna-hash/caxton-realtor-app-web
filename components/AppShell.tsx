@@ -371,7 +371,7 @@ export default function AppShell({
       </a>
       {/* ======== TOP BAR ======== */}
       {!chromeless && <header className={`sticky top-0 z-40 ${isAdmin ? 'bg-white text-gray-900 border-b border-[#ECE8F5] lg:bg-[#F6F5FB] lg:border-b-0' : 'bg-white text-gray-900 border-b border-gray-200'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div className={`${isAdmin ? "max-w-7xl sm:px-6" : "max-w-3xl"} mx-auto px-4 py-3 flex items-center justify-between`}>
           {/* Left: hamburger */}
           <button
             onClick={() => setDrawerOpen(true)}

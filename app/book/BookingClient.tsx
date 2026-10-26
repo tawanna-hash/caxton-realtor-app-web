@@ -101,7 +101,7 @@ export default function BookingClient({ scheduler }: { scheduler: PublicSchedule
   }
 
   return (
-    <main className="mx-auto max-w-[960px] px-4 py-8 font-[Inter,system-ui,sans-serif] text-[14px] text-[#4A4757]">
+    <main className="max-w-3xl mx-auto px-4 py-8 sm:py-8 font-[Inter,system-ui,sans-serif] text-[14px] text-[#4A4757]">
       <div className={card}>
         {header}
         <div className="grid gap-0 md:grid-cols-[260px_1fr]">

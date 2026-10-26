@@ -91,8 +91,8 @@ export default function SignClient({ token }: { token: string }) {
     } finally { setBusy(false); }
   };
 
-  if (missing) return <div className="mx-auto max-w-xl px-4 py-16"><h1 className="text-2xl font-bold text-[#301D5D]">This link is not valid</h1><p className="mt-2 text-slate-600">Ask the sender for a new signing link.</p></div>;
-  if (!view) return <div className="mx-auto max-w-xl px-4 py-16 text-slate-500">Loading.</div>;
+  if (missing) return <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8"><h1 className="text-2xl font-bold text-[#301D5D]">This link is not valid</h1><p className="mt-2 text-slate-600">Ask the sender for a new signing link.</p></div>;
+  if (!view) return <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8 text-slate-500">Loading.</div>;
 
   const message: Record<string, string> = {
     waiting: `Thank you. You have signed. Waiting for the others (${view.signedBy} of ${view.total} done). You will get the signed copy by email.`,
@@ -106,7 +106,7 @@ export default function SignClient({ token }: { token: string }) {
   if (done || view.state !== 'ready') {
     const text = done === 'signed' ? 'Thank you. You have signed. You will get the completed copy by email once everyone has signed.' : done === 'declined' ? 'You declined to sign. The sender has been told.' : message[view.state];
     return (
-      <div className="mx-auto max-w-xl px-4 py-12">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <h1 className="text-2xl font-bold text-[#301D5D]">{view.document}</h1>
         <p className="mt-1 text-sm text-slate-600">{view.property}</p>
         <p className="mt-6 border border-slate-200 bg-white p-4 text-slate-900" role="status">{text}</p>
@@ -118,7 +118,7 @@ export default function SignClient({ token }: { token: string }) {
   const apply = (m: Mark) => { if (editing) setMarks({ ...marks, [editing]: m }); setEditing(null); };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
       {view.logo && <SigLogo src={view.logo} alt={view.brandName} />}
       <p className="text-xs font-bold uppercase tracking-[0.16em]" style={{ color: view.accent }}>{view.brandName ? `${view.brandName} · ` : ''}Closing Time Secure Sign</p>
       <h1 className="mt-1 text-2xl font-bold text-[#301D5D]">{view.document}</h1>

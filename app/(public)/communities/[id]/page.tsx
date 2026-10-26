@@ -151,7 +151,7 @@ export default async function CommunityDetailPage(
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8 pb-32">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-8 ">
         {/* Left: gallery + overview + home plans */}
         <div className="lg:col-span-3">
           <InventoryGallery

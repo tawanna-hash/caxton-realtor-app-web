@@ -19,7 +19,7 @@ export default async function OfficeDashboardPage() {
   const agents = await officeOverview(brokerage.id, today);
   const totals = agents.reduce((a, x) => ({ deals: a.deals + x.activeDeals, urgent: a.urgent + x.urgent, watch: a.watch + x.watch }), { deals: 0, urgent: 0, watch: 0 });
   return (
-    <div id="agent-desk" className="mx-auto my-6 max-w-5xl rounded-2xl border border-[#E6E5EC] bg-white px-4 py-8 sm:px-8 sm:py-8">
+    <div id="agent-desk" className="max-w-3xl mx-auto px-4 py-8 sm:py-8 rounded-2xl border border-[#E6E5EC] bg-white">
       <p className="ds-eyebrow">Office dashboard</p>
       <h1 className="ds-title">{brokerage.name}</h1>
       <div className="mt-4 grid grid-cols-3 gap-3 text-center">

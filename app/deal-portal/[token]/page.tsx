@@ -34,7 +34,7 @@ export default async function DealPortalPage({ params }: { params: Promise<{ tok
   ];
 
   return (
-    <main className="mx-auto max-w-[1100px] px-4 py-8 font-[Inter,system-ui,sans-serif] text-[14px] text-[#4A4757]">
+    <main className="max-w-3xl mx-auto px-4 py-8 sm:py-8 font-[Inter,system-ui,sans-serif] text-[14px] text-[#4A4757]">
       <div className="overflow-hidden rounded-xl border border-[#E6E5EC] bg-white">
         <div className="flex items-center justify-between border-b border-[#E6E5EC] px-6 py-3">
           <div>

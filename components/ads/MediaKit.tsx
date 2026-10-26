@@ -70,7 +70,7 @@ export default function MediaKit({ mode = 'admin' }: { mode?: 'admin' | 'public'
   const isPublic = mode === 'public';
 
   return (
-    <div className={isPublic ? "mx-auto max-w-6xl px-4 py-8" : "mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8 [&_section]:p-4 [&_table]:text-xs [&_th]:py-3 [&_td]:py-3"}>
+    <div className={isPublic ? "max-w-3xl mx-auto px-4 py-8 sm:py-8" : "mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8 [&_section]:p-4 [&_table]:text-xs [&_th]:py-3 [&_td]:py-3"}>
       <div className="mb-4">
         {!isPublic && <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Sales</div>}
         <PageTitle size="md">{isPublic ? 'Advertising Media Kit — 2026' : 'Media Kit — 2026'}</PageTitle>

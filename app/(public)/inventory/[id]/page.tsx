@@ -211,7 +211,7 @@ function DetailView({
           high-resolution image (1500px+ natural width) pushes the
           implicit `1fr` track past the container and the right-side
           sidebar overflows the viewport. */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-8">
+      <div className="grid grid-cols-1 gap-8">
         {/* Left column: gallery + description */}
         <div className="min-w-0">
           <InventoryGallery

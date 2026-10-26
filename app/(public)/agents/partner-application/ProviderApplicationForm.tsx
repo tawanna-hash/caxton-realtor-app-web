@@ -73,7 +73,7 @@ export default function ProviderApplicationForm() {
   if (status === 'success') {
     return (
       <div id="agent-desk" className="min-h-screen bg-white px-4 py-14 sm:px-8">
-        <div className="mx-auto max-w-2xl border border-[#D8D0C2] bg-white p-8 shadow-[0_18px_45px_rgba(40,25,77,0.08)] sm:p-12">
+        <div className="max-w-3xl mx-auto border border-[#D8D0C2] bg-white p-8 shadow-[0_18px_45px_rgba(40,25,77,0.08)] sm:p-12">
           <CheckCircle2 className="rnn-heading-icon text-[#005A00]" aria-hidden="true" />
           <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-[#7059A8]">Application received</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950">You&apos;re in the Review Queue.</h1>
@@ -88,7 +88,7 @@ export default function ProviderApplicationForm() {
 
   return (
     <div id="agent-desk" className="min-h-screen bg-white">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8 lg:py-14">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <Link href="/agents#referral-network" className="inline-flex min-h-[42px] items-center gap-2 text-sm font-bold text-[#301D5D] hover:text-[#42277C]">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to Closing Time
         </Link>

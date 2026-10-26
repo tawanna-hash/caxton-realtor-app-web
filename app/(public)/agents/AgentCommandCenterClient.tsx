@@ -65,7 +65,7 @@ export default function AgentCommandCenterClient({
   return (
     <div id="agent-desk" className="min-h-screen bg-white pb-16">
       <section className="border-b border-[#E6E5EC] bg-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-8 sm:py-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-start">
+        <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8 grid gap-8">
           <div>
             <p className="ds-eyebrow inline-flex items-center gap-2">
               <Sparkles className="rnn-inline-icon" aria-hidden="true" />
@@ -119,7 +119,7 @@ export default function AgentCommandCenterClient({
       </section>
 
       <section id="deadline-planner" className="scroll-mt-20">
-        <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-8 sm:pt-8 lg:pt-8">
+        <div className="max-w-3xl mx-auto px-4 pt-6">
           <div className="border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(40,25,77,0.05)] sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-4">
             <div className="flex items-start gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EFEAF8] text-[#301D5D]">

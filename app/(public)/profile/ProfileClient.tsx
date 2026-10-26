@@ -95,7 +95,7 @@ export default function ProfileClient() {
 
   if (loading) {
     return (
-      <div className="px-4 py-8 max-w-md mx-auto">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
         <p className="text-sm text-gray-500 font-light text-center">Loading your profile&hellip;</p>
       </div>
     );
@@ -108,7 +108,7 @@ export default function ProfileClient() {
   const fullName = `${first} ${last}`.trim() || 'Your account';
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto px-4">
       <div className="px-4 py-6" style={{ backgroundColor: accent }}>
         <p className="text-xs uppercase tracking-[0.2em] text-white/70">My Profile</p>
         <h1 className="text-lg text-white font-medium truncate">{fullName}</h1>

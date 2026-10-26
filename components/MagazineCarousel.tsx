@@ -196,7 +196,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
       {tab === 'current' ? (
         <div className="px-4">{issueCard(current, true)}</div>
       ) : (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl px-4">
           <div className="mb-8 grid grid-cols-1 gap-3 md:grid-cols-3">
             <label className="relative block">
               <span className="sr-only">Search issues</span>

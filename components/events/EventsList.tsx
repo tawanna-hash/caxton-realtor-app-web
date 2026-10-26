@@ -84,7 +84,7 @@ export function EventsList({ pub, events, loading, error, onBack, onSelect, topB
       {/* Body */}
       <div className="pb-24">
         {/* Page header — matches the drawer-page kit (Builders, Resources, etc.) */}
-        <div className="max-w-7xl mx-auto px-4 py-8 sm:px-8 sm:py-12 mb-2">
+        <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8 mb-2">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             {pub === 'newsline' ? 'Newsline San Antonio' : pub === 'realtyline-dallas' ? 'RealtyLine Dallas/Ft. Worth' : 'RealtyLine Austin'}
           </p>
