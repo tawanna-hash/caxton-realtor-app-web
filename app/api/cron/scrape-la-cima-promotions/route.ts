@@ -18,6 +18,7 @@ import { fetchLaCimaPromotions } from '@/lib/scrapers/la-cima-promotions';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deleteStaleBuilderPromotions } from '@/lib/builder-inventory-sync';
 import { withScraperRun } from '@/lib/with-scraper-run';
+import { cronAuthEnforced } from '@/lib/server/cron-auth';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -26,7 +27,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
-  const isProduction = process.env.VERCEL_ENV === 'production';
+  const isProduction = cronAuthEnforced();
   const expected = process.env.CRON_SECRET;
   const got = req.headers.get('authorization');
   if (!isProduction) return { ok: true };

@@ -18,6 +18,7 @@ import {
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 import { withScraperRun } from '@/lib/with-scraper-run';
+import { cronAuthEnforced } from '@/lib/server/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,7 +31,7 @@ const SCRAPER_SUBMITTER_NAME = 'Newmark Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-newmark@harmonyone.system';
 
 function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
-  if (process.env.VERCEL_ENV !== 'production') return { ok: true };
+  if (!cronAuthEnforced()) return { ok: true };
   const expected = process.env.CRON_SECRET;
   const got = req.headers.get('authorization');
   if (!expected) return { ok: false, reason: 'CRON_SECRET not configured' };

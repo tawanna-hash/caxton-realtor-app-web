@@ -21,6 +21,7 @@
 
 import { NextResponse } from 'next/server';
 import { deleteExpiredPromotions } from '../../../../lib/builder-inventory-sync';
+import { cronAuthEnforced } from '@/lib/server/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,7 +34,7 @@ function authorized(req: Request): boolean {
 }
 
 export async function GET(req: Request) {
-  if (process.env.VERCEL_ENV === 'production' && !authorized(req)) {
+  if (cronAuthEnforced() && !authorized(req)) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 

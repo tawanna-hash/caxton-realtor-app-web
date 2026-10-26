@@ -17,6 +17,7 @@ import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 import { neon } from '@neondatabase/serverless';
 import { withScraperRun } from '@/lib/with-scraper-run';
+import { cronAuthEnforced } from '@/lib/server/cron-auth';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -30,7 +31,7 @@ const SCRAPER_SUBMITTER_EMAIL = 'scraper-giddens-communities@harmonyone.system';
 const BUILDER_NAME = 'Giddens Homes';
 
 function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
-  const isProduction = process.env.VERCEL_ENV === 'production';
+  const isProduction = cronAuthEnforced();
   const expected = process.env.CRON_SECRET;
   const got = req.headers.get('authorization');
 

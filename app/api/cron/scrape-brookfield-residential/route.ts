@@ -13,6 +13,7 @@ import { fetchBrookfieldResidentialAustin } from '@/lib/scrapers/brookfield-resi
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 import { withScraperRun } from '@/lib/with-scraper-run';
+import { cronAuthEnforced } from '@/lib/server/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,7 @@ const SCRAPER_SUBMITTER_EMAIL = 'scraper-brookfield-residential@harmonyone.syste
 const BUILDER_NAME = 'Brookfield Residential';
 
 function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
-  const isProduction = process.env.VERCEL_ENV === 'production';
+  const isProduction = cronAuthEnforced();
   const expected = process.env.CRON_SECRET;
   const got = req.headers.get('authorization');
 

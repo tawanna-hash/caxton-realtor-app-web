@@ -13,13 +13,14 @@ import { NextResponse } from 'next/server';
 import { fetchGiddensPromotions } from '../../../../lib/scrapers/giddens-realtors';
 import { upsertBuilderInventoryByExternalId } from '../../../../lib/builder-inventory';
 import { withScraperRun } from '@/lib/with-scraper-run';
+import { cronAuthEnforced } from '@/lib/server/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 function authorized(req: Request): boolean {
-  if (process.env.VERCEL_ENV !== 'production') return true;
+  if (!cronAuthEnforced()) return true;
   const expected = process.env.CRON_SECRET;
   if (!expected) return false;
   const got = req.headers.get('authorization');

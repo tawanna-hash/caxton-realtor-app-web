@@ -34,6 +34,7 @@ import {
 import { deleteStaleBuilderPromotions } from '@/lib/builder-inventory-sync';
 import { neon } from '@neondatabase/serverless';
 import { withScraperRun } from '@/lib/with-scraper-run';
+import { cronAuthEnforced } from '@/lib/server/cron-auth';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -44,7 +45,7 @@ export const maxDuration = 60;
 const BUILDER_NAME = 'Drees Homes';
 
 function authorized(req: Request): boolean {
-  if (process.env.VERCEL_ENV !== 'production') return true;
+  if (!cronAuthEnforced()) return true;
   const expected = process.env.CRON_SECRET;
   if (!expected) return false;
   const got = req.headers.get('authorization');

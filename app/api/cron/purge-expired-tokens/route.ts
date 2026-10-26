@@ -17,6 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
+import { cronAuthEnforced } from '@/lib/server/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,7 +29,7 @@ function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
   if (secret && auth === `Bearer ${secret}`) return true;
   // Allow unauthenticated runs in dev so we can hit it manually.
-  if (process.env.NODE_ENV !== 'production') return true;
+  if (!cronAuthEnforced()) return true;
   return false;
 }
 
