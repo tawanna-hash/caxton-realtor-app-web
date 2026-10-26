@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { canOptimizeImage } from '@/lib/optimizable-image-hosts';
 import type { Magazine } from '@/lib/magazines';
 import { fetchMagazines } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
@@ -151,13 +153,23 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
         >
           <div className="relative w-full aspect-[3/4] overflow-hidden border border-gray-200 bg-white shadow-sm transition duration-200 group-hover:-translate-y-1 group-hover:shadow-lg group-focus-visible:ring-2 group-focus-visible:ring-offset-2 active:scale-[0.98]">
             {magazine.cover_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={magazine.cover_url}
-                alt={`${magazine.issue_label} cover`}
-                className="h-full w-full object-contain"
-                loading={featured ? 'eager' : 'lazy'}
-              />
+              canOptimizeImage(magazine.cover_url) ? (
+                <Image
+                  src={magazine.cover_url}
+                  alt={`${magazine.issue_label} cover`}
+                  fill
+                  sizes={featured ? '240px' : '(min-width: 768px) 240px, 45vw'}
+                  className="object-contain"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={magazine.cover_url}
+                  alt={`${magazine.issue_label} cover`}
+                  className="h-full w-full object-contain"
+                  loading={featured ? 'eager' : 'lazy'}
+                />
+              )
             ) : (
               <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-wider text-gray-500">
                 No cover

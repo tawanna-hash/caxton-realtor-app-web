@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { canOptimizeImage } from '@/lib/optimizable-image-hosts';
 import type { Magazine } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
 import { usePtrRefresh } from '@/hooks/use-ptr-refresh';
@@ -95,8 +97,19 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
         <button onClick={onOpenMagazine} className="block w-full group">
           <div className="relative w-full max-w-sm mx-auto md:mx-0 aspect-[17/22] overflow-hidden shadow-2xl group-hover:shadow-3xl transition-shadow bg-white">
             {magazine.cover_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={magazine.cover_url} alt={`${magazine.issue_label} cover`} className="w-full h-full object-contain" fetchPriority="high" decoding="async" />
+              canOptimizeImage(magazine.cover_url) ? (
+                <Image
+                  src={magazine.cover_url}
+                  alt={`${magazine.issue_label} cover`}
+                  fill
+                  priority
+                  sizes="(min-width: 768px) 384px, 90vw"
+                  className="object-contain"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={magazine.cover_url} alt={`${magazine.issue_label} cover`} className="w-full h-full object-contain" fetchPriority="high" decoding="async" />
+              )
             ) : (
               <div className="flex items-center justify-center w-full h-full text-white/60 text-xs uppercase tracking-wider">No cover</div>
             )}
