@@ -104,7 +104,7 @@ function PartialPaymentsBody({ advertiserId }: { advertiserId: number }) {
 export default function ClientDetail({ id }: { id: number }) {
   const adv = useJson('/api/admin/advertisers', (j) => (j.advertisers ?? []) as Adv[], noAdv);
   const agr = useJson('/api/admin/agreements', (j) => (j.agreements ?? []) as Agr[], noAgr);
-  const inv = useJson('/api/admin/invoices', (j) => (j.invoices ?? []) as Inv[], noInv);
+  const inv = useJson('/api/admin/invoices?lite=1', (j) => (j.invoices ?? []) as Inv[], noInv);
   const sch = useJson('/api/admin/recurring-invoices', (j) => (j.schedules ?? []) as Sch[], noSch);
   const [removedAgr, setRemovedAgr] = useState<Set<string>>(new Set());
   async function deleteAgreement(agId: string) {

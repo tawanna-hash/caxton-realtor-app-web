@@ -28,6 +28,7 @@
  * against the live upstream feed if a WordPress post is ever re-synced.
  */
 
+import { withErrorHandling } from '@/lib/server/error';
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { requireAdmin } from '@/lib/server/auth/admin';
@@ -125,7 +126,7 @@ const AUSTIN_ROWS: NormalizedRow[] = (austinArticles as AustinImportRow[]).map((
 
 const ROWS: NormalizedRow[] = [...AUSTIN_ROWS, ...SA_ROWS];
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   await requireAdmin();
   const preview = req.nextUrl.searchParams.get('preview');
   if (!preview) {
@@ -150,7 +151,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-export const POST = withAdminTracking(async (req: NextRequest) => {
+const _POST = withAdminTracking(async (req: NextRequest) => {
   await requireAdmin();
 
   const publication = req.nextUrl.searchParams.get('publication');
@@ -199,3 +200,6 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
     errors,
   });
 });
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);

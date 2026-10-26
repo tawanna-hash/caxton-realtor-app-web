@@ -1,3 +1,4 @@
+import { withErrorHandling } from '@/lib/server/error';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/server/auth/admin';
@@ -20,7 +21,7 @@ function validStatus(value: string | null): value is ReferralApplicationStatus {
   return Boolean(value && statuses.includes(value as ReferralApplicationStatus));
 }
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   await requireAdmin();
   const status = new URL(req.url).searchParams.get('status');
   return NextResponse.json({
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-export async function PATCH(req: NextRequest) {
+async function _PATCH(req: NextRequest) {
   const admin = await requireAdmin();
   const body = await req.json().catch(() => null);
   const parsed = updateSchema.safeParse(body);
@@ -43,3 +44,6 @@ export async function PATCH(req: NextRequest) {
   if (!row) return NextResponse.json({ error: 'Application not found.' }, { status: 404 });
   return NextResponse.json({ application: row });
 }
+
+export const GET = withErrorHandling(_GET);
+export const PATCH = withErrorHandling(_PATCH);

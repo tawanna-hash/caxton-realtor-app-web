@@ -73,7 +73,7 @@ export default function SignedAgreements() {
   const who = (e: string | null) => (e ? team.data.find((t) => t.email.toLowerCase() === e.toLowerCase())?.fullName || e : '—');
   const [version, setVersion] = useState(0);
   const agr = useJson(`/api/admin/agreements?v=${version}`, (j) => (j.agreements ?? []) as Agr[], [] as Agr[]);
-  const inv = useJson('/api/admin/invoices', (j) => (j.invoices ?? []) as Inv[], [] as Inv[]);
+  const inv = useJson('/api/admin/invoices?lite=1', (j) => (j.invoices ?? []) as Inv[], [] as Inv[]);
   const [q, setQ] = useState('');
   const [sts, setSts] = useState<St[]>(['active', 'on_hold']);
   const [extra, setExtra] = useState<FilterKey[]>([]);

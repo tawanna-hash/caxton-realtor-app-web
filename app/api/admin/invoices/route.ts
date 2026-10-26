@@ -125,6 +125,17 @@ export async function GET(req: NextRequest) {
         ORDER BY i.created_at DESC
       `;
     }
+    // ?lite=1 — read-only dashboards/reports don't need the long remit-to memo
+    // (~1.7 KB x every invoice), audit log or stored Stripe link; dropping them
+    // roughly halves the payload. The invoice editor still gets the full rows.
+    if (searchParams.get('lite') === '1') {
+      const LITE_DROP = ['memo', 'audit_log', 'stripe_payment_link_url'];
+      rows = (rows as Array<Record<string, unknown>>).map((r) => {
+        const o = { ...r };
+        for (const k of LITE_DROP) delete o[k];
+        return o;
+      });
+    }
     return NextResponse.json({ invoices: rows as InvoiceWithAdvertiser[] });
   } catch (err) {
     return NextResponse.json({ error: 'list failed', detail: errMessage(err) }, { status: 500 });

@@ -1,3 +1,4 @@
+import { withErrorHandling } from '@/lib/server/error';
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { query } from '@/lib/server/db/neon';
@@ -6,7 +7,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /** Admin only: the four-year archive of a closed Closing Time deal (deal file, audit report, documents) as one zip. */
-export async function GET(req: Request): Promise<Response> {
+async function _GET(req: Request): Promise<Response> {
   await requireAdmin();
   const url = new URL(req.url);
   const realtor = url.searchParams.get('realtor') ?? '';
@@ -17,3 +18,5 @@ export async function GET(req: Request): Promise<Response> {
   const name = `${rows[0].property.replace(/[^\w.\- ]+/g, ' ').trim().slice(0, 80) || 'Deal'} - Closing Time File.zip`;
   return new Response(new Uint8Array(rows[0].zip), { headers: { 'Content-Type': 'application/zip', 'Content-Disposition': `attachment; filename="${name}"`, 'Cache-Control': 'private, no-store' } });
 }
+
+export const GET = withErrorHandling(_GET);

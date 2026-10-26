@@ -1,3 +1,4 @@
+import { withErrorHandling } from '@/lib/server/error';
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
@@ -77,7 +78,7 @@ function extract(raw: string): Details {
   return { agentName, company, businessAddress, email, website: clean(website), phone: clean(phone) };
 }
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   await requireAdmin(); await setup();
   const status = new URL(req.url).searchParams.get('status') || 'pending'; const sql = getSql();
   const rows = status === 'all' ? await sql`SELECT * FROM fastemail_realtor_imports ORDER BY received_at DESC` : await sql`SELECT * FROM fastemail_realtor_imports WHERE status = ${status} ORDER BY received_at DESC`;
@@ -85,7 +86,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ rows, counts: Object.fromEntries(countRows.map((r) => [r.status, r.count])) });
 }
 
-export async function POST() {
+async function _POST() {
   await requireAdmin(); await setup();
   const client = await getGmailClient();
   if (!client) return NextResponse.json({ error: 'Connect Gmail before scanning.' }, { status: 400 });
@@ -111,7 +112,7 @@ export async function POST() {
   return NextResponse.json({ queued, repaired, skipped });
 }
 
-export async function PATCH(req: NextRequest) {
+async function _PATCH(req: NextRequest) {
   await requireAdmin(); await setup();
   const { id, action } = await req.json() as { id?: string; action?: 'realtyline' | 'san_antonio' | 'reject' };
   if (!id || !['realtyline','san_antonio','reject'].includes(action || '')) return NextResponse.json({ error: 'A valid record and action are required.' }, { status: 400 });
@@ -128,3 +129,7 @@ export async function PATCH(req: NextRequest) {
   await sql`UPDATE fastemail_realtor_imports SET status = ${action}, reviewed_at = NOW() WHERE id = ${id}`;
   return NextResponse.json({ ok: true, duplicate });
 }
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);
+export const PATCH = withErrorHandling(_PATCH);

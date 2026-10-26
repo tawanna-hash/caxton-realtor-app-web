@@ -52,7 +52,7 @@ function Bars({ values, color = '#8C94F5', money: isMoney, legend, labels = MONT
 export default function DashboardBeta() {
   const year = new Date().getFullYear();
   const today = new Date().toISOString().slice(0, 10);
-  const inv = useJson('/api/admin/invoices', (j) => (j.invoices ?? []) as Inv[], noInv);
+  const inv = useJson('/api/admin/invoices?lite=1', (j) => (j.invoices ?? []) as Inv[], noInv);
   const agr = useJson('/api/admin/agreements', (j) => (j.agreements ?? []) as Agr[], noAgr);
   const board = useJson('/api/admin/agreements-v2/board', (j) => (j.items ?? []) as Board[], noBoard);
   const pay = useJson('/api/admin/agreements-v2/payouts?range=90-days', (j) => (j.payouts ?? []) as Payout[], noPay);

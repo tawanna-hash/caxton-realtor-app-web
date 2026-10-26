@@ -98,7 +98,7 @@ const Name = ({ n }: { n: string }) => <div><div className="font-semibold text-[
 // ---------- Revenue Breakdown ----------
 type RevRow = { id: string; period: string; service: string; client: string; cents: number };
 function Revenue() {
-  const inv = useJson('/api/admin/invoices', (j) => (j.invoices ?? []) as Inv[], noInv);
+  const inv = useJson('/api/admin/invoices?lite=1', (j) => (j.invoices ?? []) as Inv[], noInv);
   const [range, setRange] = useState<Range>('last12');
   const [by, setBy] = useState<'day' | 'week' | 'month' | 'quarter' | 'year' | 'all'>('month');
   const [bd, setBd] = useState<string[]>([]);
