@@ -22,6 +22,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { BuilderInventoryRow, PromoType } from '@/lib/builder-inventory';
+import { expandRow, type CompactRow } from '@/lib/inventory-compact';
 import {
   activeFilterCount,
   DEFAULT_FILTERS,
@@ -71,7 +72,16 @@ function priceValueFor(f: InventoryFilterState): string {
 }
 
 interface Props {
-  rows: BuilderInventoryRow[];
+  /** Full row set (promotions and builders hubs). */
+  rows?: BuilderInventoryRow[];
+  /**
+   * Deferred mode (inventory page): the server sends only the first screenful
+   * as compact rows plus the filter menu options; the rest is fetched from
+   * `lazyUrl` once the page is interactive.
+   */
+  compactRows?: CompactRow[];
+  facets?: { builders: string[]; cities: string[]; promos: PromoType[] };
+  lazyUrl?: string;
   initialFilters?: InventoryFilterState;
   initialSort?: SortKey;
   /** Which host page rendered this — surfaces in PostHog + analytics. */
@@ -84,31 +94,63 @@ interface Props {
 const PAGE_SIZE = 24;
 
 export default function InventoryBrowser({
-  rows,
+  rows: rowsProp,
+  compactRows,
+  facets,
+  lazyUrl,
   initialFilters = DEFAULT_FILTERS,
   initialSort = 'featured',
   surface = 'inventory',
   hideHeader = false,
 }: Props) {
+  const [rows, setRows] = useState<BuilderInventoryRow[]>(() =>
+    compactRows ? compactRows.map(expandRow) : (rowsProp ?? []),
+  );
+  const [complete, setComplete] = useState(!compactRows || !lazyUrl);
+  useEffect(() => {
+    if (complete || !lazyUrl) return;
+    let cancelled = false;
+    const load = () => {
+      fetch(lazyUrl, { credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+        .then((d: { rows: CompactRow[] }) => {
+          if (cancelled) return;
+          setRows(d.rows.map(expandRow));
+          setComplete(true);
+        })
+        .catch(() => {
+          // Keep the first screenful; filters still work over what we have.
+          if (!cancelled) setComplete(true);
+        });
+    };
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+    };
+    if (w.requestIdleCallback) w.requestIdleCallback(load, { timeout: 1200 });
+    else setTimeout(load, 300);
+    return () => {
+      cancelled = true;
+    };
+  }, [complete, lazyUrl]);
   const [filters, setFilters] = useState<InventoryFilterState>(initialFilters);
   const [sort, setSort] = useState<SortKey>(initialSort);
 
   // Distinct filter option sources (derived from the full row set so the
   // menus reflect what's actually available).
   const builderOptions = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.builderName).filter(Boolean))).sort(),
-    [rows],
+    () => !complete && facets ? facets.builders : Array.from(new Set(rows.map((r) => r.builderName).filter(Boolean))).sort(),
+    [rows, complete, facets],
   );
   const cityOptions = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.city).filter(Boolean))).sort(),
-    [rows],
+    () => !complete && facets ? facets.cities : Array.from(new Set(rows.map((r) => r.city).filter(Boolean))).sort(),
+    [rows, complete, facets],
   );
   const promoOptions = useMemo(
     () =>
-      Array.from(
+      !complete && facets ? facets.promos : Array.from(
         new Set(rows.map((r) => r.promoType).filter((p): p is PromoType => !!p)),
       ).sort(),
-    [rows],
+    [rows, complete, facets],
   );
 
   const filtered = useMemo(
@@ -307,7 +349,11 @@ export default function InventoryBrowser({
         )}
       </div>
 
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && !complete ? (
+        <p role="status" className="py-16 text-center text-sm text-gray-500">
+          Loading more homes…
+        </p>
+      ) : filtered.length === 0 ? (
         <EmptyState hasFilters={count > 0} onClear={clearAll} />
       ) : (
         <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">

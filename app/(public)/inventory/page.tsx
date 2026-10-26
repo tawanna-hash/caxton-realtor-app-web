@@ -20,9 +20,10 @@
 // /inventory/submit and /inventory/[id]; those routes are untouched.
 
 import { Suspense } from 'react';
-import { listBuilderInventoryCached, toBrowserRow } from '@/lib/builder-inventory';
+import { listBuilderInventoryCached, type PromoType } from '@/lib/builder-inventory';
+import { compactRow } from '@/lib/inventory-compact';
 import { getServerPub } from '@/lib/publication';
-import { parseFilters } from '@/lib/inventory-filters';
+import { matchesFilter, parseFilters, sortRows } from '@/lib/inventory-filters';
 import InventoryBrowser from '@/components/inventory/InventoryBrowser';
 import InventoryListSkeleton from '@/components/inventory/InventoryListSkeleton';
 import BuildersBreadcrumb from '@/components/BuildersBreadcrumb';
@@ -30,6 +31,8 @@ import { AdSlot } from '@/components/ads/AdSlot';
 import BuilderDeveloperFloater from '@/components/builders/BuilderDeveloperFloater';
 
 export const dynamic = 'force-dynamic';
+
+const FIRST_SCREEN = 36;
 
 export const metadata = {
   title: 'Move-in Ready Homes — Realty News Now',
@@ -54,9 +57,25 @@ async function HomesList({ filters, sort }: { filters: Filters['filters']; sort:
     publication: pub,
     limit: 1000,
   });
+  // Send only the first screenful (already filtered and sorted for this URL)
+  // plus the filter menu options; the browser fetches the full compact set
+  // from /api/inventory/browser once it is interactive.
+  const first = sortRows(
+    rows.filter((r) => matchesFilter(r, initialFilters)),
+    sort,
+  ).slice(0, FIRST_SCREEN);
+  const facets = {
+    builders: Array.from(new Set(rows.map((r) => r.builderName).filter(Boolean))).sort(),
+    cities: Array.from(new Set(rows.map((r) => r.city).filter(Boolean))).sort(),
+    promos: Array.from(
+      new Set(rows.map((r) => r.promoType).filter((p): p is PromoType => !!p)),
+    ).sort(),
+  };
   return (
     <InventoryBrowser
-      rows={rows.map(toBrowserRow)}
+      compactRows={first.map(compactRow)}
+      facets={facets}
+      lazyUrl="/api/inventory/browser"
       initialFilters={initialFilters}
       initialSort={sort}
       surface="inventory"
