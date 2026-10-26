@@ -287,7 +287,7 @@ export async function listInsertionOrders(
     advertiser_name: string | null;
     advertiser_email: string | null;
   }>(
-    `SELECT io.*, a.name AS advertiser_name, a.email AS advertiser_email
+    `SELECT io.*, a.name AS advertiser_name, COALESCE(a.billing_email, a.portal_email) AS advertiser_email
        FROM insertion_orders io
        LEFT JOIN advertisers a ON a.id = io.advertiser_id
        ${where}

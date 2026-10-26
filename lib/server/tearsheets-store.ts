@@ -161,7 +161,7 @@ export async function listTearsheets(
   >(
     `SELECT t.*,
             a.name AS advertiser_name,
-            a.email AS advertiser_email,
+            COALESCE(a.billing_email, a.portal_email) AS advertiser_email,
             io.io_number AS io_number
        FROM tearsheets t
        LEFT JOIN advertisers a ON a.id = t.advertiser_id
