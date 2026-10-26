@@ -7,6 +7,7 @@
 // POST   — upsert { month: 'YYYY-MM', channel, amount_cents, notes? }
 // DELETE — ?id=<uuid>
 
+import { clearMarketingPerformanceCache } from '@/lib/server/marketing-performance-cache';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/server/auth/admin';
@@ -50,6 +51,7 @@ export const POST = withAdminTracking(async (req: Request) => {
      RETURNING id`,
     [`${body.month}-01`, body.channel, body.amount_cents, body.notes || null, createdBy, body.publication],
   );
+  clearMarketingPerformanceCache();
   return NextResponse.json({ ok: true, id: rows[0]?.id });
 });
 
@@ -59,5 +61,6 @@ export const DELETE = withAdminTracking(async (req: Request) => {
   if (!UUID_RE.test(id)) throw new ApiError(400, 'Invalid id');
   await ensureMarketingSpendSchema();
   await query(`DELETE FROM marketing_spend WHERE id = $1`, [id]);
+  clearMarketingPerformanceCache();
   return NextResponse.json({ ok: true });
 });
