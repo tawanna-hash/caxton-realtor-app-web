@@ -62,8 +62,12 @@ function sendAlert(payload: AlertPayload): void {
   } catch { /* swallow */ }
 }
 
+// posthog-js is loaded on demand by the provider, which hands the instance over here.
+let ph: PostHog | null = null;
+export function setPostHog(instance: PostHog): void { ph = instance; }
+
 function captureToPostHog(event: string, props: Record<string, unknown>): void {
-  try { (window as unknown as { posthog?: PostHog }).posthog?.capture(event, props); } catch { /* swallow */ }
+  try { ph?.capture(event, props); } catch { /* swallow */ }
 }
 
 // Well-known browser-extension and plugin noise. None of these are real app

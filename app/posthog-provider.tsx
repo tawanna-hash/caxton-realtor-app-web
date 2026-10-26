@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import type { PostHog } from "posthog-js";
 import { usePathname } from "next/navigation";
-import { installActivityTracker } from "@/lib/activity-tracker";
+import { installActivityTracker, setPostHog } from "@/lib/activity-tracker";
 
 let initialized = false;
 // posthog-js (about 215 KB) is loaded on demand after the page is idle so it never
@@ -85,6 +85,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     initialized = true;
     // Wire global error + form-submit capture for /admin/activity dashboard.
     // No-ops on admin pages and rate-limits itself per page load.
+    setPostHog(posthog);
     installActivityTracker();
     // S19 one-time migration: legacy 'savedPub' -> 'caxton_pub'.
     // Runs once per browser; no-op afterwards.
