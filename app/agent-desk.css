@@ -1,0 +1,512 @@
+/* Closing Time Agent Desk styles.
+   Loaded into the `agent-desk` cascade layer (declared after Tailwind's layers
+   and the `overrides` layer in globals.css), so these rules win over utilities
+   and global overrides without needing !important. */
+/* Agent Desk: app-shell design. Inter, deep purple, light purple, soft gray, white.
+   Scoped to #agent-desk. */
+#agent-desk {
+  --d-ink: #1B1726; --d-text: #4A4757; --d-muted: #4A4757;
+  --d-purple: #301D5D; --d-purple-hover: #42277C; --d-lav: #7059A8;
+  --d-lav-soft: #EFEAF8; --d-lav-wash: #F6F3FB;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: var(--d-text);
+}
+#agent-desk *:not(svg):not(svg *) { font-family: inherit; }
+/* Normalize legacy palette (beige, slate) to the neutral scheme */
+#agent-desk [class*='border-[#D9D0BF]'], #agent-desk [class*='border-[#D8D0C2]'], #agent-desk .border-slate-200, #agent-desk .border-slate-300 { border-color: var(--d-line); }
+#agent-desk .border-slate-100, #agent-desk .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: var(--d-line-soft); }
+#agent-desk [class*='bg-[#F6F3FB]'] { background-color: var(--d-lav-wash); }
+#agent-desk [class*='bg-[#FFFDF8]'], #agent-desk [class*='bg-[#FCFBF9]'], #agent-desk [class*='bg-[#F7F3EB]'], #agent-desk [class*='bg-[#F7F5F1]'], #agent-desk [class*='bg-[#ECE6DA]'] { background-color: #FFFFFF; }
+#agent-desk :is(h1, h2, h3, h4) { color: var(--d-ink); }
+#agent-desk .text-slate-950, #agent-desk .text-slate-900, #agent-desk .text-gray-900 { color: var(--d-ink); }
+#agent-desk .text-slate-700, #agent-desk .text-slate-600 { color: var(--d-text); }
+#agent-desk .text-slate-500, #agent-desk .text-slate-400, #agent-desk .text-gray-500 { color: var(--d-muted); }
+#agent-desk .uppercase[class*='text-[#7059A8]'], #agent-desk p.uppercase.text-gray-500 { color: var(--d-muted); font-weight: 600; letter-spacing: 0.08em; }
+#agent-desk a:not([class*='bg-']):not([class*='border']) { color: var(--d-purple); }
+#agent-desk input[type='checkbox'], #agent-desk input[type='radio'] { accent-color: var(--d-purple); }
+#agent-desk button[class*='bg-[var(--rnn-purple-500)]'], #agent-desk a[class*='bg-[var(--rnn-purple-500)]'] { background-color: var(--d-purple); border-color: var(--d-purple); color: #FFFFFF; }
+#agent-desk button[class*='bg-[var(--rnn-purple-500)]']:hover:not(:disabled) { background-color: var(--d-purple-hover); }
+#agent-desk button[aria-expanded] { background-color: #FFFFFF; border: 1px solid var(--d-line); color: var(--d-purple); }
+#agent-desk :is(input, select, textarea)::placeholder { color: #A3A0AF; }
+/* Deal Settings: each topic is its own card */
+#agent-desk [data-section-key='assist'] { background: transparent; border: 0; padding: 0; box-shadow: none; }
+#agent-desk [data-section-key='assist'] > div[class*='grid'] { gap: 1.25rem; }
+#agent-desk [data-section-key='assist'] section[aria-label].never { border: 1px solid var(--d-line); border-radius: 12px; background-color: #FFF; padding: 1.25rem 1.375rem; min-width: 0; }
+/* Agent Desk restyle v3: app shell (left rail + content), matching the reference app.
+   Inter + deep purple / light purple / soft gray. Scoped to #agent-desk. */
+#agent-desk {
+  --d-line: #E6E5EC; --d-line-soft: #F6F3FB; --d-rail: #F6F3FB; --d-hover: #F6F3FB;
+  background-color: #FFFFFF; font-size: 14px; -webkit-font-smoothing: antialiased;
+}
+/* Rail */
+#agent-desk .ds-rail { height: calc(100vh - 4rem); height: calc(100dvh - 4rem); overflow-y: auto; background: #FFFFFF; border-right: 1px solid var(--d-line); padding: 0 0.5rem 1rem; }
+#agent-desk .ds-brand { display: flex; align-items: center; gap: 0.625rem; padding: 1rem 0.5rem; margin: 0 -0.5rem 0.5rem; border-bottom: 1px solid var(--d-line); padding-left: 1rem; }
+#agent-desk .ds-brand-mark { display: inline-flex; height: 1.5rem; width: 1.5rem; align-items: center; justify-content: center; border-radius: 6px; background: var(--d-purple); color: #fff; flex: none; }
+#agent-desk .ds-brand-name { font-size: 1rem; font-weight: 600; color: var(--d-ink); white-space: nowrap; }
+#agent-desk .ds-nav-top { list-style: none; margin: 0; padding: 0; }
+#agent-desk .ds-navbtn, #agent-desk .ds-deal { display: flex; width: 100%; align-items: center; gap: 0.75rem; text-align: left; padding: 0.5rem 0.75rem; border-radius: 8px; background: transparent; border: 0; color: var(--d-text); font-size: 0.875rem; font-weight: 500; min-height: 36px; }
+#agent-desk .ds-deal { align-items: flex-start; gap: 0.625rem; min-height: 0; padding: 0.4rem 0.75rem; }
+#agent-desk .ds-navbtn:hover, #agent-desk .ds-deal:hover { background: var(--d-hover); }
+#agent-desk .ds-navbtn[aria-current], #agent-desk .ds-deal[aria-current] { background: var(--d-hover); color: var(--d-ink); font-weight: 600; }
+#agent-desk .ds-navbtn[aria-current] .ct-navicon { color: var(--d-purple); }
+#agent-desk .ds-navbtn .ct-navicon { color: var(--d-muted); }
+#agent-desk .ds-deals { list-style: none; margin: 0; padding: 0; max-height: 40vh; overflow-y: auto; }
+#agent-desk .ds-sub { color: var(--d-muted); }
+#agent-desk .ds-group { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0.75rem 0.375rem; }
+#agent-desk .ds-group-label { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--d-muted); margin: 0; }
+#agent-desk .ds-group-solo { padding: 1rem 0.75rem 0.375rem; }
+#agent-desk .ds-new { display: inline-flex; align-items: center; gap: 0.25rem; border: 1px solid var(--d-line); background: #fff; color: var(--d-purple); border-radius: 6px; padding: 0.125rem 0.5rem; font-size: 0.75rem; font-weight: 600; }
+#agent-desk .ds-new:hover { background: var(--d-hover); }
+@media (max-width: 639px) {
+  #agent-desk .ds-brand-name, #agent-desk .ds-navbtn span, #agent-desk .ds-deal .ds-sub, #agent-desk .ds-group-label, #agent-desk .ds-new span { display: none; }
+  #agent-desk .ds-navbtn, #agent-desk .ds-deal { justify-content: center; padding-left: 0.25rem; padding-right: 0.25rem; }
+  #agent-desk .ds-deal > span:last-child { display: none; }
+  #agent-desk .ds-brand { padding-left: 0.5rem; justify-content: center; }
+}
+/* Content */
+/* Every page lives inside one outlined board */
+#agent-desk .ds-mainwrap { min-width: 0; }
+#agent-desk .ds-toolbar { margin: 1.25rem 1.25rem 0; padding: 0 0.5rem; }
+#agent-desk .ds-toolbar .ds-back { margin-bottom: 0.875rem; }
+#agent-desk .ds-toolbar .ds-dealnav { margin-bottom: 0; }
+#agent-desk .ds-toolbar + .ds-main { margin-top: 1rem; }
+#agent-desk .ds-main { margin: 1.25rem 1.25rem 3rem; padding: 2rem 2.25rem 2.75rem; border: 1px solid var(--d-line); border-radius: 16px; background: #fff; }
+@media (max-width: 639px) { #agent-desk .ds-main { margin: 0.75rem 0.5rem 2rem; padding: 1.25rem 1rem 1.75rem; border-radius: 12px; } #agent-desk .ds-toolbar { margin: 0.75rem 0.5rem 0; } }
+/* Legacy panels directly on the board: no second outline, just a hairline divider */
+#agent-desk .ds-main > section > div[class*='border-slate-200'], #agent-desk .ds-main > div[class*='border-slate-200'] { border-width: 0 0 1px; border-radius: 0; padding-left: 0; padding-right: 0; background: transparent; }
+#agent-desk .ds-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1rem; margin-bottom: 1.25rem; padding: 0.875rem 1.25rem; background: #F6F3FB; border: 1px solid var(--d-line); border-radius: 12px; }
+#agent-desk .ds-header .ds-title { margin-top: 0.125rem; font-size: 1.375rem; }
+#agent-desk .ds-header .ds-subtitle { margin-top: 0.125rem; font-size: 0.8125rem; }
+#agent-desk .ds-eyebrow { margin: 0; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--d-muted); }
+#agent-desk .ds-title { margin: 0.375rem 0 0; font-size: 1.125rem; line-height: 1.15; font-weight: 600; letter-spacing: -0.025em; color: var(--d-ink); }
+#agent-desk .ds-subtitle { margin: 0.375rem 0 0; font-size: 0.875rem; color: var(--d-muted); }
+#agent-desk .ds-pill-lg { border: 1px solid var(--d-line); background: #fff; color: var(--d-purple); border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.8125rem; font-weight: 600; }
+#agent-desk .ds-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+@media (max-width: 1023px) { #agent-desk .ds-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+#agent-desk .ds-stat { display: flex; justify-content: space-between; gap: 0.75rem; border: 1px solid var(--d-line); border-radius: 4px; padding: 1rem 1.125rem; background: #fff; }
+#agent-desk .ds-stat-label { margin: 0; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--d-muted); }
+#agent-desk .ds-stat-num { margin: 0.75rem 0 0; font-size: 1.75rem; line-height: 1; font-weight: 600; color: var(--d-ink); }
+#agent-desk .ds-stat-sub { margin: 0.375rem 0 0; font-size: 0.8125rem; color: var(--d-text); }
+#agent-desk .ds-stat-icon { display: inline-flex; height: 2rem; width: 2rem; flex: none; align-items: center; justify-content: center; border-radius: 8px; }
+#agent-desk .ds-i-purple { background: #EFEAF8; color: var(--rnn-purple-500); }
+#agent-desk .ds-i-green { background: #EFEAF8; color: var(--rnn-purple-500); }
+#agent-desk .ds-i-blue { background: #EFEAF8; color: var(--rnn-purple-500); }
+#agent-desk .ds-i-amber { background: #EFEAF8; color: var(--rnn-purple-500); }
+#agent-desk:not(:has([data-desk-view='overview'])) .ds-stats { display: none; }
+/* Cards */
+#agent-desk [class~='border'][class*='bg-white'],
+#agent-desk [class~='border'][class*='bg-[#FCFBF9]'],
+#agent-desk [class~='border'][class*='bg-[#FFFDF8]'],
+#agent-desk [class~='border'][class*='bg-[#F7F3EB]'] { border-radius: 12px; border-color: var(--d-line); background-color: #FFFFFF; }
+#agent-desk [class~='border'][class*='bg-white'] [class~='border'][class*='bg-white'],
+#agent-desk [class~='border'][class*='bg-white'] [class~='border'][class*='bg-[#FCFBF9]'] { background-color: #FFFFFF; border-radius: 10px; }
+#agent-desk .rnn-heading-icon { background-color: var(--d-lav-soft); color: var(--d-purple); border-radius: 8px; }
+#agent-desk :is(h3, h4) { font-weight: 600; letter-spacing: -0.02em; }
+/* Tabs */
+#agent-desk nav[aria-label='Transaction sections'] { border-radius: 0; border: 0; border-bottom: 1px solid var(--d-line); background: transparent; padding-left: 0; padding-right: 0; }
+#agent-desk nav[aria-label='Transaction sections'] > div:last-child { margin-left: 0; margin-right: 0; padding-left: 0; padding-right: 0; }
+#agent-desk nav[aria-label] button[class*='border-b-2'] { font-weight: 500; font-size: 0.875rem; color: var(--d-muted); }
+#agent-desk nav[aria-label] button[class*='border-b-2'][aria-current='page'] { color: var(--d-ink); font-weight: 600; border-bottom-color: var(--d-purple); }
+/* Controls */
+#agent-desk button, #agent-desk a[class*='min-h-['] { border-radius: 8px; }
+#agent-desk button[class*='bg-[var(--rnn-purple-500)]'], #agent-desk a[class*='bg-[var(--rnn-purple-500)]'] { font-weight: 600; }
+#agent-desk button[class*='border']:not([class*='bg-[var(--rnn-purple-500)]']):not([class*='border-b-2']) { border-color: var(--d-line); color: var(--d-ink); font-weight: 500; }
+#agent-desk button[class*='border']:not([class*='bg-[var(--rnn-purple-500)]']):not([class*='border-b-2']):hover:not(:disabled) { background-color: var(--d-hover); border-color: #E6E5EC; }
+#agent-desk :is(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select, textarea) { border-color: var(--d-line); border-radius: 8px; }
+#agent-desk :is(input, select, textarea):focus { border-color: var(--d-purple); box-shadow: 0 0 0 3px rgb(48 29 93 / 0.12); }
+/* Tables */
+#agent-desk thead th { color: var(--d-muted); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+#agent-desk tbody tr { border-color: var(--d-line); }
+#agent-desk tbody tr:hover { background-color: var(--d-rail); }
+#agent-desk [class*='bg-amber-50'], #agent-desk [class*='bg-[#FFF9E7]'] { background-color: var(--d-lav-wash); border-color: var(--d-line); color: var(--d-text); border-radius: 10px; }
+/* Tool child pages (Forms Library, Calculators, Referral Network, Integrations):
+   plain page header + outlined cards, no outer card. */
+#agent-desk .ds-page { background: transparent; border: 0; border-radius: 0; padding: 0; box-shadow: none; }
+#agent-desk .ds-page > div:first-child { margin-bottom: 1rem; }
+#agent-desk .ds-page :is(a, button) { transition: background-color 0.15s, border-color 0.15s; }
+#agent-desk .ds-page article, #agent-desk .ds-page li > button { box-shadow: none; }
+/* Deals solo page */
+#agent-desk .ds-tabs { display: flex; gap: 0.25rem; margin: 1.25rem 0 1rem; border-bottom: 1px solid var(--d-line); }
+#agent-desk .ds-tab { border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; padding: 0.625rem 0.75rem; font-size: 0.875rem; font-weight: 500; color: var(--d-muted); margin-bottom: -1px; }
+#agent-desk .ds-tab[aria-selected='true'] { color: var(--d-ink); font-weight: 600; border-bottom-color: var(--d-purple); }
+#agent-desk .ds-tab-count { margin-left: 0.25rem; font-size: 0.75rem; color: var(--d-muted); }
+#agent-desk .ds-filters { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+#agent-desk .ds-search { display: flex; align-items: center; gap: 0.5rem; min-width: 260px; flex: 0 1 360px; height: 40px; padding: 0 0.75rem; border: 1px solid var(--d-line); border-radius: 8px; background: #fff; color: var(--d-muted); }
+#agent-desk .ds-search:focus-within { border-color: var(--d-purple); box-shadow: 0 0 0 2px #EFEAF8; }
+#agent-desk .ds-search input { flex: 1; min-width: 0; border: 0; box-shadow: none; outline: none; background: transparent; color: var(--d-ink); }
+#agent-desk .ds-select { height: 40px; min-width: 130px; padding: 0 0.75rem; }
+#agent-desk .ds-table-wrap { overflow-x: auto; border: 1px solid var(--d-line); border-radius: 12px; background: #fff; }
+#agent-desk .ds-table-wrap table { border-collapse: collapse; }
+#agent-desk .ds-table-wrap thead th { padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--d-line); background: var(--d-rail); }
+#agent-desk .ds-table-wrap tbody td { padding: 0.875rem 0.5rem; }
+#agent-desk .ds-table-wrap tbody tr { border-top: 1px solid var(--d-line); }
+#agent-desk .ds-table-wrap tbody tr:first-child { border-top: 0; }
+#agent-desk .ds-table-wrap tbody tr:hover, #agent-desk .ds-table-wrap tbody tr:focus-visible { background: var(--d-rail); }
+#agent-desk .ds-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.125rem 0.625rem; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+#agent-desk .ds-chip-purple { background: var(--d-lav-soft); color: var(--rnn-purple-500); }
+#agent-desk .ds-bar { display: inline-block; width: 72px; height: 6px; border-radius: 999px; background: #E6E5EC; overflow: hidden; }
+#agent-desk .ds-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--d-purple); }
+/* Deal subpage */
+#agent-desk .ds-back { display: inline-flex; align-items: center; gap: 0.25rem; border: 0; background: transparent; padding: 0; font-size: 0.8125rem; color: var(--d-muted); }
+#agent-desk .ds-back:hover { color: var(--d-ink); }
+#agent-desk .ds-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; margin-top: 1.25rem; }
+@media (min-width: 1024px) { #agent-desk .ds-split { grid-template-columns: minmax(0, 1fr) 320px; } }
+#agent-desk .ds-card { border: 1px solid var(--d-line); border-radius: 4px; background: #fff; padding: 1rem 1.125rem; }
+#agent-desk .ds-card.ds-list { padding: 0; }
+#agent-desk .ds-card.ds-list > p { padding: 1rem 1.125rem; }
+#agent-desk .ds-list-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.125rem; border-top: 1px solid var(--d-line); font-size: 0.875rem; width: 100%; background: transparent; border-left: 0; border-right: 0; border-bottom: 0; border-radius: 0; }
+#agent-desk .ds-list-row:first-child { border-top: 0; }
+#agent-desk .ds-link-row:hover { background: var(--d-rail); }
+#agent-desk .ds-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem 1.5rem; }
+#agent-desk .ds-field-label { margin: 0; font-size: 0.8125rem; color: var(--d-muted); }
+#agent-desk .ds-field-value { margin: 0.25rem 0 0; font-size: 0.9375rem; color: var(--d-ink); }
+#agent-desk .ds-side-title { margin: 1.25rem 0 0.5rem; font-size: 0.9375rem; font-weight: 600; color: var(--d-ink); }
+#agent-desk .ds-side-title:first-child { margin-top: 0; }
+#agent-desk .ds-provider-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem; min-height: 88px; padding: 0.75rem; text-align: center; border: 1px solid var(--d-line); border-radius: 12px; background: #fff; }
+#agent-desk .ds-provider-tile:hover { background: var(--d-rail); border-color: #E6E5EC; }
+/* Buttons: small, white, thin gray border, medium corners, dark purple on hover.
+   Excludes navigation (rail, tabs, back links), tiles, chips and tiny icon toggles. */
+#agent-desk :is(button, a[class*='min-h-['], a[class*='rounded-lg'][class*='px-'], a[class*='rounded-md'][class*='px-']):not(.ds-navbtn):not(.ds-deal):not(.ds-tab):not(.ds-back):not(.ds-provider-tile):not(.ds-link-row):not([role='tab']):not([aria-current]):not([class*='border-b-2']):not([class*='h-6 w-6']):not([class*='h-7 w-7']):not([class*='h-5 w-5']):not([class*='h-9 w-9']):not(.ds-search *) {
+  background-color: #FFFFFF;
+  color: var(--d-ink);
+  border: 1px solid #E6E5EC;
+  border-radius: 8px;
+  min-height: 32px;
+  height: auto;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  box-shadow: none;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+#agent-desk :is(button, a[class*='min-h-['], a[class*='rounded-lg'][class*='px-'], a[class*='rounded-md'][class*='px-']):not(.ds-navbtn):not(.ds-deal):not(.ds-tab):not(.ds-back):not(.ds-provider-tile):not(.ds-link-row):not([role='tab']):not([aria-current]):not([class*='border-b-2']):not([class*='h-6 w-6']):not([class*='h-7 w-7']):not([class*='h-5 w-5']):not([class*='h-9 w-9']):hover:not(:disabled) {
+  background-color: var(--rnn-purple-500);
+  border-color: var(--rnn-purple-500);
+  color: #FFFFFF;
+}
+#agent-desk :is(button, a):not(.ds-navbtn):not(.ds-deal):not(.ds-tab):disabled { opacity: 0.5; }
+/* Destructive confirmation: solid red so it stands out */
+#agent-desk button.ds-confirm-remove { background-color: #C62828; border-color: #C62828; color: #FFFFFF; }
+#agent-desk button.ds-confirm-remove:hover:not(:disabled) { background-color: #A61E1E; border-color: #A61E1E; }
+/* Calculators embedded in the Agent Desk: follow the desk's type and spacing */
+#agent-desk .ds-embed main { max-width: none; margin: 0; padding: 0 0 2rem; }
+/* Print / share / download bar: a plain toolbar at the end of the calculator, not a floating pill */
+#agent-desk .ds-embed { position: relative; }
+#agent-desk .ds-embed div[class*='fixed'][class*='pointer-events-none'] { position: absolute; transform: none; left: auto; right: 0; top: 0; bottom: auto; display: flex; justify-content: flex-end; margin: 0; z-index: 5; pointer-events: auto; }
+@media (max-width: 900px) { #agent-desk .ds-embed { padding-top: 64px; } }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] { background: #fff; backdrop-filter: none; border: 1px solid var(--d-line); border-radius: 10px; box-shadow: none; gap: 0.375rem; padding: 0.375rem; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) { color: var(--d-ink); background: #fff; border: 1px solid var(--d-line); border-radius: 8px; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a):hover { background: #EFEAF8; color: var(--d-purple); border-color: #EFEAF8; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a)[aria-label='Back'] { display: none; }
+@media print {
+  #agent-desk .ds-rail, #agent-desk .ds-header, #agent-desk .ds-back, #agent-desk .ds-toolbar { display: none; }
+  #agent-desk .ds-main { margin: 0; padding: 0; border: 0; }
+}
+#agent-desk .ds-embed :is(h1, h2, h3, .font-serif) { font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; color: var(--d-ink); }
+#agent-desk .ds-embed h1 { font-size: 1.75rem; line-height: 1.15; font-weight: 600; }
+#agent-desk .ds-embed :is(input, select, textarea) { border-color: var(--d-line); border-radius: 8px; }
+#agent-desk .ds-embed :is(input, select, textarea):focus { border-color: var(--d-purple); outline: none; box-shadow: 0 0 0 2px #EFEAF8; }
+#agent-desk .ds-embed [class*='rounded'][class*='border'] { border-color: var(--d-line); border-radius: 12px; }
+/* Tool rows: white text on the dark hover */
+#agent-desk .ds-tool-row:hover :is(h3, p, span) { color: #FFFFFF; opacity: 1; }
+/* Purple focus ring instead of the browser's blue */
+#agent-desk :focus-visible { outline: 2px solid var(--rnn-purple-500); outline-offset: 2px; }
+/* Email signature on desk calculators */
+@media screen {
+  #agent-desk .ds-embed aside.ds-signature { display: flex; align-items: center; gap: 1rem; margin-top: 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--d-line); border-left: 3px solid var(--d-purple); border-radius: 12px; background: #fff; }
+  #agent-desk .ds-embed aside.ds-signature img { flex: none; }
+  #agent-desk .ds-embed aside.ds-signature-empty { display: block; margin-top: 1.5rem; padding: 0.875rem 1.25rem; border: 1px dashed var(--d-line); border-radius: 12px; background: #F6F3FB; color: var(--d-muted); font-size: 0.8125rem; }
+  #agent-desk .ds-embed aside.ds-signature-empty a { color: var(--d-purple); font-weight: 600; text-decoration: underline; }
+}
+/* Calculators and Referral Network: same type scale as Current Deal (eyebrow 11px, title 18px/600, body 14px/12px) */
+#agent-desk .ds-compact .ds-eyebrow { font-size: 0.6875rem; letter-spacing: 0.08em; }
+#agent-desk .ds-compact .ds-title { font-size: 1.125rem; line-height: 1.35; font-weight: 600; margin-top: 0.5rem; }
+#agent-desk .ds-compact .ds-subtitle { font-size: 0.875rem; line-height: 1.5; margin-top: 0.375rem; }
+/* Consistency sweep: one type scale across every Agent Desk page.
+   Eyebrow 11px/600 caps, page + section titles 18px/600, card titles 14px/600,
+   body 14px, helper text 12px, ink/text/muted colors from the desk tokens. */
+#agent-desk :is(h2, h3, h4)[class*='text-xl'], #agent-desk :is(h2, h3, h4)[class*='text-2xl'], #agent-desk :is(h2, h3, h4)[class*='text-lg'] { font-size: 1.125rem; line-height: 1.35; font-weight: 600; letter-spacing: -0.02em; color: var(--d-ink); }
+#agent-desk :is(h3, h4)[class*='text-sm'] { font-weight: 600; color: var(--d-ink); }
+#agent-desk :is(h3, h4, p).uppercase { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; color: var(--d-muted); }
+#agent-desk .font-bold, #agent-desk .font-extrabold, #agent-desk .font-black { font-weight: 600; }
+#agent-desk .ds-header .ds-title { font-size: 1.375rem; }
+#agent-desk .ds-embed h1 { font-size: 1.125rem; line-height: 1.35; font-weight: 600; }
+#agent-desk .ds-review-btn { height: 1.75rem; padding: 0 0.625rem; font-size: 0.75rem; }
+/* Deal page: summary strip, progress stepper, parties */
+#agent-desk .ds-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; padding: 0; border: 0; background: transparent; }
+@media (min-width: 768px) { #agent-desk .ds-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+#agent-desk .ds-stepper { display: flex; list-style: none; margin: 1.5rem 0 0; padding: 0; overflow-x: auto; }
+#agent-desk .ds-step { position: relative; flex: 1 1 0; min-width: 96px; padding-top: 2rem; text-align: center; }
+#agent-desk .ds-step::before, #agent-desk .ds-step::after { content: ''; position: absolute; top: 0.6875rem; height: 2px; background: #E6E5EC; }
+#agent-desk .ds-step::before { left: 0; right: 50%; }
+#agent-desk .ds-step::after { left: 50%; right: 0; }
+#agent-desk .ds-step.prev-done::before, #agent-desk .ds-step.is-done::after { background: #005A00; }
+#agent-desk .ds-step.is-first { text-align: left; }
+#agent-desk .ds-step.is-first::before, #agent-desk .ds-step.is-last::after { display: none; }
+#agent-desk .ds-step.is-first::after { left: 0.6875rem; }
+#agent-desk .ds-step.is-last { text-align: right; }
+#agent-desk .ds-step.is-last::before { right: 0.6875rem; }
+#agent-desk .ds-step-dot { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 1.4375rem; height: 1.4375rem; box-sizing: border-box; border-radius: 9999px; border: 2px dashed #C9C7D3; background: #fff; display: flex; align-items: center; justify-content: center; color: #fff; z-index: 1; }
+#agent-desk .ds-step.is-first .ds-step-dot { left: 0; transform: none; }
+#agent-desk .ds-step.is-last .ds-step-dot { left: auto; right: 0; transform: none; }
+#agent-desk .ds-step.is-done .ds-step-dot { background: #005A00; border: 2px solid #005A00; }
+#agent-desk .ds-step.is-current .ds-step-dot { border: 2px solid #005A00; background: #fff; }
+#agent-desk .ds-step-label { display: block; font-size: 0.8125rem; font-weight: 400; color: #6B6A75; line-height: 1.3; }
+#agent-desk .ds-step.is-current .ds-step-label { color: var(--d-ink); font-weight: 500; }
+#agent-desk .ds-step-sub { display: block; min-height: 1rem; margin-top: 0.125rem; font-size: 0.75rem; color: #4A4757; }
+#agent-desk .ds-step.is-current .ds-step-sub { color: var(--d-ink); }
+#agent-desk .ds-avatar { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 9999px; background: var(--d-lav-soft); color: var(--d-purple); font-size: 0.6875rem; font-weight: 600; margin-right: 0.625rem; }
+/* Small section labels stay ALL CAPS (the global heading capitalize rule is unlayered and would otherwise win) */
+#agent-desk :is(h1, h2, h3, h4, h5, h6).uppercase, #agent-desk :is(h3, h4)[class*='tracking-['][class*='text-xs'] { text-transform: uppercase; }
+/* Closings page + sidebar link */
+#agent-desk .ds-nav-closings { margin: 0 0 0.25rem; }
+#agent-desk .ds-closing-list { list-style: none; margin: 0.5rem 0 0; padding: 0; border: 1px solid var(--d-line); border-radius: 12px; background: #fff; overflow: hidden; }
+#agent-desk .ds-closing-list > li + li { border-top: 1px solid var(--d-line-soft, #F6F3FB); }
+#agent-desk .ds-closing-row { display: flex; width: 100%; align-items: flex-start; gap: 0.75rem; padding: 0.875rem 1rem; background: #fff; border: 0; border-radius: 0; height: auto; text-align: left; }
+#agent-desk .ds-closing-row:hover { background: var(--d-lav-wash); color: inherit; }
+#agent-desk .ds-closing-row:hover :is(span) { color: inherit; }
+#agent-desk .ds-progress { display: inline-block; width: 3rem; height: 4px; border-radius: 9999px; background: var(--d-line); overflow: hidden; }
+#agent-desk .ds-progress > span { display: block; height: 100%; background: var(--d-purple); }
+#agent-desk .ds-filter-on { background: var(--d-purple); color: #fff; border-color: var(--d-purple); }
+/* Quick-jump pills */
+#agent-desk .ds-pills { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+#agent-desk .ds-pills button { height: 1.625rem; padding: 0 0.625rem; border-radius: 9999px; font-size: 0.6875rem; font-weight: 500; }
+/* Snapshot: draggable cards */
+#agent-desk .ds-grip { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); z-index: 2; height: 1.25rem; width: 2rem; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--d-muted); opacity: 0; cursor: grab; border-radius: 6px; }
+#agent-desk .group:hover > .ds-grip, #agent-desk .ds-grip:focus-visible { opacity: 1; }
+#agent-desk .ds-grip:hover { background: var(--d-lav-soft); color: var(--d-purple); }
+#agent-desk .ds-grip:active { cursor: grabbing; }
+#agent-desk .ds-drop-target > :not(.ds-grip) { outline: 2px dashed var(--d-purple); outline-offset: 2px; border-radius: 12px; }
+/* Snapshot monitoring wall: resizable tiles on a 12-column grid */
+#agent-desk .ds-wall { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+#agent-desk .ds-tile > .ds-card, #agent-desk .ds-tile > div:not(.ds-grip) { min-width: 0; }
+@media (min-width: 768px) {
+  #agent-desk .ds-wall { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-rows: 120px; grid-auto-flow: row dense; }
+  #agent-desk .ds-tile { grid-column: span var(--w, 6); grid-row: span var(--h, 3); }
+  #agent-desk .ds-tile > :not(.ds-grip):not(.ds-resize) { height: 100%; overflow: auto; }
+}
+#agent-desk .ds-resize { position: absolute; right: 2px; bottom: 2px; z-index: 2; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 4px; background: transparent; cursor: nwse-resize; opacity: 0; touch-action: none;
+  background-image: linear-gradient(135deg, transparent 50%, var(--d-muted) 50%, var(--d-muted) 56%, transparent 56%, transparent 68%, var(--d-muted) 68%, var(--d-muted) 74%, transparent 74%); }
+#agent-desk .group:hover > .ds-resize, #agent-desk .ds-resize:focus-visible { opacity: 0.8; }
+@media (max-width: 767px) { #agent-desk .ds-resize { display: none; } }
+#agent-desk .ds-resize:hover, #agent-desk .ds-resize:focus { background-color: transparent; border: 0; }
+/* Snapshot: micro-KPI counters */
+#agent-desk .ds-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; }
+@media (min-width: 640px) { #agent-desk .ds-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { #agent-desk .ds-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+#agent-desk .ds-kpi { display: flex; flex-direction: column; align-items: flex-start; gap: 0.125rem; height: auto; padding: 0.625rem 0.75rem; text-align: left; border: 1px solid var(--d-line); border-radius: 4px; background: #fff; color: var(--d-ink); }
+#agent-desk .ds-kpi-label { font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--d-muted); }
+#agent-desk .ds-kpi-num { font-size: 1.375rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em; color: var(--d-ink); }
+#agent-desk .ds-kpi-sub { font-size: 0.6875rem; color: var(--d-muted); }
+#agent-desk .ds-kpi.is-alert .ds-kpi-num { color: #661102; }
+#agent-desk .ds-kpi.is-ok .ds-kpi-num { color: #005A00; }
+#agent-desk .ds-kpi.is-open { border-color: var(--d-purple); background: var(--d-lav-wash); }
+#agent-desk .ds-kpi:hover :is(.ds-kpi-label, .ds-kpi-num, .ds-kpi-sub) { color: #fff; }
+#agent-desk .ds-kpi-panel { animation: ds-kpi-in 0.15s ease-out; }
+/* Snapshot: reference layout (three cards + parties) */
+#agent-desk .ds-snap-grid { display: grid; gap: 0.75rem; margin-top: 0.5rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 768px) { #agent-desk .ds-snap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { #agent-desk .ds-snap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) 220px; } }
+#agent-desk .ds-snap-row { display: flex; width: 100%; align-items: center; gap: 0.5rem; height: auto; padding: 0.75rem 1rem; border: 0; border-bottom: 1px solid #F6F3FB; border-radius: 0; background: #fff; color: var(--d-ink); text-align: left; }
+#agent-desk .ds-snap-row:hover { background: var(--d-lav-wash); color: var(--d-ink); }
+#agent-desk .ds-snap-row:hover :is(span) { color: inherit; }
+#agent-desk .ds-detail { border: 1px solid var(--d-line); border-radius: 12px; background: #fff; padding: 0.625rem 1rem; }
+#agent-desk .ds-detail > summary { cursor: pointer; font-size: 0.875rem; font-weight: 600; color: var(--d-ink); list-style: none; }
+#agent-desk .ds-detail > summary::-webkit-details-marker { display: none; }
+#agent-desk .ds-detail[open] > summary { margin-bottom: 0.25rem; }
+#agent-desk .ds-snap-grid .ds-card { border-radius: 10px; }
+#agent-desk .ds-snap-grid .text-sm { font-size: 0.8125rem; }
+#agent-desk .ds-snap-grid .text-xs { font-size: 0.71875rem; }
+#agent-desk .ds-snap-grid .ds-chip { min-width: 1.375rem; height: 1.375rem; padding: 0 0.375rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; font-size: 0.6875rem; }
+/* Closing Time banner hidden for now - remove this rule to restore */
+#agent-desk .ds-header { display: none; }
+/* Deal section nav: grouped underline tabs */
+#agent-desk .ds-dealnav { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0 1.25rem; border-bottom: 1px solid var(--d-line); }
+#agent-desk .ds-dealnav-group { position: relative; display: flex; align-items: stretch; gap: 0.125rem; padding-right: 1.25rem; }
+#agent-desk .ds-dealnav-group:not(:last-child)::after { content: ''; position: absolute; right: 0; top: 50%; height: 1.125rem; width: 1px; transform: translateY(-50%); background: var(--d-line); }
+#agent-desk .ds-dealnav-group:last-child { padding-right: 0; }
+#agent-desk .ds-dealnav-label { align-self: center; margin-right: 0.375rem; font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #7A7787; }
+#agent-desk .ds-dealnav button { height: 2rem; min-height: 0; padding: 0 0.625rem; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: #4A4757; font-size: 0.8125rem; font-weight: 500; margin-bottom: -1px; }
+#agent-desk .ds-dealnav button:hover { background: transparent; color: var(--rnn-purple-500); border-bottom-color: #D9CFF0; }
+#agent-desk .ds-dealnav button[aria-current='page'] { background: transparent; color: var(--rnn-purple-500); font-weight: 600; border-bottom-color: var(--rnn-purple-500); }
+#agent-desk .ds-dealnav-menu { position: absolute; left: 0; top: 100%; z-index: 20; min-width: 10rem; padding: 0.25rem; background: #fff; border: 1px solid var(--d-line); border-radius: 10px; display: flex; flex-direction: column; }
+#agent-desk .ds-dealnav .ds-dealnav-menu button { height: 2rem; margin: 0; width: 100%; justify-content: flex-start; text-align: left; border: 0; border-radius: 6px; padding: 0 0.625rem; }
+#agent-desk .ds-dealnav .ds-dealnav-menu button:hover { background: #EFEAF8; color: var(--rnn-purple-500); border: 0; }
+#agent-desk .ds-dealnav button[aria-expanded] { background: transparent; border: 0; border-bottom: 2px solid transparent; color: #4A4757; }
+#agent-desk .ds-dealnav button[aria-expanded='true'] { color: var(--rnn-purple-500); }
+#agent-desk .ds-dealnav button[aria-expanded][aria-current='page'] { border-bottom-color: var(--rnn-purple-500); color: var(--rnn-purple-500); font-weight: 600; }
+#agent-desk .ds-nav-child { margin: 0.125rem 0 0.25rem 1.5rem; padding: 0 0 0 0.5rem; list-style: none; border-left: 1px solid var(--d-line); }
+#agent-desk .ds-nav-child .ds-navbtn { font-size: 0.8125rem; }
+#agent-desk .ds-navbtn[aria-expanded] { border: 0; background-color: transparent; color: inherit; }
+#agent-desk .ds-navbtn[aria-expanded]:hover { background-color: var(--d-hover); }
+/* Integrations page: Integrations first, then back arrow */
+#agent-desk .ds-main[data-desk-view='integrations'] { display: flex; flex-direction: column; }
+#agent-desk .ds-main[data-desk-view='integrations'] > [data-section-key='integrations'] { order: -2; }
+#agent-desk .ds-main[data-desk-view='integrations'] > .ds-back { order: -1; align-self: flex-start; margin-top: 1rem; }
+#agent-desk .ds-cal-tile button { border-color: #E6E5EC; }
+#agent-desk .ds-cal-tile div button { border: 0; background: transparent; padding: 0; height: auto; min-height: 0; color: var(--rnn-purple-500); font-weight: 600; }
+#agent-desk .ds-cal-tile div button:hover { background: transparent; color: var(--rnn-purple-500); }
+/* Integrations tiles: light purple hover */
+#agent-desk [data-section-key='integrations'] li > button:hover:not(:disabled) { background-color: #EFEAF8; border-color: #D9CFF0; color: var(--rnn-purple-500); }
+#agent-desk .ds-cal-tile div button, #agent-desk .ds-cal-tile div button:hover:not(:disabled) { border: 0; background: transparent; padding: 0; height: auto; min-height: 0; color: var(--rnn-purple-500); font-size: 0.75rem; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+/* Documents: per-row Upload and Open, upload menu */
+#agent-desk .ds-row-btn { display: inline-flex; align-items: center; gap: 0.375rem; height: 2rem; padding: 0 0.75rem; font-size: 0.8125rem; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+#agent-desk .ds-upload-opt { display: flex; align-items: center; gap: 0.75rem; width: 100%; margin-bottom: 0.375rem; padding: 0.5rem 0.625rem; border: 1px solid #E6E5EC; border-radius: 12px; background: #fff; color: #1B1726; font-size: 0.9375rem; font-weight: 500; text-align: left; }
+#agent-desk .ds-upload-opt:hover:not(:disabled) { background: #EFEAF8; border-color: #D9CFF0; color: var(--rnn-purple-500); }
+#agent-desk .ds-upload-ico { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px; background: #F1EEF8; color: var(--rnn-purple-500); flex-shrink: 0; }
+/* Agent Desk typography: one scale for every field, label and value */
+#agent-desk :is(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select, textarea) { font-family: inherit; font-size: 0.875rem; font-weight: 500; font-style: normal; letter-spacing: normal; }
+#agent-desk :is(input, textarea)::placeholder { font-weight: 400; font-style: normal; }
+#agent-desk .font-mono { font-family: inherit; }
+#agent-desk .italic { font-style: normal; }
+#agent-desk label > span.uppercase { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em; color: var(--d-muted); }
+#agent-desk :is(input, textarea, select) { text-transform: none; }
+/* Agent Desk design standard
+   Page titles 22/600 · section titles 14/600 · body 14/400 · values 14/500 · labels and captions 11-12/500 muted */
+#agent-desk :is(h1, h2, h3, h4).ds-title, #agent-desk :is(h2, h3)[class*='text-2xl'] { font-size: 1.375rem; line-height: 1.2; font-weight: 600; color: var(--d-ink); letter-spacing: -0.02em; }
+#agent-desk :is(h2, h3, h4)[class*='text-xl']:not(.ds-title), #agent-desk :is(h2, h3, h4)[class*='text-lg']:not(.ds-title), #agent-desk .ds-side-title { font-size: 0.875rem; line-height: 1.35; font-weight: 600; color: var(--d-ink); letter-spacing: -0.01em; }
+#agent-desk .ds-eyebrow, #agent-desk .ds-group-label, #agent-desk .ds-stat-label, #agent-desk .ds-kpi-label, #agent-desk thead th { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--d-muted); }
+#agent-desk .ds-subtitle, #agent-desk .ds-back, #agent-desk .ds-step-label { font-size: 0.875rem; }
+#agent-desk .ds-stat-sub, #agent-desk .ds-kpi-sub { font-size: 0.75rem; font-weight: 500; color: var(--d-muted); }
+#agent-desk .ds-stat-num, #agent-desk .ds-kpi-num { font-size: 1.5rem; font-weight: 600; line-height: 1.2; color: var(--d-ink); }
+#agent-desk .ds-compact :is(h1, h2, h3).ds-title { font-size: 1.375rem; line-height: 1.2; font-weight: 600; margin-top: 0.25rem; }
+#agent-desk :is(h3, h4, p).uppercase { font-weight: 500; }
+#agent-desk .ds-subtitle { color: var(--d-muted); }
+#agent-desk input.cf-label { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--d-muted); }
+/* Phones: keep Closing Time usable without zooming or sideways scrolling. */
+@media (max-width: 639px) {
+  #agent-desk input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  #agent-desk textarea,
+  #agent-desk select { font-size: 16px; }
+  #agent-desk table { font-size: 13px; }
+}
+/* Phones: Deals and Contacts tables become one card per row. */
+@media (max-width: 767px) {
+  #agent-desk .ds-table-wrap.ds-cards { overflow: visible; border: 0; background: transparent; }
+  #agent-desk .ds-table-wrap.ds-cards table { min-width: 0; width: 100%; }
+  #agent-desk .ds-table-wrap.ds-cards thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  #agent-desk .ds-table-wrap.ds-cards tbody, #agent-desk .ds-table-wrap.ds-cards tr, #agent-desk .ds-table-wrap.ds-cards td { display: block; }
+  #agent-desk .ds-table-wrap.ds-cards tbody tr { margin-bottom: 10px; border: 1px solid var(--d-line); border-radius: 12px; background: #fff; padding: 8px 0; }
+  #agent-desk .ds-table-wrap.ds-cards tbody tr:first-child { border-top: 1px solid var(--d-line); }
+  #agent-desk .ds-table-wrap.ds-cards tbody td { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 14px; text-align: right; max-width: none; white-space: normal; overflow: visible; text-overflow: clip; }
+  #agent-desk .ds-table-wrap.ds-cards tbody td::before { content: attr(data-label); flex: none; font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--d-muted); text-align: left; }
+  #agent-desk .ds-table-wrap.ds-cards tbody td[data-label=""]::before { content: none; }
+  #agent-desk .ds-table-wrap.ds-cards tbody td[data-label=""] { justify-content: flex-end; }
+  #agent-desk .ds-table-wrap.ds-cards tbody td:first-child { display: block; text-align: left; font-size: 14px; font-weight: 600; padding-bottom: 8px; }
+  #agent-desk .ds-table-wrap.ds-cards tbody td:first-child::before { content: none; }
+  #agent-desk .ds-table-wrap.ds-cards tbody td[colspan] { display: block; text-align: center; }
+  #agent-desk .ds-table-wrap.ds-cards tbody td[colspan]::before { content: none; }
+}
+/* Phones: deal tabs wrap as whole words, never letter by letter. */
+@media (max-width: 767px) {
+  #agent-desk .ds-dealnav { gap: 0.25rem 0.75rem; }
+  #agent-desk .ds-dealnav-group { flex-wrap: wrap; padding-right: 0.75rem; }
+  #agent-desk .ds-dealnav button { white-space: nowrap; flex: none; }
+}
+/* Phones: list rows wrap their chip and action buttons onto a second line instead of overflowing. */
+@media (max-width: 767px) {
+  #agent-desk .ds-list-row { flex-wrap: wrap; }
+  #agent-desk .ds-list-row > .min-w-0.flex-1 { flex: 1 1 calc(100% - 2.5rem); }
+}
+/* Closing Time page titles use the same serif as the public site headings. */
+#agent-desk :is(h1, h2, h3, h4).ds-title { font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.01em; font-size: 1.5rem; line-height: 1.2; }
+#agent-desk .ds-header .ds-title { font-size: 1.5rem; }
+/* Phones: main navigation and row controls get 44px tap targets. */
+@media (max-width: 767px) {
+  #agent-desk :is(.ds-navbtn, .ds-tab, .ds-new, .ds-row-btn, .ds-back, .ds-deal) { min-height: 44px; }
+}
+#agent-desk .ds-dealnav-label { color: #4A4757; }
+#agent-desk .ds-card, #agent-desk .ds-navbtn, #agent-desk .ds-deal, #agent-desk .ds-new { border-radius: 4px; }
+#agent-desk { background: var(--astro-bg-base); }
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible, #agent-desk :focus-visible, button.ct-switch:focus-visible { outline: 2px solid var(--astro-focus); outline-offset: 2px; }
+#agent-desk .ds-main { margin: var(--astro-margin); border-radius: 4px; background: var(--astro-bg-surface); }
+#agent-desk .ds-card { border-radius: 4px; }
+@media (max-width: 639px) { #agent-desk .ds-main { margin: 16px 8px 24px; } }
+@media (min-width: 640px) { #agent-desk .ds-page { padding-inline: 0; } }
+/* Foldable widths (about 450 to 950px): keep deal tabs on one line each and wrap whole tabs, never words */
+#agent-desk .ds-dealnav button { white-space: nowrap; flex: none; }
+#agent-desk .ds-dealnav-group { flex-wrap: wrap; }
+/* Closing Time left rail: own scroll, pinned to the full viewport (no site header above it). */
+#agent-desk .ds-rail { top: 0; height: 100dvh; overflow-y: auto; overscroll-behavior: contain; align-self: start; }
+/* Contract page: field delete buttons appear on hover or focus so the form reads cleanly. */
+#agent-desk [data-testid="contract-page"] button[aria-label="Delete field"], #agent-desk [data-testid="contract-page"] button[aria-label="Remove field"] { opacity: 0; transition: opacity 0.15s; }
+#agent-desk [data-testid="contract-page"] .min-w-0:hover button[aria-label="Delete field"], #agent-desk [data-testid="contract-page"] .min-w-0:focus-within button[aria-label="Delete field"],
+#agent-desk [data-testid="contract-page"] .min-w-0:hover button[aria-label="Remove field"], #agent-desk [data-testid="contract-page"] .min-w-0:focus-within button[aria-label="Remove field"] { opacity: 1; }
+@media (hover: none) { #agent-desk [data-testid="contract-page"] button[aria-label="Delete field"], #agent-desk [data-testid="contract-page"] button[aria-label="Remove field"] { opacity: 1; } }
+/* Contract page on phones: 16px inputs stop iOS zoom, 44px touch targets, no sideways scroll. */
+@media (max-width: 639px) {
+  #agent-desk [data-testid="contract-page"] input:not(.cf-label), #agent-desk [data-testid="contract-page"] textarea { font-size: 16px; }
+  #agent-desk [data-testid="contract-page"] [role="tab"] { min-height: 44px; }
+  #agent-desk [data-testid="contract-page"] summary button, #agent-desk [data-testid="contract-page"] section button { min-height: 40px; }
+  #agent-desk [data-testid="contract-page"] { overflow-x: hidden; }
+}
+/* Page header standard (matches My Scheduling): sans 22px/600 title, 14px subtitle, no eyebrow above the title. */
+#agent-desk :is(h1, h2, h3, h4).ds-title, #agent-desk .ds-header .ds-title { font-family: inherit; font-size: 1.375rem; line-height: 1.25; font-weight: 600; letter-spacing: 0; color: #1B1726; margin-top: 0; }
+#agent-desk .ds-subtitle { margin-top: 0.25rem; font-size: 0.875rem; color: #4A4757; }
+#agent-desk .ds-eyebrow:has(+ .ds-title):not(.ds-keep) { display: none; }
+/* Button corner standard: medium (8px) on every action button, beats the Tailwind rounded-md/4px override. Cards, tiles and pills keep their own shape. */
+#agent-desk button[class*='border']:not([role='switch']):not([class*='rounded-full']):not([class*='flex-col']):not([class*='h-9 w-9']):not([class*='border-b-2']):not([role='tab']):not(.ds-navbtn):not(.ds-tab):not(.ds-deal),
+#agent-desk button.ds-new, #agent-desk a[class*='min-h-[32px]'] { border-radius: 8px; }
+#agent-desk .ds-compact .ds-subtitle, #agent-desk .ds-header .ds-subtitle { margin-top: 0.25rem; }
+/* Calculators inside the desk: same page header, lead text and labels as every other page. */
+#agent-desk .ds-embed p[class*='uppercase'][class*='tracking-[0.2em]'] { display: none; }
+#agent-desk .ds-embed :is(h1, h2.font-serif) { font-size: 1.375rem; line-height: 1.25; font-weight: 600; letter-spacing: 0; margin-top: 0; }
+#agent-desk .ds-embed header { margin-bottom: 1.25rem; }
+#agent-desk .ds-embed header p[class*='font-light'] { font-size: 0.875rem; font-weight: 400; line-height: 1.5; max-width: 48rem; margin-top: 0.25rem; }
+#agent-desk .ds-embed label > span[class*='font-medium'] { font-size: 0.8125rem; font-weight: 500; text-transform: capitalize; }
+/* Card corner standard: every card, table frame and panel uses 4px, including those with arbitrary Tailwind radii. */
+#agent-desk :is([class*='rounded-['], .ds-table-wrap, .ds-closing-list, .ds-detail, .ds-embed [class*='rounded'][class*='border']):not([class*='rounded-full']):not(button):not(input):not(select):not(textarea):not(.ds-stat-icon) { border-radius: 4px; }
+/* Calculator actions: same standard buttons as the rest of the desk */
+#agent-desk .ds-embed div[class*='pointer-events-auto'] { background: transparent; border: 0; padding: 0; gap: 8px; border-radius: 0; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) { flex-direction: row; min-width: 0; min-height: 32px; height: 32px; padding: 0 12px; gap: 6px; border-radius: 8px; background: #fff; border: 1px solid var(--d-line); font-size: 13px; font-weight: 500; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) span { font-size: 13px; text-transform: none; letter-spacing: 0; margin: 0; font-weight: 500; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a) svg { width: 14px; height: 14px; }
+#agent-desk .ds-embed div[class*='pointer-events-auto'] :is(button, a):hover { background: #EFEAF8; color: var(--rnn-purple-500); border-color: #E6E5EC; }
+/* Calculators: actions flush right, Save Now row right-aligned, no narrow paragraph wrap */
+#agent-desk .ds-embed div[class*='fixed'][class*='pointer-events-none'] { left: 0; right: 0; width: auto; max-width: none; padding: 0; justify-content: flex-end; }
+#agent-desk .ds-embed header > div:has(> button) { justify-content: flex-end; }
+#agent-desk .ds-embed p[class*='max-w-3xl'], #agent-desk .ds-embed p[class*='max-w-2xl'] { max-width: none; }
+/* Mobile: stat tiles keep their icon inside the card; long labels wrap instead of pushing it out. */
+@media (max-width: 639px) {
+  #agent-desk .ds-stat { padding: 0.875rem; gap: 0.5rem; }
+  #agent-desk .ds-stat > :first-child { min-width: 0; }
+  #agent-desk .ds-stat-icon { height: 1.75rem; width: 1.75rem; }
+}
+/* One checkbox size everywhere on the desk: 18px square, 4px corners, brand purple. */
+#agent-desk input[type='checkbox']:not(.sr-only) { width: 18px; height: 18px; min-width: 18px; min-height: 18px; margin: 0; flex: none; border-radius: 4px; accent-color: var(--rnn-purple-500); cursor: pointer; -webkit-appearance: none; appearance: none; background: #fff; border: 1px solid #B9B6C4; display: inline-grid; place-content: center; transition: none; }
+#agent-desk input[type='checkbox']:not(.sr-only):hover { background: #fff; border-color: #B9B6C4; }
+#agent-desk input[type='checkbox']:not(.sr-only):checked { background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23301D5D' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E") center / 14px 14px no-repeat; border-color: #B9B6C4; }
+#agent-desk input[type='checkbox']:not(.sr-only):disabled { opacity: 0.5; cursor: not-allowed; }
+#agent-desk input[type='checkbox']:not(.sr-only):focus-visible { outline: 2px solid var(--rnn-purple-500); outline-offset: 2px; }
+/* Deal items in the left rail: show the full address and countdown (Astro 4.1.2) */
+#agent-desk button.ds-deal { height: auto; min-height: 36px; overflow: visible; }
+#agent-desk button.ds-deal > span:not(:first-child) { white-space: normal; }
+#agent-desk .ds-deals { flex: 0 0 auto; }
+/* Closing Time (limited edition): serif page titles like the Realty News Now pages (Builders, Guides). */
+#agent-desk.ct-lite :is(h1, h2) { font-family: var(--font-serif); font-weight: 400; color: var(--rnn-purple-500); letter-spacing: -0.01em; }
+#agent-desk.ct-lite h1 { font-size: 2.25rem; line-height: 1.15; }
+#agent-desk.ct-lite h2 { font-size: 1.5rem; line-height: 1.25; }
+@media (min-width: 1024px) { #agent-desk.ct-lite h1 { font-size: 2.75rem; } }
+/* Same text color as the Realty News Now pages: deep indigo for titles and copy, light weight for paragraphs. */
+#agent-desk.ct-lite, #agent-desk.ct-lite :is(h3, h4, p, li, dt, dd, label, td, th, legend, summary) { color: var(--rnn-purple-500); }
+#agent-desk.ct-lite :is(p, dd)[class*='text-'] , #agent-desk.ct-lite :is(span, div, li, label, a)[class*='text-slate-'], #agent-desk.ct-lite :is(span, div, li, label, p, a)[class*='text-gray-'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#5B5470]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#4A4757]'], #agent-desk.ct-lite :is(span, div, li, label, p)[class*='text-[#1B1726]'] { color: var(--rnn-purple-500); }
+#agent-desk.ct-lite p:not([class*='font-semibold']):not([class*='font-bold']):not([class*='uppercase']) { font-weight: 300; }
+#agent-desk.ct-lite :is(.text-red-700, [class*='text-red-']) { color: #B42318; }
+/* Closing Time (limited edition) on phones: 16px form controls stop iOS zoom, tighter title, stacked hero. */
+@media (max-width: 639px) {
+  #agent-desk.ct-lite :is(input:not([type='checkbox']):not([type='radio']), select, textarea) { font-size: 16px; }
+  #agent-desk.ct-lite h1 { font-size: 1.875rem; }
+  #agent-desk.ct-lite h2 { font-size: 1.25rem; }
+  #agent-desk.ct-lite section { min-width: 0; }
+}
+/* Grids with only breakpoint column classes get an implicit auto column that grows to its widest child and pushes the page off screen. Pin them to the screen width. */
+@media (max-width: 1023px) {
+  #agent-desk.ct-lite .grid:not([class^='grid-cols-']):not([class*=' grid-cols-']):not([class*='sm:grid-cols']):not([class*='md:grid-cols']) { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 639px) {
+  #agent-desk.ct-lite .grid[class*='sm:grid-cols']:not([class^='grid-cols-']):not([class*=' grid-cols-']):not([class*='md:grid-cols']) { grid-template-columns: minmax(0, 1fr); }
+  #agent-desk.ct-lite .grid[class*='md:grid-cols']:not([class^='grid-cols-']):not([class*=' grid-cols-']) { grid-template-columns: minmax(0, 1fr); }
+  #agent-desk.ct-lite :is(.grid, .flex) > * { min-width: 0; }
+}
+/* Paragraphs run the full width of the window instead of a narrow column. */
+#agent-desk.ct-lite :is(p, .ds-subtitle) { max-width: none; text-wrap: wrap; }
