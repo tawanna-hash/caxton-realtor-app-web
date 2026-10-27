@@ -1817,7 +1817,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 }
 textarea.anchor-input { border-radius: 14px !important; padding: 0.75rem 1rem !important; line-height: 1.5; }
 /* Beta mobile: tables stack as individual rows, tabs wrap, nothing slides sideways. */
-@media (max-width: 767px) {
+@media screen and (max-width: 767px) {
   [data-admin-ui='true'] :is(div, section):has(> table) { overflow-x: visible !important; }
   [data-admin-ui='true'] table { min-width: 0 !important; width: 100% !important; display: block; border-spacing: 0 !important; }
   [data-admin-ui='true'] table thead { display: none; }
