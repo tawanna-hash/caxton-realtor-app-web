@@ -144,7 +144,7 @@ export default function BillingHub() {
       {client && tab === 'recurring' && <RecurringPanel clientId={client.id} />}
       {client && tab === 'statements' && <StatementsPanel />}
       {client && tab === 'paymentlinks' && <PaymentLinksPanel clientId={client.id} />}
-      {client && tab === 'activity' && <ActivityTab invoices={invoices} agreements={agreement ? [agreement] : agreements} />}
+      {client && tab === 'activity' && <ActivityTab invoices={invoices} agreements={agreement ? [agreement] : agr.data.filter((a) => a.advertiser_id === clientId)} />}
 
       {control && <ControlDrawer onClose={() => setControl(false)} onBill={(m, seed) => { setControl(false); setBill({ mode: m, seed }); }} />}
       {bill && client && <BillScreen client={client} agreementId={agreementId || null} mode={bill.mode} seed={bill.seed} onClose={() => setBill(null)} onDone={() => { setBill(null); setVersion((v) => v + 1); }} />}
@@ -365,11 +365,24 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
 function ActivityTab({ invoices, agreements }: { invoices: FullInv[]; agreements: Agr[] }) {
   const [q, setQ] = useState(''); const [types, setTypes] = useState<string[]>([]); const [notif, setNotif] = useState(true); const [open, setOpen] = useState<string | null>(null);
   type Ev = { key: string; at: string; kind: 'agreement' | 'invoice' | 'notification'; text: string; link?: { label: string; href: string }; detail?: string };
+  // Delivered invoice emails (Resend events) so the Notification filter has invoice sends, not only agreement emails.
+  const mail = useJson('/api/admin/invoices/email-status', (j) => (j.rows ?? []) as Array<{ id: string; to: string[]; subject: string; created_at: string; last_event: string }>, [] as Array<{ id: string; to: string[]; subject: string; created_at: string; last_event: string }>);
   const events = useMemo<Ev[]>(() => {
     const out: Ev[] = [];
+    const seenMail = new Set<string>();
+    for (const i of invoices) {
+      const num = (i.number ?? '').trim(); if (!num) continue;
+      const link = { label: num, href: `/admin/billing-hub/invoice/${i.id}/preview` };
+      for (const m of mail.data) {
+        if (seenMail.has(m.id) || !(m.subject ?? '').includes(num)) continue;
+        seenMail.add(m.id);
+        const reminder = /remind/i.test(m.subject);
+        out.push({ key: `m-${m.id}`, at: m.created_at, kind: 'notification', text: `${reminder ? 'A payment reminder' : 'Invoice'} for {link} was emailed to ${(m.to ?? []).join(', ') || 'the client'}${m.last_event ? ` (${m.last_event})` : ''}.`, link, detail: m.subject });
+      }
+    }
     for (const a of agreements) for (const [n, e] of (a.audit_log ?? []).entries()) {
       const label = e.event.replace(/_/g, ' ');
-      out.push({ key: `a-${a.id}-${n}`, at: e.timestamp, kind: /email|sent|remind/i.test(e.event) ? 'notification' : 'agreement', text: `Agreement ${label}${e.user_email ? ` by ${e.user_email}` : ''}.`, detail: e.details });
+      out.push({ key: `a-${a.id}-${n}`, at: e.timestamp, kind: /email|_sent|remind/i.test(e.event) ? 'notification' : 'agreement', text: `Agreement ${label}${e.user_email ? ` by ${e.user_email}` : ''}.`, detail: e.details });
     }
     for (const i of invoices) {
       const link = { label: i.number ?? 'invoice', href: `/admin/billing-hub/invoice/${i.id}/preview` };
@@ -380,7 +393,7 @@ function ActivityTab({ invoices, agreements }: { invoices: FullInv[]; agreements
       }
     }
     return out.sort((a, b) => b.at.localeCompare(a.at));
-  }, [invoices, agreements]);
+  }, [invoices, agreements, mail.data]);
   const shown = events.filter((e) => (notif || e.kind !== 'notification') && (types.length === 0 || types.includes(e.kind)) && (!q.trim() || e.text.toLowerCase().includes(q.trim().toLowerCase())));
   return (
     <div className="space-y-4">
