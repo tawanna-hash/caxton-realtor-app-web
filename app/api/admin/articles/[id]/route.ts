@@ -175,9 +175,15 @@ export const DELETE = withAdminTracking(
     // Manually-created articles are deleted outright — "revert to WordPress"
     // has no meaning for an article that never came from WordPress.
     if (isManualArticleId(wpPostId)) {
-      const deleted = await deleteArchivedArticle(publication, wpPostId);
-      invalidate(publication);
-      return NextResponse.json({ ok: true, deleted });
+      // Remove every market's copy of a multi-market article.
+      const members = await getArticleGroupMembers(publication, wpPostId);
+      let deleted = false;
+      for (const m of members) {
+        const ok = await deleteArchivedArticle(m.publication, m.wpPostId);
+        if (m.wpPostId === wpPostId && m.publication === publication) deleted = ok;
+        invalidate(m.publication);
+      }
+      return NextResponse.json({ ok: true, deleted, deletedMarkets: members.map((m) => m.publication) });
     }
 
     // Imported/WordPress articles may return on the next sync. Hide them
