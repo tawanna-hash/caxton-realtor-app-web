@@ -98,11 +98,16 @@ Unless Publisher agrees otherwise in writing, charges for Mobile App Products an
 Invoices may be sent to the preferred billing email identified in the Insertion Order.
 9.4 Payment Methods
 Publisher accepts:
-• major credit cards;
-• ACH or other bank processing; and
+• major credit and debit cards;
+• ACH bank payments;
+• buy now, pay later services offered by Publisher at checkout (currently Affirm, Afterpay / Clearpay, and Klarna), subject to the provider’s eligibility requirements and terms; and
 • checks payable to Caxton Publications, Inc., mailed to P.O. Box 81366, Austin, Texas 78708-1366.
-9.5 Credit-Card Processing Surcharge
-Where permitted by applicable law and card-network rules, payments made by credit card are subject to a three percent (3%) processing surcharge. No surcharge applies to ACH or check payments.
+9.5 Electronic Payment Processing Fees
+Where permitted by applicable law and card-network rules, a processing fee is added to electronic payments made through Publisher’s online payment pages. The fee is shown at checkout before Advertiser authorizes payment, and it is in addition to the invoice amount:
+• credit or debit card: three percent (3%) of the amount paid;
+• ACH bank payment: one percent (1%) of the amount paid, not to exceed five dollars ($5.00) per payment; and
+• buy now, pay later: five and ninety-nine hundredths percent (5.99%) of the amount paid plus thirty cents ($0.30).
+No processing fee applies to payments made by check. Publisher may change these fees on written notice before the payment is made. By authorizing an ACH bank payment, Advertiser authorizes Publisher and its payment processor to debit the bank account Advertiser provides for the amount shown at checkout. A payment that is returned, reversed, or disputed does not discharge the amount owed, and Advertiser remains responsible for the amount due plus any return or dispute fees charged to Publisher.
 9.6 No Setoff
 Advertiser and Agency must pay all amounts when due without setoff, deduction, withholding, recoupment, or counterclaim, except to the extent required by law.
 10. Billing Disputes; Late Charges; Collection
