@@ -199,6 +199,7 @@ interface PdfJsPage {
   }) => { promise: Promise<void>; cancel?: () => void };
   getAnnotations: () => Promise<PdfJsAnnotation[]>;
   getTextContent: () => Promise<PdfJsTextContent>;
+  getOperatorList?: () => Promise<unknown>;
 }
 interface PdfJsDoc {
   numPages: number;
@@ -699,20 +700,29 @@ export default function InteractiveMagazineReader({
     const adj: number[] = [];
     const prev = spreads[currentSpreadIdx - 1];
     const next = spreads[currentSpreadIdx + 1];
-    if (prev) {
-      if (prev.left !== null) adj.push(prev.left);
-      if (prev.right !== null) adj.push(prev.right);
-    }
+    // Next spread first (most likely turn), then the previous one.
     if (next) {
       if (next.left !== null) adj.push(next.left);
       if (next.right !== null) adj.push(next.right);
     }
-    const t = setTimeout(() => {
-      if (cancelled) return;
+    if (prev) {
+      if (prev.left !== null) adj.push(prev.left);
+      if (prev.right !== null) adj.push(prev.right);
+    }
+    // Wait for the current spread to paint, then warm the neighbours one at
+    // a time. getOperatorList pulls the page's images and fonts over the
+    // network (range requests) without drawing, so the next turn finds them
+    // already downloaded instead of waiting on a large PDF.
+    const t = setTimeout(async () => {
       for (const pageIdx of adj) {
-        doc.getPage(pageIdx + 1).catch(() => { /* noop */ });
+        if (cancelled) return;
+        try {
+          const p = await doc.getPage(pageIdx + 1);
+          if (cancelled) return;
+          await p.getOperatorList?.();
+        } catch { /* noop */ }
       }
-    }, 100);
+    }, 700);
     return () => {
       cancelled = true;
       clearTimeout(t);
