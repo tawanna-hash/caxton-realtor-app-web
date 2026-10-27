@@ -1566,7 +1566,12 @@ function PageCanvas({
     (o) => !shouldSuppressOverlay(o, hotspots, displayWidth, displayHeight),
   );
   return (
-    <div className="relative inline-block shadow-2xl">
+    <div
+      className="relative inline-block shadow-2xl"
+      // Until the first render sizes the canvas, collapse the box so the
+      // browser's default 300x150 canvas never paints and then jumps.
+      style={displayWidth > 0 ? undefined : { width: 0, height: 0, overflow: 'hidden' }}
+    >
       <canvas ref={canvasRef} className="block bg-white" />
       <HotspotLayer hotspots={hotspots} displayWidth={displayWidth} displayHeight={displayHeight} />
       {visibleOverlays.map((o, i) => (
