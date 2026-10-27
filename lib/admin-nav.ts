@@ -77,6 +77,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Services', href: '/admin/services-beta', description: 'Services, rates, billing occurrence and trigger' },
       { label: 'Bundles', href: '/admin/services-beta/bundles', description: 'Group services into one priced bundle', parent: '/admin/services-beta' },
       { label: 'Reports', href: '/admin/reports-beta', description: 'Revenue, active services, future invoices, agreements and credit' },
+      { label: 'Deposit Slip', href: '/admin/reports-beta/deposit-slip', description: 'Checks recorded against invoices, totalled for the bank deposit', parent: '/admin/reports-beta' },
       { label: 'Integrations', href: '/admin/integrations-beta', description: 'Stripe, QuickBooks and Gmail status' },
       { label: 'API keys', href: '/admin/integrations-beta/api-keys', description: 'Generate and revoke API keys', parent: '/admin/integrations-beta' },
       { label: 'Business details', href: '/admin/settings-beta/business-details', description: 'Business name, address, brand and billing settings' },
