@@ -874,7 +874,9 @@ function CreateModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const [publication, setPublication] = useState<NewsArticle['publication']>('austin');
+  const [publications, setPublications] = useState<Array<NewsArticle['publication']>>(['austin']);
+  const togglePublication = (id: NewsArticle['publication']) =>
+    setPublications((cur) => (cur.includes(id) ? cur.filter((p) => p !== id) : [...cur, id]));
   const [head, setHead] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [contentHtml, setContentHtml] = useState('');
@@ -905,11 +907,14 @@ function CreateModal({
       setError('Select a category from the approved list');
       return;
     }
+    if (publications.length === 0) {
+      setError('Select at least one market to publish to');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
-      const body = {
-        publication,
+      const baseBody = {
         head: head.trim(),
         excerpt: excerpt.trim() || null,
         contentHtml: contentHtml.trim() || null,
@@ -923,15 +928,26 @@ function CreateModal({
           .filter(Boolean),
         publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
       };
-      const res = await fetch('/api/admin/articles', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const b = await res.json().catch(() => ({}));
-        throw new Error(b?.error || `Create failed (${res.status})`);
+      const failures: string[] = [];
+      let created = 0;
+      for (const publication of publications) {
+        const res = await fetch('/api/admin/articles', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...baseBody, publication }),
+        });
+        if (res.ok) {
+          created += 1;
+        } else {
+          const b = await res.json().catch(() => ({}));
+          failures.push(`${PUB_LABEL[publication]}: ${b?.error || `failed (${res.status})`}`);
+        }
+      }
+      if (failures.length > 0) {
+        // Keep the modal open on the markets that failed so nothing is re-posted twice.
+        setPublications((cur) => cur.filter((p) => failures.some((f) => f.startsWith(`${PUB_LABEL[p]}:`))));
+        throw new Error(`${created > 0 ? `Published to ${created} market(s). ` : ''}Failed — ${failures.join('; ')}`);
       }
       onCreated();
     } catch (err) {
@@ -968,17 +984,20 @@ function CreateModal({
 
         <div className="px-6 py-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Publication">
-              <select
-                value={publication}
-                onChange={(e) => setPublication(e.target.value as NewsArticle['publication'])}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
-              >
-                <option value="austin">Austin</option>
-                <option value="san_antonio">San Antonio</option>
-                <option value="houston">Houston</option>
-                <option value="dallas">Dallas / Ft. Worth</option>
-              </select>
+            <Field label="Publish to markets">
+              <div className="flex flex-wrap gap-x-4 gap-y-2 py-1">
+                {(Object.keys(PUB_LABEL) as Array<NewsArticle['publication']>).map((id) => (
+                  <label key={id} className="inline-flex items-center gap-2 text-sm text-gray-800 min-h-[32px] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={publications.includes(id)}
+                      onChange={() => togglePublication(id)}
+                      className="h-4 w-4 rounded border-gray-300 accent-brand-700"
+                    />
+                    {PUB_LABEL[id]}
+                  </label>
+                ))}
+              </div>
             </Field>
             <Field label="Published date">
               <input
