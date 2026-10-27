@@ -24,3 +24,13 @@ test('market brand follows the client market', () => {
   assert.equal(t.brandForMarket('san_antonio').brand, 'Newsline San Antonio');
   assert.equal(t.brandForMarket(null).brand, 'RealtyLine Austin');
 });
+
+test('ACH variant: bank-account wording and ach-only link', () => {
+  const url = t.achSetupUrl('https://x.app/pay/setup/a.b.c');
+  assert.equal(url, 'https://x.app/pay/setup/a.b.c?method=ach');
+  assert.equal(t.achSetupUrl(url), url);
+  const r = t.renderPaymentMethodTemplate('austin', { client_first_name: 'Jo', payment_setup_url: url }, 'ach');
+  assert.match(r.body, /bank account for ACH debit/);
+  assert.match(r.body, /Securely Add Bank Account \(ACH\)/);
+  assert.doesNotMatch(r.body, /card or bank account/);
+});
