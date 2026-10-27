@@ -141,9 +141,10 @@ export function DepositReport({ kind, payments, from, to, preparedBy }: { kind: 
 function PrintSlip({ title, slip, rows, byDay, total, from, to, preparedBy }: { title: string; slip: boolean; rows: DepositPaymentRow[]; byDay: Array<{ day: string; count: number; cents: number }>; total: number; from: string; to: string; preparedBy: string | null }) {
   const th = 'border-b border-black px-1.5 py-1 text-left font-semibold';
   const td = 'border-b border-gray-300 px-1.5 py-1 align-top';
+  const hasMemo = rows.some((p) => p.memo?.trim());
   return (
     <div className="deposit-print hidden text-[10px] leading-snug text-black print:block">
-      <style>{`@media print { @page { size: letter portrait; margin: 0.5in; } .deposit-print table { border-collapse: collapse; width: 100%; } .deposit-print tr { break-inside: avoid; } .deposit-print thead { display: table-header-group; } }`}</style>
+      <style>{`@media print { @page { size: letter portrait; margin: 0.5in; } .deposit-print table { border-collapse: collapse; width: 100%; } .deposit-print tr { break-inside: avoid; } .deposit-print thead { display: table-header-group; } .deposit-print th, .deposit-print td { font-size: 10px !important; line-height: 1.35 !important; text-transform: none !important; letter-spacing: 0 !important; } .deposit-print th { white-space: nowrap; } html, body, body * { min-height: 0 !important; } }`}</style>
       <div className="flex items-end justify-between border-b-2 border-black pb-2">
         <div>
           <div className="text-[9px] uppercase tracking-[0.2em]">Caxton Publications, Inc.</div>
@@ -170,7 +171,7 @@ function PrintSlip({ title, slip, rows, byDay, total, from, to, preparedBy }: { 
       ) : (
         <table className="mt-3">
           <thead><tr>
-            <th className={`${th} w-6`}>#</th><th className={th}>Date</th><th className={th}>Partner</th><th className={th}>Invoice</th><th className={th}>Check no.</th><th className={th}>Memo</th><th className={`${th} text-right`}>Amount</th>
+            <th className={`${th} w-6`}>#</th><th className={th}>Date</th><th className={th}>Partner</th><th className={th}>Invoice</th><th className={th}>Check no.</th>{hasMemo && <th className={th}>Memo</th>}<th className={`${th} text-right`}>Amount</th>
           </tr></thead>
           <tbody>{rows.map((p, n) => (
             <tr key={p.id}>
@@ -179,11 +180,11 @@ function PrintSlip({ title, slip, rows, byDay, total, from, to, preparedBy }: { 
               <td className={td}>{p.partner_name ?? '—'}{pubLabel(p.publication) && <span className="text-gray-600"> · {pubLabel(p.publication)}</span>}</td>
               <td className={`${td} whitespace-nowrap`}>{p.invoice_number ?? 'Draft'}</td>
               <td className={`${td} whitespace-nowrap font-semibold`}>{p.reference?.trim() || '—'}</td>
-              <td className={td}>{p.memo?.trim() || ''}</td>
+              {hasMemo && <td className={td}>{p.memo?.trim() || ''}</td>}
               <td className={`${td} whitespace-nowrap text-right tabular-nums`}>{formatCents(p.amount_cents)}</td>
             </tr>
           ))}</tbody>
-          <tfoot><tr><td colSpan={6} className="border-t-2 border-black px-1.5 py-1.5 text-right font-bold">{slip ? 'Total deposit' : 'Total'}</td><td className="border-t-2 border-black px-1.5 py-1.5 text-right font-bold tabular-nums">{formatCents(total)}</td></tr></tfoot>
+          <tfoot><tr><td colSpan={hasMemo ? 6 : 5} className="border-t-2 border-black px-1.5 py-1.5 text-right font-bold">{slip ? 'Total deposit' : 'Total'}</td><td className="border-t-2 border-black px-1.5 py-1.5 text-right font-bold tabular-nums">{formatCents(total)}</td></tr></tfoot>
         </table>
       )}
       {slip && (
