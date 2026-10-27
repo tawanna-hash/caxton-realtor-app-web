@@ -15,7 +15,7 @@ import { stripeSafeEmail } from '@/lib/stripe-email';
 import { getSql, ensureSchema } from '@/lib/db';
 import { withNeonTransaction } from '@/lib/server/db/neon';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
-import { paymentMethodLabel, processingFeeCents } from '@/lib/payment-processing-fees';
+import { paymentMethodLabel, processingFeeCents, type InvoicePaymentMethod } from '@/lib/payment-processing-fees';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 import { resolveEmailSenderAddress } from '@/lib/email-sender';
 import { ensurePublicationColumn } from '@/lib/publication-theme';
@@ -50,6 +50,8 @@ export interface CreateInvoiceCheckoutSessionParams {
   invoiceId: string;
   createdBy: string | null;
   sendEmail: boolean;
+  /** Client-chosen method; defaults to card. */
+  paymentMethod?: InvoicePaymentMethod;
   emailMode?: 'invoice' | 'reminder';
   emailFrom?: string;
   emailTo?: string;
@@ -133,13 +135,14 @@ export async function createInvoiceCheckoutSession(
   });
 
   const stripe = getStripe();
-  const feeCents = processingFeeCents(inv.balance_cents, 'card');
+  const pm: InvoicePaymentMethod = params.paymentMethod ?? 'card';
+  const feeCents = processingFeeCents(inv.balance_cents, pm);
   const chargeCents = inv.balance_cents + feeCents;
   let session;
   try {
     session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: ['card'],
+      payment_method_types: pm === 'ach' ? ['us_bank_account'] : pm === 'bnpl' ? ['affirm', 'afterpay_clearpay', 'klarna'] : ['card'],
       customer_email: stripeSafeEmail(inv.bill_to_email),
       line_items: [
         {
@@ -158,7 +161,7 @@ export async function createInvoiceCheckoutSession(
             currency: 'usd',
             unit_amount: feeCents,
             product_data: {
-              name: `${paymentMethodLabel('card')} processing fee`,
+              name: `${paymentMethodLabel(pm)} processing fee`,
               description: 'Processing fee disclosed before payment authorization',
             },
           },
@@ -171,7 +174,7 @@ export async function createInvoiceCheckoutSession(
         source: 'invoice_payment',
         invoice_id: inv.id,
         invoice_number: inv.number,
-        payment_method_selection: 'card',
+        payment_method_selection: pm,
         base_amount_cents: String(inv.balance_cents),
         processing_fee_cents: String(feeCents),
         charge_total_cents: String(chargeCents),
@@ -181,7 +184,7 @@ export async function createInvoiceCheckoutSession(
           source: 'invoice_payment',
           invoice_id: inv.id,
           invoice_number: inv.number,
-          payment_method_selection: 'card',
+          payment_method_selection: pm,
           base_amount_cents: String(inv.balance_cents),
           processing_fee_cents: String(feeCents),
           charge_total_cents: String(chargeCents),

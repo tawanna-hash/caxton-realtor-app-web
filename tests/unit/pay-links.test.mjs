@@ -28,3 +28,10 @@ test('stripe-safe email keeps one valid address only', () => {
   assert.equal(mail.stripeSafeEmail('bad'), undefined);
   assert.equal(mail.stripeSafeEmail(null), undefined);
 });
+
+test('payment method fees for the client chooser', async () => {
+  const f = await jiti.import('../../lib/payment-processing-fees.ts');
+  assert.equal(f.processingFeeCents(100000, 'card'), 3000);
+  assert.equal(f.processingFeeCents(100000, 'ach'), 500);
+  assert.equal(f.INVOICE_PAYMENT_METHODS.length, 3);
+});
