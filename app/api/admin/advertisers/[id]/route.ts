@@ -418,6 +418,33 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       }
     }
 
+    // Carry a changed billing email onto this partner's open invoices (they
+    // snapshot bill_to_email when created) so invoice emails, payment links
+    // and statements all use the new address. Paid/void invoices are history
+    // and stay untouched; deliberate per-invoice overrides are left alone.
+    if (updates.includes('billing_email')) {
+      try {
+        const next = (rows[0] as { billing_email?: string | null } | undefined)?.billing_email?.trim() || null;
+        if (next) {
+          await sql`
+            UPDATE invoices i
+               SET bill_to_email = ${next}
+              FROM advertisers a
+             WHERE i.advertiser_id = ${idNum} AND a.id = i.advertiser_id
+               AND i.status NOT IN ('paid', 'void')
+               AND (
+                 COALESCE(btrim(i.bill_to_email), '') = ''
+                 OR lower(i.bill_to_email) = lower(COALESCE(a.contact_email, ''))
+                 OR lower(i.bill_to_email) = lower(COALESCE(a.portal_email, ''))
+                 OR lower(i.bill_to_email) = lower(COALESCE(${previousBillingEmail}, ''))
+               )
+          `;
+        }
+      } catch (err) {
+        console.warn('[admin/advertisers PATCH] invoice email sync failed:', err);
+      }
+    }
+
     // Mirror identity edits back onto the current agreement so the
     // Billing tab reflects CRM edits. Only fires when an identity column
     // changed (name/company/address/etc.), to avoid stomping billing
