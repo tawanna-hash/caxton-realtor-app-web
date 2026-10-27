@@ -11,6 +11,8 @@ import {
   MARKET_BRANDS,
   renderPaymentMethodHtml,
   unresolvedPlaceholders,
+  ACH_TEMPLATE_NAME,
+  PAYMENT_METHOD_TEMPLATE_NAME,
   type PaymentMethodFields,
   type TemplateMarket,
 } from '@/lib/agreements-v2/payment-method-template';
@@ -23,12 +25,12 @@ const FIELDS: Array<[keyof PaymentMethodFields, string, string]> = [
   ['payment_setup_url', 'Secure payment setup link', 'https://…'],
 ];
 
-export default function PaymentMethodTemplate({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function PaymentMethodTemplate({ open, onClose, variant = 'any' }: { open: boolean; onClose: () => void; variant?: 'any' | 'ach' }) {
   const [market, setMarket] = useState<TemplateMarket>('austin');
   const [fields, setFields] = useState<PaymentMethodFields>({});
   const [copied, setCopied] = useState<string | null>(null);
-  const out = useMemo(() => renderPaymentMethodHtml(market, fields), [market, fields]);
-  const missing = useMemo(() => unresolvedPlaceholders(market, fields), [market, fields]);
+  const out = useMemo(() => renderPaymentMethodHtml(market, fields, { variant }), [market, fields, variant]);
+  const missing = useMemo(() => unresolvedPlaceholders(market, fields, variant), [market, fields, variant]);
   const [view, setView] = useState<'preview' | 'text'>('preview');
   const [testTo, setTestTo] = useState('tawanna@myrealtyline.com');
   const [sending, setSending] = useState(false);
@@ -60,7 +62,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
     if (!agId) return;
     setLinking(true); setLinkMsg(null);
     try {
-      const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'link', advertiser_id: Number(agId) }) });
+      const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'link', variant, advertiser_id: Number(agId) }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { setLinkMsg({ ok: false, t: j.error ?? 'Could not create the link.' }); return; }
       setMarket(j.market); setFields((f) => { const next: PaymentMethodFields = { ...f }; for (const [k, v] of Object.entries(j.fields as PaymentMethodFields)) if (v) next[k as keyof PaymentMethodFields] = v; return next; });
@@ -72,7 +74,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
   async function sendTest() {
     setSending(true); setSendMsg(null);
     try {
-      const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ market, fields, to: testTo }) });
+      const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ variant, market, fields, to: testTo }) });
       const j = await r.json().catch(() => ({}));
       setSendMsg(r.ok ? { ok: true, t: `Test sent to ${j.to} from ${j.from}.${j.logged ? ' Saved to the client file.' : ''}` } : { ok: false, t: j.detail ?? j.error ?? 'Test could not be sent.' });
     } catch { setSendMsg({ ok: false, t: 'Test could not be sent.' }); } finally { setSending(false); }
@@ -81,7 +83,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
   async function sendReal() {
     setRealSending(true); setRealMsg(null);
     try {
-      const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'send', market, fields, to: toList, cc: ccList }) });
+      const r = await fetch('/api/admin/agreements-v2/payment-method-template', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'send', variant, market, fields, to: toList, cc: ccList }) });
       const j = await r.json().catch(() => ({}));
       setRealMsg(r.ok ? { ok: true, t: `Sent to ${[...(j.to ?? []), ...(j.cc ?? [])].join(', ')} from ${j.from}.${j.logged ? ' Saved to the client file.' : ''}` } : { ok: false, t: j.detail ?? j.error ?? 'Email could not be sent.' });
     } catch { setRealMsg({ ok: false, t: 'Email could not be sent.' }); } finally { setRealSending(false); }
@@ -101,11 +103,11 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" role="dialog" aria-modal="true" aria-label="Payment Method Setup template" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" role="dialog" aria-modal="true" aria-label={variant === 'ach' ? ACH_TEMPLATE_NAME : PAYMENT_METHOD_TEMPLATE_NAME} onClick={onClose}>
       <div className="w-full max-w-4xl space-y-5 rounded-[12px] bg-white p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Payment Method Setup</h2>
+            <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">{variant === 'ach' ? ACH_TEMPLATE_NAME : PAYMENT_METHOD_TEMPLATE_NAME}</h2>
             <p className={A.subtitle}>The company name, sender and contact details follow the client&apos;s market.</p>
           </div>
           <button type="button" className={A.small} onClick={onClose}>Close</button>
@@ -134,7 +136,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
                 <input className={A.input} placeholder={ph} value={fields[key] ?? ''} onChange={(e) => setFields((f) => ({ ...f, [key]: e.target.value }))} />
               </label>
             ))}
-            <p className="text-xs text-[color:var(--ds-body)]">Leave Agreement blank for clients without one — that line is left out. Other blank fields keep their {'{{placeholder}}'}. The secure link opens Stripe&apos;s payment window directly (card, Apple Pay, Link or bank account). No charge is made.</p>
+            <p className="text-xs text-[color:var(--ds-body)]">Leave Agreement blank for clients without one — that line is left out. Other blank fields keep their {'{{placeholder}}'}. The secure link opens Stripe&apos;s payment window directly ({variant === 'ach' ? 'bank account (ACH debit) only' : 'card, Apple Pay, Link or bank account'}). No charge is made.</p>
           </div>
 
           <div className="space-y-3">

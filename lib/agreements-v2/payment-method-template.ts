@@ -43,6 +43,28 @@ export function brandForMarket(market: string | null | undefined): MarketBrand {
 export const PAYMENT_METHOD_TEMPLATE_ID = 'builtin-payment-method-setup';
 export const PAYMENT_METHOD_TEMPLATE_NAME = 'Payment Method Setup';
 
+export const ACH_TEMPLATE_ID = 'builtin-ach-debit-setup';
+export const ACH_TEMPLATE_NAME = 'ACH Debit Payment Setup';
+export type TemplateVariant = 'any' | 'ach';
+
+/** ACH variant: same email, bank-account (ACH debit) wording, and an ACH-only Stripe link. */
+function toAch(s: string): string {
+  return s
+    .replace(/Add your payment method/g, 'Set up ACH debit')
+    .replace(/Please add a card or bank account \(ACH\)/g, 'Please add a bank account for ACH debit')
+    .replace(/If you choose a bank account, Stripe may send/g, 'Stripe may send')
+    .replace(/Securely Add Payment Method/g, 'Securely Add Bank Account (ACH)')
+    .replace(/Please don't email your card or bank account details/g, "Please don't email your bank account or routing numbers")
+    .replace(/By saving a payment method on the secure page, you authorize (\{\{BRAND\}\}|[^<]*?) to save it/g, 'By saving a bank account on the secure page, you authorize $1 to save it')
+    .replace(/use it for payments/g, 'debit it by ACH for payments')
+    .replace(/use it for your advertising payments/g, 'debit it by ACH for your advertising payments')
+    .replace(/we have not yet received a payment method/g, 'we have not yet received a bank account');
+}
+/** Append ?method=ach to a setup link so Stripe offers bank account only. */
+export function achSetupUrl(url: string): string {
+  return /[?&]method=ach\b/.test(url) ? url : `${url}${url.includes('?') ? '&' : '?'}method=ach`;
+}
+
 export const PAYMENT_METHOD_SUBJECT = 'Add your payment method — {{BRAND}}';
 
 export const PAYMENT_METHOD_BODY = `Hi {{client_first_name}},
@@ -76,7 +98,7 @@ export type PaymentMethodFields = {
 };
 
 /** Fill market tokens always; client fields only when provided (blank keeps the placeholder). */
-export function renderPaymentMethodTemplate(market: string | null | undefined, fields: PaymentMethodFields = {}) {
+export function renderPaymentMethodTemplate(market: string | null | undefined, fields: PaymentMethodFields = {}, variant: TemplateVariant = 'any') {
   const b = brandForMarket(market);
   const vals: Record<string, string> = {
     BRAND: b.brand,
@@ -93,14 +115,15 @@ export function renderPaymentMethodTemplate(market: string | null | undefined, f
         .replace('Agreement: {{agreement_name_or_number}}\n', '')
         .replace('in your advertising agreement.', 'stated below.')
         .replace('for payments under agreement {{agreement_name_or_number}}, according to', 'for your advertising payments, according to');
-  return { brand: b, from: `Tawanna Verock <${b.sender_email}>`, subject: fill(PAYMENT_METHOD_SUBJECT), body: fill(body) };
+  const x = variant === 'ach' ? toAch : (t: string) => t;
+  return { brand: b, from: `Tawanna Verock <${b.sender_email}>`, subject: fill(x(PAYMENT_METHOD_SUBJECT)), body: fill(x(body)) };
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /** Branded HTML email: real button for the setup link, market brand in header and footer. */
-export function renderPaymentMethodHtml(market: string | null | undefined, fields: PaymentMethodFields = {}, opts: { reminder?: boolean } = {}) {
-  const r = renderPaymentMethodTemplate(market, fields);
+export function renderPaymentMethodHtml(market: string | null | undefined, fields: PaymentMethodFields = {}, opts: { reminder?: boolean; variant?: TemplateVariant } = {}) {
+  const r = renderPaymentMethodTemplate(market, fields, opts.variant);
   if (opts.reminder) r.subject = `Reminder: ${r.subject}`;
   const b = r.brand;
   const v = (k: keyof PaymentMethodFields) => (fields[k]?.trim() ? esc(fields[k]!.trim()) : `{{${k}}}`);
@@ -130,17 +153,17 @@ ${hasAg ? row('Agreement', v('agreement_name_or_number')) : ''}${row('Payment am
 </td></tr>
 <tr><td style="padding:16px 28px;background:#ffffff;border-top:1px solid #E2DFEC;font-size:12px;color:#4E4B66;"><a href="mailto:${b.sender_email}" style="color:#4E4B66;">${b.sender_email}</a> · <a href="https://${b.domain}" style="color:#4E4B66;">${b.domain}</a></td></tr>
 </table></td></tr></table></body></html>`;
-  return { ...r, html };
+  return { ...r, html: opts.variant === 'ach' ? toAch(html) : html };
 }
 
 /** Placeholders that would still show as {{like_this}} in the email. Used to block sending. */
-export function unresolvedPlaceholders(market: string | null | undefined, fields: PaymentMethodFields = {}): string[] {
-  const body = renderPaymentMethodTemplate(market, fields).body;
+export function unresolvedPlaceholders(market: string | null | undefined, fields: PaymentMethodFields = {}, variant: TemplateVariant = 'any'): string[] {
+  const body = renderPaymentMethodTemplate(market, fields, variant).body;
   return [...new Set([...body.matchAll(/\{\{\s*([A-Za-z_]+)\s*\}\}/g)].map((m) => m[1]))];
 }
 
 /** Plain-text alternative for the HTML email (setup link included). */
-export function renderPaymentMethodText(market: string | null | undefined, fields: PaymentMethodFields = {}, opts: { reminder?: boolean } = {}): string {
-  const body = renderPaymentMethodTemplate(market, fields).body;
+export function renderPaymentMethodText(market: string | null | undefined, fields: PaymentMethodFields = {}, opts: { reminder?: boolean; variant?: TemplateVariant } = {}): string {
+  const body = renderPaymentMethodTemplate(market, fields, opts.variant).body;
   return opts.reminder ? `A quick reminder: we have not yet received a payment method for this account.\n\n${body}` : body;
 }

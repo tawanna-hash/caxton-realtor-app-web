@@ -28,10 +28,12 @@ async function start(req: NextRequest, ctx: Ctx) {
     const t = await loadSetupTarget(v.subject);
     if (!t) return back('error=invalid');
     const base = req.nextUrl.origin;
+    const ach = req.nextUrl.searchParams.get('method') === 'ach';
+    const q = ach ? '&method=ach' : '';
     const url = await createSetupCheckoutSession(t, {
-      methods: ['card', 'us_bank_account'],
-      successUrl: `${base}/pay/setup/${token}?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${base}/pay/setup/${token}?canceled=1`,
+      methods: ach ? ['us_bank_account'] : ['card', 'us_bank_account'],
+      successUrl: `${base}/pay/setup/${token}?session_id={CHECKOUT_SESSION_ID}${q}`,
+      cancelUrl: `${base}/pay/setup/${token}?canceled=1${q}`,
     });
     if (!url) return back('error=unavailable');
     return NextResponse.redirect(url, 303);

@@ -52,7 +52,7 @@ export default async function PaymentSetupPage({ params, searchParams }: Props) 
   }
   // One click from the email: with no result/error/cancel on the URL, go
   // straight to Stripe's payment window instead of showing an extra page.
-  if (!one(sp.session_id) && !one(sp.canceled) && !one(sp.error) && !one(sp.info)) redirect(`/api/pay/setup/${token}`);
+  if (!one(sp.session_id) && !one(sp.canceled) && !one(sp.error) && !one(sp.info)) redirect(`/api/pay/setup/${token}${one(sp.method) === 'ach' ? '?method=ach' : ''}`);
   const brand = t.brand;
   const first = t.firstName;
   const ag = t.agreement;
