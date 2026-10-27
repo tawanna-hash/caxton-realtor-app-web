@@ -239,23 +239,22 @@ export function RowMenu({ items, label = 'More actions', plain = false }: { item
   const [pos, setPos] = useState<{ top: number; right: number; maxHeight: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const shownCount = useRef(0);
 
-  // Anchor the fixed menu to its button; flip above when there is more room there.
+  // Anchor the fixed menu to its button using the menu's real height: open
+  // below when it fits, otherwise above, and keep it on screen while scrolling.
   const place = () => {
     const b = btnRef.current; if (!b) return;
     const r = b.getBoundingClientRect();
-    const below = window.innerHeight - r.bottom - 12;
-    const above = r.top - 12;
-    const right = Math.max(8, window.innerWidth - r.right);
-    let top: number; let maxHeight: number;
-    if (below >= 320 || below >= above) { top = r.bottom + 6; maxHeight = Math.max(160, below); }
-    else { maxHeight = Math.min(above, 640); top = r.top - 6 - maxHeight; }
-    // Keep the open menu on screen while the page scrolls, even when its row
-    // scrolls under the sticky header or off the bottom. It closes only on an
-    // outside click or a menu choice.
     const vh = window.innerHeight;
-    maxHeight = Math.min(maxHeight, vh - 16);
-    top = Math.min(Math.max(top, 8), vh - 8 - Math.min(maxHeight, 640));
+    const right = Math.max(8, window.innerWidth - r.right);
+    const natural = menuRef.current?.scrollHeight ?? shownCount.current * 31 + 10;
+    const maxHeight = Math.min(natural, vh - 16);
+    const below = vh - r.bottom - 14;
+    const above = r.top - 14;
+    let top = maxHeight <= below || below >= above ? r.bottom + 6 : r.top - 6 - maxHeight;
+    top = Math.min(Math.max(top, 8), vh - 8 - maxHeight);
     setPos({ top, right, maxHeight });
   };
 
@@ -265,13 +264,15 @@ export function RowMenu({ items, label = 'More actions', plain = false }: { item
     const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) close(); };
     // Scrolling the page keeps the menu open and follows the button; scrolling inside the menu is ignored.
     const onScroll = (e: Event) => { if (ref.current && e.target instanceof Node && ref.current.contains(e.target)) return; place(); };
+    const raf = requestAnimationFrame(place); // re-measure once the menu has rendered
     document.addEventListener('mousedown', onDoc);
     window.addEventListener('scroll', onScroll, true);
     window.addEventListener('resize', place);
-    return () => { document.removeEventListener('mousedown', onDoc); window.removeEventListener('scroll', onScroll, true); window.removeEventListener('resize', place); };
+    return () => { cancelAnimationFrame(raf); document.removeEventListener('mousedown', onDoc); window.removeEventListener('scroll', onScroll, true); window.removeEventListener('resize', place); };
   }, [open]);
 
   const shown = items.filter((i) => i.label);
+  shownCount.current = shown.length;
   if (shown.length === 0) return null;
   return (
     <div ref={ref} className="inline-block">
@@ -291,7 +292,7 @@ export function RowMenu({ items, label = 'More actions', plain = false }: { item
         <span aria-hidden="true" className={plain ? 'inline-block rotate-90' : undefined}>⋯</span>
       </button>
       {open && pos && (
-        <div role="menu" style={{ position: 'fixed', top: pos.top, right: pos.right, maxHeight: pos.maxHeight, overflowY: 'auto', overscrollBehavior: 'contain' }} className="z-[100] w-56 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
+        <div ref={menuRef} role="menu" style={{ position: 'fixed', top: pos.top, right: pos.right, maxHeight: pos.maxHeight, overflowY: 'auto', overscrollBehavior: 'contain' }} className="z-[100] w-56 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
           {shown.map((i) => {
             const cls = `block w-full rounded-[10px] px-3 py-2 text-left text-sm ${i.danger ? 'text-red-700' : 'text-[color:var(--ds-ink)]'} hover:bg-[color:var(--ds-hover)] disabled:opacity-50`;
             return i.href ? (
