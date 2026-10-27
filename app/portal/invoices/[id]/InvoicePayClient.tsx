@@ -161,6 +161,7 @@ export default function InvoicePayClient({
       setError('Could not start checkout. Please try again.');
       setMode('idle');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoice.id, paymentMethod, payCents, fullDueCents]);
 
   const fetchClientSecret = useCallback(async () => {
@@ -174,6 +175,7 @@ export default function InvoicePayClient({
       throw new Error(data.error ?? 'Could not start checkout.');
     }
     return data.client_secret as string;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoice.id, paymentMethod, payCents, fullDueCents]);
 
   return (
@@ -307,7 +309,7 @@ export default function InvoicePayClient({
             <h1 className="text-2xl font-normal tracking-wide text-neutral-900">INVOICE</h1>
             <div className="mt-1 font-semibold">Caxton Publications, Inc.</div>
             <div>PO Box 81366</div>
-            <div>Austin, Texas 78708-1366</div>
+            <div>Austin, Texas 78708</div>
             <div>United States</div>
             <div className="mt-2">www.myrealtyline.com</div>
           </div>

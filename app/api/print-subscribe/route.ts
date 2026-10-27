@@ -300,7 +300,7 @@ function confirmationEmailHtml(p: SubscribePayload, usps: AddressCheckResult): s
   <p style="color: #7A7787; font-size: 12px; margin: 40px 0 0; padding-top: 20px; border-top: 1px solid #E6E5EC;">
     Realty News Now<br/>
     a Caxton Publications, Inc. brand<br/>
-    P.O. Box 81366, Austin, TX 78708-1366<br/>
+    P.O. Box 81366, Austin, TX 78708<br/>
     (512) 965-0057
   </p>
 </div>`.trim();

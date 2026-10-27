@@ -643,7 +643,7 @@ export function renderPartnerStatementEmail(
       <img src="${APP_BASE_URL}/brand/caxton-logo.jpg" width="112" alt="Caxton Publications Inc." style="height:auto;object-fit:contain">
       <div style="text-align:right;font-size:12px;line-height:1.45">
         <div style="font-size:24px;letter-spacing:.06em;color:#1B1726">STATEMENT</div>
-        <strong>Caxton Publications, Inc.</strong><br>PO Box 81366<br>Austin, Texas 78708-1366<br>United States
+        <strong>Caxton Publications, Inc.</strong><br>PO Box 81366<br>Austin, Texas 78708<br>United States
       </div>
     </div>
     <div style="font-size:14px;line-height:1.6;padding:22px 0">${messageHtml}</div>

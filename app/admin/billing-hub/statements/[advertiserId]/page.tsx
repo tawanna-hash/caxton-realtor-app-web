@@ -164,6 +164,7 @@ export default async function StatementPage({
   if (invoices.length === 0) notFound();
 
   const billTo = billingRows[0] ?? invoices[0];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const recipient =
     advertiser.billing_email?.trim() ||
     billTo.bill_to_email?.trim() ||
@@ -208,9 +209,11 @@ export default async function StatementPage({
         LIMIT 1
       `) as unknown as Array<{ checkout_url: string | null }>
     : [];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const overduePaymentLinkUrl = isSafeHttpUrl(existingStatementLinks[0]?.checkout_url)
     ? existingStatementLinks[0].checkout_url
     : null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const generateStatementLink = generateStatementOverdueLink.bind(null, advertiser.id);
 
   return (
@@ -243,7 +246,7 @@ export default async function StatementPage({
             <div className="text-2xl tracking-wide text-neutral-900">STATEMENT</div>
             <div className="mt-1 font-semibold">Caxton Publications, Inc.</div>
             <div>PO Box 81366</div>
-            <div>Austin, Texas 78708-1366</div>
+            <div>Austin, Texas 78708</div>
             <div>United States</div>
             <div className="mt-2">www.realtynewsnow.app</div>
           </div>

@@ -328,7 +328,7 @@ export default function PrivacyPage() {
                 <br />
                 P.O. Box 81366
                 <br />
-                Austin, Texas 78708-1366
+                Austin, Texas 78708
               </span>
             </p>
           </div>

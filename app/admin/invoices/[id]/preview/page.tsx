@@ -125,7 +125,7 @@ export default async function InvoicePreviewPage({
             <div className="text-2xl tracking-wide text-neutral-900">INVOICE</div>
             <div className="mt-1 font-semibold">Caxton Publications, Inc.</div>
             <div>PO Box 81366</div>
-            <div>Austin, Texas 78708-1366</div>
+            <div>Austin, Texas 78708</div>
             <div>United States</div>
             <div className="mt-2">www.realtynewsnow.app</div>
           </div>

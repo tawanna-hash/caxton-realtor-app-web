@@ -71,7 +71,7 @@ All notices under this Agreement must be in writing.
 7.1 Notices to Publisher
 Notices to Publisher must be sent by one of the following methods:
 • personal delivery;
-• U.S. mail to: Caxton Publications, Inc., P.O. Box 81366, Austin, Texas 78708-1366; or
+• U.S. mail to: Caxton Publications, Inc., P.O. Box 81366, Austin, Texas 78708; or
 • email to tawanna@realtynewsnow.app or tawanna@realtynewsnow.app, provided that Publisher confirms receipt.
 7.2 Notices to Advertiser or Agency
 Publisher may send notices to the email address, mailing address, or other contact information listed in the Insertion Order. Notice to Agency constitutes notice to Advertiser, and notice to Advertiser constitutes notice to Agency.
@@ -101,7 +101,7 @@ Publisher accepts:
 • major credit and debit cards;
 • ACH bank payments;
 • buy now, pay later services offered by Publisher at checkout (currently Affirm, Afterpay / Clearpay, and Klarna), subject to the provider’s eligibility requirements and terms; and
-• checks payable to Caxton Publications, Inc., mailed to P.O. Box 81366, Austin, Texas 78708-1366.
+• checks payable to Caxton Publications, Inc., mailed to P.O. Box 81366, Austin, Texas 78708.
 9.5 Electronic Payment Processing Fees
 Where permitted by applicable law and card-network rules, a processing fee is added to electronic payments made through Publisher’s online payment pages. The fee is shown at checkout before Advertiser authorizes payment, and it is in addition to the invoice amount:
 • credit or debit card: three percent (3%) of the amount paid;

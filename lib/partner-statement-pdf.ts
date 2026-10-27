@@ -81,7 +81,7 @@ export async function generatePartnerStatementPdf(statement: PartnerStatement): 
     rightText(page, continued ? 'STATEMENT - CONTINUED' : 'STATEMENT', PAGE_W - MARGIN, y - 18, regular, continued ? 15 : 23);
     rightText(page, 'Caxton Publications, Inc.', PAGE_W - MARGIN, y - 36, bold, 9);
     rightText(page, 'PO Box 81366', PAGE_W - MARGIN, y - 49, regular, 8);
-    rightText(page, 'Austin, Texas 78708-1366', PAGE_W - MARGIN, y - 61, regular, 8);
+    rightText(page, 'Austin, Texas 78708', PAGE_W - MARGIN, y - 61, regular, 8);
     rightText(page, 'United States', PAGE_W - MARGIN, y - 73, regular, 8);
     page.drawLine({ start: { x: MARGIN, y: y - 88 }, end: { x: PAGE_W - MARGIN, y: y - 88 }, thickness: 1, color: RULE });
     y -= 108;

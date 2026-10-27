@@ -121,7 +121,7 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ bytes: Ui
   right(page, 'INVOICE', PAGE_W - M, y - 20, regular, 23);
   right(page, 'Caxton Publications, Inc.', PAGE_W - M, y - 38, bold, 9);
   right(page, 'PO Box 81366', PAGE_W - M, y - 51, regular, 8);
-  right(page, 'Austin, Texas 78708-1366', PAGE_W - M, y - 63, regular, 8);
+  right(page, 'Austin, Texas 78708', PAGE_W - M, y - 63, regular, 8);
   right(page, 'United States', PAGE_W - M, y - 75, regular, 8);
   right(page, 'www.realtynewsnow.app', PAGE_W - M, y - 90, regular, 8);
   y -= 100;

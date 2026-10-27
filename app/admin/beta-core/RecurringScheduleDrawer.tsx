@@ -907,7 +907,7 @@ export function RecurringScheduleDrawer({
                     Caxton Publications Inc.
                   </strong>
                   <br />
-                  PO Box 81366 · Austin, TX 78708-1366
+                  PO Box 81366 · Austin, TX 78708
                   <br />
                   {emailFrom} · realtynewsnow.app
                 </div>
@@ -1000,7 +1000,7 @@ export function RecurringScheduleDrawer({
               <br />
               PO Box 81366
               <br />
-              Austin, Texas 78708-1366
+              Austin, Texas 78708
             </div>
           </header>
           <div className="grid grid-cols-2 gap-8 py-4">
