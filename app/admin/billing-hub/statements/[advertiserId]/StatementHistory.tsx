@@ -14,8 +14,8 @@ export default function StatementHistory({ advertiserId, initial }: { advertiser
   const [rows, setRows] = useState(initial);
   const [err, setErr] = useState('');
   async function del(r: Row) {
-    const typed = promptDeleteWithCopy('Permanent deletion cannot be undone. Type this statement history ID to delete it:', r.id);
-    if (typed !== r.id) { setErr('Not deleted: the typed ID did not match.'); return; }
+    const typed = await promptDeleteWithCopy('Permanent deletion cannot be undone. Copy or type this statement history ID to delete it:', r.id);
+    if (typed !== r.id) { if (typed === null) return; setErr('Not deleted: the typed ID did not match.'); return; }
     const res = await fetch(`/api/admin/advertisers/${advertiserId}/statement-history`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ history_id: r.id, permanent: true, confirmation_id: typed }) });
     const j = await res.json().catch(() => ({}));
     if (!res.ok) { setErr(j.error ?? 'Could not delete this history record.'); return; }

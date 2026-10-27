@@ -114,8 +114,8 @@ export default function RecurringPanel({ clientId = null }: { clientId?: number 
   };
   const del = async (s: Sch) => {
     if (s.status === 'active') { setErr('Pause the active schedule before permanent deletion.'); return; }
-    const typed = promptDeleteWithCopy('Permanent deletion cannot be undone. Type this schedule ID to delete it:', s.id);
-    if (typed !== s.id) { setErr('Schedule was not deleted: the typed ID did not match.'); return; }
+    const typed = await promptDeleteWithCopy('Permanent deletion cannot be undone. Copy or type this schedule ID to delete it:', s.id);
+    if (typed !== s.id) { if (typed === null) return; setErr('Schedule was not deleted: the typed ID did not match.'); return; }
     setErr('');
     try {
       const r = await fetch(`/api/admin/recurring-invoices/${s.id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ permanent: true, confirmation_id: typed }) });

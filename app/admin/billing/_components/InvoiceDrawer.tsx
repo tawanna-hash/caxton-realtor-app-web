@@ -397,8 +397,8 @@ export function InvoiceDrawer({
 
   const permanentlyDelete = async () => {
     if (!existing) return;
-    const confirmation = promptDeleteWithCopy('Permanent deletion cannot be undone. Type this invoice ID to delete it:', existing.id);
-    if (confirmation !== existing.id) { onError('Invoice was not deleted: the typed ID did not match.'); return; }
+    const confirmation = await promptDeleteWithCopy('Permanent deletion cannot be undone. Copy or type this invoice ID to delete it:', existing.id);
+    if (confirmation !== existing.id) { if (confirmation === null) return; onError('Invoice was not deleted: the typed ID did not match.'); return; }
     setSaving(true);
     try {
       const response = await fetch(`/api/admin/invoices/${existing.id}`, {
@@ -756,8 +756,8 @@ function PaymentHistoryRow({
 
   const referenceLabel = isCheckPayment(method) ? 'Check no.' : 'Reference';
   const deletePayment = async () => {
-    const confirmation = promptDeleteWithCopy('Permanent deletion cannot be undone. Type this payment ID to delete it:', payment.id);
-    if (confirmation !== payment.id) { setError('Payment was not deleted: the typed ID did not match.'); return; }
+    const confirmation = await promptDeleteWithCopy('Permanent deletion cannot be undone. Copy or type this payment ID to delete it:', payment.id);
+    if (confirmation !== payment.id) { if (confirmation === null) return; setError('Payment was not deleted: the typed ID did not match.'); return; }
     setSaving(true); setError(null);
     try {
       const response = await fetch(`/api/admin/invoice-payments/${payment.id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ permanent: true, confirmation_id: confirmation }) });

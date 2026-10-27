@@ -360,9 +360,9 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
     if (!window.confirm(`Void ${i.number ?? 'this invoice'}? This keeps the record but removes it from open receivables.`)) return;
     void run(async () => { await patch(i, { status: 'void' }); return `${i.number} voided.`; }, 'Could not void invoice.');
   };
-  const del = (i: Inv) => {
-    const typed = promptDeleteWithCopy('Permanent deletion cannot be undone. Type this invoice ID to delete it:', i.id);
-    if (typed !== i.id) { fail('Invoice was not deleted: the typed ID did not match.'); return; }
+  const del = async (i: Inv) => {
+    const typed = await promptDeleteWithCopy('Permanent deletion cannot be undone. Copy or type this invoice ID to delete it:', i.id);
+    if (typed !== i.id) { if (typed === null) return; fail('Invoice was not deleted: the typed ID did not match.'); return; }
     void run(async () => {
       const r = await fetch(`/api/admin/invoices/${i.id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ permanent: true, confirmation_id: typed }) });
       const j = await r.json().catch(() => ({}));
