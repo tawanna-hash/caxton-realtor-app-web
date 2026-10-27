@@ -697,6 +697,7 @@ export default function InteractiveMagazineReader({
   useEffect(() => {
     if (!doc || !spreads.length) return;
     let cancelled = false;
+    let prefetchTask: { promise: Promise<void>; cancel?: () => void } | null = null;
     const adj: number[] = [];
     const prev = spreads[currentSpreadIdx - 1];
     const next = spreads[currentSpreadIdx + 1];
@@ -733,7 +734,9 @@ export default function InteractiveMagazineReader({
           c.height = Math.round(fit.renderViewport.height);
           const cctx = c.getContext('2d');
           if (!cctx) continue;
-          await p.render({ canvasContext: cctx, viewport: fit.renderViewport }).promise;
+          prefetchTask = p.render({ canvasContext: cctx, viewport: fit.renderViewport });
+          await prefetchTask.promise;
+          prefetchTask = null;
           if (cancelled) return;
           pageCacheRef.current.set(key, c);
         } catch { /* noop */ }
@@ -746,6 +749,9 @@ export default function InteractiveMagazineReader({
     return () => {
       cancelled = true;
       clearTimeout(t);
+      // Stop a half-finished background render so it cannot hold up the
+      // worker while the user turns a page or zooms.
+      try { prefetchTask?.cancel?.(); } catch { /* noop */ }
     };
   }, [doc, currentSpreadIdx, spreads, currentSpread, fitPage, zoom]);
 
