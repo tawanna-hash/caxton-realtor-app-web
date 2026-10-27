@@ -7,7 +7,6 @@
  * No auth required; both sites expose /wp-json/wp/v2/posts publicly.
  */
 
-import { unstable_cache } from 'next/cache';
 import { logger } from './logger';
 import { authorPortrait, canonicalAuthorName } from '@/lib/article-author-profiles';
 import { canonicalArticleCategory } from '@/lib/article-categories';
@@ -490,7 +489,7 @@ function transformPost(
 // Public API — wrapped in unstable_cache for 30-minute revalidate
 // -----------------------------------------------------------------------------
 
-async function fetchNewsArticles(publication: Publication): Promise<NewsArticle[]> {
+export async function fetchNewsArticles(publication: Publication): Promise<NewsArticle[]> {
   if (publication !== 'austin' && publication !== 'san_antonio') return [];
   const cfg = PUBS[publication];
   const [categoryMap, posts] = await Promise.all([
@@ -511,96 +510,19 @@ async function fetchNewsArticles(publication: Publication): Promise<NewsArticle[
   return articles;
 }
 
-const cachedAustin = unstable_cache(() => fetchNewsArticles('austin'), ['wp-news', 'austin'], {
-  revalidate: CACHE_REVALIDATE_S,
-  tags: ['wp-news', 'wp-news:austin'],
-});
-
-const cachedSanAntonio = unstable_cache(
-  () => fetchNewsArticles('san_antonio'),
-  ['wp-news', 'san_antonio'],
-  { revalidate: CACHE_REVALIDATE_S, tags: ['wp-news', 'wp-news:san_antonio'] },
-);
-
 /**
- * Internal: returns the upstream-only article list.
- *
- * Admin uses this directly and we deliberately BYPASS unstable_cache so the
- * admin Articles page always reflects the true current state of WordPress.
- * (Next 16 deprecated unstable_cache and revalidateTag(tag, 'max') now uses
- * stale-while-revalidate, so the prior "sync revalidates, page re-renders"
- * flow returned stale data on the immediate next read. Admin is low traffic
- * — paying the WP roundtrip on every load is fine and is the most reliable
- * way to guarantee correctness.)
- *
- * Public callers should keep using getNews() which still goes through the
- * 30-minute cache.
+ * All articles now live in our own archive (wp_article_archive). WordPress was
+ * imported once, permanently, by ensureWordPressImported() and is never read
+ * again. Edits, deletes and multi-market copies are made on archive rows.
  */
 export async function getNewsRaw(publication: Publication): Promise<NewsArticle[]> {
-  const [archiveResult, upstreamResult] = await Promise.allSettled([
-    import('./article-archive').then(({ getArchivedArticles }) =>
-      getArchivedArticles(publication),
-    ),
-    fetchNewsArticles(publication),
-  ]);
-
-  const archived = archiveResult.status === 'fulfilled' ? archiveResult.value : [];
-  const upstream = upstreamResult.status === 'fulfilled' ? upstreamResult.value : [];
-  // Never throw here — an unreachable WordPress upstream (or an empty
-  // archive) should degrade to "show whatever we have" rather than surface
-  // as a page-level error banner. The admin page's `errors` array only
-  // exists to reflect a rejected promise; keeping this resolved always
-  // keeps that banner from appearing.
-  if (upstreamResult.status === 'rejected') {
-    console.warn(
-      `[wp-news] upstream fetch failed for ${publication}, serving archive only:`,
-      upstreamResult.reason,
-    );
-  }
-
-  const { mergeArchivedAndUpstream } = await import('./article-archive');
-  return mergeArchivedAndUpstream(archived, upstream).map(withKnownAuthor);
-}
-
-/** Public-cached variant used by the public feed (kept on unstable_cache). */
-async function getNewsCached(publication: Publication): Promise<NewsArticle[]> {
-  if (publication === 'austin') return cachedAustin();
-  if (publication === 'san_antonio') return cachedSanAntonio();
-  return [];
+  const { ensureWordPressImported } = await import('./wordpress-import');
+  await ensureWordPressImported();
+  const { getArchivedArticles } = await import('./article-archive');
+  const archived = await getArchivedArticles(publication);
+  return archived.map(withKnownAuthor);
 }
 
 export async function getNews(publication: Publication): Promise<NewsArticle[]> {
-  const [archiveResult, upstreamResult] = await Promise.allSettled([
-    import('./article-archive').then(({ getArchivedArticles }) =>
-      getArchivedArticles(publication),
-    ),
-    getNewsCached(publication),
-  ]);
-
-  const archived = archiveResult.status === 'fulfilled' ? archiveResult.value : [];
-  const upstream = upstreamResult.status === 'fulfilled' ? upstreamResult.value : [];
-  if (upstreamResult.status === 'rejected') {
-    console.warn(
-      `[wp-news] upstream fetch failed for ${publication}, serving archive only:`,
-      upstreamResult.reason,
-    );
-  }
-
-  const { mergeArchivedAndUpstream } = await import('./article-archive');
-  const combined = mergeArchivedAndUpstream(archived, upstream).map(withKnownAuthor);
-
-  // Apply admin overrides on top of upstream. Overrides are NOT inside the
-  // unstable_cache wrapper above, so edits take effect immediately without
-  // needing a Sync. Failures must not break the public feed.
-  try {
-    const { getAllOverridesForPublication, applyOverride } = await import('./article-overrides');
-    const overrides = await getAllOverridesForPublication(publication);
-    if (overrides.size === 0) return combined;
-    const merged = combined.map((a) => withKnownAuthor(applyOverride(a, overrides.get(a.id))));
-    // Filter out hidden articles for public consumers.
-    return merged.filter((a) => !(a as { hidden?: boolean }).hidden);
-  } catch (err) {
-    logger.warn({ err, publication }, 'Article overrides merge failed; serving upstream');
-    return combined;
-  }
+  return getNewsRaw(publication);
 }

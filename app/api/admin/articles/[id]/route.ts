@@ -20,6 +20,7 @@ import {
 import {
   isManualArticleId,
   getArticleGroupMembers,
+  getArchivedArticleByPostId,
   updateArchivedArticle,
   deleteArchivedArticle,
 } from '@/lib/server/article-archive';
@@ -130,7 +131,7 @@ export const PATCH = withAdminTracking(
     // table (keyed to a real wp_post_id) doesn't apply here. `wpPostId` here
     // is already the FULL article id, matching what article-archive.ts stores
     // in its own wp_post_id column.
-    if (isManualArticleId(wpPostId)) {
+    if (isManualArticleId(wpPostId) || (await getArchivedArticleByPostId(publication, wpPostId))) {
       // Copies published to several markets share a group id: apply the edit to
       // every market's copy, not just the one opened.
       const members = await getArticleGroupMembers(publication, wpPostId);
@@ -174,7 +175,7 @@ export const DELETE = withAdminTracking(
 
     // Manually-created articles are deleted outright — "revert to WordPress"
     // has no meaning for an article that never came from WordPress.
-    if (isManualArticleId(wpPostId)) {
+    if (isManualArticleId(wpPostId) || (await getArchivedArticleByPostId(publication, wpPostId))) {
       // Remove every market's copy of a multi-market article.
       const members = await getArticleGroupMembers(publication, wpPostId);
       let deleted = false;

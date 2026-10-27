@@ -109,14 +109,14 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     label: 'Print Issue',
     links: [
       { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions' },
-      { label: 'Monthly Articles', href: '/admin/articles', description: 'WordPress feeds, manual articles & advertiser features' },
+      { label: 'Monthly Articles', href: '/admin/articles', description: 'Multi-market articles & advertiser features' },
     ],
   },
   {
     label: 'Website',
     links: [
       { label: 'Trending',  href: '/admin/content/trending', description: 'Rotating feed ticker CTAs' },
-      { label: 'Monthly Articles', href: '/admin/articles', description: 'WordPress feeds, manual articles & advertiser features' },
+      { label: 'Monthly Articles', href: '/admin/articles', description: 'Multi-market articles & advertiser features' },
       { label: 'Event Images', href: '/admin/event-images', description: 'Event photo gallery' },
     ],
   },

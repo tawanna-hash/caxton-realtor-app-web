@@ -54,7 +54,7 @@ let schemaEnsured = false;
  * the `ensureXSchema()` pattern used by feature-articles.ts and
  * article-overrides.ts.
  */
-async function ensureArticleArchiveSchema(): Promise<void> {
+export async function ensureArticleArchiveSchema(): Promise<void> {
   if (schemaEnsured) return;
   // Table may already exist in production (created ad hoc before this file
   // had a write path). CREATE TABLE IF NOT EXISTS won't retroactively add a

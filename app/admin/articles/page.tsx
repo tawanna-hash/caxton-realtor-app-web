@@ -1,9 +1,4 @@
 import { getNewsRaw, type NewsArticle, type Publication } from '@/lib/server/wp-news';
-import {
-  getAllOverridesForPublication,
-  applyOverride,
-  type ArticleOverride,
-} from '@/lib/server/article-overrides';
 import { getSql } from '@/lib/db';
 import { listFeatureArticles } from '@/lib/feature-articles';
 import ArticlesClient, { type AdminArticle } from './ArticlesClient';
@@ -12,12 +7,9 @@ import { authorPortrait, canonicalAuthorName } from '@/lib/article-author-profil
 export const dynamic = 'force-dynamic';
 
 async function loadForPublication(publication: Publication): Promise<AdminArticle[]> {
-  const [upstream, overrides] = await Promise.all([
-    getNewsRaw(publication),
-    getAllOverridesForPublication(publication).catch((): Map<string, ArticleOverride> => new Map()),
-  ]);
+  const upstream = await getNewsRaw(publication);
   return upstream.map((a) => {
-    const merged = applyOverride(a, overrides.get(a.id));
+    const merged = a;
     const authorName = canonicalAuthorName(merged.author?.name || 'Staff', publication);
     return {
       ...(merged as NewsArticle),

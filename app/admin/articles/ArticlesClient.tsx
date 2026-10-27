@@ -160,9 +160,6 @@ function formatDate(iso: string | undefined): string {
 export default function ArticlesClient({ initialArticles, initialErrors }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [syncing, setSyncing] = useState(false);
-  const [syncError, setSyncError] = useState<string | null>(null);
-  const [syncedAt, setSyncedAt] = useState<string | null>(null);
   // Tab, filter, and search live in the URL so refresh/sharing preserves them.
   const [tab, setTab] = useUrlString<ArticlesTab>('tab', 'all');
   const [filter, setFilter] = useUrlString<PubFilter>('filter', 'all');
@@ -224,27 +221,6 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     setPage(1);
   };
 
-  async function handleSync() {
-    setSyncing(true);
-    setSyncError(null);
-    try {
-      const res = await fetch('/api/admin/articles/sync', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || `Sync failed (${res.status})`);
-      }
-      setSyncedAt(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
-      startTransition(() => router.refresh());
-    } catch (err) {
-      setSyncError(err instanceof Error ? err.message : 'Sync failed');
-    } finally {
-      setSyncing(false);
-    }
-  }
-
   function handleSaved() {
     setEditing(null);
     startTransition(() => router.refresh());
@@ -298,7 +274,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     }
   }
 
-  const busy = syncing || pending;
+  const busy = pending;
 
   return (
     <div className="content-admin-shell">
@@ -308,7 +284,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Content</p>
           <PageTitle size="md">Articles</PageTitle>
           <p className="text-sm text-gray-600 mt-1">
-            Monthly articles pulled from WordPress feeds plus featured partner articles, in one list. Edits are saved locally and applied instantly to the public app — WordPress is untouched. Use Sync now to refresh the upstream feed. Articles published to several markets update together.
+            Monthly articles plus featured partner articles, in one list. Everything lives in the app: edits apply instantly to the public app. Articles published to several markets update together.
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -336,49 +312,12 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             </button>
           <button
             type="button"
-            onClick={handleSync}
-            disabled={busy}
-            className="inline-flex items-center gap-2 rounded-md bg-[#301D5D] px-4 py-2 text-sm font-medium text-white hover:bg-[#42277C] disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
-          >
-            {busy ? (
-              <>
-                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                Syncing…
-              </>
-            ) : (
-              <>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="23 4 23 10 17 10" />
-                  <polyline points="1 20 1 14 7 14" />
-                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
-                  <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
-                </svg>
-                Sync now
-              </>
-            )}
-          </button>
-          <button
-            type="button"
             onClick={() => openFeature(null)}
             className="inline-flex items-center gap-2 rounded-md border border-brand-700 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-700/5 min-h-[44px] whitespace-nowrap"
           >
             + Featured article
           </button>
           </div>
-          {syncedAt && !syncError && (
-            <span className="text-xs text-gray-500">Last sync: {syncedAt}</span>
-          )}
-          {syncError && <span className="text-xs text-[#661102]">{syncError}</span>}
         </div>
       </div>
 
@@ -467,7 +406,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
         <div className="rounded-md border border-gray-200 bg-white p-8 text-center">
           <p className="text-sm text-gray-600">
             {initialArticles.length === 0
-              ? 'No articles loaded. Try Sync now to fetch from WordPress.'
+              ? 'No articles yet.'
               : 'No articles match your filters.'}
           </p>
         </div>
@@ -692,7 +631,6 @@ function EditModal({
   const [tagsCsv, setTagsCsv] = useState((article.tags || []).join(', '));
   const [hidden, setHidden] = useState(article.hidden);
   const [saving, setSaving] = useState(false);
-  const [reverting, setReverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function save() {
@@ -731,30 +669,7 @@ function EditModal({
     }
   }
 
-  async function revert() {
-    if (!confirm('Revert all admin edits for this article? Upstream WordPress values will be restored.')) {
-      return;
-    }
-    setReverting(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/admin/articles/${encodeURIComponent(article.id)}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        const b = await res.json().catch(() => ({}));
-        throw new Error(b?.error || `Revert failed (${res.status})`);
-      }
-      onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Revert failed');
-    } finally {
-      setReverting(false);
-    }
-  }
-
-  const busy = saving || reverting;
+  const busy = saving;
   const hasOverride = article.editedFields.length > 0;
 
   return (
@@ -867,16 +782,6 @@ function EditModal({
 
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-wrap items-center justify-between gap-3 rounded-b-lg">
           <div>
-            {hasOverride && (
-              <button
-                type="button"
-                onClick={revert}
-                disabled={busy}
-                className="text-sm text-[#661102] hover:underline disabled:opacity-50 min-h-[44px]"
-              >
-                {reverting ? 'Reverting…' : 'Revert to WordPress'}
-              </button>
-            )}
           </div>
           <div className="flex items-center gap-3">
             <button
