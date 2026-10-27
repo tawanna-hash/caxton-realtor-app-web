@@ -120,7 +120,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const stripePaymentMethodTypes = paymentMethod === 'ach'
       ? ['us_bank_account']
       : paymentMethod === 'bnpl'
-        ? ['affirm', 'klarna']
+        ? ['affirm', 'afterpay_clearpay', 'klarna']
         : ['card'];
 
     const sessionParams: Record<string, unknown> = {
