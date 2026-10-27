@@ -545,6 +545,33 @@ export default function InteractiveMagazineReader({
     return () => { cancelled = true; };
   }, [magazine.id]);
 
+  // ---- Rendered-page cache (next/previous spread) ----
+  // Pages are painted offscreen ahead of time so a turn only has to blit.
+  const pageCacheRef = useRef<Map<string, HTMLCanvasElement>>(new Map());
+  const fitPage = useCallback(
+    (page: PdfJsPage) => {
+      const stage = stageRef.current;
+      const viewport = scrollRef.current ?? stage;
+      if (!viewport) return null;
+      const stageH = Math.max(viewport.clientHeight - 16, 100);
+      const stageW = Math.max(viewport.clientWidth - 16, 100);
+      const natural = page.getViewport({ scale: 1 });
+      const aspect = natural.width / natural.height;
+      const perPageWidth = spreadMode ? Math.max(Math.floor((stageW - 8) / 2), 100) : stageW;
+      const cssWidth = Math.min(perPageWidth, stageH * aspect);
+      const cssHeight = cssWidth / aspect;
+      const displayWidth = cssWidth * zoom;
+      const displayHeight = cssHeight * zoom;
+      const displayScale = displayWidth / natural.width;
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      const renderScale = Math.min(displayScale * dpr, 6);
+      const renderViewport = page.getViewport({ scale: renderScale });
+      const key = `${Math.round(renderViewport.width)}x${Math.round(renderViewport.height)}`;
+      return { displayWidth, displayHeight, displayScale, renderViewport, key };
+    },
+    [spreadMode, zoom],
+  );
+
   // ---- Render current spread ----
   useEffect(() => {
     if (!doc || !currentSpread) return;
@@ -584,56 +611,29 @@ export default function InteractiveMagazineReader({
         if (cancelled) return;
         if (latestRef.current !== pageNum) return;
 
-        const stage = stageRef.current;
-        if (!stage) return;
-        // Base the page-fit math on the SCROLL container (the viewport box),
-        // not the stage. At zoom>1 the stage uses width:max-content so its
-        // clientWidth equals the canvas width — which would feed back and
-        // recursively re-scale on every render. The scroll container is the
-        // stable viewport box we want to fit-to.
-        const viewport = scrollRef.current ?? stage;
-        const stageH = Math.max(viewport.clientHeight - 16, 100);
-        const stageW = Math.max(viewport.clientWidth - 16, 100);
-        const natural = page.getViewport({ scale: 1 });
-        const aspect = natural.width / natural.height;
-        const perPageWidth = spreadMode ? Math.max(Math.floor((stageW - 8) / 2), 100) : stageW;
-        const fitByHeight = stageH * aspect;
-        const cssWidth = Math.min(perPageWidth, fitByHeight);
-        const cssHeight = cssWidth / aspect;
-        const displayWidth = cssWidth * zoom;
-        const displayHeight = cssHeight * zoom;
-        const displayScale = displayWidth / natural.width;
-        // Cap DPR at 3 (was 2) so Retina / 3x phone screens render at full
-        // device resolution. This is the single biggest lever for fine-detail
-        // legibility (legal copy, MLS tables) on iPhone, where window.devicePixelRatio is 3.
-        const dpr = Math.min(window.devicePixelRatio || 1, 3);
-        // Cap the effective render scale so very high zoom levels (5x, 10x)
-        // don't blow up the bitmap to gigapixel sizes on mobile. We bumped
-        // this from 4 to 6 because users zoom into MLS tables and contact
-        // info that were getting browser-upscaled (blurry) beyond ~3x at the
-        // old cap. 6 keeps bitmaps under ~36MP at typical viewports.
-        const MAX_RENDER_SCALE = 6;
-        const renderScale = Math.min(displayScale * dpr, MAX_RENDER_SCALE);
-        const renderViewport = page.getViewport({ scale: renderScale });
-
-        // Render offscreen first so the visible canvas keeps showing the
-        // previous page until the new one is fully painted. Atomic swap via
-        // drawImage eliminates both the blank-canvas gap and the stale-task
-        // overwrite race.
-        const offscreen = document.createElement('canvas');
-        // Round (not floor) so bitmap dims are exact integers and the CSS
-        // display size derived from them produces a clean 1/dpr ratio with
-        // no sub-pixel scaling blur.
-        offscreen.width = Math.round(renderViewport.width);
-        offscreen.height = Math.round(renderViewport.height);
-        const offCtx = offscreen.getContext('2d');
-        if (!offCtx) return;
-        const task = page.render({ canvasContext: offCtx, viewport: renderViewport });
-        if (isLeft) leftTask = task;
-        else rightTask = task;
-        await task.promise;
-        if (cancelled) return;
-        if (latestRef.current !== pageNum) return;
+        const fit = fitPage(page);
+        if (!fit) return;
+        const { displayWidth, displayHeight, displayScale, renderViewport } = fit;
+        const cacheKey = `${pageNum}:${fit.key}`;
+        let offscreen = pageCacheRef.current.get(cacheKey) ?? null;
+        if (!offscreen) {
+          // Render offscreen first so the visible canvas keeps showing the
+          // previous page until the new one is fully painted. Atomic swap via
+          // drawImage eliminates both the blank-canvas gap and the stale-task
+          // overwrite race.
+          offscreen = document.createElement('canvas');
+          offscreen.width = Math.round(renderViewport.width);
+          offscreen.height = Math.round(renderViewport.height);
+          const offCtx = offscreen.getContext('2d');
+          if (!offCtx) return;
+          const task = page.render({ canvasContext: offCtx, viewport: renderViewport });
+          if (isLeft) leftTask = task;
+          else rightTask = task;
+          await task.promise;
+          if (cancelled) return;
+          if (latestRef.current !== pageNum) return;
+          if (zoom <= 1) pageCacheRef.current.set(cacheKey, offscreen);
+        }
 
         // Compute overlays before the visual swap so the canvas resize and
         // overlay update apply in the same frame. Otherwise there's a brief
@@ -691,7 +691,7 @@ export default function InteractiveMagazineReader({
       try { leftTask?.cancel?.(); } catch { /* noop */ }
       try { rightTask?.cancel?.(); } catch { /* noop */ }
     };
-  }, [doc, currentSpread, spreadMode, zoom]);
+  }, [doc, currentSpread, spreadMode, zoom, fitPage]);
 
   // ---- Prefetch adjacent spreads ----
   useEffect(() => {
@@ -709,25 +709,45 @@ export default function InteractiveMagazineReader({
       if (prev.left !== null) adj.push(prev.left);
       if (prev.right !== null) adj.push(prev.right);
     }
-    // Wait for the current spread to paint, then warm the neighbours one at
-    // a time. getOperatorList pulls the page's images and fonts over the
-    // network (range requests) without drawing, so the next turn finds them
-    // already downloaded instead of waiting on a large PDF.
+    // Wait for the current spread to paint, then render the neighbouring
+    // pages offscreen one at a time (next spread first) so a turn only has to
+    // blit them. Skipped when zoomed, where bitmaps are large.
     const t = setTimeout(async () => {
+      if (zoom > 1) return;
+      const wanted = new Set<number>(adj);
+      if (currentSpread) {
+        if (currentSpread.left !== null) wanted.add(currentSpread.left);
+        if (currentSpread.right !== null) wanted.add(currentSpread.right);
+      }
       for (const pageIdx of adj) {
         if (cancelled) return;
         try {
           const p = await doc.getPage(pageIdx + 1);
           if (cancelled) return;
-          await p.getOperatorList?.();
+          const fit = fitPage(p);
+          if (!fit) continue;
+          const key = `${pageIdx}:${fit.key}`;
+          if (pageCacheRef.current.has(key)) continue;
+          const c = document.createElement('canvas');
+          c.width = Math.round(fit.renderViewport.width);
+          c.height = Math.round(fit.renderViewport.height);
+          const cctx = c.getContext('2d');
+          if (!cctx) continue;
+          await p.render({ canvasContext: cctx, viewport: fit.renderViewport }).promise;
+          if (cancelled) return;
+          pageCacheRef.current.set(key, c);
         } catch { /* noop */ }
+      }
+      // Evict anything outside the current and adjacent spreads.
+      for (const k of Array.from(pageCacheRef.current.keys())) {
+        if (!wanted.has(Number(k.split(':')[0]))) pageCacheRef.current.delete(k);
       }
     }, 700);
     return () => {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [doc, currentSpreadIdx, spreads]);
+  }, [doc, currentSpreadIdx, spreads, currentSpread, fitPage, zoom]);
 
   // ---- Lock body scroll while reader is open ----
   useEffect(() => {
