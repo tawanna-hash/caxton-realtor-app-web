@@ -23,8 +23,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
   const { token } = await params;
   const v = verifyStatementPayToken(token);
   if (!v.ok) return page('Link not valid', v.reason === 'expired' ? 'This payment link has expired. Please contact us for a new statement.' : 'This payment link is not valid. Please contact us for a new statement.', 400);
-  if (v.subject.kind === 'invoice') return page('Choose how to pay', 'Select a payment method. The processing fee is added at checkout and shown before you pay.', 200, 'Continue to payment', true);
-  return page('Continue to secure payment', 'You will be taken to our secure payment page to pay the amount shown on your statement.', 200, 'Continue to payment');
+  return page('Choose how to pay', 'Select a payment method. The processing fee is added at checkout and shown before you pay.', 200, 'Continue to payment', true);
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
@@ -40,9 +39,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       if (r.checkoutUrl) return NextResponse.redirect(r.checkoutUrl, 303);
       return page('Nothing to pay', 'This invoice has no balance due. Thank you.', 200);
     }
+    const form = await req.formData().catch(() => null);
+    const m = form?.get('method');
+    const paymentMethod = isInvoicePaymentMethod(m) ? m : 'card';
     const statement = await loadPartnerStatement(v.subject.advertiserId, { scope: v.subject.scope });
     if (!statement) return page('Nothing to pay', 'There is no outstanding balance on this statement. Thank you.', 200);
-    const withLink = await getOrCreatePartnerStatementOverdueLink(statement);
+    const withLink = await getOrCreatePartnerStatementOverdueLink(statement, { paymentMethod });
     if (withLink.overduePaymentLinkUrl) return NextResponse.redirect(withLink.overduePaymentLinkUrl, 303);
     return page('Nothing to pay', 'There is no outstanding balance on this statement. Thank you.', 200);
   } catch (e) {

@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { WAYS_TO_PAY_TITLE, waysToPayLines } from '@/lib/payment-options-copy';
 import { PDFDocument, PDFString, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import {
   type PartnerStatement,
@@ -173,6 +174,15 @@ export async function generatePartnerStatementPdf(statement: PartnerStatement): 
   page.drawRectangle({ x: 302, y: y - 24, width: PAGE_W - MARGIN - 302, height: 24, color: LIGHT });
   page.drawText('Outstanding balance (USD)', { x: 310, y: y - 16, font: bold, size: 8, color: DARK });
   rightText(page, statementMoney(statement.outstandingCents), PAGE_W - MARGIN - 8, y - 16, bold, 8);
+
+  y -= 40;
+  if (y < 130) newPage();
+  page.drawText(WAYS_TO_PAY_TITLE, { x: MARGIN, y, font: bold, size: 8, color: DARK });
+  y -= 12;
+  for (const line of waysToPayLines()) {
+    page.drawText(clean(`- ${line}`), { x: MARGIN, y, font: regular, size: 7, color: DARK });
+    y -= 10;
+  }
 
   for (const item of doc.getPages()) {
     item.drawText('We appreciate your business.', {

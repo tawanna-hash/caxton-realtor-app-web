@@ -21,6 +21,7 @@
 // That is why it takes the pooled tagged-template `sql` client (or defaults to
 // getSql()) rather than a PoolClient bound to a live transaction.
 
+import { waysToPayHtml, waysToPayText } from '@/lib/payment-options-copy';
 import { isBillingEmailBlocked } from '@/lib/server/inactive-guard';
 import { Resend } from 'resend';
 import { getSql } from '@/lib/db';
@@ -202,6 +203,8 @@ export function invoiceEmailText({
       '',
       consumeUrl,
       '',
+      waysToPayText(),
+      '',
       'This secure link stays active until the invoice is paid, and you can reopen it any time from this email.',
     ].join('\n');
   }
@@ -216,6 +219,8 @@ export function invoiceEmailText({
     `Balance due: ${formatEmailCents(amountCents)}`,
     '',
     consumeUrl,
+    '',
+    waysToPayText(),
     '',
     'This secure link stays active until the invoice is paid, and you can reopen it any time from this email.',
     '',
@@ -259,6 +264,7 @@ export function invoiceEmailHtml({
         View &amp; pay invoice ${escapeEmailHtml(number)}
       </a>
       </p>
+      ${waysToPayHtml()}
       <p style="font-size:13px;color:#667085">This secure link stays active until the invoice is paid, and you can reopen it any time from this email.</p>
       ${closing}
     </div>

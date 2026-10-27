@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
+import { WAYS_TO_PAY_TITLE, waysToPayLines } from '@/lib/payment-options-copy';
 import { getSql } from '@/lib/db';
 
 const PAGE_W = 612;
@@ -221,6 +222,10 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ bytes: Ui
     y -= 6;
   };
   if (inv.memo) block('Notes', inv.memo, 8);
+  ensure(24 + waysToPayLines().length * 10);
+  page.drawText(WAYS_TO_PAY_TITLE, { x: M, y, font: bold, size: 8, color: DARK }); y -= 12;
+  for (const l of waysToPayLines()) { page.drawText(clean(`- ${l}`), { x: M, y, font: regular, size: 7.5, color: DARK }); y -= 10; }
+  y -= 8;
   ensure(20);
   page.drawLine({ start: { x: M, y: y + 4 }, end: { x: PAGE_W - M, y: y + 4 }, thickness: 0.75, color: RULE });
   y -= 10;

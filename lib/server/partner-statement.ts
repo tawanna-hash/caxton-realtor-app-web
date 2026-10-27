@@ -2,7 +2,8 @@ import { stripeSafeEmail } from '@/lib/stripe-email';
 import { randomUUID } from 'node:crypto';
 import { ensureSchema, getSql } from '@/lib/db';
 import { isSafeCents } from '@/lib/invoices';
-import { paymentMethodLabel, processingFeeCents } from '@/lib/payment-processing-fees';
+import { waysToPayHtml, waysToPayText } from '@/lib/payment-options-copy';
+import { paymentMethodLabel, processingFeeCents, type InvoicePaymentMethod } from '@/lib/payment-processing-fees';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { withNeonTransaction } from '@/lib/server/db/neon';
 import {
@@ -183,8 +184,9 @@ function sumSafeCents(values: number[], label: string): number {
 
 export async function getOrCreatePartnerStatementOverdueLink(
   statement: PartnerStatement,
-  options: { forceRefresh?: boolean } = {},
+  options: { forceRefresh?: boolean; paymentMethod?: InvoicePaymentMethod } = {},
 ): Promise<PartnerStatement> {
+  const pm: InvoicePaymentMethod = options.paymentMethod ?? 'card';
   const requestedAllocations = overdueAllocations(statement);
   if (requestedAllocations.length === 0) {
     return { ...statement, overduePaymentLinkUrl: null };
@@ -223,7 +225,7 @@ export async function getOrCreatePartnerStatementOverdueLink(
       }
 
       const allocationsJson = JSON.stringify(allocations);
-      if (!options.forceRefresh) {
+      if (!options.forceRefresh && pm === 'card') {
         const existing = await client.query<StatementPaymentSessionRow>(
           `SELECT id, checkout_url, stripe_checkout_session_id
              FROM statement_payment_sessions
@@ -294,7 +296,7 @@ export async function getOrCreatePartnerStatementOverdueLink(
         allocations.map((allocation) => allocation.amountCents),
         'statement payment',
       );
-      const feeCents = processingFeeCents(baseAmountCents, 'card');
+      const feeCents = processingFeeCents(baseAmountCents, pm);
       if (!isSafeCents(feeCents) || !isSafeCents(baseAmountCents + feeCents, { positive: true })) {
         throw new InvoiceLifecycleError('statement payment amount is invalid', 400);
       }
@@ -314,7 +316,7 @@ export async function getOrCreatePartnerStatementOverdueLink(
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
-        payment_method_types: ['card'],
+        payment_method_types: pm === 'ach' ? ['us_bank_account'] : pm === 'bnpl' ? ['affirm', 'afterpay_clearpay', 'klarna'] : ['card'],
         customer_email: stripeSafeEmail(statement.recipientEmail),
         line_items: [
           {
@@ -333,7 +335,7 @@ export async function getOrCreatePartnerStatementOverdueLink(
               currency: 'usd',
               unit_amount: feeCents,
               product_data: {
-                name: `${paymentMethodLabel('card')} processing fee`,
+                name: `${paymentMethodLabel(pm)} processing fee`,
                 description: 'Processing fee disclosed before payment authorization',
               },
             },
@@ -358,7 +360,7 @@ export async function getOrCreatePartnerStatementOverdueLink(
             base_amount_cents: String(baseAmountCents),
             processing_fee_cents: String(feeCents),
             charge_total_cents: String(baseAmountCents + feeCents),
-            payment_method_selection: 'card',
+            payment_method_selection: pm,
           },
         },
       });
@@ -655,6 +657,7 @@ export function renderPartnerStatementEmail(
       <tr style="background:#f5f5f5;font-weight:700"><td style="padding:10px 9px">Outstanding balance (USD)</td><td style="padding:10px 9px;text-align:right">${statementMoney(statement.outstandingCents)}</td></tr>
     </table>
     ${payAllHtml}
+    ${waysToPayHtml()}
     <table style="width:100%;border-collapse:collapse;font-size:12px">
       <thead><tr style="background:#1B1726;color:#fff">
         <th style="padding:9px 8px;text-align:left">Invoice #</th><th style="padding:9px 8px;text-align:left">Invoice date</th><th style="padding:9px 8px;text-align:left">Due date</th><th style="padding:9px 8px;text-align:right">Total</th><th style="padding:9px 8px;text-align:right">Paid</th><th style="padding:9px 8px;text-align:right">Due</th><th style="padding:9px 8px"></th>
@@ -676,7 +679,7 @@ export function renderPartnerStatementEmail(
   const payAllText = statement.overduePaymentLinkUrl
     ? (statement.payScope === 'all' ? `\nPay balance in full (${statementMoney(statement.payAllCents ?? statement.overdueCents)}): ${statement.overduePaymentLinkUrl}\n` : `\nPay all overdue invoices (${statementMoney(statement.overdueCents)}): ${statement.overduePaymentLinkUrl}\n`)
     : '';
-  const text = `${personalMessage}\n\nSTATEMENT OF ACCOUNT\n${statement.billToName}\nAs of ${statementDate(statement.asOf)}\n\nOverdue: ${statementMoney(statement.overdueCents)}\nNot yet due: ${statementMoney(statement.notYetDueCents)}\nOutstanding balance (USD): ${statementMoney(statement.outstandingCents)}\n${payAllText}\n${invoiceText}\n\nWe appreciate your business.`;
+  const text = `${personalMessage}\n\nSTATEMENT OF ACCOUNT\n${statement.billToName}\nAs of ${statementDate(statement.asOf)}\n\nOverdue: ${statementMoney(statement.overdueCents)}\nNot yet due: ${statementMoney(statement.notYetDueCents)}\nOutstanding balance (USD): ${statementMoney(statement.outstandingCents)}\n${payAllText}\n${invoiceText}\n\n${waysToPayText()}\n\nWe appreciate your business.`;
 
   return { html, text };
 }
