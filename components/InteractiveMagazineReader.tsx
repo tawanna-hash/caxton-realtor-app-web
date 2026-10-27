@@ -1254,7 +1254,12 @@ export default function InteractiveMagazineReader({
         }}
       >
         {!doc ? (
-          <div className="flex flex-col items-center gap-3">
+          <div
+            className="flex flex-col items-center justify-center gap-3"
+            // Same box as the stage that replaces it, so swapping poster for
+            // pages does not move the layout.
+            style={{ minWidth: '100%', minHeight: '100%', padding: chromeVisible ? '64px 16px' : '16px' }}
+          >
             {magazine.cover_url ? (
               // eslint-disable-next-line @next/next/no-img-element -- poster shown while the PDF loads
               <img
@@ -1349,7 +1354,7 @@ export default function InteractiveMagazineReader({
             </button>
             <p className="text-xs uppercase tracking-[0.2em] text-white/90 font-medium">{magazine.issue_label}</p>
             <span className="text-[10px] text-white/60">
-              {doc ? pageLabel : loadProgress}
+              {doc ? pageLabel : `1 / ${magazine.page_count}`}
             </span>
           </div>
           <div className="flex items-center gap-1">
