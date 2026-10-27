@@ -13,6 +13,7 @@ import { formatCents } from '@/lib/invoices';
 import type { AdvertiserOption } from '@/app/admin/beta-core/billing/types';
 import { RecurringScheduleDrawer } from '@/app/admin/beta-core/RecurringScheduleDrawer';
 import { BETA_EMAIL_ENABLED } from '@/lib/beta-email';
+import { promptDeleteWithCopy } from '@/lib/confirm-delete-id';
 
 type Sch = RecurringScheduleWithAdvertiser;
 const SELECT = 'anchor-input rounded-[10px] border border-[color:var(--ds-line)] bg-white px-3 py-2 text-sm text-[color:var(--ds-ink)]';
@@ -113,7 +114,7 @@ export default function RecurringPanel({ clientId = null }: { clientId?: number 
   };
   const del = async (s: Sch) => {
     if (s.status === 'active') { setErr('Pause the active schedule before permanent deletion.'); return; }
-    const typed = window.prompt(`Permanent deletion cannot be undone. Type this schedule ID to delete it:\n${s.id}`);
+    const typed = promptDeleteWithCopy('Permanent deletion cannot be undone. Type this schedule ID to delete it:', s.id);
     if (typed !== s.id) { setErr('Schedule was not deleted: the typed ID did not match.'); return; }
     setErr('');
     try {

@@ -4,6 +4,7 @@
 // history ID to confirm), as on the Get Paid statements page.
 
 import { useState } from 'react';
+import { promptDeleteWithCopy } from '@/lib/confirm-delete-id';
 
 type Row = { id: string; recipient_email: string; sender_email: string; subject: string; sent_by: string | null; sent_at: string; invoice_count: number; outstanding_cents: number };
 const money = (c: number) => `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -13,7 +14,7 @@ export default function StatementHistory({ advertiserId, initial }: { advertiser
   const [rows, setRows] = useState(initial);
   const [err, setErr] = useState('');
   async function del(r: Row) {
-    const typed = window.prompt(`Permanent deletion cannot be undone. Type this statement history ID to delete it:\n${r.id}`);
+    const typed = promptDeleteWithCopy('Permanent deletion cannot be undone. Type this statement history ID to delete it:', r.id);
     if (typed !== r.id) { setErr('Not deleted: the typed ID did not match.'); return; }
     const res = await fetch(`/api/admin/advertisers/${advertiserId}/statement-history`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ history_id: r.id, permanent: true, confirmation_id: typed }) });
     const j = await res.json().catch(() => ({}));

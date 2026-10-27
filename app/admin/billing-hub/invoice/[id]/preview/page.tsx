@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import PreviewAsClientButton from '@/components/admin/PreviewAsClientButton';
+import SendInvoiceButton from '@/components/admin/SendInvoiceButton';
 import PrintInvoiceButton from '@/app/admin/beta-core/PrintInvoiceButton';
 
 export const dynamic = 'force-dynamic';
@@ -106,6 +107,7 @@ export default async function InvoicePreviewPage({
         <div className="flex items-center gap-2">
           <PreviewAsClientButton advertiserId={invoice.advertiser_id} invoiceId={invoice.id} />
           <PrintInvoiceButton />
+          <SendInvoiceButton invoiceId={invoice.id} status={invoice.status} email={invoice.bill_to_email} />
         </div>
       </div>
 

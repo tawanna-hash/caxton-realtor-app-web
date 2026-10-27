@@ -236,17 +236,31 @@ export type MenuItem = { label: string; onClick?: () => void; href?: string; dis
 /** One "more" button per row or card. Keeps a single main action visible and tucks the rest into a menu. */
 export function RowMenu({ items, label = 'More actions', plain = false }: { items: MenuItem[]; label?: string; plain?: boolean }) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  const [pos, setPos] = useState<{ top: number; right: number; maxHeight: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  // Anchor the fixed menu to its button; flip above when there is more room there.
+  const place = () => {
+    const b = btnRef.current; if (!b) return;
+    const r = b.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom - 12;
+    const above = r.top - 12;
+    const right = Math.max(8, window.innerWidth - r.right);
+    if (below >= 320 || below >= above) setPos({ top: r.bottom + 6, right, maxHeight: Math.max(160, below) });
+    else { const h = Math.min(above, 640); setPos({ top: r.top - 6 - h, right, maxHeight: h }); }
+  };
 
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
     const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) close(); };
+    // Scrolling the page keeps the menu open and follows the button; scrolling inside the menu is ignored.
+    const onScroll = (e: Event) => { if (ref.current && e.target instanceof Node && ref.current.contains(e.target)) return; place(); };
     document.addEventListener('mousedown', onDoc);
-    window.addEventListener('scroll', close, true);
-    window.addEventListener('resize', close);
-    return () => { document.removeEventListener('mousedown', onDoc); window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); };
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', place);
+    return () => { document.removeEventListener('mousedown', onDoc); window.removeEventListener('scroll', onScroll, true); window.removeEventListener('resize', place); };
   }, [open]);
 
   const shown = items.filter((i) => i.label);
@@ -255,21 +269,21 @@ export function RowMenu({ items, label = 'More actions', plain = false }: { item
     <div ref={ref} className="inline-block">
       <button
         type="button"
+        ref={btnRef}
         aria-label={label}
         aria-haspopup="menu"
         aria-expanded={open}
         className={plain ? 'inline-flex h-9 w-9 items-center justify-center text-lg leading-none text-[color:var(--ds-ink)]' : 'anchor-outline inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[color:var(--ds-line)] bg-white text-lg leading-none text-[color:var(--ds-ink)] hover:bg-[color:var(--ds-hover)]'}
         style={plain ? { border: 0, background: 'transparent' } : undefined}
         onClick={(e) => {
-          const r = e.currentTarget.getBoundingClientRect();
-          setPos({ top: r.bottom + 6, right: Math.max(8, window.innerWidth - r.right) });
+          place();
           setOpen((o) => !o);
         }}
       >
         <span aria-hidden="true" className={plain ? 'inline-block rotate-90' : undefined}>⋯</span>
       </button>
       {open && pos && (
-        <div role="menu" style={{ position: 'fixed', top: pos.top, right: pos.right }} className="z-[70] w-56 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
+        <div role="menu" style={{ position: 'fixed', top: pos.top, right: pos.right, maxHeight: pos.maxHeight, overflowY: 'auto', overscrollBehavior: 'contain' }} className="z-[70] w-56 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
           {shown.map((i) => {
             const cls = `block w-full rounded-[10px] px-3 py-2 text-left text-sm ${i.danger ? 'text-red-700' : 'text-[color:var(--ds-ink)]'} hover:bg-[color:var(--ds-hover)] disabled:opacity-50`;
             return i.href ? (

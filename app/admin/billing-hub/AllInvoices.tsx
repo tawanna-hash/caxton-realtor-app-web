@@ -18,9 +18,12 @@ import { ScheduledInvoicesPanel } from '@/app/admin/beta-core/ScheduledInvoicesP
 import { isNative } from '@/lib/native/runtime';
 import { BETA_EMAIL_ENABLED } from '@/lib/beta-email';
 import EmailInvoiceDialog, { type EmailValues } from './EmailInvoiceDialog';
+import { promptDeleteWithCopy } from '@/lib/confirm-delete-id';
 
 export type InvoiceIntent = {
   edit?: string;
+  /** Open the Receive payment drawer for this invoice id. */
+  pay?: string;
   create?: { advertiser_id: number | null; agreement_id: string; amount_cents: number | null };
 };
 
@@ -262,6 +265,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
     consumed.current = true;
     if (intent.create) setCreating(intent.create);
     if (intent.edit) { const hit = rows.find((i) => i.id === intent.edit); if (hit) setEditing(hit); else fail('That invoice could not be found.'); }
+    if (intent.pay) { const hit = rows.find((i) => i.id === intent.pay); if (hit) setPaying(hit); else fail('That invoice could not be found.'); }
     onIntentDone?.();
   }, [rows, intent, onIntentDone, fail]);
 
@@ -357,7 +361,7 @@ export default function AllInvoices({ intent, initialQuery = '', onIntentDone }:
     void run(async () => { await patch(i, { status: 'void' }); return `${i.number} voided.`; }, 'Could not void invoice.');
   };
   const del = (i: Inv) => {
-    const typed = window.prompt(`Permanent deletion cannot be undone. Type this invoice ID to delete it:\n${i.id}`);
+    const typed = promptDeleteWithCopy('Permanent deletion cannot be undone. Type this invoice ID to delete it:', i.id);
     if (typed !== i.id) { fail('Invoice was not deleted: the typed ID did not match.'); return; }
     void run(async () => {
       const r = await fetch(`/api/admin/invoices/${i.id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ permanent: true, confirmation_id: typed }) });

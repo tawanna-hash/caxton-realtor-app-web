@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email';
 import { generatePartnerStatementPdf } from '@/lib/partner-statement-pdf';
+import { generateInvoicePdf } from '@/lib/invoice-pdf';
 import {
   loadPartnerStatement,
   refreshPartnerStatementLinks,
@@ -88,7 +89,23 @@ export const POST = withAdminTracking(async function POST(
       })),
     };
     const rendered = renderPartnerStatementEmail(refreshed, message);
-    const pdf = await generatePartnerStatementPdf(refreshed);
+    // Every statement also carries each listed invoice as its own PDF.
+    const [pdf, ...invoicePdfs] = await Promise.all([
+      generatePartnerStatementPdf(refreshed),
+      ...refreshed.invoices.map((inv) =>
+        generateInvoicePdf(inv.id).catch((err) => {
+          console.error('[send-statement] invoice pdf failed', inv.id, err);
+          return null;
+        }),
+      ),
+    ]);
+    const invoiceAttachments = invoicePdfs
+      .filter((x): x is NonNullable<typeof x> => Boolean(x))
+      .map((x) => ({
+        filename: x.filename,
+        content: Buffer.from(x.bytes).toString('base64'),
+        contentType: 'application/pdf',
+      }));
 
     const sql = getSql();
     const paymentLinkCount =
@@ -131,6 +148,7 @@ export const POST = withAdminTracking(async function POST(
             content: Buffer.from(pdf).toString('base64'),
             contentType: 'application/pdf',
           },
+          ...invoiceAttachments,
         ],
       });
     } catch (sendError) {
@@ -157,6 +175,7 @@ export const POST = withAdminTracking(async function POST(
       recipient,
       invoice_count: refreshed.invoices.length,
       payment_link_count: paymentLinkCount,
+      invoice_pdf_count: invoiceAttachments.length,
       overdue_payment_link_created: Boolean(refreshed.overduePaymentLinkUrl),
       message_id: result.messageId ?? null,
       history_id: history?.id ?? null,

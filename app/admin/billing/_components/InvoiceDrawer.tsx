@@ -22,6 +22,7 @@ import {
   cardExpirationWarning,
   formatCardExpiration,
 } from '@/lib/card-expiration';
+import { promptDeleteWithCopy } from '@/lib/confirm-delete-id';
 
 // Minimal shape of an agreement_line_items row, as returned by
 // GET /api/admin/agreements/[id]/line-items.
@@ -396,7 +397,7 @@ export function InvoiceDrawer({
 
   const permanentlyDelete = async () => {
     if (!existing) return;
-    const confirmation = window.prompt(`Permanent deletion cannot be undone. Type this invoice ID to delete it:\n${existing.id}`);
+    const confirmation = promptDeleteWithCopy('Permanent deletion cannot be undone. Type this invoice ID to delete it:', existing.id);
     if (confirmation !== existing.id) { onError('Invoice was not deleted: the typed ID did not match.'); return; }
     setSaving(true);
     try {
@@ -755,7 +756,7 @@ function PaymentHistoryRow({
 
   const referenceLabel = isCheckPayment(method) ? 'Check no.' : 'Reference';
   const deletePayment = async () => {
-    const confirmation = window.prompt(`Permanent deletion cannot be undone. Type this payment ID to delete it:\n${payment.id}`);
+    const confirmation = promptDeleteWithCopy('Permanent deletion cannot be undone. Type this payment ID to delete it:', payment.id);
     if (confirmation !== payment.id) { setError('Payment was not deleted: the typed ID did not match.'); return; }
     setSaving(true); setError(null);
     try {

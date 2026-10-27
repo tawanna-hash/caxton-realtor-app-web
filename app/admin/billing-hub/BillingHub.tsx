@@ -293,6 +293,7 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
 function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { client: Adv; invoices: FullInv[]; agreements: Agr[]; intent: InvoiceIntent | null; onIntentDone: () => void }) {
   const [scope, setScope] = useState<'client' | 'all'>(intent || wantsAll() ? 'all' : 'client');
   const [focusQ, setFocusQ] = useState('');
+  const [payIntent, setPayIntent] = useState<InvoiceIntent | null>(null);
   const [q, setQ] = useState(''); const [st, setSt] = useState<string[]>([]);
   const [from, setFrom] = useState(''); const [to, setTo] = useState(''); const [addOpen, setAddOpen] = useState(false);
   const [sort, setSort] = useState<{ k: 'number' | 'issue' | 'due' | 'total'; dir: 1 | -1 }>({ k: 'number', dir: -1 });
@@ -309,7 +310,7 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
       ))}
     </div>
   );
-  if (scope === 'all') return <div className="space-y-4"><div className="flex flex-wrap items-center gap-3">{scopeSwitch}<span id="invoice-search-slot" className="contents" /></div><AllInvoices intent={intent} initialQuery={focusQ} onIntentDone={onIntentDone} /></div>;
+  if (scope === 'all') return <div className="space-y-4"><div className="flex flex-wrap items-center gap-3">{scopeSwitch}<span id="invoice-search-slot" className="contents" /></div><AllInvoices intent={payIntent ?? intent} initialQuery={focusQ} onIntentDone={() => { if (payIntent) setPayIntent(null); else onIntentDone(); }} /></div>;
   return (
     <div className="space-y-4">
       {scopeSwitch}
@@ -349,7 +350,7 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(i.issue_date)}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(i.due_date)}</td>
                 <td className="text-right text-[color:var(--ds-ink)]">{money(i.total_cents)}</td>
-                <td className="text-right"><RowMenu items={[{ label: 'View invoice', href: `/admin/billing-hub/invoice/${i.id}/preview` }, { label: 'Edit invoice', onClick: () => { setFocusQ(i.number ?? ''); setScope('all'); } }]} /></td>
+                <td className="whitespace-nowrap text-right"><button type="button" disabled={['paid', 'void', 'draft'].includes(i.status)} title={['paid', 'void', 'draft'].includes(i.status) ? `This invoice is ${i.status}.` : undefined} className={`${A.small} mr-2`} onClick={() => { setFocusQ(i.number ?? ''); setPayIntent({ pay: i.id }); setScope('all'); }}>Receive payment</button><RowMenu items={[{ label: 'View invoice', href: `/admin/billing-hub/invoice/${i.id}/preview` }, { label: 'Edit invoice', onClick: () => { setFocusQ(i.number ?? ''); setScope('all'); } }]} /></td>
               </tr>
             ))}
             {rows.length === 0 && <tr><td colSpan={9} className="py-10 text-center text-[color:var(--ds-body)]">No invoices to show.</td></tr>}
