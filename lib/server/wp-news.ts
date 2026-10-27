@@ -137,7 +137,10 @@ export async function sanitizeArticleHtmlForStorage(html: string): Promise<strin
 // Types
 // -----------------------------------------------------------------------------
 
-export type Publication = 'austin' | 'san_antonio';
+export type Publication = 'austin' | 'san_antonio' | 'houston' | 'dallas';
+
+/** Markets backed by a WordPress feed. Houston and Dallas / Ft. Worth are archive-only. */
+type WpPublication = 'austin' | 'san_antonio';
 
 export interface NewsArticle {
   id: string;
@@ -201,7 +204,7 @@ interface PublicationConfig {
 // Publication config (slugs from production WP /categories endpoints).
 // -----------------------------------------------------------------------------
 
-const PUBS: Record<Publication, PublicationConfig> = {
+const PUBS: Record<WpPublication, PublicationConfig> = {
   austin: {
     baseUrl: 'https://realtyline.us',
     slugToAppCategory: {
@@ -486,6 +489,7 @@ function transformPost(
 // -----------------------------------------------------------------------------
 
 async function fetchNewsArticles(publication: Publication): Promise<NewsArticle[]> {
+  if (publication !== 'austin' && publication !== 'san_antonio') return [];
   const cfg = PUBS[publication];
   const [categoryMap, posts] = await Promise.all([
     fetchCategoryMap(cfg.baseUrl),
@@ -558,7 +562,9 @@ export async function getNewsRaw(publication: Publication): Promise<NewsArticle[
 
 /** Public-cached variant used by the public feed (kept on unstable_cache). */
 async function getNewsCached(publication: Publication): Promise<NewsArticle[]> {
-  return publication === 'austin' ? cachedAustin() : cachedSanAntonio();
+  if (publication === 'austin') return cachedAustin();
+  if (publication === 'san_antonio') return cachedSanAntonio();
+  return [];
 }
 
 export async function getNews(publication: Publication): Promise<NewsArticle[]> {

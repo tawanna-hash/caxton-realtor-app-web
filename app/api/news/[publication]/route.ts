@@ -12,14 +12,14 @@ import { listPinnedFeatureArticles } from '@/lib/feature-articles';
 
 export const runtime = 'nodejs';
 
-const VALID: Publication[] = ['austin', 'san_antonio'];
+const VALID: Publication[] = ['austin', 'san_antonio', 'houston', 'dallas'];
 
 type Ctx = { params: Promise<{ publication: string }> };
 
 export const GET = withErrorHandling(async (req: Request, ctx: Ctx) => {
   const { publication } = await ctx.params;
   if (!VALID.includes(publication as Publication)) {
-    throw new ApiError(400, 'Invalid publication. Must be "austin" or "san_antonio".');
+    throw new ApiError(400, 'Invalid publication. Must be "austin", "san_antonio", "houston" or "dallas".');
   }
 
   let articles;

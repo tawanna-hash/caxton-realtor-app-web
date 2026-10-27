@@ -25,7 +25,7 @@ import {
 
 export const runtime = 'nodejs';
 
-const VALID_PUBS = new Set<Publication>(['austin', 'san_antonio']);
+const VALID_PUBS = new Set<Publication>(['austin', 'san_antonio', 'houston', 'dallas']);
 
 function parseArticleId(rawId: string): { publication: Publication; wpPostId: string } {
   // wp-news.transformPost generates id as `${publication}-${post.id}`. We

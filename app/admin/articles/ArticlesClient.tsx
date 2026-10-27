@@ -26,16 +26,20 @@ type Props = {
   initialErrors: string[];
 };
 
-type PubFilter = 'all' | 'austin' | 'san_antonio';
+type PubFilter = 'all' | NewsArticle['publication'];
 
 const PUB_LABEL: Record<NewsArticle['publication'], string> = {
   austin: 'Austin',
   san_antonio: 'San Antonio',
+  houston: 'Houston',
+  dallas: 'Dallas / Ft. Worth',
 };
 
 const PUB_STYLES: Record<NewsArticle['publication'], string> = {
   austin: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
   san_antonio: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
+  houston: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
+  dallas: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
 };
 
 function CategoryPicker({
@@ -185,7 +189,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   }, [initialArticles, filter, search, categoryFilter]);
 
   const counts = useMemo(() => {
-    const c = { all: 0, austin: 0, san_antonio: 0 };
+    const c = { all: 0, austin: 0, san_antonio: 0, houston: 0, dallas: 0 };
     for (const a of initialArticles) {
       if (a.hidden) continue;
       c.all += 1;
@@ -375,6 +379,8 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
         <div><strong>{counts.all.toLocaleString()}</strong><span>Total articles</span></div>
         <div><strong>{counts.austin.toLocaleString()}</strong><span>Austin</span></div>
         <div><strong>{counts.san_antonio.toLocaleString()}</strong><span>San Antonio</span></div>
+        <div><strong>{counts.houston.toLocaleString()}</strong><span>Houston</span></div>
+        <div><strong>{counts.dallas.toLocaleString()}</strong><span>Dallas / Ft. Worth</span></div>
         <div><strong>{initialArticles.filter((article) => article.hidden).length.toLocaleString()}</strong><span>Hidden</span></div>
       </section>
 
@@ -393,7 +399,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
       {/* Filters */}
       {deleteError && <p role="alert" className="mb-3 text-sm text-[#661102]">{deleteError}</p>}
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        {(['all', 'austin', 'san_antonio'] as const).map((key) => (
+        {(['all', 'austin', 'san_antonio', 'houston', 'dallas'] as const).map((key) => (
           <button
             key={key}
             type="button"
@@ -868,7 +874,7 @@ function CreateModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
-  const [publication, setPublication] = useState<'austin' | 'san_antonio'>('austin');
+  const [publication, setPublication] = useState<NewsArticle['publication']>('austin');
   const [head, setHead] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [contentHtml, setContentHtml] = useState('');
@@ -965,11 +971,13 @@ function CreateModal({
             <Field label="Publication">
               <select
                 value={publication}
-                onChange={(e) => setPublication(e.target.value as 'austin' | 'san_antonio')}
+                onChange={(e) => setPublication(e.target.value as NewsArticle['publication'])}
                 className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
               >
                 <option value="austin">Austin</option>
                 <option value="san_antonio">San Antonio</option>
+                <option value="houston">Houston</option>
+                <option value="dallas">Dallas / Ft. Worth</option>
               </select>
             </Field>
             <Field label="Published date">

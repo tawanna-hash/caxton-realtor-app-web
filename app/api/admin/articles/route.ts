@@ -23,7 +23,7 @@ import { sanitizeArticleHtmlForStorage } from '@/lib/server/wp-news';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const VALID_PUBS = new Set<Publication>(['austin', 'san_antonio']);
+const VALID_PUBS = new Set<Publication>(['austin', 'san_antonio', 'houston', 'dallas']);
 
 type CreateBody = {
   publication?: unknown;
@@ -58,7 +58,7 @@ function validateCreateBody(raw: unknown): {
   const body = raw as CreateBody;
 
   if (typeof body.publication !== 'string' || !VALID_PUBS.has(body.publication as Publication)) {
-    throw new ApiError(400, 'publication must be "austin" or "san_antonio"');
+    throw new ApiError(400, 'publication must be "austin", "san_antonio", "houston" or "dallas"');
   }
   if (typeof body.head !== 'string' || !body.head.trim()) {
     throw new ApiError(400, 'head (title) is required');

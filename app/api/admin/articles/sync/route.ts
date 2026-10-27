@@ -27,6 +27,8 @@ export const POST = withAdminTracking(async () => {
   revalidateTag('wp-news', { expire: 0 });
   revalidateTag('wp-news:austin', { expire: 0 });
   revalidateTag('wp-news:san_antonio', { expire: 0 });
+  revalidateTag('wp-news:houston', { expire: 0 });
+  revalidateTag('wp-news:dallas', { expire: 0 });
 
   return NextResponse.json({
     ok: true,

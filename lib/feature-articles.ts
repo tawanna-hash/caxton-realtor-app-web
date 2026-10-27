@@ -243,7 +243,7 @@ export type PinnedFeature = FeatureArticle & { advertiserName: string; advertise
  * the most recent featured article to the top of each market's feed.
  */
 export async function listPinnedFeatureArticles(
-  publication: 'austin' | 'san_antonio',
+  publication: 'austin' | 'san_antonio' | 'houston' | 'dallas',
   limit = 1,
 ): Promise<PinnedFeature[]> {
   await ensureFeatureArticlesSchema();

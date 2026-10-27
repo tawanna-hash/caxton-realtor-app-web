@@ -26,15 +26,22 @@ async function loadForPublication(publication: Publication): Promise<AdminArticl
   });
 }
 
+const ADMIN_PUBLICATIONS: Array<{ id: Publication; label: string }> = [
+  { id: 'austin', label: 'Austin' },
+  { id: 'san_antonio', label: 'San Antonio' },
+  { id: 'houston', label: 'Houston' },
+  { id: 'dallas', label: 'Dallas / Ft. Worth' },
+];
+
 export default async function AdminArticlesPage() {
-  const [austin, sanAntonio] = await Promise.allSettled([
-    loadForPublication('austin'),
-    loadForPublication('san_antonio'),
-  ]);
+  const results = await Promise.allSettled(ADMIN_PUBLICATIONS.map((p) => loadForPublication(p.id)));
 
   const articles: AdminArticle[] = [];
-  if (austin.status === 'fulfilled') articles.push(...austin.value);
-  if (sanAntonio.status === 'fulfilled') articles.push(...sanAntonio.value);
+  const errors: string[] = [];
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled') articles.push(...r.value);
+    else errors.push(`${ADMIN_PUBLICATIONS[i].label} feed: ${String(r.reason)}`);
+  });
 
   // Sort newest first
   articles.sort((a, b) => {
@@ -42,10 +49,6 @@ export default async function AdminArticlesPage() {
     const db = b.dateIso ? Date.parse(b.dateIso) : 0;
     return db - da;
   });
-
-  const errors: string[] = [];
-  if (austin.status === 'rejected') errors.push(`Austin feed: ${String(austin.reason)}`);
-  if (sanAntonio.status === 'rejected') errors.push(`San Antonio feed: ${String(sanAntonio.reason)}`);
 
   return <ArticlesClient initialArticles={articles} initialErrors={errors} />;
 }

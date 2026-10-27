@@ -77,6 +77,8 @@ async function ensureArticleArchiveSchema(): Promise<void> {
       source_url    TEXT
     )
   `);
+  // Older deployments constrained publication to austin / san_antonio.
+  await query(`ALTER TABLE wp_article_archive DROP CONSTRAINT IF EXISTS wp_article_archive_publication_check`);
   await query(`ALTER TABLE wp_article_archive ADD COLUMN IF NOT EXISTS slug TEXT`);
   await query(`ALTER TABLE wp_article_archive ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
   await query(`ALTER TABLE wp_article_archive ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);

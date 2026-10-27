@@ -13,7 +13,7 @@ export const ARTICLE_CATEGORIES = [
 ] as const;
 
 export type ArticleCategory = typeof ARTICLE_CATEGORIES[number];
-export type ArticlePublication = 'austin' | 'san_antonio';
+export type ArticlePublication = 'austin' | 'san_antonio' | 'houston' | 'dallas';
 
 const [abor, fivePoints, wcrSanAntonio, wcrAustin, gsaba, hbaAustin, sabor,
   editorsChoice, featuredPartner, faces, rrc] = ARTICLE_CATEGORIES;
@@ -53,7 +53,12 @@ export function canonicalArticleCategory(value: string, publication?: string): s
 }
 
 export function articleCategoriesForPublication(publication: ArticlePublication): ArticleCategory[] {
-  return publication === 'austin'
-    ? [abor, fivePoints, wcrAustin, hbaAustin, editorsChoice, featuredPartner, faces, rrc]
-    : [wcrSanAntonio, gsaba, sabor, editorsChoice, featuredPartner, faces, rrc];
+  if (publication === 'austin') {
+    return [abor, fivePoints, wcrAustin, hbaAustin, editorsChoice, featuredPartner, faces, rrc];
+  }
+  if (publication === 'san_antonio') {
+    return [wcrSanAntonio, gsaba, sabor, editorsChoice, featuredPartner, faces, rrc];
+  }
+  // Houston and Dallas / Ft. Worth: shared editorial categories only.
+  return [editorsChoice, featuredPartner, faces, rrc];
 }
