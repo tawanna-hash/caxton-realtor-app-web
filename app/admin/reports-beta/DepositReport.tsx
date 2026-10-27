@@ -63,7 +63,9 @@ export function DepositReport({ kind, payments, from, to, preparedBy }: { kind: 
   };
 
   return (
-    <div className="space-y-5">
+    <>
+    <PrintSlip title={title} slip={slip} rows={rows} byDay={byDay} total={total} from={from} to={to} preparedBy={preparedBy} />
+    <div className="space-y-5 print:hidden">
       <div className="flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
           <div className="flex items-center gap-3"><Link href="/admin/reports-beta" aria-label="Back to reports" className="text-2xl leading-none text-[color:var(--ds-ink)]">&lsaquo;</Link><h1 className={A.title}>{title}</h1></div>
@@ -129,6 +131,66 @@ export function DepositReport({ kind, payments, from, to, preparedBy }: { kind: 
             </div>
           )}
         </>
+      )}
+    </div>
+    </>
+  );
+}
+
+/* Print-only layout: one compact table on Letter paper instead of the screen cards. */
+function PrintSlip({ title, slip, rows, byDay, total, from, to, preparedBy }: { title: string; slip: boolean; rows: DepositPaymentRow[]; byDay: Array<{ day: string; count: number; cents: number }>; total: number; from: string; to: string; preparedBy: string | null }) {
+  const th = 'border-b border-black px-1.5 py-1 text-left font-semibold';
+  const td = 'border-b border-gray-300 px-1.5 py-1 align-top';
+  return (
+    <div className="deposit-print hidden text-[10px] leading-snug text-black print:block">
+      <style>{`@media print { @page { size: letter portrait; margin: 0.5in; } .deposit-print table { border-collapse: collapse; width: 100%; } .deposit-print tr { break-inside: avoid; } .deposit-print thead { display: table-header-group; } }`}</style>
+      <div className="flex items-end justify-between border-b-2 border-black pb-2">
+        <div>
+          <div className="text-[9px] uppercase tracking-[0.2em]">Caxton Publications, Inc.</div>
+          <div className="text-[16px] font-bold">{title}</div>
+        </div>
+        <div className="text-right">
+          <div>Period: <b>{shortDate(from)} – {shortDate(to)}</b></div>
+          <div>Tender: <b>Checks only</b> · Prepared by: <b>{preparedBy ?? '—'}</b></div>
+        </div>
+      </div>
+      <div className="mt-2 flex gap-8">
+        <div>Total deposit <div className="text-[15px] font-bold tabular-nums">{formatCents(total)}</div></div>
+        <div>Checks <div className="text-[15px] font-bold tabular-nums">{rows.length}</div></div>
+        {slip && <div>Deposit days <div className="text-[15px] font-bold tabular-nums">{byDay.length}</div></div>}
+        {slip && byDay.length > 1 && (
+          <table className="ml-auto !w-auto">
+            <thead><tr><th className={th}>Date</th><th className={`${th} text-right`}>Count</th><th className={`${th} text-right`}>Amount</th></tr></thead>
+            <tbody>{byDay.map((d) => <tr key={d.day}><td className={td}>{d.day === 'Undated' ? 'Undated' : shortDate(d.day)}</td><td className={`${td} text-right`}>{d.count}</td><td className={`${td} text-right tabular-nums`}>{formatCents(d.cents)}</td></tr>)}</tbody>
+          </table>
+        )}
+      </div>
+      {rows.length === 0 ? (
+        <p className="mt-4">No check payments were recorded between {shortDate(from)} and {shortDate(to)}.</p>
+      ) : (
+        <table className="mt-3">
+          <thead><tr>
+            <th className={`${th} w-6`}>#</th><th className={th}>Date</th><th className={th}>Partner</th><th className={th}>Invoice</th><th className={th}>Check no.</th><th className={th}>Memo</th><th className={`${th} text-right`}>Amount</th>
+          </tr></thead>
+          <tbody>{rows.map((p, n) => (
+            <tr key={p.id}>
+              <td className={td}>{n + 1}</td>
+              <td className={`${td} whitespace-nowrap`}>{shortDate(p.payment_date)}</td>
+              <td className={td}>{p.partner_name ?? '—'}{pubLabel(p.publication) && <span className="text-gray-600"> · {pubLabel(p.publication)}</span>}</td>
+              <td className={`${td} whitespace-nowrap`}>{p.invoice_number ?? 'Draft'}</td>
+              <td className={`${td} whitespace-nowrap font-semibold`}>{p.reference?.trim() || '—'}</td>
+              <td className={td}>{p.memo?.trim() || ''}</td>
+              <td className={`${td} whitespace-nowrap text-right tabular-nums`}>{formatCents(p.amount_cents)}</td>
+            </tr>
+          ))}</tbody>
+          <tfoot><tr><td colSpan={6} className="border-t-2 border-black px-1.5 py-1.5 text-right font-bold">{slip ? 'Total deposit' : 'Total'}</td><td className="border-t-2 border-black px-1.5 py-1.5 text-right font-bold tabular-nums">{formatCents(total)}</td></tr></tfoot>
+        </table>
+      )}
+      {slip && (
+        <div className="mt-8 grid grid-cols-2 gap-10 break-inside-avoid">
+          <div><div className="h-6" /><div className="border-t border-black pt-1">Prepared by{preparedBy ? `: ${preparedBy}` : ''}</div></div>
+          <div><div className="h-6" /><div className="border-t border-black pt-1">Verified / deposited by · Date</div></div>
+        </div>
       )}
     </div>
   );
