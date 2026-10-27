@@ -7,7 +7,7 @@ import type { NewsArticle } from '@/lib/server/wp-news';
 
 import PageTitle from '@/components/ui/PageTitle';
 import ContentPagination from '@/app/admin/_components/ContentPagination';
-import FeatureArticlesPanel from './FeatureArticlesPanel';
+import FeatureArticlesPanel, { type FeatureArticle } from './FeatureArticlesPanel';
 import AuthorPicker, { AuthorPhoto } from './AuthorPicker';
 import type { ArticleAuthor } from '@/lib/server/article-authors';
 import { ARTICLE_CATEGORIES, canonicalArticleCategory } from '@/lib/article-categories';
@@ -17,9 +17,13 @@ import { normalizeArticleHtml } from '@/lib/article-html';
 export type AdminArticle = NewsArticle & {
   hidden: boolean;
   editedFields: string[];
+  /** Markets this article appears in (featured partner articles can span several). */
+  markets?: Array<NewsArticle['publication']>;
+  /** Set for featured partner articles, which are edited through the partner form. */
+  featured?: FeatureArticle & { advertiserName: string };
 };
 
-type ArticlesTab = 'monthly' | 'featured';
+type ArticlesTab = 'all' | 'monthly' | 'featured';
 
 type Props = {
   initialArticles: AdminArticle[];
@@ -160,7 +164,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   const [syncError, setSyncError] = useState<string | null>(null);
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
   // Tab, filter, and search live in the URL so refresh/sharing preserves them.
-  const [tab, setTab] = useUrlString<ArticlesTab>('tab', 'monthly');
+  const [tab, setTab] = useUrlString<ArticlesTab>('tab', 'all');
   const [filter, setFilter] = useUrlString<PubFilter>('filter', 'all');
   const [search, setSearch] = useUrlState<string>('q', '', {
     parse: (raw) => raw ?? '',
@@ -178,7 +182,9 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     const q = search.trim().toLowerCase();
     return initialArticles.filter((a) => {
       if (a.hidden || (categoryFilter && canonicalArticleCategory(a.cat, a.publication) !== categoryFilter)) return false;
-      if (filter !== 'all' && a.publication !== filter) return false;
+      if (tab === 'monthly' && a.featured) return false;
+      if (tab === 'featured' && !a.featured) return false;
+      if (filter !== 'all' && !(a.markets ?? [a.publication]).includes(filter)) return false;
       if (!q) return true;
       return (
         a.head.toLowerCase().includes(q) ||
@@ -186,14 +192,14 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
         a.cat.toLowerCase().includes(q)
       );
     });
-  }, [initialArticles, filter, search, categoryFilter]);
+  }, [initialArticles, filter, search, categoryFilter, tab]);
 
   const counts = useMemo(() => {
     const c = { all: 0, austin: 0, san_antonio: 0, houston: 0, dallas: 0 };
     for (const a of initialArticles) {
       if (a.hidden) continue;
       c.all += 1;
-      c[a.publication] += 1;
+      for (const m of a.markets ?? [a.publication]) c[m] += 1;
     }
     return c;
   }, [initialArticles]);
@@ -249,7 +255,26 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     startTransition(() => router.refresh());
   }
 
+  const [featureRequest, setFeatureRequest] = useState<{ nonce: number; article: FeatureArticle | null } | null>(null);
+  const openFeature = (article: FeatureArticle | null) => setFeatureRequest({ nonce: Date.now(), article });
+  const editArticle = (a: AdminArticle) => (a.featured ? openFeature(a.featured) : setEditing(a));
+
   async function handleDelete(article: AdminArticle) {
+    if (article.featured) {
+      if (!window.confirm(`Delete \"${article.head}\"?\n\nThis featured partner article will be permanently removed.`)) return;
+      setDeletingId(article.id);
+      setDeleteError(null);
+      try {
+        const res = await fetch(`/api/admin/feature-articles/${article.featured.id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error(`Delete failed (${res.status})`);
+        startTransition(() => router.refresh());
+      } catch (err) {
+        setDeleteError(err instanceof Error ? err.message : 'Delete failed');
+      } finally {
+        setDeletingId(null);
+      }
+      return;
+    }
     if (!window.confirm(`Delete "${article.head}"?\n\n${article.id.includes('-manual-') ? 'This manually created article will be permanently removed.' : 'This imported article will be removed from the app and public feed.'}`)) return;
     setDeletingId(article.id);
     setDeleteError(null);
@@ -277,15 +302,12 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Content</p>
-          <PageTitle size="md">Monthly Articles</PageTitle>
+          <PageTitle size="md">Articles</PageTitle>
           <p className="text-sm text-gray-600 mt-1">
-            {tab === 'monthly'
-              ? 'All articles pulled from WordPress feeds. Edits are saved locally and applied instantly to the public app — WordPress is untouched. Use Sync now to refresh the upstream feed.'
-              : 'Editorial pieces tied to a partner. Published articles appear on that partner\u2019s public detail page beneath their event photos.'}
+            Monthly articles pulled from WordPress feeds plus featured partner articles, in one list. Edits are saved locally and applied instantly to the public app — WordPress is untouched. Use Sync now to refresh the upstream feed. Articles published to several markets update together.
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          {tab === 'monthly' && (
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -341,20 +363,27 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
               </>
             )}
           </button>
+          <button
+            type="button"
+            onClick={() => openFeature(null)}
+            className="inline-flex items-center gap-2 rounded-md border border-brand-700 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-700/5 min-h-[44px] whitespace-nowrap"
+          >
+            + Featured article
+          </button>
           </div>
-          )}
-          {tab === 'monthly' && syncedAt && !syncError && (
+          {syncedAt && !syncError && (
             <span className="text-xs text-gray-500">Last sync: {syncedAt}</span>
           )}
-          {tab === 'monthly' && syncError && <span className="text-xs text-[#661102]">{syncError}</span>}
+          {syncError && <span className="text-xs text-[#661102]">{syncError}</span>}
         </div>
       </div>
 
-      {/* Tab switcher */}
+      {/* Type filter */}
       <div className="flex items-center gap-2 mb-4 border-b border-gray-200">
         {([
-          { key: 'monthly' as const, label: 'Monthly Articles' },
-          { key: 'featured' as const, label: 'Featured Articles' },
+          { key: 'all' as const, label: 'All Articles' },
+          { key: 'monthly' as const, label: 'Monthly' },
+          { key: 'featured' as const, label: 'Featured' },
         ]).map(({ key, label }) => (
           <button
             key={key}
@@ -371,9 +400,6 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
         ))}
       </div>
 
-      {tab === 'featured' ? (
-        <FeatureArticlesPanel seedAuthors={seedAuthors} />
-      ) : (
       <>
       <section className="content-admin-summary" aria-label="Article summary">
         <div><strong>{counts.all.toLocaleString()}</strong><span>Total articles</span></div>
@@ -463,8 +489,11 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
+                    {a.featured && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border bg-amber-50 text-amber-800 border-amber-200 mr-1">Featured</span>
+                    )}
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border ${PUB_STYLES[a.publication]}`}>
-                      {PUB_LABEL[a.publication]}
+                      {(a.markets ?? [a.publication]).map((m) => PUB_LABEL[m]).join(', ')}
                     </span>
                     {a.editedFields.length > 0 && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#E0FBE0] text-[#005A00] border border-[#00E200]/30">Edited</span>
@@ -486,7 +515,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                 <dd className="text-gray-700">{formatDate(a.dateIso || a.publishedAt)}</dd>
               </dl>
               <div className="mt-2 flex items-center gap-3">
-                <button type="button" onClick={() => setEditing(a)} className="text-brand-700 hover:underline text-xs font-medium">Edit</button>
+                <button type="button" onClick={() => editArticle(a)} className="text-brand-700 hover:underline text-xs font-medium">Edit</button>
                 <a href={a.link} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:underline text-xs">View ↗</a>
                 <button type="button" onClick={() => void handleDelete(a)} disabled={deletingId === a.id}
                   className="text-[#661102] hover:underline text-xs disabled:opacity-50">{deletingId === a.id ? 'Deleting…' : 'Delete'}</button>
@@ -555,7 +584,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${PUB_STYLES[a.publication]}`}
                       >
-                        {PUB_LABEL[a.publication]}
+                        {a.featured ? 'Featured · ' : ''}{(a.markets ?? [a.publication]).map((m) => PUB_LABEL[m]).join(', ')}
                       </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-700">{a.cat}</td>
@@ -569,7 +598,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                       <div className="inline-flex items-center gap-3">
                         <button
                           type="button"
-                          onClick={() => setEditing(a)}
+                          onClick={() => editArticle(a)}
                           className="text-brand-700 hover:underline text-xs font-medium"
                         >
                           Edit
@@ -605,6 +634,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
       {editing && (
         <EditModal
           article={editing}
+          linkedMarkets={editing.groupId ? initialArticles.filter((x) => x.groupId === editing.groupId).map((x) => x.publication) : [editing.publication]}
           seedAuthors={seedAuthors}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
@@ -615,7 +645,13 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
         <CreateModal seedAuthors={seedAuthors} onClose={() => setCreating(false)} onCreated={handleCreated} />
       )}
       </>
-      )}
+
+      <FeatureArticlesPanel
+        embedded
+        seedAuthors={seedAuthors}
+        request={featureRequest}
+        onChanged={() => startTransition(() => router.refresh())}
+      />
     </div>
   );
 }
@@ -626,11 +662,13 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
 
 function EditModal({
   article,
+  linkedMarkets,
   seedAuthors,
   onClose,
   onSaved,
 }: {
   article: AdminArticle;
+  linkedMarkets: Array<NewsArticle['publication']>;
   seedAuthors: ArticleAuthor[];
   onClose: () => void;
   onSaved: () => void;
@@ -726,7 +764,8 @@ function EditModal({
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
-              Edit article · {PUB_LABEL[article.publication]}
+              Edit article · {linkedMarkets.length > 1 ? linkedMarkets.map((m) => PUB_LABEL[m]).join(', ') : PUB_LABEL[article.publication]}
+              {linkedMarkets.length > 1 && <span className="normal-case tracking-normal text-brand-700"> — changes apply to all {linkedMarkets.length} markets</span>}
             </p>
             <h2 className="font-serif text-xl text-gray-900 mt-1 line-clamp-1">{article.head}</h2>
           </div>
@@ -928,26 +967,15 @@ function CreateModal({
           .filter(Boolean),
         publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
       };
-      const failures: string[] = [];
-      let created = 0;
-      for (const publication of publications) {
-        const res = await fetch('/api/admin/articles', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...baseBody, publication }),
-        });
-        if (res.ok) {
-          created += 1;
-        } else {
-          const b = await res.json().catch(() => ({}));
-          failures.push(`${PUB_LABEL[publication]}: ${b?.error || `failed (${res.status})`}`);
-        }
-      }
-      if (failures.length > 0) {
-        // Keep the modal open on the markets that failed so nothing is re-posted twice.
-        setPublications((cur) => cur.filter((p) => failures.some((f) => f.startsWith(`${PUB_LABEL[p]}:`))));
-        throw new Error(`${created > 0 ? `Published to ${created} market(s). ` : ''}Failed — ${failures.join('; ')}`);
+      const res = await fetch('/api/admin/articles', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...baseBody, publications }),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        throw new Error(b?.error || `Create failed (${res.status})`);
       }
       onCreated();
     } catch (err) {

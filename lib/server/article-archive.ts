@@ -21,6 +21,7 @@ interface ArchivedArticleRow {
   tags: string[] | null;
   published_at: string | Date;
   source_url: string | null;
+  group_id?: string | null;
 }
 
 // Manually-created articles (no WordPress post backing them) get a
@@ -80,6 +81,24 @@ async function ensureArticleArchiveSchema(): Promise<void> {
   // Older deployments constrained publication to austin / san_antonio.
   await query(`ALTER TABLE wp_article_archive DROP CONSTRAINT IF EXISTS wp_article_archive_publication_check`);
   await query(`ALTER TABLE wp_article_archive ADD COLUMN IF NOT EXISTS slug TEXT`);
+  await query(`ALTER TABLE wp_article_archive ADD COLUMN IF NOT EXISTS group_id TEXT`);
+  await query(`CREATE INDEX IF NOT EXISTS idx_wp_article_archive_group ON wp_article_archive (group_id)`);
+  // Link manual articles that were previously posted to several markets one at
+  // a time (same title and publish time) so edits reach every copy.
+  try {
+    await query(`
+      UPDATE wp_article_archive a
+         SET group_id = 'g-' || md5(a.head || a.published_at::text)
+       WHERE a.group_id IS NULL
+         AND a.wp_post_id LIKE '%-manual-%'
+         AND EXISTS (
+           SELECT 1 FROM wp_article_archive b
+            WHERE b.head = a.head AND b.published_at = a.published_at
+              AND b.publication <> a.publication AND b.wp_post_id LIKE '%-manual-%')
+    `);
+  } catch (err) {
+    console.warn('[article-archive] group backfill skipped:', err);
+  }
   await query(`ALTER TABLE wp_article_archive ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
   await query(`ALTER TABLE wp_article_archive ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
   await query(
@@ -146,6 +165,7 @@ function rowToArticle(row: ArchivedArticleRow): NewsArticle {
       ? { name: authorName, avatar: authorAvatar }
       : { name: authorName },
     tags: row.tags ?? [],
+    ...(row.group_id ? { groupId: row.group_id } : {}),
   };
 }
 
@@ -154,7 +174,7 @@ export async function getArchivedArticles(publication: Publication): Promise<New
   const rows = await query<ArchivedArticleRow>(
     `SELECT publication, wp_post_id, head, excerpt, content_html,
             image_url, image_thumb, author_name, author_avatar, cat, tags,
-            published_at, source_url
+            published_at, source_url, group_id
        FROM wp_article_archive
       WHERE publication = $1
       ORDER BY published_at DESC`,
@@ -201,6 +221,28 @@ export interface CreateArchivedArticleInput {
   tags?: string[] | null;
   publishedAt?: string | null; // ISO date/datetime; defaults to now
   sourceUrl?: string | null;
+  groupId?: string | null;
+}
+
+export function newArticleGroupId(): string {
+  return `g-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/** Every copy (including itself) of an article published to several markets. */
+export async function getArticleGroupMembers(
+  publication: Publication,
+  wpPostId: string,
+): Promise<Array<{ publication: Publication; wpPostId: string }>> {
+  await ensureArticleArchiveSchema();
+  const rows = await query<{ publication: Publication; wp_post_id: string }>(
+    `SELECT publication, wp_post_id FROM wp_article_archive
+      WHERE group_id IS NOT NULL
+        AND group_id = (SELECT group_id FROM wp_article_archive WHERE publication = $1 AND wp_post_id = $2)`,
+    [publication, wpPostId],
+  );
+  return rows.length > 0
+    ? rows.map((r) => ({ publication: r.publication, wpPostId: r.wp_post_id }))
+    : [{ publication, wpPostId }];
 }
 
 export async function createArchivedArticle(
@@ -213,8 +255,8 @@ export async function createArchivedArticle(
     `INSERT INTO wp_article_archive
        (publication, wp_post_id, slug, head, excerpt, content_html, image_url,
         image_thumb, author_name, author_avatar, cat, tags, published_at,
-        source_url, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
+        source_url, group_id, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())
      RETURNING publication, wp_post_id, head, excerpt, content_html, image_url,
                image_thumb, author_name, author_avatar, cat, tags, published_at,
                source_url`,
@@ -233,6 +275,7 @@ export async function createArchivedArticle(
       input.tags ?? [],
       publishedAt.toISOString(),
       input.sourceUrl ?? null,
+      input.groupId ?? null,
     ],
   );
   return rowToArticle(rows[0]);

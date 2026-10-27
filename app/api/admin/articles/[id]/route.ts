@@ -19,6 +19,7 @@ import {
 } from '@/lib/server/article-overrides';
 import {
   isManualArticleId,
+  getArticleGroupMembers,
   updateArchivedArticle,
   deleteArchivedArticle,
 } from '@/lib/server/article-archive';
@@ -130,19 +131,26 @@ export const PATCH = withAdminTracking(
     // is already the FULL article id, matching what article-archive.ts stores
     // in its own wp_post_id column.
     if (isManualArticleId(wpPostId)) {
-      const updated = await updateArchivedArticle(publication, wpPostId, {
-        head: body.head,
-        excerpt: body.excerpt,
-        contentHtml: body.contentHtml,
-        imageUrl: body.imageUrl,
-        authorName: body.authorName,
-        authorAvatar: body.authorAvatar,
-        cat: body.cat,
-        tags: body.tags,
-      });
+      // Copies published to several markets share a group id: apply the edit to
+      // every market's copy, not just the one opened.
+      const members = await getArticleGroupMembers(publication, wpPostId);
+      let updated = null;
+      for (const m of members) {
+        const result = await updateArchivedArticle(m.publication, m.wpPostId, {
+          head: body.head,
+          excerpt: body.excerpt,
+          contentHtml: body.contentHtml,
+          imageUrl: body.imageUrl,
+          authorName: body.authorName,
+          authorAvatar: body.authorAvatar,
+          cat: body.cat,
+          tags: body.tags,
+        });
+        if (m.wpPostId === wpPostId && m.publication === publication) updated = result;
+        invalidate(m.publication);
+      }
       if (!updated) throw new ApiError(404, 'Article not found');
-      invalidate(publication);
-      return NextResponse.json({ ok: true, article: updated });
+      return NextResponse.json({ ok: true, article: updated, updatedMarkets: members.map((m) => m.publication) });
     }
 
     const saved = await upsertArticleOverride({

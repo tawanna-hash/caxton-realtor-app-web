@@ -16,7 +16,7 @@ import { revalidateTag } from 'next/cache';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ApiError } from '@/lib/server/error';
-import { createArchivedArticle } from '@/lib/server/article-archive';
+import { createArchivedArticle, newArticleGroupId } from '@/lib/server/article-archive';
 import type { Publication } from '@/lib/server/wp-news';
 import { sanitizeArticleHtmlForStorage } from '@/lib/server/wp-news';
 
@@ -27,6 +27,7 @@ const VALID_PUBS = new Set<Publication>(['austin', 'san_antonio', 'houston', 'da
 
 type CreateBody = {
   publication?: unknown;
+  publications?: unknown;
   head?: unknown;
   excerpt?: unknown;
   contentHtml?: unknown;
@@ -40,7 +41,7 @@ type CreateBody = {
 };
 
 function validateCreateBody(raw: unknown): {
-  publication: Publication;
+  publications: Publication[];
   head: string;
   excerpt: string | null;
   contentHtml: string | null;
@@ -57,8 +58,12 @@ function validateCreateBody(raw: unknown): {
   }
   const body = raw as CreateBody;
 
-  if (typeof body.publication !== 'string' || !VALID_PUBS.has(body.publication as Publication)) {
-    throw new ApiError(400, 'publication must be "austin", "san_antonio", "houston" or "dallas"');
+  const requested = Array.isArray(body.publications)
+    ? body.publications
+    : typeof body.publication === 'string' ? [body.publication] : [];
+  const publications = [...new Set(requested)] as Publication[];
+  if (publications.length === 0 || !publications.every((p) => typeof p === 'string' && VALID_PUBS.has(p))) {
+    throw new ApiError(400, 'select at least one market: "austin", "san_antonio", "houston" or "dallas"');
   }
   if (typeof body.head !== 'string' || !body.head.trim()) {
     throw new ApiError(400, 'head (title) is required');
@@ -83,7 +88,7 @@ function validateCreateBody(raw: unknown): {
   }
 
   return {
-    publication: body.publication as Publication,
+    publications,
     head: body.head.trim(),
     excerpt: str(body.excerpt),
     contentHtml: str(body.contentHtml),
@@ -106,21 +111,26 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
   await requireAdmin();
   const parsed = validateCreateBody(await req.json().catch(() => ({})));
 
-  const article = await createArchivedArticle({
-    publication: parsed.publication,
-    head: parsed.head,
-    excerpt: parsed.excerpt,
-    contentHtml: parsed.contentHtml ? await sanitizeArticleHtmlForStorage(parsed.contentHtml) : null,
-    imageUrl: parsed.imageUrl,
-    imageThumb: parsed.imageThumb,
-    authorName: parsed.authorName,
-    authorAvatar: parsed.authorAvatar,
-    cat: parsed.cat,
-    tags: parsed.tags,
-    publishedAt: parsed.publishedAt,
-  });
+  const groupId = parsed.publications.length > 1 ? newArticleGroupId() : null;
+  const contentHtml = parsed.contentHtml ? await sanitizeArticleHtmlForStorage(parsed.contentHtml) : null;
+  const articles = [];
+  for (const publication of parsed.publications) {
+    articles.push(await createArchivedArticle({
+      publication,
+      head: parsed.head,
+      excerpt: parsed.excerpt,
+      contentHtml,
+      imageUrl: parsed.imageUrl,
+      imageThumb: parsed.imageThumb,
+      authorName: parsed.authorName,
+      authorAvatar: parsed.authorAvatar,
+      cat: parsed.cat,
+      tags: parsed.tags,
+      publishedAt: parsed.publishedAt,
+      groupId,
+    }));
+    invalidate(publication);
+  }
 
-  invalidate(parsed.publication);
-
-  return NextResponse.json({ article }, { status: 201 });
+  return NextResponse.json({ article: articles[0], articles }, { status: 201 });
 });

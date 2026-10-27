@@ -4,6 +4,8 @@ import {
   applyOverride,
   type ArticleOverride,
 } from '@/lib/server/article-overrides';
+import { getSql } from '@/lib/db';
+import { listFeatureArticles } from '@/lib/feature-articles';
 import ArticlesClient, { type AdminArticle } from './ArticlesClient';
 import { authorPortrait, canonicalAuthorName } from '@/lib/article-author-profiles';
 
@@ -44,6 +46,45 @@ export default async function AdminArticlesPage() {
   });
 
   // Sort newest first
+  // Featured partner articles share the same list (shown in every market their
+  // partner is published in).
+  try {
+    const [features, advs] = await Promise.all([
+      listFeatureArticles({ limit: 2000 }),
+      getSql()`SELECT id, name, slug, COALESCE(publication, 'austin') AS publication FROM advertisers` as unknown as Promise<
+        Array<{ id: number; name: string; slug: string; publication: string }>
+      >,
+    ]);
+    const advById = new Map(advs.map((a) => [a.id, a]));
+    const ALL: Publication[] = ADMIN_PUBLICATIONS.map((p) => p.id);
+    for (const f of features) {
+      const adv = advById.get(f.advertiserId);
+      const scope = adv?.publication ?? 'austin';
+      const markets = (ALL as string[]).includes(scope) ? [scope as Publication] : ALL;
+      articles.push({
+        id: `feature-${f.id}`,
+        publication: markets[0],
+        markets,
+        cat: 'Featured Partner',
+        head: f.title,
+        sum: f.excerpt ?? '',
+        link: f.articleUrl || (adv ? `/advertisers/${adv.slug}` : ''),
+        imageUrl: f.imageUrl ?? undefined,
+        time: '',
+        date: f.publishedAt,
+        publishedAt: f.publishedAt.length <= 10 ? `${f.publishedAt}T00:00:00.000Z` : f.publishedAt,
+        dateIso: f.publishedAt.length <= 10 ? `${f.publishedAt}T00:00:00.000Z` : f.publishedAt,
+        author: { name: f.author ?? adv?.name ?? '', ...(f.authorAvatar ? { avatar: f.authorAvatar } : {}) },
+        tags: [],
+        hidden: false,
+        editedFields: [],
+        featured: { ...f, advertiserName: adv?.name ?? '' },
+      } as AdminArticle);
+    }
+  } catch (err) {
+    errors.push(`Featured articles: ${String(err)}`);
+  }
+
   articles.sort((a, b) => {
     const da = a.dateIso ? Date.parse(a.dateIso) : 0;
     const db = b.dateIso ? Date.parse(b.dateIso) : 0;

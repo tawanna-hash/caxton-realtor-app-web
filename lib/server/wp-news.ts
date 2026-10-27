@@ -158,6 +158,8 @@ export interface NewsArticle {
   author?: { name: string; avatar?: string };
   dateIso?: string;
   tags?: string[];
+  /** Shared by copies of one article published to several markets at once. */
+  groupId?: string;
 }
 
 interface WpPost {

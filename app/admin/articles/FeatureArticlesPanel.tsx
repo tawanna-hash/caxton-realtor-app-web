@@ -11,7 +11,7 @@ import AuthorPicker, { AuthorPhoto } from './AuthorPicker';
 import type { ArticleAuthor } from '@/lib/server/article-authors';
 import { authorPortrait, canonicalAuthorName } from '@/lib/article-author-profiles';
 
-type FeatureArticle = {
+export type FeatureArticle = {
   id: number;
   advertiserId: number;
   title: string;
@@ -71,7 +71,19 @@ function formatDate(iso: string): string {
   });
 }
 
-export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: ArticleAuthor[] }) {
+export default function FeatureArticlesPanel({
+  seedAuthors,
+  embedded = false,
+  request = null,
+  onChanged,
+}: {
+  seedAuthors: ArticleAuthor[];
+  /** Render only the add/edit form (the combined Articles list owns the rows). */
+  embedded?: boolean;
+  /** Ask an embedded panel to open the form: an article to edit, or null to add. */
+  request?: { nonce: number; article: FeatureArticle | null } | null;
+  onChanged?: () => void;
+}) {
   const [articles, setArticles] = useState<FeatureArticle[] | null>(null);
   const [advertisers, setAdvertisers] = useState<PickerAdvertiser[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -134,6 +146,13 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
     setShowForm(true);
   };
 
+  useEffect(() => {
+    if (!request) return;
+    if (request.article) openEdit(request.article);
+    else openCreate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request?.nonce]);
+
   const openEdit = (a: FeatureArticle) => {
     setEditingId(a.id);
     setForm({
@@ -184,6 +203,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
       setShowForm(false);
       setEditingId(null);
       reload();
+      onChanged?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
@@ -208,6 +228,7 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
 
   return (
     <div>
+      {!embedded && (<>
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <p className="text-sm text-gray-600 font-light max-w-2xl">
           Editorial pieces tied to a partner. Published articles appear on that
@@ -323,6 +344,8 @@ export default function FeatureArticlesPanel({ seedAuthors }: { seedAuthors: Art
           })}
         </ul>
       )}
+
+      </>)}
 
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-start justify-center p-4 overflow-y-auto"
