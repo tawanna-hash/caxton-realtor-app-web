@@ -275,6 +275,10 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
       }
       return;
     }
+    const linked = article.groupId ? initialArticles.filter((x) => x.groupId === article.groupId) : [];
+    if (linked.length > 1) {
+      if (!window.confirm(`Delete "${article.head}" from all ${linked.length} markets?\n\n${linked.map((x) => PUB_LABEL[x.publication]).join(', ')}\n\nThis permanently removes every copy.`)) return;
+    } else
     if (!window.confirm(`Delete "${article.head}"?\n\n${article.id.includes('-manual-') ? 'This manually created article will be permanently removed.' : 'This imported article will be removed from the app and public feed.'}`)) return;
     setDeletingId(article.id);
     setDeleteError(null);
