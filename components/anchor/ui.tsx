@@ -247,8 +247,16 @@ export function RowMenu({ items, label = 'More actions', plain = false }: { item
     const below = window.innerHeight - r.bottom - 12;
     const above = r.top - 12;
     const right = Math.max(8, window.innerWidth - r.right);
-    if (below >= 320 || below >= above) setPos({ top: r.bottom + 6, right, maxHeight: Math.max(160, below) });
-    else { const h = Math.min(above, 640); setPos({ top: r.top - 6 - h, right, maxHeight: h }); }
+    let top: number; let maxHeight: number;
+    if (below >= 320 || below >= above) { top = r.bottom + 6; maxHeight = Math.max(160, below); }
+    else { maxHeight = Math.min(above, 640); top = r.top - 6 - maxHeight; }
+    // Keep the open menu on screen while the page scrolls, even when its row
+    // scrolls under the sticky header or off the bottom. It closes only on an
+    // outside click or a menu choice.
+    const vh = window.innerHeight;
+    maxHeight = Math.min(maxHeight, vh - 16);
+    top = Math.min(Math.max(top, 8), vh - 8 - Math.min(maxHeight, 640));
+    setPos({ top, right, maxHeight });
   };
 
   useEffect(() => {
@@ -283,7 +291,7 @@ export function RowMenu({ items, label = 'More actions', plain = false }: { item
         <span aria-hidden="true" className={plain ? 'inline-block rotate-90' : undefined}>⋯</span>
       </button>
       {open && pos && (
-        <div role="menu" style={{ position: 'fixed', top: pos.top, right: pos.right, maxHeight: pos.maxHeight, overflowY: 'auto', overscrollBehavior: 'contain' }} className="z-[70] w-56 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
+        <div role="menu" style={{ position: 'fixed', top: pos.top, right: pos.right, maxHeight: pos.maxHeight, overflowY: 'auto', overscrollBehavior: 'contain' }} className="z-[100] w-56 rounded-[10px] border border-[color:var(--ds-line)] bg-white p-1 shadow-lg">
           {shown.map((i) => {
             const cls = `block w-full rounded-[10px] px-3 py-2 text-left text-sm ${i.danger ? 'text-red-700' : 'text-[color:var(--ds-ink)]'} hover:bg-[color:var(--ds-hover)] disabled:opacity-50`;
             return i.href ? (
