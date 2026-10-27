@@ -250,10 +250,14 @@ export function RowMenu({ items, label = 'More actions', plain = false }: { item
     const vh = window.innerHeight;
     const right = Math.max(8, window.innerWidth - r.right);
     const natural = menuRef.current?.scrollHeight ?? shownCount.current * 31 + 10;
-    const maxHeight = Math.min(natural, vh - 16);
     const below = vh - r.bottom - 14;
     const above = r.top - 14;
-    let top = maxHeight <= below || below >= above ? r.bottom + 6 : r.top - 6 - maxHeight;
+    let top: number; let maxHeight: number;
+    if (natural <= below) { maxHeight = natural; top = r.bottom + 6; }
+    else if (natural <= above) { maxHeight = natural; top = r.top - 6 - natural; }
+    else if (below >= above) { maxHeight = Math.max(160, below); top = r.bottom + 6; } // scrolls inside
+    else { maxHeight = Math.max(160, above); top = r.top - 6 - maxHeight; }
+    maxHeight = Math.min(maxHeight, vh - 16);
     top = Math.min(Math.max(top, 8), vh - 8 - maxHeight);
     setPos({ top, right, maxHeight });
   };
