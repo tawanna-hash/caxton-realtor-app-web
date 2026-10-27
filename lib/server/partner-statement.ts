@@ -316,7 +316,7 @@ export async function getOrCreatePartnerStatementOverdueLink(
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
-        payment_method_types: pm === 'ach' ? ['us_bank_account'] : pm === 'bnpl' ? ['affirm', 'afterpay_clearpay', 'klarna'] : ['card'],
+        payment_method_types: pm === 'ach' ? ['us_bank_account'] : pm === 'bnpl' ? ['affirm', 'klarna'] : ['card'],
         customer_email: stripeSafeEmail(statement.recipientEmail),
         line_items: [
           {

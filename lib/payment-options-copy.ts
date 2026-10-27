@@ -6,8 +6,7 @@ export const WAYS_TO_PAY_TITLE = 'Ways to pay';
 export function waysToPayLines(): string[] {
   return [
     ...INVOICE_PAYMENT_METHODS.map((o) => `${o.label} (processing fee: ${o.feeLabel})`),
-    'ACH debit from a bank account on file (processing fee: 1%, capped at $5.00)',
-    'Check payable to Caxton Publications, Inc., PO Box 81366, Austin, TX 78708-1366',
+    'Check payable to Caxton Publications, Inc., P.O. Box 81366, Austin, Texas 78708',
   ];
 }
 
