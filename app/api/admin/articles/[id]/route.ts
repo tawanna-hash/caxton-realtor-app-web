@@ -21,6 +21,9 @@ import {
   isManualArticleId,
   getArticleGroupMembers,
   getArchivedArticleByPostId,
+  createArchivedArticle,
+  setArticleGroup,
+  newArticleGroupId,
   updateArchivedArticle,
   deleteArchivedArticle,
 } from '@/lib/server/article-archive';
@@ -64,6 +67,8 @@ type PatchBody = {
   cat?: string | null;
   tags?: string[] | null;
   hidden?: boolean;
+  publishedAt?: string | null;
+  publications?: Publication[];
 };
 
 const TEXT_FIELDS = [
@@ -107,6 +112,21 @@ function validateBody(raw: unknown): PatchBody {
     }
   }
 
+  if ('publishedAt' in body && body.publishedAt != null) {
+    if (typeof body.publishedAt !== 'string' || Number.isNaN(Date.parse(body.publishedAt))) {
+      throw new ApiError(400, 'publishedAt must be a valid date');
+    }
+    out.publishedAt = new Date(body.publishedAt).toISOString();
+  }
+
+  if ('publications' in body && body.publications != null) {
+    const list = body.publications;
+    if (!Array.isArray(list) || list.length === 0 || !list.every((x) => typeof x === 'string' && VALID_PUBS.has(x as Publication))) {
+      throw new ApiError(400, 'select at least one valid market');
+    }
+    out.publications = [...new Set(list)] as Publication[];
+  }
+
   if ('hidden' in body) {
     if (typeof body.hidden !== 'boolean') {
       throw new ApiError(400, 'hidden must be a boolean');
@@ -146,12 +166,52 @@ export const PATCH = withAdminTracking(
           authorAvatar: body.authorAvatar,
           cat: body.cat,
           tags: body.tags,
+          publishedAt: body.publishedAt,
         });
         if (m.wpPostId === wpPostId && m.publication === publication) updated = result;
         invalidate(m.publication);
       }
       if (!updated) throw new ApiError(404, 'Article not found');
-      return NextResponse.json({ ok: true, article: updated, updatedMarkets: members.map((m) => m.publication) });
+
+      // Market selection: add copies in newly ticked markets, remove copies in
+      // unticked ones. All copies stay linked so future edits reach every market.
+      let finalMarkets = members.map((m) => m.publication);
+      if (body.publications) {
+        const wanted = new Set(body.publications);
+        const have = new Set(members.map((m) => m.publication));
+        const toAdd = body.publications.filter((p) => !have.has(p));
+        const toRemove = members.filter((m) => !wanted.has(m.publication));
+        if (toAdd.length > 0 || toRemove.length > 0) {
+          const source = (await getArchivedArticleByPostId(publication, wpPostId)) ?? updated;
+          const groupId = source.groupId ?? newArticleGroupId();
+          if (toAdd.length > 0) {
+            if (!source.groupId) await setArticleGroup(members, groupId);
+            for (const pub of toAdd) {
+              await createArchivedArticle({
+                publication: pub,
+                head: source.head,
+                excerpt: source.excerpt ?? source.sum ?? '',
+                contentHtml: source.contentHtml ?? '',
+                imageUrl: source.imageUrl ?? null,
+                imageThumb: source.imageThumb ?? source.imageUrl ?? null,
+                authorName: source.author?.name ?? 'Staff',
+                authorAvatar: source.author?.avatar ?? null,
+                cat: source.cat ?? '',
+                tags: source.tags ?? [],
+                publishedAt: source.publishedAt || source.dateIso || null,
+                groupId,
+              });
+              invalidate(pub);
+            }
+          }
+          for (const m of toRemove) {
+            await deleteArchivedArticle(m.publication, m.wpPostId);
+            invalidate(m.publication);
+          }
+          finalMarkets = body.publications;
+        }
+      }
+      return NextResponse.json({ ok: true, article: updated, updatedMarkets: finalMarkets });
     }
 
     const saved = await upsertArticleOverride({

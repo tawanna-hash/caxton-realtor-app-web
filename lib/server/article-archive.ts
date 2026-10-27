@@ -245,6 +245,18 @@ export async function getArticleGroupMembers(
     : [{ publication, wpPostId }];
 }
 
+export async function setArticleGroup(
+  members: Array<{ publication: Publication; wpPostId: string }>,
+  groupId: string,
+): Promise<void> {
+  await ensureArticleArchiveSchema();
+  for (const m of members) {
+    await query(`UPDATE wp_article_archive SET group_id = $3 WHERE publication = $1 AND wp_post_id = $2`, [
+      m.publication, m.wpPostId, groupId,
+    ]);
+  }
+}
+
 export async function createArchivedArticle(
   input: CreateArchivedArticleInput,
 ): Promise<NewsArticle> {

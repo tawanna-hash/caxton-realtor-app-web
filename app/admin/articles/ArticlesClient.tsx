@@ -629,11 +629,23 @@ function EditModal({
   const [authorAvatar, setAuthorAvatar] = useState(article.author?.avatar || '');
   const [cat, setCat] = useState(article.cat);
   const [tagsCsv, setTagsCsv] = useState((article.tags || []).join(', '));
-  const [hidden, setHidden] = useState(article.hidden);
+  const [markets, setMarkets] = useState<Array<NewsArticle['publication']>>(linkedMarkets);
+  const toggleMarket = (id: NewsArticle['publication']) =>
+    setMarkets((cur) => (cur.includes(id) ? cur.filter((m) => m !== id) : [...cur, id]));
+  const [publishedAt, setPublishedAt] = useState(() => {
+    const d = new Date(article.publishedAt || article.dateIso || Date.now());
+    if (Number.isNaN(d.getTime())) return '';
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function save() {
+    if (markets.length === 0) {
+      setError('Select at least one market');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -649,7 +661,8 @@ function EditModal({
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean),
-        hidden,
+        publishedAt: publishedAt ? new Date(publishedAt).toISOString() : undefined,
+        publications: markets,
       };
       const res = await fetch(`/api/admin/articles/${encodeURIComponent(article.id)}`, {
         method: 'PATCH',
@@ -699,6 +712,32 @@ function EditModal({
         </div>
 
         <div className="px-6 py-4 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="Publish to markets" hint="Unticking a market removes the article from it; ticking one adds a copy.">
+              <div className="flex flex-wrap gap-x-4 gap-y-2 py-1">
+                {(Object.keys(PUB_LABEL) as Array<NewsArticle['publication']>).map((id) => (
+                  <label key={id} className="inline-flex items-center gap-2 text-sm text-gray-800 min-h-[32px] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={markets.includes(id)}
+                      onChange={() => toggleMarket(id)}
+                      className="h-4 w-4 rounded border-gray-300 accent-brand-700"
+                    />
+                    {PUB_LABEL[id]}
+                  </label>
+                ))}
+              </div>
+            </Field>
+            <Field label="Published date">
+              <input
+                type="datetime-local"
+                value={publishedAt}
+                onChange={(e) => setPublishedAt(e.target.value)}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
+              />
+            </Field>
+          </div>
+
           <Field label="Title">
             <input
               type="text"
@@ -748,7 +787,7 @@ function EditModal({
           <Field label="Article body" hint="Edit visually or switch to HTML code. Leave blank to use upstream content.">
             <ArticleBodyEditor value={contentHtml} onChange={updateBody} headline={head} category={cat}
               summary={excerpt} imageUrl={imageUrl} authorName={authorName} authorAvatar={authorAvatar}
-              publishedAt={article.publishedAt || article.dateIso} />
+              publishedAt={publishedAt ? new Date(publishedAt).toISOString() : article.publishedAt || article.dateIso} />
           </Field>
 
           <Field label="Tags" hint="Comma-separated">
@@ -761,17 +800,6 @@ function EditModal({
             />
           </Field>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={hidden}
-              onChange={(e) => setHidden(e.target.checked)}
-              className="h-4 w-4 rounded-md border-gray-300 text-brand-700 focus:ring-brand-700"
-            />
-            <span className="text-sm text-gray-700">
-              Hide this article from the public app
-            </span>
-          </label>
 
           {error && (
             <div className="rounded-md bg-[#FFEAE6] border border-[#FF2A04]/30 px-3 py-2 text-sm text-[#661102]">
