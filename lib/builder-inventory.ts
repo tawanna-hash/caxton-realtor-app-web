@@ -915,7 +915,7 @@ export async function updateBuilderInventory(
   // Two-pass merge: fetch current row, JS-merge input on top, write back the
   // full row. This lets us cleanly distinguish "field not provided"
   // (undefined) from "field set to null" — which COALESCE cannot do.
-  const current = await getBuilderInventoryById(id);
+  const current = await getBuilderInventoryById(id, true);
   if (!current) return null;
 
   const m = { ...current, ...input };
