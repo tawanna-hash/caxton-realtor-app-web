@@ -11,7 +11,6 @@ import {
   MARKET_BRANDS,
   renderPaymentMethodHtml,
   unresolvedPlaceholders,
-  ACH_TEMPLATE_NAME,
   PAYMENT_METHOD_TEMPLATE_NAME,
   type PaymentMethodFields,
   type TemplateMarket,
@@ -25,7 +24,8 @@ const FIELDS: Array<[keyof PaymentMethodFields, string, string]> = [
   ['payment_setup_url', 'Secure payment setup link', 'https://…'],
 ];
 
-export default function PaymentMethodTemplate({ open, onClose, variant = 'any' }: { open: boolean; onClose: () => void; variant?: 'any' | 'ach' }) {
+export default function PaymentMethodTemplate({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [variant, setVariant] = useState<'any' | 'ach'>('any');
   const [market, setMarket] = useState<TemplateMarket>('austin');
   const [fields, setFields] = useState<PaymentMethodFields>({});
   const [copied, setCopied] = useState<string | null>(null);
@@ -103,11 +103,11 @@ export default function PaymentMethodTemplate({ open, onClose, variant = 'any' }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" role="dialog" aria-modal="true" aria-label={variant === 'ach' ? ACH_TEMPLATE_NAME : PAYMENT_METHOD_TEMPLATE_NAME} onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8" role="dialog" aria-modal="true" aria-label={PAYMENT_METHOD_TEMPLATE_NAME} onClick={onClose}>
       <div className="w-full max-w-4xl space-y-5 rounded-[12px] bg-white p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">{variant === 'ach' ? ACH_TEMPLATE_NAME : PAYMENT_METHOD_TEMPLATE_NAME}</h2>
+            <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">{PAYMENT_METHOD_TEMPLATE_NAME}</h2>
             <p className={A.subtitle}>The company name, sender and contact details follow the client&apos;s market.</p>
           </div>
           <button type="button" className={A.small} onClick={onClose}>Close</button>
@@ -115,6 +115,13 @@ export default function PaymentMethodTemplate({ open, onClose, variant = 'any' }
 
         <div className="grid gap-5 md:grid-cols-[260px_1fr]">
           <div className="space-y-3">
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-[color:var(--ds-body)]">Payment method</span>
+              <select className={A.input} value={variant} onChange={(e) => setVariant(e.target.value === 'ach' ? 'ach' : 'any')}>
+                <option value="any">Card or bank account (ACH)</option>
+                <option value="ach">Bank account (ACH debit) only</option>
+              </select>
+            </label>
             <label className="block space-y-1">
               <span className="text-xs font-medium text-[color:var(--ds-body)]">Client</span>
               <select className={A.input} value={agId} onChange={(e) => pickClient(e.target.value)}>
