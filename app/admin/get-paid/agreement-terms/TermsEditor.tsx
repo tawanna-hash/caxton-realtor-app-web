@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { A } from '@/components/anchor/ui';
+import { applyFeesToTerms } from '@/lib/agreement-terms';
 
 type Version = { id: number; body: string; effective_at: string; note: string; created_by: string; created_at: string };
 
@@ -28,6 +29,19 @@ export default function TermsEditor() {
       })
       .catch(() => setMsg({ ok: false, text: 'Could not load terms.' }));
   }, []);
+
+  async function syncFees() {
+    setMsg(null);
+    try {
+      const d = (await (await fetch('/api/payment-settings/fees')).json()) as { fees?: Parameters<typeof applyFeesToTerms>[1] };
+      if (!d.fees) throw new Error('no fees');
+      const next = applyFeesToTerms(body, d.fees);
+      setMsg({ ok: true, text: next === body ? 'Section 9.5 already matches the current payment settings.' : 'Section 9.5 updated from payment settings. Review it, then save as a new version.' });
+      setBody(next);
+    } catch {
+      setMsg({ ok: false, text: 'Could not load payment settings.' });
+    }
+  }
 
   async function save() {
     setBusy(true);
@@ -74,9 +88,12 @@ export default function TermsEditor() {
             <input className={A.input} value={note} onChange={(e) => setNote(e.target.value)} placeholder="What changed" />
           </div>
         </div>
-        <button className={A.primary} disabled={busy || body.trim().length < 200} onClick={save}>
-          {busy ? 'Saving' : 'Save new version'}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button className={A.primary} disabled={busy || body.trim().length < 200} onClick={save}>
+            {busy ? 'Saving' : 'Save new version'}
+          </button>
+          <button className={A.outline} type="button" onClick={syncFees}>Update section 9.5 fees from payment settings</button>
+        </div>
       </div>
       <div className="space-y-2 rounded-[10px] bg-white p-4">
         <h2 className="text-base font-semibold">Version history</h2>

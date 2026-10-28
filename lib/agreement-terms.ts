@@ -540,6 +540,29 @@ No amendment, waiver, discharge, or modification of this Agreement is binding on
 The applicable Insertion Order or other signing document incorporating these Terms may be executed in counterparts, each of which is deemed an original and all of which together constitute one instrument.
 Signatures delivered by PDF, electronic signature platform, scanned image, or other electronic means are deemed effective as originals.`;
 
+/** Words for a percentage like 5.99 -> "five and ninety-nine hundredths percent (5.99%)"; simple form for others. */
+function pctText(p: number): string {
+  const whole: Record<number, string> = { 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten' };
+  const n = Number(p.toFixed(4));
+  if (Number.isInteger(n) && whole[n]) return `${whole[n]} percent (${n}%)`;
+  return `${n} percent (${n}%)`;
+}
+const usd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+/** Rewrites the three fee bullets in section 9.5 from the given fee settings. */
+export function applyFeesToTerms(
+  text: string,
+  fees: { card: { percent: number }; ach: { percent: number; cap_cents: number }; bnpl: { percent: number; fixed_cents: number } },
+): string {
+  const card = `• credit or debit card: ${pctText(fees.card.percent)} of the amount paid;`;
+  const ach = `• ACH bank payment: ${pctText(fees.ach.percent)} of the amount paid, not to exceed ${usd(fees.ach.cap_cents)} per payment; and`;
+  const bnpl = `• buy now, pay later: ${fees.bnpl.percent === 5.99 ? 'five and ninety-nine hundredths percent (5.99%)' : pctText(fees.bnpl.percent)} of the amount paid plus ${usd(fees.bnpl.fixed_cents)}.`;
+  return text
+    .replace(/^• credit or debit card:.*$/m, card)
+    .replace(/^• ACH bank payment:.*$/m, ach)
+    .replace(/^• buy now, pay later:.*$/m, bnpl);
+}
+
 /** Oct 27, 2026 00:00 America/Chicago (CDT). */
 export const TERMS_UPDATE_CUTOFF = '2026-10-27T05:00:00Z';
 

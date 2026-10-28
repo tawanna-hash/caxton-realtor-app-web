@@ -32,3 +32,11 @@ test('terms resolve to the version in effect at signing', () => {
   assert.match(store, /effective_at\)\.getTime\(\) <= at/);
   assert.match(store, /ORDER BY effective_at DESC/);
 });
+
+test('section 9.5 fee bullets can be regenerated from settings', () => {
+  const t = readFileSync('lib/agreement-terms.ts', 'utf8');
+  assert.match(t, /export function applyFeesToTerms/);
+  assert.match(t, /\^• credit or debit card/);
+  assert.match(t, /\^• ACH bank payment/);
+  assert.match(t, /\^• buy now, pay later/);
+});

@@ -29,6 +29,7 @@ import {
   BILL_TO,
 } from "@/lib/pressbook-constants";
 import { termsForChannel } from "@/lib/agreement-terms";
+import { useCurrentTerms } from "@/lib/use-current-terms";
 import {
   allowsCheckPayment,
   deriveChannelFromAgreementType,
@@ -186,6 +187,7 @@ export function AgreementDrawer({
     amount_cents: number | null;
   }) => void;
 }) {
+  const currentTerms = useCurrentTerms();
   const linkedCampaign = useMemo(
     () =>
       existing
@@ -1737,7 +1739,7 @@ export function AgreementDrawer({
       {!isUploaded && (
         <Section title="Terms &amp; Digital Signature">
           <div className="max-h-40 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
-            {termsForChannel(
+            {currentTerms ?? termsForChannel(
               deriveChannelFromAgreementType(form.type),
               form.publication,
             )}
