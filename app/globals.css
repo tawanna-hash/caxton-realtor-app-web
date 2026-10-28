@@ -630,7 +630,7 @@ textarea::placeholder {
 }
 [data-admin-ui='true'] input[type='search'],
 [data-admin-ui='true'] input[placeholder*='earch' i] {
-  border-radius: 9999px;
+  border-radius: 6px;
   background-color: #ffffff;
 }
 /* ---- Pass 2: whole-admin consistency ---------------------------------- */
@@ -794,11 +794,11 @@ textarea::placeholder {
 [data-admin-ui='true'] button[class~='rounded-md'][class*='bg-gray-100'],
 [data-admin-ui='true'] button[class~='rounded-md'][class*='bg-[var(--rnn-purple-500)]'][class~='py-1'],
 [data-admin-ui='true'] button[class~='rounded'][class*='bg-gray-100'] {
-  border-radius: var(--admin-pill-radius);
+  border-radius: 6px;
 }
 /* Status and channel tags stay pill-shaped in tables and drawers too. */
 [data-admin-shell='true'] :is(span, a, button)[class*='rounded'][class*='bg-'][class*='uppercase'][class~='text-xs']:not([class*='rounded-l']):not([class*='rounded-r']) {
-  border-radius: var(--admin-pill-radius);
+  border-radius: 6px;
 }
 /* Mint kit details: dashed dividers between stat-strip cells. */
 [data-admin-ui='true'] section[class*='divide-x'] > * + * {
@@ -807,7 +807,7 @@ textarea::placeholder {
 /* Sub-navigation segmented toggles (Day / Week / Month style). */
 [data-admin-ui='true'] [role='tablist'][class*='rounded'] {
   background-color: var(--admin-field);
-  border-radius: 9999px;
+  border-radius: 6px;
   padding: 0.125rem;
 }
 /* Lavender period chip (Mint "This Month" control): date-range and period
@@ -821,7 +821,7 @@ textarea::placeholder {
   color: var(--rnn-purple-700);
   font-weight: 600;
   border: 1px solid transparent;
-  border-radius: 9999px;
+  border-radius: 6px;
   padding-inline: 1rem 2.25rem;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23301D5D' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -838,7 +838,7 @@ textarea::placeholder {
 [data-admin-ui='true'] button[aria-label='Today'] {
   background-color: #EFEAF8;
   color: var(--rnn-purple-700);
-  border-radius: 9999px;
+  border-radius: 6px;
   font-weight: 600;
 }
 /* Operational admin pages share a compact desktop density so filters, table
@@ -1846,3 +1846,10 @@ body:has(nav[aria-label="Mobile tabs"]) button[aria-label="Back to top"] {
 }
 }
 
+
+
+/* Admin: any remaining pill-class element that is not a fixed-size circle
+   (avatars, dots, switches) takes the standard 6px control radius. */
+[data-admin-shell='true'] :is(button, a, span, label, li, div)[class*='rounded-full']:not([class*=' w-']):not([class*=' h-']):not([class*='size-']):not([class~='w-full']):not(.anchor-toggle):not([role='switch']):not(.ct-switch) {
+  border-radius: 6px !important;
+}
