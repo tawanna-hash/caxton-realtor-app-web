@@ -42,10 +42,10 @@ e-Blast Campaigns are digital email-based advertising products billed separately
 This Agreement begins when Publisher accepts the applicable order and continues through the Ad Timing Term stated in the Insertion Order. The final month or final scheduled deployment within the Ad Timing Term is the last committed period of the initial term.
 5.2 Firm Commitment
 The Ad Timing Term is a firm commitment. After Publisher accepts an Insertion Order or other signing document, Advertiser may not cancel, terminate, reduce, suspend, or obtain a refund for any committed advertising during the Ad Timing Term except as Publisher may expressly agree in writing.
-5.3 Renewal for Recurring Products Only
-Only products expressly designated as recurring in the Insertion Order will automatically renew after the Ad Timing Term. Each Recurring Product renews on a month-to-month basis on the same ad size, placement type, and other applicable terms then in effect, including Publisher’s then-current rates, unless timely non-renewed under Section 6.
-5.4 Non-Recurring Products
-Any product not expressly designated as recurring in the Insertion Order ends automatically upon completion of its stated schedule and does not renew.
+5.3 Automatic Renewal
+This Agreement renews automatically at the end of the Ad Timing Term on the same ad size, placement type, and other applicable terms then in effect, including Publisher’s then-current rates, unless Publisher receives written notice of non-renewal at least thirty (30) calendar days before the end of the Ad Timing Term.
+5.4 Notice of Non-Renewal
+To prevent automatic renewal, Advertiser must give Publisher written notice of non-renewal that is received at least thirty (30) calendar days before the end of the Ad Timing Term. Notice received after that date does not prevent renewal.
 5.5 Renewal Changes
 Publisher may change rates, specifications, or product terms for any Renewal Term by written notice before the renewed placement or campaign is invoiced or scheduled. If Advertiser continues into the Renewal Term after such notice, the revised rate, specification, or term applies.
 6. Non-Renewal; End-of-Term Cancellation Procedure
@@ -99,14 +99,12 @@ Invoices may be sent to the preferred billing email identified in the Insertion 
 9.4 Payment Methods
 Publisher accepts:
 • major credit and debit cards;
-• ACH bank payments;
-• buy now, pay later services offered by Publisher at checkout (currently Affirm, Afterpay / Clearpay, and Klarna), subject to the provider’s eligibility requirements and terms; and
+• ACH bank payments; and
 • checks payable to Caxton Publications, Inc., mailed to P.O. Box 81366, Austin, Texas 78708.
 9.5 Electronic Payment Processing Fees
 Where permitted by applicable law and card-network rules, a processing fee is added to electronic payments made through Publisher’s online payment pages. The fee is shown at checkout before Advertiser authorizes payment, and it is in addition to the invoice amount:
 • credit or debit card: three percent (3%) of the amount paid;
-• ACH bank payment: one percent (1%) of the amount paid, not to exceed five dollars ($5.00) per payment; and
-• buy now, pay later: five and ninety-nine hundredths percent (5.99%) of the amount paid plus thirty cents ($0.30).
+• ACH bank payment: one percent (1%) of the amount paid, not to exceed five dollars ($5.00) per payment.
 No processing fee applies to payments made by check. Publisher may change these fees on written notice before the payment is made. By authorizing an ACH bank payment, Advertiser authorizes Publisher and its payment processor to debit the bank account Advertiser provides for the amount shown at checkout. A payment that is returned, reversed, or disputed does not discharge the amount owed, and Advertiser remains responsible for the amount due plus any return or dispute fees charged to Publisher.
 9.6 No Setoff
 Advertiser and Agency must pay all amounts when due without setoff, deduction, withholding, recoupment, or counterclaim, except to the extent required by law.
@@ -555,12 +553,11 @@ export function applyFeesToTerms(
   fees: { card: { percent: number }; ach: { percent: number; cap_cents: number }; bnpl: { percent: number; fixed_cents: number } },
 ): string {
   const card = `• credit or debit card: ${pctText(fees.card.percent)} of the amount paid;`;
-  const ach = `• ACH bank payment: ${pctText(fees.ach.percent)} of the amount paid, not to exceed ${usd(fees.ach.cap_cents)} per payment; and`;
-  const bnpl = `• buy now, pay later: ${fees.bnpl.percent === 5.99 ? 'five and ninety-nine hundredths percent (5.99%)' : pctText(fees.bnpl.percent)} of the amount paid plus ${usd(fees.bnpl.fixed_cents)}.`;
+  const ach = `• ACH bank payment: ${pctText(fees.ach.percent)} of the amount paid, not to exceed ${usd(fees.ach.cap_cents)} per payment.`;
   return text
     .replace(/^• credit or debit card:.*$/m, card)
     .replace(/^• ACH bank payment:.*$/m, ach)
-    .replace(/^• buy now, pay later:.*$/m, bnpl);
+    ;
 }
 
 /** Oct 27, 2026 00:00 America/Chicago (CDT). */
