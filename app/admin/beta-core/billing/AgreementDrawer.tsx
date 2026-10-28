@@ -1324,6 +1324,15 @@ export function AgreementDrawer({
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
+              checked={!form.is_renewal}
+              disabled={!!renewedFrom}
+              onChange={(e) => upd("is_renewal", !e.target.checked)}
+            />
+            This is a new partner
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
               checked={form.ask_billing_address}
               onChange={(e) => upd("ask_billing_address", e.target.checked)}
             />
