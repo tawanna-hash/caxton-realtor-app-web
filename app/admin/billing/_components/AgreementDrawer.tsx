@@ -21,6 +21,7 @@ import {
   MONTHS_LIST,
   FREQ_PKG_AG,
   FREQ_MONTHS,
+  buildTimingRun,
   AD_SIZES,
   FREQUENCIES,
   PAYMENT_TYPES,
@@ -1317,7 +1318,20 @@ export function AgreementDrawer({
                       value={f}
                       checked={form.frequency === f}
                       onChange={() => {
-                        upd("frequency", f);
+                        const n = FREQ_MONTHS[f] ?? 0;
+                        const picked = Object.entries(form.ad_timing_months).filter(([, on]) => on);
+                        const firstYear = picked.length === 1 ? form.ad_timing_years[picked[0][0]] : "";
+                        if (n > 1 && picked.length === 1 && /^\d{4}$/.test(firstYear ?? "")) {
+                          const run = buildTimingRun(picked[0][0], Number(firstYear), n);
+                          setForm((p) => ({
+                            ...p,
+                            frequency: f,
+                            ad_timing_months: run.months,
+                            ad_timing_years: run.years,
+                          }));
+                        } else {
+                          upd("frequency", f);
+                        }
                         onSizeFrChange(form.ad_size, f);
                       }}
                       className="w-4 h-4 accent-[#301D5D]"
@@ -1481,12 +1495,25 @@ export function AgreementDrawer({
                   value={form.ad_timing_years[m.k] ?? ""}
                   disabled={!form.ad_timing_months[m.k]}
                   maxLength={4}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const count = FREQ_MONTHS[form.frequency] ?? 0;
+                    const onlyThis =
+                      Object.entries(form.ad_timing_months).filter(([, on]) => on).length === 1;
+                    if (count > 1 && onlyThis && /^\d{4}$/.test(val)) {
+                      const run = buildTimingRun(m.k, Number(val), count);
+                      setForm((f) => ({
+                        ...f,
+                        ad_timing_months: run.months,
+                        ad_timing_years: run.years,
+                      }));
+                      return;
+                    }
                     upd("ad_timing_years", {
                       ...form.ad_timing_years,
-                      [m.k]: e.target.value,
-                    })
-                  }
+                      [m.k]: val,
+                    });
+                  }}
                   className="w-14 px-2 py-1 text-xs rounded-md border border-gray-300 disabled:bg-gray-100 disabled:text-gray-500"
                   placeholder="Year"
                 />

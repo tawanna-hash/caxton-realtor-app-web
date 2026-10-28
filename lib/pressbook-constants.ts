@@ -49,3 +49,25 @@ export const PAYMENT_TYPE_LABELS: Record<(typeof PAYMENT_TYPES)[number], string>
 };
 export const CARD_TYPES    = ['Visa', 'Mastercard', 'American Express', 'Other'] as const;
 export const BILL_TO       = ['Advertiser', 'Agency'] as const;
+
+/**
+ * Ad Timing Term auto-fill. Given the first month and 4-digit year, returns
+ * the checked months and years for a run of `count` consecutive months
+ * (3x, 6x or 12x), rolling the year forward after December.
+ */
+export function buildTimingRun(
+  startKey: string,
+  startYear: number,
+  count: number,
+): { months: Record<string, boolean>; years: Record<string, string> } {
+  const months: Record<string, boolean> = Object.fromEntries(MONTHS_LIST.map((m) => [m.k, false]));
+  const years: Record<string, string> = Object.fromEntries(MONTHS_LIST.map((m) => [m.k, '']));
+  const start = MONTHS_LIST.findIndex((m) => m.k === startKey);
+  if (start < 0) return { months, years };
+  for (let i = 0; i < Math.min(count, 12); i++) {
+    const idx = (start + i) % 12;
+    months[MONTHS_LIST[idx].k] = true;
+    years[MONTHS_LIST[idx].k] = String(startYear + Math.floor((start + i) / 12));
+  }
+  return { months, years };
+}
