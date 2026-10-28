@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   if (!isId(keepId) || !mergeIds.length || !mergeIds.every(isId)) return NextResponse.json({ error: 'keepId and mergeIds required' }, { status: 400 });
   await ensureSchema();
   const sql = getSql();
-  const tables = (await sql`SELECT table_name FROM information_schema.columns WHERE table_schema = 'public' AND column_name = 'advertiser_id' AND table_name <> 'advertisers'`) as unknown as Array<{ table_name: string }>;
+  const tables = (await sql`SELECT table_name FROM information_schema.columns WHERE table_schema = 'public' AND column_name = 'advertiser_id' AND table_name <> 'advertisers' AND data_type IN ('integer','bigint','smallint')`) as unknown as Array<{ table_name: string }>;
   const report: Array<Record<string, unknown>> = [];
   let failed = false;
   for (const mid of mergeIds) {
