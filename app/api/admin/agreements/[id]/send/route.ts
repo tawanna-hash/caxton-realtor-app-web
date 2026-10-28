@@ -64,7 +64,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
     const token = signToken(id);
-    const signingLink = `${siteUrl}/admin/billing/sign/${token}`;
+    const signingLink = `${siteUrl}/agree/${token}`;
 
     // Allow the admin to override the standard pitch with a custom
     // message typed into the drawer. Falls back to the boilerplate.

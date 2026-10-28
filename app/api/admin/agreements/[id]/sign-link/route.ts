@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
   const token = signToken(id);
-  const url = `${siteUrl}/admin/billing/sign/${token}`;
+  const url = `${siteUrl}/agree/${token}`;
 
   return NextResponse.json({ url });
 }

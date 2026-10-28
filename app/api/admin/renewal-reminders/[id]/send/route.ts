@@ -70,7 +70,7 @@ export const POST = withAdminTracking(async (req: NextRequest, ctx: RouteCtx) =>
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
   const token = signToken(reminder.agreement_id);
-  const signingLink = `${siteUrl}/admin/billing/sign/${token}`;
+  const signingLink = `${siteUrl}/agree/${token}`;
 
   const html = renewalEmail({
     companyName: reminder.company_name ?? ag?.company_name ?? undefined,

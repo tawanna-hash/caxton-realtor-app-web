@@ -80,7 +80,7 @@ export async function GET(req: Request) {
     }
 
     const brand = brandForPublication(agreement.publication);
-    const signingLink = `${siteUrl}/admin/billing/sign/${signToken(agreement.id)}`;
+    const signingLink = `${siteUrl}/agree/${signToken(agreement.id)}`;
     const deadline = formatRenewalOfferDeadline(agreement.renewal_offer_expires_at);
     const isReviewStage = agreement.status === 'proposal_sent';
     const subject = `24 Hours Left: Keep Your ${brand.brandName} Renewal Rate — ${agreement.company_name ?? 'Renewal Agreement'}`;

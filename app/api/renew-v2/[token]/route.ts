@@ -79,7 +79,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       start_date: ag.start_date,
       end_date: ag.end_date,
       needs_full_form: channel !== 'print' || (ag.line_count ?? 0) > 0,
-      full_form_url: `/admin/billing/sign/${token}`,
+      full_form_url: `/agree/${token}`,
       allow_check: allowsCheckPayment(channel),
       card_on_file: cardOnFile,
       payment_mode: ag.payment_mode,

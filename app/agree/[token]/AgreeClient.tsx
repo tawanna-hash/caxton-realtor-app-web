@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import BillingTimeline, { type TimelineView } from '@/components/anchor/TimelineView';
 import EmbeddedPay from './EmbeddedPay';
-import SignaturePad, { type SignatureValue } from '@/app/admin/billing/sign/[token]/SignaturePad';
+import SignaturePad, { type SignatureValue } from '@/components/SignaturePad';
 
 type Fields = Record<string, string>;
 type PlacementNeed = { line_no: number; label: string; channel: 'email' | 'app'; start_date: string | null; preferred_send_dates: string[] };
@@ -235,7 +235,7 @@ export default function AgreeClient({ token }: { token: string }) {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
-        if (j.code === 'needs_full_form' && data) { window.location.href = data.full_form_url; return; }
+        if (j.code === 'needs_full_form') throw new Error('This agreement is not ready for online signing. Please contact us.');
         throw new Error(j.error || 'Something went wrong. Please try again.');
       }
       setDone(true);
@@ -313,8 +313,7 @@ export default function AgreeClient({ token }: { token: string }) {
         <div className={card}>
           <p className="text-xs font-semibold text-[color:var(--ds-body)]">{data.brand}</p>
           <h1 className="mt-1 text-2xl font-semibold text-[color:var(--ds-ink)]">Your advertising agreement</h1>
-          <p className="mt-2 text-sm text-[color:var(--ds-body)]">This agreement includes details we need you to confirm on the full form.</p>
-          <a href={data.full_form_url} className={`${pill} mt-5`}>Continue</a>
+          <p className="mt-2 text-sm text-[color:var(--ds-body)]">This agreement is not ready for online signing yet. Please contact us and we will finish setting it up.</p>
         </div>
       </div>
     );

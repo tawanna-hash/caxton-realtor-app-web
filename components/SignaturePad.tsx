@@ -1,6 +1,6 @@
 'use client';
 
-// app/admin/billing/sign/[token]/SignaturePad.tsx
+// components/SignaturePad.tsx
 //
 // Three-tab signature capture used in Step 5 of the sign wizard:
 //   1. Type   — typed legal name (default)

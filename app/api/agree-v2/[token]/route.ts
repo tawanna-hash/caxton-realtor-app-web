@@ -164,7 +164,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       schedule_hidden: !payOpts.show_schedule,
       schedule_view: payOpts.schedule_view,
       schedule_groups: payOpts.show_schedule && svcPlans ? occurrenceGroups(svcPlans) : null,
-      full_form_url: `/admin/billing/sign/${token}`,
+      full_form_url: `/agree/${token}`,
       allow_check: payOpts.check && (prepay ? checkState === 'approved' : allowsCheckPayment(channel)),
       prepay_required: prepay,
       prepay_note: prepay ? PREPAY_NOTE : null,
