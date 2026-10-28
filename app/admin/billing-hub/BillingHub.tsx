@@ -29,7 +29,7 @@ type Agr = {
 type FullInv = Inv & { issued_at?: string | null; paid_at?: string | null; created_at?: string | null; audit_log?: AuditEntry[]; bill_to_name?: string | null };
 type Product = { id: string | number; name: string; description?: string | null; unit_price_cents?: number | null; price_cents?: number | null; active?: boolean | null; billing_type?: string | null };
 type Tab = 'hub' | 'agreement' | 'payment' | 'invoices' | 'recurring' | 'statements' | 'paymentlinks' | 'activity';
-const TABS: Array<[Tab, string]> = [['agreement', 'Agreement'], ['invoices', 'Invoices'], ['recurring', 'Recurring invoices'], ['statements', 'Statements'], ['paymentlinks', 'Payment links'], ['activity', 'Activity Log']];
+const TABS: Array<[Tab, string]> = [['agreement', 'Agreement'], ['invoices', 'Invoices'], ['recurring', 'Recurring invoices'], ['statements', 'Statements'], ['activity', 'Activity Log']];
 const none: never[] = [];
 const cap = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 const dt = (v: string) => new Date(v).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
