@@ -7,7 +7,7 @@ const STEPS = ['Introduction', 'Review Services', 'Terms Of Service', 'Additiona
 export type PreviewData = {
   company: string; rep: string; email: string; phone: string;
   address: string; city: string; state: string; zip: string; billingEmail: string;
-  askAddress: boolean; renewal: boolean; timing: string[]; lines: Array<[string, string]>; totalCents: number; methods: string[];
+  askAddress: boolean; renewal: boolean; market: string; timing: string[]; lines: Array<[string, string]>; totalCents: number; methods: string[];
 };
 const usd = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
@@ -38,7 +38,7 @@ export default function ClientPreview({ d }: { d: PreviewData }) {
       <div className="shrink-0 border-b border-gray-200 bg-white px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Client view, live</div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         <div className="mx-auto max-w-sm">
-          <div className="text-sm font-semibold text-[#1B1740]">RealtyLine</div>
+          <div className="text-sm font-semibold text-[#1B1740]">{d.market || 'Select a market'}</div>
           <ol className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500">
             {STEPS.map((s, i) => <li key={s}><button type="button" onClick={() => setStep(i)} className={i === step ? 'font-semibold text-[#5B2BE0]' : 'hover:text-gray-800'}>{s}</button></li>)}
           </ol>
