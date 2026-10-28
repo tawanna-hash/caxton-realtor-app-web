@@ -121,9 +121,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const cancelUrl = `${APP_BASE_URL}/portal/invoices/${inv.id}?canceled=1`;
     const stripePaymentMethodTypes = paymentMethod === 'ach'
       ? ['us_bank_account']
-      : paymentMethod === 'bnpl'
-        ? ['affirm', 'afterpay_clearpay', 'klarna']
-        : ['card'];
+      : ['card'];
 
     const sessionParams: Record<string, unknown> = {
       mode: 'payment' as const,

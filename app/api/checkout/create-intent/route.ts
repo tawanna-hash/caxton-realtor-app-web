@@ -245,7 +245,7 @@ export async function POST(req: NextRequest) {
       amount: totalCents,
       currency: 'usd',
       customer: customerId,
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ['card', 'link'],
       description: `${slot.name} -- ${computed.description} -- ${pubsJoined}`,
       statement_descriptor_suffix: 'AD BOOKING',
       receipt_email: d.email,

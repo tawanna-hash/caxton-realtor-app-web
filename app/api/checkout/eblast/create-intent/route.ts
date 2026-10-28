@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       amount: amountCents,
       currency: 'usd',
       customer: customer.id,
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ['card', 'link'],
       description: `${pkg.name} — ${data.publication} — ${sends} send${sends === 1 ? '' : 's'}`,
       statement_descriptor_suffix: 'E-BLAST',
       receipt_email: data.email,

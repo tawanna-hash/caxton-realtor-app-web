@@ -160,7 +160,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         customer: customerId,
         // Save the payment method for future off-session issue charges
         setup_future_usage: 'off_session',
-        automatic_payment_methods: { enabled: true },
+        payment_method_types: ['card', 'link'],
         description: `${ag.company_name ?? 'Partner'} \u2014 ${ag.ad_size ?? 'ad'} \u2014 first issue`,
         statement_descriptor_suffix: 'REALTYLINE AUSTIN',
         receipt_email: ag.advertiser_email ?? ag.billing_email ?? undefined,
