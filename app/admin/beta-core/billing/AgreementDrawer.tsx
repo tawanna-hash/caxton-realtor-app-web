@@ -1027,17 +1027,17 @@ export function AgreementDrawer({
     setForm((cur) => {
       const next = { ...cur, company_name: partnerLabel(a) };
       const fill = (k: keyof AgForm, v: string | null | undefined) => {
-        if (v && !String(cur[k] ?? "").trim()) (next as Record<string, unknown>)[k] = v;
+        if (v && String(v).trim()) (next as Record<string, unknown>)[k] = v;
       };
       next.advertiser_id = a.id;
       next.publication = a.publication as PublicationScope;
       fill("rep_name", [a.first_name, a.last_name].filter(Boolean).join(" "));
       fill("phone", a.phone ? formatPhoneInput(a.phone) : null);
       fill("email", a.contact_email);
-      fill("address", a.address);
-      fill("city", a.city);
-      fill("state", a.state);
-      fill("zip", a.zip);
+      next.address = a.address ?? "";
+      next.city = a.city ?? "";
+      next.state = a.state ?? "";
+      next.zip = a.zip ?? "";
       fill("billing_email", a.billing_email ?? a.contact_email);
       fill("billing_contact_name", a.billing_contact_name);
       fill(
@@ -1149,7 +1149,7 @@ export function AgreementDrawer({
           {isCreate && form.advertiser_id != null &&
             advertisers.some((a) => a.id === form.advertiser_id && partnerLabel(a) === form.company_name) && (
               <div className="mt-1 text-xs text-emerald-700">
-                Partner on file. Empty fields were filled in from their record.
+                Partner on file. Their saved contact, address and billing details were filled in. Anything their record is missing is left for you to enter.
               </div>
             )}
         </Field>
