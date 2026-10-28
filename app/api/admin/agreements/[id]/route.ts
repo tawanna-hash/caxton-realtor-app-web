@@ -193,6 +193,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
         case 'paid_at':            await apply(field, raw, () => sql`UPDATE agreements SET paid_at = ${raw}                            WHERE id = ${id}`); break;
         case 'attachments':        await apply(field, raw, () => sql`UPDATE agreements SET attachments = ${raw != null ? JSON.stringify(raw) : null}::jsonb WHERE id = ${id}`); break;
         case 'is_renewal':         await apply(field, raw, () => sql`UPDATE agreements SET is_renewal = ${!!raw}                       WHERE id = ${id}`); break;
+        case 'ask_billing_address': await apply(field, raw, () => sql`UPDATE agreements SET ask_billing_address = ${!!raw}            WHERE id = ${id}`); break;
         case 'renewed_from_id':
           if (raw === null || typeof raw === 'string') {
             await apply(field, raw, () => sql`UPDATE agreements SET renewed_from_id = ${raw}         WHERE id = ${id}`);

@@ -81,6 +81,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     }
 
     const channel = channelOfRow(ag);
+    const askBilling = (ag as unknown as { ask_billing_address?: boolean | null }).ask_billing_address === true;
     const lines = (await sql`
       SELECT line_no, package_label, channel, ad_size, frequency, quantity, amount_cents, pay_now, start_date, end_date, preferred_send_dates
         FROM agreement_line_items WHERE agreement_id = ${ag.id} ORDER BY line_no
@@ -140,7 +141,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
           return { line_no: l.line_no, package_label: m?.name || l.package_label, description: m?.description || null, amount_cents: l.amount_cents, optional: m?.optional === true, discount_note: m?.discount_note || null };
         }),
       })) : null,
-      details: meta ? { name: meta.name, note: meta.note, ask_address: meta.ask_address, refs: meta.refs.filter((r) => r.client_facing), expires_at: meta.expires_at } : null,
+      details: meta ? { name: meta.name, note: meta.note, ask_address: meta.ask_address || askBilling, refs: meta.refs.filter((r) => r.client_facing), expires_at: meta.expires_at } : askBilling ? { name: null, note: null, ask_address: true, refs: [], expires_at: null } : null,
       intro: renderIntro(meta?.intro || defaults.intro_new, ag),
       expired,
       placement: placementNeeds({ ...ag, channel } as never, lines as never),
@@ -311,7 +312,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       if (typeof v === 'string') patches[k] = v.trim() || null;
     }
     const required: Array<[string, string]> = [
-      ...(meta?.ask_address ? ([['address', 'street address'], ['city', 'city'], ['state', 'state'], ['zip', 'ZIP code']] as Array<[string, string]>) : []),
+      ...(meta?.ask_address || (ag as unknown as { ask_billing_address?: boolean | null }).ask_billing_address === true ? ([['address', 'street address'], ['city', 'city'], ['state', 'state'], ['zip', 'ZIP code']] as Array<[string, string]>) : []),
       ['company_name', 'company name'],
       ['rep_name', 'contact name'],
       ['advertiser_email', 'email'],

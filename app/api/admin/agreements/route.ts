@@ -237,6 +237,14 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       }
     }
 
+    if (body.ask_billing_address === true) {
+      try {
+        await sql`UPDATE agreements SET ask_billing_address = true WHERE id = ${createdAg.id}`;
+      } catch (e) {
+        console.error('[admin/agreements POST] ask_billing_address write failed', errMessage(e));
+      }
+    }
+
     // Mirror the agreement into the CRM as soon as it's created. New rows
     // land with status='prospect' so they stay off public-facing surfaces
     // until the agreement is signed; on signing the helper promotes them

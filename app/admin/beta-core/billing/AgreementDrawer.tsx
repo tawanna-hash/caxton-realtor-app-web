@@ -102,6 +102,8 @@ type AgForm = {
   cardholder_address: string;
   // Signature
   terms_accepted: boolean;
+  is_renewal: boolean;
+  ask_billing_address: boolean;
   sign_date: string;
   signer_name: string;
   // Internal
@@ -348,6 +350,8 @@ export function AgreementDrawer({
     card_expiration: seed?.card_expiration ?? "",
     cardholder_address: seed?.cardholder_address ?? "",
     terms_accepted: seed?.terms_accepted ?? false,
+    is_renewal: Boolean(renewedFrom) || (seed as { is_renewal?: boolean | null } | undefined)?.is_renewal === true,
+    ask_billing_address: (seed as { ask_billing_address?: boolean | null } | undefined)?.ask_billing_address === true,
     sign_date: toISODateString(existing?.signed_at) || today,
     signer_name: seed?.signer_name ?? "",
     notes:
@@ -686,7 +690,8 @@ export function AgreementDrawer({
       terms_accepted: isSigning ? true : form.terms_accepted || null,
       terms_accepted_at: isSigning ? new Date().toISOString() : null,
       signed_at: isSigning ? form.sign_date + "T00:00:00.000Z" : null,
-      is_renewal: !!renewedFrom,
+      is_renewal: form.is_renewal || !!renewedFrom,
+      ask_billing_address: form.ask_billing_address,
       renewed_from_id: renewedFrom?.id ?? null,
     };
   };
@@ -713,7 +718,7 @@ export function AgreementDrawer({
   };
 
   const persistAgreement = async (isSigning: boolean) => {
-    if (form.address.trim() || form.city.trim() || form.state.trim() || form.zip.trim()) {
+    if (!form.ask_billing_address && (form.address.trim() || form.city.trim() || form.state.trim() || form.zip.trim())) {
       const missing = ([["street address", form.address], ["city", form.city], ["state", form.state], ["ZIP code", form.zip]] as const)
         .filter(([, v]) => !v.trim()).map(([l]) => l);
       if (missing.length) throw new Error(`Billing address is incomplete: add ${missing.join(", ")}.`);
@@ -1215,6 +1220,24 @@ export function AgreementDrawer({
               placeholder="78701"
             />
           </Field>
+        </div>
+        <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-sm">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.is_renewal}
+              onChange={(e) => upd("is_renewal", e.target.checked)}
+            />
+            This is a renewal
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.ask_billing_address}
+              onChange={(e) => upd("ask_billing_address", e.target.checked)}
+            />
+            Ask client to complete billing address
+          </label>
         </div>
       </Section>
 

@@ -114,6 +114,8 @@ export interface Agreement {
 
   // Renewals
   is_renewal: boolean | null;
+  /** Ask the partner to complete their billing address on the signing page. */
+  ask_billing_address?: boolean | null;
   renewed_from_id: string | null;
   renewal_offer_expires_at: string | null;
   renewal_offer_reminder_sent_at: string | null;
@@ -164,7 +166,7 @@ export const AGREEMENT_PATCHABLE_FIELDS = [
   'stripe_customer_id','stripe_invoice_id','stripe_payment_intent_id',
   'stripe_payment_link_url','paid_at',
   'attachments',
-  'is_renewal','renewed_from_id',
+  'is_renewal','renewed_from_id','ask_billing_address',
   'notes',
   'publication',
 ] as const;
