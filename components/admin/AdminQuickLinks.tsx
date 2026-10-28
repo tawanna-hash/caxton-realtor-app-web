@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ADMIN_NAV } from '@/lib/admin-nav';
+import { ALL_ADMIN_NAV as ADMIN_NAV } from '@/lib/admin-nav';
 
 type QuickLinkGroup = (typeof ADMIN_NAV)[number];
 type QuickLink = QuickLinkGroup['links'][number];

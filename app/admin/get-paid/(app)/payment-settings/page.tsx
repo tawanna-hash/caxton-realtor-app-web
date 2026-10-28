@@ -5,6 +5,6 @@ import SettingsForm from './SettingsForm';
 export const dynamic = 'force-dynamic';
 
 export default async function PaymentSettingsPage() {
-  if (!(await getCurrentAdmin())) redirect('/admin/login');
+  if (!(await getCurrentAdmin())) redirect('/admin/get-paid/login');
   return <SettingsForm />;
 }

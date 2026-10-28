@@ -1,4 +1,4 @@
-import DashboardBeta from '../dashboard-beta/DashboardBeta';
+import DashboardBeta from '../../dashboard-beta/DashboardBeta';
 
 export const dynamic = 'force-dynamic';
 

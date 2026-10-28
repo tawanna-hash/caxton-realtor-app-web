@@ -5,6 +5,6 @@ import TermsEditor from './TermsEditor';
 export const dynamic = 'force-dynamic';
 
 export default async function AgreementTermsPage() {
-  if (!(await getCurrentAdmin())) redirect('/admin/login');
+  if (!(await getCurrentAdmin())) redirect('/admin/get-paid/login');
   return <TermsEditor />;
 }

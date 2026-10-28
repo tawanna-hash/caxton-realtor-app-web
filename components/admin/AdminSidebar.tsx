@@ -32,7 +32,7 @@ import {
   ChevronsRight,
   ChevronDown,
 } from 'lucide-react';
-import { ADMIN_NAV, isAdminGroupActive as isGroupActive, type AdminNavGroup } from '@/lib/admin-nav';
+import { ADMIN_NAV, GET_PAID_NAV, isGetPaidPath, isAdminGroupActive as isGroupActive, type AdminNavGroup } from '@/lib/admin-nav';
 // Sidebar order is alphabetical at every level (sections, pages, and nested
 // child pages). Other nav surfaces keep the order defined in lib/admin-nav.ts.
 const byLabel = (a: { label: string }, b: { label: string }) =>
@@ -42,8 +42,9 @@ const PINNED_FIRST = 'Admin Dashboard';
 const PINNED_SECOND = 'Partners';
 const pinRank = (l: string) => (l === PINNED_FIRST ? 0 : l === PINNED_SECOND ? 1 : 2);
 const ADMIN_GROUPS: AdminNavGroup[] = ADMIN_NAV
-  .map((g) => ({ ...g, links: g.label === 'Get Paid' ? [...g.links] : [...g.links].sort(byLabel) }))
+  .map((g) => ({ ...g, links: [...g.links].sort(byLabel) }))
   .sort((a, b) => pinRank(a.label) - pinRank(b.label) || byLabel(a, b));
+const GET_PAID_GROUPS: AdminNavGroup[] = GET_PAID_NAV;
 
 import BetaCountChip from '@/components/admin/BetaCountChip';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
@@ -55,6 +56,12 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ size?: number; className
   Partners: Users,
   Sales: Users,
   'Get Paid': DollarSign,
+  Dashboard: LayoutDashboard,
+  Agreements: FileBarChart,
+  Billing: DollarSign,
+  Services: Newspaper,
+  Reports: BarChart3,
+  Settings: ShieldCheck,
   Beta: DollarSign,
   'Mailing List HUB': Mail,
   'Ad Ops': Megaphone,
@@ -87,6 +94,8 @@ function InlineBadge({ href }: { href: string }) {
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const inGetPaid = isGetPaidPath(pathname);
+  const ADMIN_GROUPS_ACTIVE = inGetPaid ? GET_PAID_GROUPS : ADMIN_GROUPS;
 
   // Lazy initializer reads localStorage once, synchronously, on first
   // render — no effect needed, so no post-mount flash and no
@@ -108,8 +117,8 @@ export default function AdminSidebar() {
   const [manualOpen, setManualOpen] = useState<Map<string, boolean>>(new Map());
 
   const activeGroupLabel = useMemo(
-    () => ADMIN_GROUPS.find((g) => isGroupActive(g, pathname))?.label,
-    [pathname],
+    () => ADMIN_GROUPS_ACTIVE.find((g) => isGroupActive(g, pathname))?.label,
+    [pathname, ADMIN_GROUPS_ACTIVE],
   );
 
   const toggleCollapsed = useCallback(() => {
@@ -140,10 +149,10 @@ export default function AdminSidebar() {
     >
       <div className="flex items-center justify-between px-4 pt-5 pb-3">
         {!collapsed && (
-          <Link href="/admin" className="flex items-center gap-3 min-w-0">
+          <Link href={inGetPaid ? '/admin/get-paid' : '/admin'} className="flex items-center gap-3 min-w-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/rnn-logo.jpg" alt="" width={40} height={40} className="h-10 w-10 shrink-0 rounded-xl" />
-            <span className="text-sm font-semibold tracking-tight text-brand-700 truncate">Realty News Now</span>
+            <span className="text-sm font-semibold tracking-tight text-brand-700 truncate">{inGetPaid ? 'Get Paid' : 'Realty News Now'}</span>
           </Link>
         )}
         <button
@@ -157,7 +166,7 @@ export default function AdminSidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto py-1 pr-0">
-        {ADMIN_GROUPS.map((group) => {
+        {ADMIN_GROUPS_ACTIVE.map((group) => {
           const Icon = GROUP_ICONS[group.label] ?? Newspaper;
           const isActive = isGroupActive(group, pathname);
           const isOpen = manualOpen.has(group.label)
@@ -244,7 +253,7 @@ export default function AdminSidebar() {
                         >
                           <span className="truncate">{link.label}</span>
                           <InlineBadge href={link.href} />
-                          {group.label === 'Get Paid' && <BetaCountChip href={link.href} />}
+                          {inGetPaid && <BetaCountChip href={link.href} />}
                         </Link>
                         {kids.length > 0 && (
                           <div className="ml-4 mt-1 space-y-1">
@@ -262,7 +271,7 @@ export default function AdminSidebar() {
                                 >
                                   <span aria-hidden="true" className="text-gray-300">&#8627;</span>
                                   <span className="truncate">{kid.label}</span>
-                                  {group.label === 'Get Paid' && <BetaCountChip href={kid.href} />}
+                                  {inGetPaid && <BetaCountChip href={kid.href} />}
                                 </Link>
                               );
                             })}

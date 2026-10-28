@@ -17,6 +17,7 @@
 //
 // Replaces: SiteHeader.tsx, HamburgerMenu.tsx, admin layout inline nav.
 
+import { isGetPaidPath } from '@/lib/admin-nav';
 import MobileTables from '@/components/anchor/MobileTables';
 import AdminGlobalSearch from '@/components/admin/AdminGlobalSearch';
 import { useCallback, useEffect, useState } from 'react';
@@ -314,7 +315,7 @@ export default function AppShell({
     setUser(null);
     setUser(null);
     setDrawerOpen(false);
-    router.push(isAdmin ? '/admin/login' : '/login');
+    router.push(isAdmin ? (isGetPaidPath(window.location.pathname) ? '/admin/get-paid/login' : '/admin/login') : '/login');
   }, [isAdmin, router]);
 
   const handlePubSwitch = useCallback((targetPubId?: string) => {
@@ -352,7 +353,8 @@ export default function AppShell({
   }, [pathname]);
 
   const drawerBg = PUB_COLORS[pub] ?? PUB_COLORS.realtynewsnow;
-  const isLoginPage = pathname === '/admin/login';
+  const isLoginPage = pathname === '/admin/login' || pathname === '/admin/get-paid/login';
+  const inGetPaid = isAdmin && isGetPaidPath(pathname);
   const isSignInPage = pathname === '/login' || pathname.startsWith('/auth/');
 
   // Admin login page — no nav
@@ -396,8 +398,8 @@ export default function AppShell({
           <div className="flex items-center gap-2">
             {isAdmin ? (
               <>
-                <Link href="/admin" className="text-sm sm:text-base font-semibold tracking-tight text-brand-700">
-                  Realty News Now Admin
+                <Link href={inGetPaid ? '/admin/get-paid' : '/admin'} className="text-sm sm:text-base font-semibold tracking-tight text-brand-700">
+                  {inGetPaid ? 'Get Paid' : 'Realty News Now Admin'}
                 </Link>
                 <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-brand-100 text-brand-700">
                   Internal
@@ -471,13 +473,23 @@ export default function AppShell({
                 balanced against the hamburger on the left. */}
             {isAdmin ? (
               <div className="inline-flex items-center gap-2">
-              <a
-                href="/admin/get-paid"
-                aria-label="Open Get Paid"
-                className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs uppercase tracking-[0.1em] font-medium text-white bg-brand-700 border border-brand-700 hover:bg-brand-800 transition"
-              >
-                <span>Get Paid</span>
-              </a>
+              {inGetPaid ? (
+                <a
+                  href="/admin"
+                  aria-label="Open Realty News Now admin"
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs uppercase tracking-[0.1em] font-medium text-white bg-brand-700 border border-brand-700 hover:bg-brand-800 transition"
+                >
+                  <span>Realty News Now</span>
+                </a>
+              ) : (
+                <a
+                  href="/admin/get-paid"
+                  aria-label="Open Get Paid"
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs uppercase tracking-[0.1em] font-medium text-white bg-brand-700 border border-brand-700 hover:bg-brand-800 transition"
+                >
+                  <span>Get Paid</span>
+                </a>
+              )}
               <button
                 type="button"
                 onClick={() => {

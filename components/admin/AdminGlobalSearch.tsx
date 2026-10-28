@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, FileText, Building2 } from 'lucide-react';
-import { ADMIN_NAV } from '@/lib/admin-nav';
+import { ALL_ADMIN_NAV as ADMIN_NAV } from '@/lib/admin-nav';
 
 type Partner = { id: number; name: string; publication?: string };
 type Result = { key: string; kind: 'page' | 'partner'; label: string; hint: string; href: string };

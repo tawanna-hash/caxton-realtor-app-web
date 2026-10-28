@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ADMIN_NAV } from '@/lib/admin-nav';
+import { ADMIN_NAV, GET_PAID_NAV } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 import PendingGmailBadge from '@/components/PendingGmailBadge';
@@ -70,7 +70,10 @@ interface NavSection {
 // desktop top-bar in AppShell.tsx always render the same groups.
 // We adapt each canonical link into the drawer's NavItem shape
 // (adding `adminOnly: true` so non-admins never see admin links).
-const ADMIN_GROUPS: { label: string; links: NavItem[] }[] = ADMIN_NAV.map(
+const ADMIN_GROUPS: { label: string; links: NavItem[] }[] = [
+  ...ADMIN_NAV,
+  { label: 'Get Paid', links: GET_PAID_NAV.flatMap((g) => g.links) },
+].map(
   (g) => ({
     label: g.label,
     links: g.links.map((l) => ({

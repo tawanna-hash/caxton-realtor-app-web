@@ -31,6 +31,7 @@
  * `salt = options.cookies.sessionToken.name`).
  */
 
+import { isGetPaidPath } from '@/lib/admin-nav';
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import { ADMIN_SESSION_COOKIE_NAME } from './lib/auth/cookie-names';
@@ -140,6 +141,7 @@ function handleCsrf(req: NextRequest): NextResponse | null {
 
 const PUBLIC_ADMIN_PATHS = new Set<string>([
   '/admin/login',
+  '/admin/get-paid/login',
   '/admin/forgot-password',
   '/admin/reset-password',
   '/admin/r',
@@ -336,7 +338,7 @@ export async function proxy(req: NextRequest) {
 
     // Redirect to /admin/login?next=<original path + query>
     const url = req.nextUrl.clone();
-    url.pathname = '/admin/login';
+    url.pathname = isGetPaidPath(pathname) ? '/admin/get-paid/login' : '/admin/login';
     url.search = '';
     url.searchParams.set('next', pathname + search);
     return NextResponse.redirect(url, 307);

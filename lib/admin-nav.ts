@@ -64,31 +64,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
-    label: 'Get Paid',
-    links: [
-      { label: 'Dashboard', href: '/admin/dashboard-beta', description: 'Invoices, agreements, payouts, revenue and agreements at a glance' },
-      { label: 'Agreements', href: '/admin/agreements/renewals-v2', description: 'One-tap renewals and new-partner agreements' },
-      { label: 'Templates', href: '/admin/agreements/templates-beta', description: 'Reusable agreement templates with service billing rules' },
-      { label: 'Partners', href: '/admin/agreements/clients', description: 'Main contact person for each partner' },
-      { label: 'Contacts', href: '/admin/agreements/clients/contacts', description: 'Other people inside each partner organization', parent: '/admin/agreements/clients' },
-      { label: 'Billing', href: '/admin/billing-hub', description: 'Agreement, payment methods, invoices and activity for one partner' },
-      { label: 'Invoices', href: '/admin/billing-hub/invoices', description: 'Every invoice across all partners', parent: '/admin/billing-hub' },
-      { label: 'Payouts', href: '/admin/payouts-beta', description: 'Stripe payouts, fees, transactions and deposit IDs' },
-      { label: 'Services', href: '/admin/services-beta', description: 'Services, rates, billing occurrence and trigger' },
-      { label: 'Bundles', href: '/admin/services-beta/bundles', description: 'Group services into one priced bundle', parent: '/admin/services-beta' },
-      { label: 'Reports', href: '/admin/reports-beta', description: 'Revenue, active services, future invoices, agreements and credit' },
-      { label: 'Deposit Slip', href: '/admin/reports-beta/deposit-slip', description: 'Checks recorded against invoices, totalled for the bank deposit', parent: '/admin/reports-beta' },
-      { label: 'Integrations', href: '/admin/integrations-beta', description: 'Stripe, QuickBooks and Gmail status' },
-      { label: 'Payment options', href: '/admin/integrations-beta/payment-options', description: 'Every payment method available in Stripe', parent: '/admin/integrations-beta' },
-      { label: 'Payment settings', href: '/admin/get-paid/payment-settings', description: 'Checkout options and processing fees' },
-      { label: 'Agreement terms', href: '/admin/get-paid/agreement-terms', description: 'Edit terms with effective dates; signed agreements keep theirs' },
-      { label: 'API keys', href: '/admin/integrations-beta/api-keys', description: 'Generate and revoke API keys', parent: '/admin/integrations-beta' },
-      { label: 'Business details', href: '/admin/settings-beta/business-details', description: 'Business name, address, brand and billing settings' },
-      { label: 'Team', href: '/admin/settings-beta/team', description: 'Invite and manage team members', parent: '/admin/settings-beta/business-details' },
-      { label: 'Notifications', href: '/admin/settings-beta/notifications', description: 'Choose which notifications your team and clients receive', parent: '/admin/settings-beta/business-details' },
-    ],
-  },
-  {
     label: 'Mailing List HUB',
     links: [
       // The HUB page itself surfaces every audience segment as a tile, so
@@ -199,4 +174,84 @@ export function isAdminGroupActive(group: AdminNavGroup, pathname: string): bool
   return group.links.some(
     (l) => pathname === l.href || pathname.startsWith(l.href + '/'),
   );
+}
+
+/**
+ * Get Paid is its own admin area with its own sidebar and login. These groups
+ * are shown instead of ADMIN_NAV while the admin is inside Get Paid.
+ */
+export const GET_PAID_NAV: AdminNavGroup[] = [
+  { label: 'Dashboard', links: [{ label: 'Dashboard', href: '/admin/get-paid', description: 'Invoices, agreements, payouts and revenue at a glance' }] },
+  {
+    label: 'Agreements',
+    links: [
+      { label: 'Agreements', href: '/admin/agreements/renewals-v2', description: 'One-tap renewals and new-partner agreements' },
+      { label: 'Templates', href: '/admin/agreements/templates-beta', description: 'Reusable agreement templates with service billing rules' },
+      { label: 'Agreement terms', href: '/admin/get-paid/agreement-terms', description: 'Edit terms with effective dates; signed agreements keep theirs' },
+    ],
+  },
+  {
+    label: 'Partners',
+    links: [
+      { label: 'Partners', href: '/admin/agreements/clients', description: 'Main contact person for each partner' },
+      { label: 'Contacts', href: '/admin/agreements/clients/contacts', description: 'Other people inside each partner organization', parent: '/admin/agreements/clients' },
+    ],
+  },
+  {
+    label: 'Billing',
+    links: [
+      { label: 'Billing', href: '/admin/billing-hub', description: 'Agreement, payment methods, invoices and activity for one partner' },
+      { label: 'Invoices', href: '/admin/billing-hub/invoices', description: 'Every invoice across all partners', parent: '/admin/billing-hub' },
+      { label: 'Payouts', href: '/admin/payouts-beta', description: 'Stripe payouts, fees, transactions and deposit IDs' },
+    ],
+  },
+  {
+    label: 'Services',
+    links: [
+      { label: 'Services', href: '/admin/services-beta', description: 'Services, rates, billing occurrence and trigger' },
+      { label: 'Bundles', href: '/admin/services-beta/bundles', description: 'Group services into one priced bundle', parent: '/admin/services-beta' },
+    ],
+  },
+  {
+    label: 'Reports',
+    links: [
+      { label: 'Reports', href: '/admin/reports-beta', description: 'Revenue, active services, future invoices, agreements and credit' },
+      { label: 'Deposit Slip', href: '/admin/reports-beta/deposit-slip', description: 'Checks recorded against invoices, totalled for the bank deposit', parent: '/admin/reports-beta' },
+    ],
+  },
+  {
+    label: 'Settings',
+    links: [
+      { label: 'Payment settings', href: '/admin/get-paid/payment-settings', description: 'Checkout options and processing fees' },
+      { label: 'Payment options', href: '/admin/integrations-beta/payment-options', description: 'Every payment method available in Stripe' },
+      { label: 'Integrations', href: '/admin/integrations-beta', description: 'Stripe, QuickBooks and Gmail status' },
+      { label: 'API keys', href: '/admin/integrations-beta/api-keys', description: 'Generate and revoke API keys', parent: '/admin/integrations-beta' },
+      { label: 'Business details', href: '/admin/settings-beta/business-details', description: 'Business name, address, brand and billing settings' },
+      { label: 'Team', href: '/admin/settings-beta/team', description: 'Invite and manage team members', parent: '/admin/settings-beta/business-details' },
+      { label: 'Notifications', href: '/admin/settings-beta/notifications', description: 'Choose which notifications your team and clients receive', parent: '/admin/settings-beta/business-details' },
+    ],
+  },
+];
+
+/** Every admin nav group, for search and quick links. */
+export const ALL_ADMIN_NAV: AdminNavGroup[] = [...ADMIN_NAV, ...GET_PAID_NAV];
+
+const GET_PAID_PREFIXES = [
+  '/admin/get-paid',
+  '/admin/getpaid',
+  '/admin/agreements',
+  '/admin/billing-hub',
+  '/admin/billing',
+  '/admin/invoices',
+  '/admin/payouts-beta',
+  '/admin/services-beta',
+  '/admin/reports-beta',
+  '/admin/integrations-beta',
+  '/admin/settings-beta',
+  '/admin/dashboard-beta',
+];
+
+/** True when the pathname belongs to the Get Paid admin area. */
+export function isGetPaidPath(pathname: string): boolean {
+  return GET_PAID_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
 }
