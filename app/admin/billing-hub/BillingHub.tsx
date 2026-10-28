@@ -253,20 +253,25 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
     if (!agreement) return;
     fetch(`/api/admin/agreements/${agreement.id}/setup-intent`, { method: 'POST' }).then((r) => r.json()).then((j) => { if (j.publishableKey) setStripe(loadStripe(j.publishableKey)); }).catch(() => {});
   }, [agreement]);
-  async function request() {
+  async function paymentLink(send: boolean) {
     setNotice(null);
-    const r = await fetch('/api/admin/portal-links', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ advertiser_id: client.id, purpose: 'login', send_email: false }) });
-    // Beta: nothing is emailed to the client. Staff copy the secure link instead.
+    let to: string | undefined;
+    if (send) {
+      to = window.prompt('Send the payment method link to which email?', (client as { billing_email?: string | null; contact_email?: string | null }).billing_email ?? (client as { contact_email?: string | null }).contact_email ?? '') ?? undefined;
+      if (!to) return;
+    }
+    const r = await fetch(`/api/admin/advertisers/${client.id}/payment-link`, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ send, to }) });
     const j = await r.json().catch(() => ({}));
-    if (r.ok && j.consume_url) { try { await navigator.clipboard.writeText(j.consume_url); setNotice('Secure link copied. No email was sent to the client.'); } catch { setNotice(`No email was sent. Secure link: ${j.consume_url}`); } }
-    else setNotice('Could not create the link.');
+    if (!r.ok) { setNotice(j.error ?? 'Could not create the link.'); return; }
+    if (send) { setNotice(`Payment method link emailed to ${j.to}.`); return; }
+    try { await navigator.clipboard.writeText(j.url); setNotice('Payment method link copied. Paste it into a message to the client.'); } catch { setNotice(`Payment method link: ${j.url}`); }
   }
   const onFile = agreement?.card_number_last4;
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-[color:var(--ds-ink)]">Add or remove payment methods. Any overdue invoices will be reprocessed when a new method is selected.</p>
-        <div className="flex gap-3"><button type="button" className={A.outline} onClick={request}>Request payment method</button><button type="button" className={A.primary} onClick={() => { setMethod('card'); document.getElementById('add-payment-method')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}>Add payment method</button></div>
+        <div className="flex gap-3"><button type="button" className={A.outline} onClick={() => paymentLink(false)}>Copy payment link</button><button type="button" className={A.outline} onClick={() => paymentLink(true)}>Email payment link</button><button type="button" className={A.primary} onClick={() => { setMethod('card'); document.getElementById('add-payment-method')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}>Add payment method</button></div>
       </div>
       {notice && <p className="text-sm text-[color:var(--ds-body)]">{notice}</p>}
       {onFile && (
