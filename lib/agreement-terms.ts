@@ -20,8 +20,7 @@ For purposes of this Agreement:
 • “Agency” means any advertising agency, media buyer, or representative acting for Advertiser.
 • “Insertion Order” means the separate insertion order or other signing document accepted by Publisher that incorporates these Terms.
 • “Ad Timing Term” means the initial committed advertising period stated in the Insertion Order.
-• “Recurring Product” means only a product expressly designated as recurring in the Insertion Order.
-• “Renewal Term” means each month-to-month renewal period for a Recurring Product after expiration of the Ad Timing Term.
+• “Renewal Term” means each month-to-month renewal period after expiration of the Ad Timing Term.
 • “Advertising Deadline” means the applicable production, submission, or closing deadline published by Publisher for the relevant product or issue.
 • “Materials” means all copy, artwork, files, links, subject lines, images, logos, approvals, instructions, targeting criteria, recipient information, and related content supplied for publication, deployment, or distribution.
 • “Premium Position” means inside front cover, page 3, inside back cover, center spread, or back page.
@@ -43,20 +42,20 @@ This Agreement begins when Publisher accepts the applicable order and continues 
 5.2 Firm Commitment
 The Ad Timing Term is a firm commitment. After Publisher accepts an Insertion Order or other signing document, Advertiser may not cancel, terminate, reduce, suspend, or obtain a refund for any committed advertising during the Ad Timing Term except as Publisher may expressly agree in writing.
 5.3 Automatic Renewal
-This Agreement renews automatically at the end of the Ad Timing Term on the same ad size, placement type, and other applicable terms then in effect, including Publisher’s then-current rates, unless Publisher receives written notice of non-renewal at least thirty (30) calendar days before the end of the Ad Timing Term.
+This Agreement renews automatically at the end of the Ad Timing Term and then continues on a month-to-month basis, on the same ad size, placement type, and other applicable terms then in effect, including Publisher’s then-current rates, until non-renewed under Section 6.
 5.4 Notice of Non-Renewal
-To prevent automatic renewal, Advertiser must give Publisher written notice of non-renewal that is received at least thirty (30) calendar days before the end of the Ad Timing Term. Notice received after that date does not prevent renewal.
+To prevent renewal, Advertiser must give Publisher written notice of non-renewal as provided in Section 6. Notice received after the applicable deadline does not prevent renewal.
 5.5 Renewal Changes
 Publisher may change rates, specifications, or product terms for any Renewal Term by written notice before the renewed placement or campaign is invoiced or scheduled. If Advertiser continues into the Renewal Term after such notice, the revised rate, specification, or term applies.
 6. Non-Renewal; End-of-Term Cancellation Procedure
 6.1 Non-Renewal Right
-Either party may elect non-renewal of a Recurring Product effective at the end of the then-current term.
+Either party may elect non-renewal of this Agreement effective at the end of the Ad Timing Term or at the end of any month-to-month Renewal Term.
 6.2 Required Advance Notice
-To be effective, written notice of non-renewal must be received no later than thirty (30) calendar days before the applicable published Advertising Deadline for the final committed month or, during a Renewal Term, the then-current monthly term.
+To be effective, written notice of non-renewal must be received (a) at least thirty (30) calendar days before the end of the Ad Timing Term, to prevent the first Renewal Term, or (b) during a Renewal Term, at least thirty (30) calendar days before the end of the then-current monthly Renewal Term.
 6.3 Specific Deadline Controls
 If the Insertion Order states a specific non-renewal deadline for an identified product, that stated date controls for that product, provided it is not later than the deadline required by Section 6.2.
 6.4 Late Notice
-A notice received after the applicable non-renewal deadline is ineffective for the then-current term and instead applies to the following Renewal Term. Advertiser remains liable for all charges for the renewed month triggered by untimely notice.
+A notice received after the applicable deadline is ineffective for the then-current term and instead applies to the following Renewal Term. Advertiser remains liable for all charges for the renewed month triggered by untimely notice.
 6.5 Effect of Non-Renewal
 Non-renewal ends future renewals only. It does not release Advertiser or Agency from:
 • charges incurred through the end of the then-current term;
@@ -184,7 +183,7 @@ If Publisher cancels a placement or campaign without Advertiser default and does
 • a refund of the amount actually paid for the canceled, unpublished, or undeployed portion only.
 Publisher has no further liability for such cancellation.
 17. Advertiser Cancellation; No Refunds
-After Publisher accepts an Insertion Order or other signing document, no cancellations, reductions, suspensions, or refunds will be issued except as expressly stated in Section 6 regarding end-of-term non-renewal of a Recurring Product.
+After Publisher accepts an Insertion Order or other signing document, no cancellations, reductions, suspensions, or refunds will be issued except as expressly stated in Section 6 regarding non-renewal.
 If Advertiser attempts to cancel committed advertising, fails to use reserved space, fails to provide Materials, or otherwise does not proceed with scheduled advertising, Advertiser remains liable for all charges for the committed term, including premium fees, setup charges, short-rate adjustments, and collection-related amounts.
 18. Ownership; License; Use Rights
 18.1 Advertiser Ownership of Submitted Materials
