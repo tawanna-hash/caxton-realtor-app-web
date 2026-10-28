@@ -1121,6 +1121,7 @@ export function AgreementDrawer({
     company: form.company_name, rep: form.rep_name, email: form.email, phone: form.phone,
     address: form.address, city: form.city, state: form.state, zip: form.zip,
     billingEmail: form.billing_email, askAddress: form.ask_billing_address,
+    timing: nonPrint ? [] : MONTHS_LIST.filter((m) => form.ad_timing_months[m.k]).map((m) => `${m.l} ${form.ad_timing_years[m.k] ?? ""}`.trim()),
     lines: nonPrint
       ? prodLines(product, prod)
       : ([["Ad size", form.ad_size], ["Frequency", form.frequency], ["Monthly rate", totalMonthly > 0 ? `$${totalMonthly.toFixed(2)}` : ""]].filter(([, v]) => v) as Array<[string, string]>),

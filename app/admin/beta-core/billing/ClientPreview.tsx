@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
+
 // Live preview of what the client sees on their sign page. Updates as the form changes.
 const STEPS = ['Introduction', 'Review Services', 'Terms Of Service', 'Additional Terms', 'Payment', 'Sign & Approve'];
 export type PreviewData = {
   company: string; rep: string; email: string; phone: string;
   address: string; city: string; state: string; zip: string; billingEmail: string;
-  askAddress: boolean; lines: Array<[string, string]>; totalCents: number; methods: string[];
+  askAddress: boolean; timing: string[]; lines: Array<[string, string]>; totalCents: number; methods: string[];
 };
 const usd = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
@@ -19,6 +21,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 export default function ClientPreview({ d }: { d: PreviewData }) {
+  const [step, setStep] = useState(1);
   return (
     <div className="flex h-full flex-col bg-[#F3F4F7]">
       <div className="shrink-0 border-b border-gray-200 bg-white px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Client view, live</div>
@@ -26,8 +29,10 @@ export default function ClientPreview({ d }: { d: PreviewData }) {
         <div className="mx-auto max-w-sm">
           <div className="text-sm font-semibold text-[#1B1740]">RealtyLine</div>
           <ol className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500">
-            {STEPS.map((s, i) => <li key={s} className={i === 1 ? 'font-semibold text-[#5B2BE0]' : ''}>{s}</li>)}
+            {STEPS.map((s, i) => <li key={s}><button type="button" onClick={() => setStep(i)} className={i === step ? 'font-semibold text-[#5B2BE0]' : 'hover:text-gray-800'}>{s}</button></li>)}
           </ol>
+          {step === 0 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Introduction</div><p className="mt-1 text-gray-700">A short welcome and a summary of the agreement, shown before the client reviews anything.</p></div>)}
+          {step === 1 && (
           <div className="mt-3 rounded-xl bg-white p-4 shadow-sm">
             <div className="text-sm font-semibold text-[#1B1740]">Review Your Details</div>
             <div className="text-[11px] text-gray-500">We filled in what we have. Fix anything that is out of date.</div>
@@ -51,12 +56,19 @@ export default function ClientPreview({ d }: { d: PreviewData }) {
               {d.lines.map(([k, v]) => <div key={k} className="flex justify-between gap-3"><span className="text-gray-600">{k}</span><span className="text-right text-gray-900">{v}</span></div>)}
               <div className="mt-1 flex justify-between border-t border-[#D6CCF3] pt-1.5 font-semibold"><span>Agreement total</span><span>{usd(d.totalCents)}</span></div>
             </div>
-            <div className="mt-3 rounded-md bg-[#5B2BE0] py-2 text-center text-xs text-white">Continue To Payment</div>
+            {d.timing.length > 0 && (<><div className="mt-4 text-xs font-semibold text-[#1B1740]">Ad timing</div><div className="mt-1 flex flex-wrap gap-1">{d.timing.map((t) => <span key={t} className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">{t}</span>)}</div></>)}
+            <button type="button" onClick={() => setStep(4)} className="mt-3 w-full rounded-md bg-[#5B2BE0] py-2 text-center text-xs text-white">Continue To Payment</button>
           </div>
+          )}
+          {step === 2 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Terms Of Service</div><p className="mt-1 text-gray-700">The Advertising Agreement Terms the client must read and accept.</p></div>)}
+          {step === 3 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Additional Terms</div><p className="mt-1 text-gray-700">Product-specific terms for this agreement, shown after the standard terms.</p></div>)}
+          {step === 4 && (
           <div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm">
-            <div className="font-semibold text-[#1B1740]">Payment, what the client can choose</div>
+            <div className="font-semibold text-[#1B1740]">How would you like to pay?</div>
             <ul className="mt-1 list-disc pl-4 text-gray-700">{d.methods.map((m) => <li key={m}>{m}</li>)}</ul>
           </div>
+          )}
+          {step === 5 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Sign &amp; Approve</div><div className="mt-2 flex justify-between border-t border-gray-100 pt-2"><span className="text-gray-600">Agreement total</span><span className="font-semibold">{usd(d.totalCents)}</span></div><div className="mt-2 rounded-md border border-gray-200 px-2 py-1.5 text-gray-300">Type your full name to sign</div><label className="mt-2 flex items-center gap-2 text-gray-600"><input type="checkbox" disabled /> I accept the agreement terms</label><div className="mt-3 rounded-md bg-[#5B2BE0] py-2 text-center text-white">Sign &amp; Approve</div></div>)}
         </div>
       </div>
     </div>
