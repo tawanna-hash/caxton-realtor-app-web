@@ -5,6 +5,7 @@
 // The partner pays the existing ACH processing fee (0.8%, capped at $5.00).
 // Nothing is stored on the agreement here; the sign step verifies the intent.
 
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
 import { verifyToken } from '@/lib/sign-token';
@@ -20,6 +21,7 @@ export const dynamic = 'force-dynamic';
 type Row = Agreement & { lines_total?: number; pay_now_total?: number };
 
 export async function POST(_req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
+  await loadPaymentSettings();
   if (!isStripeConfigured()) return NextResponse.json({ error: 'Payments are not configured.' }, { status: 503 });
   const publishableKey = getPublishableKey();
   if (!publishableKey) return NextResponse.json({ error: 'Payments are not configured.' }, { status: 503 });

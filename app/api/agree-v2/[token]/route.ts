@@ -14,6 +14,7 @@
 // Stripe confirms that intent. Agreements that are not a simple print ad
 // continue on the existing full form.
 
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { verifyToken } from '@/lib/sign-token';
@@ -21,7 +22,7 @@ import { rateLimit } from '@/lib/server/rate-limit';
 import { ApiError } from '@/lib/server/error';
 import { type Agreement } from '@/lib/agreements';
 import { allowsCheckPayment } from '@/lib/ad-channels';
-import { termsForAgreement } from '@/lib/agreement-terms';
+import { termsTextFor } from '@/lib/server/agreement-terms-store';
 import { brandForPublication } from '@/lib/email-templates';
 import { channelOfRow, chargeBaseCents, needsFullForm, totalCents, recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
 import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
@@ -65,6 +66,7 @@ const EDITABLE = [
 ] as const;
 
 export async function GET(req: NextRequest, ctx: RouteCtx) {
+  await loadPaymentSettings();
   const { token } = await ctx.params;
   const parsed = verifyToken(token);
   if (!parsed) return NextResponse.json({ error: 'This link is no longer valid.' }, { status: 401 });
@@ -165,7 +167,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       prepay_note: prepay ? PREPAY_NOTE : null,
       check_request: prepay ? checkState : null,
       fields: Object.fromEntries(EDITABLE.map((k) => [k, (ag as unknown as Record<string, unknown>)[k] ?? ''])),
-      terms: termsForAgreement(channel, ag.publication, ag.signed_at),
+      terms: await termsTextFor(ag.signed_at),
     });
   } catch (err) {
     return NextResponse.json({ error: 'load failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });
@@ -173,6 +175,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
 }
 
 export async function POST(req: NextRequest, ctx: RouteCtx) {
+  await loadPaymentSettings();
   const { token } = await ctx.params;
   const parsed = verifyToken(token);
   if (!parsed) return NextResponse.json({ error: 'This link is no longer valid.' }, { status: 401 });

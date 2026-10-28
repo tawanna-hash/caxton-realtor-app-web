@@ -6,6 +6,7 @@
 //   POST { action: 'delete', id }                  -> remove one
 //   POST { action: 'timeline', doc }               -> billing timelines for the document
 
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
@@ -40,6 +41,7 @@ function buildCatalog(): Catalog {
 }
 
 export async function GET(req: NextRequest) {
+  await loadPaymentSettings();
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {

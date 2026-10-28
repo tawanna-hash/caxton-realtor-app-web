@@ -17,7 +17,7 @@ import { ApiError } from '@/lib/server/error';
 import { type Agreement } from '@/lib/agreements';
 import { allowsCheckPayment, deriveChannelFromAgreementType, isAdChannel } from '@/lib/ad-channels';
 import { isRenewalOfferExpired, RENEWAL_OFFER_EXPIRED_MESSAGE } from '@/lib/renewal-offer';
-import { termsForChannel } from '@/lib/agreement-terms';
+import { termsTextFor } from '@/lib/server/agreement-terms-store';
 import { brandForPublication } from '@/lib/email-templates';
 import { freqMonths } from '@/lib/renewals-v2/pricing';
 import { recordEvent } from '@/lib/renewals-v2/service';
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
         email: ag.billing_email ?? ag.advertiser_email,
         contact_name: ag.billing_contact_name ?? ag.rep_name,
       },
-      terms: termsForChannel(channel, ag.publication),
+      terms: await termsTextFor(null),
     });
   } catch (err) {
     return NextResponse.json({ error: 'load failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });

@@ -12,6 +12,7 @@
 //   5. Persist payment_intent_id + customer_id on the agreement
 //   6. Return { clientSecret, publishableKey, amountCents }
 
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { verifyToken } from '@/lib/sign-token';
@@ -24,6 +25,7 @@ export const dynamic = 'force-dynamic';
 type RouteCtx = { params: Promise<{ token: string }> };
 
 export async function POST(req: NextRequest, ctx: RouteCtx) {
+  await loadPaymentSettings();
   if (!isStripeConfigured()) {
     return NextResponse.json(
       { error: 'Stripe not configured. Set STRIPE_SECRET_KEY in Vercel env.' },

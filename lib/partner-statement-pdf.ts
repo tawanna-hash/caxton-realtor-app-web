@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 import path from 'node:path';
 import { WAYS_TO_PAY_TITLE, waysToPayLines } from '@/lib/payment-options-copy';
 import { PDFDocument, PDFString, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
@@ -57,6 +58,7 @@ function addLink(
 }
 
 export async function generatePartnerStatementPdf(statement: PartnerStatement): Promise<Uint8Array> {
+  await loadPaymentSettings();
   const doc = await PDFDocument.create();
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);

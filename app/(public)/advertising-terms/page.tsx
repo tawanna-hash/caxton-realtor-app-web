@@ -1,5 +1,7 @@
 import PageTitle from '@/components/ui/PageTitle';
-import { termsForChannel } from '@/lib/agreement-terms';
+import { termsTextFor } from '@/lib/server/agreement-terms-store';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Advertising Agreement Terms — Realty News Now',
@@ -7,8 +9,8 @@ export const metadata = {
     'The Advertising Agreement Terms that apply to RealtyLine Austin and Newsline San Antonio advertising, published by Caxton Publications, Inc.',
 };
 
-export default function AdvertisingTermsPage() {
-  const lines = termsForChannel('print').split('\n').filter((l) => l.trim());
+export default async function AdvertisingTermsPage() {
+  const lines = (await termsTextFor(null)).split('\n').filter((l) => l.trim());
   const [title, ...rest] = lines;
   return (
     <div className="min-h-screen bg-white">

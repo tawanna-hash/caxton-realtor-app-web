@@ -14,6 +14,8 @@ import {
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import {
   INVOICE_PAYMENT_METHODS,
+  setFeeConfig,
+  type FeeConfig,
   processingFeeCents,
   type InvoicePaymentMethod,
 } from '@/lib/payment-processing-fees';
@@ -96,6 +98,7 @@ function getStripePromise(pk: string) {
 }
 
 export default function InvoicePayClient({
+  fees,
   invoice,
   accountSummary,
   justPaid,
@@ -103,6 +106,7 @@ export default function InvoicePayClient({
   allowPartial = false,
   remainingCents,
 }: {
+  fees: FeeConfig;
   invoice: InvoiceData;
   accountSummary: AccountSummary;
   justPaid: boolean;
@@ -110,6 +114,7 @@ export default function InvoicePayClient({
   allowPartial?: boolean;
   remainingCents?: number;
 }) {
+  setFeeConfig(fees);
   const [mode, setMode] = useState<'idle' | 'embedded' | 'redirecting'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [pk, setPk] = useState<string | null>(null);

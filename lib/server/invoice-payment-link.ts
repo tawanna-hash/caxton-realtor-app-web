@@ -11,6 +11,7 @@
 // that, so a link handed out on day N silently died by day N+1 while the
 // UI kept showing it as live — see the refresh cron for the fix.
 
+import { checkoutSessionExtras, loadPaymentSettings } from '@/lib/server/payment-settings';
 import { stripeSafeEmail } from '@/lib/stripe-email';
 import { getSql, ensureSchema } from '@/lib/db';
 import { withNeonTransaction } from '@/lib/server/db/neon';
@@ -84,6 +85,7 @@ function isPostgresUniqueViolation(err: unknown): boolean {
 export async function createInvoiceCheckoutSession(
   params: CreateInvoiceCheckoutSessionParams,
 ): Promise<CreateInvoiceCheckoutSessionResult> {
+  await loadPaymentSettings();
   if (!isStripeConfigured()) {
     throw new InvoiceLifecycleError('Stripe is not configured', 400);
   }
@@ -142,23 +144,7 @@ export async function createInvoiceCheckoutSession(
   try {
     session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      ui_mode: 'hosted_page',
-      billing_address_collection: 'auto',
-      phone_number_collection: { enabled: true },
-      automatic_tax: { enabled: false },
-      allow_promotion_codes: false,
-      submit_type: 'auto',
-      consent_collection: { terms_of_service: 'required' },
-      name_collection: { individual: { enabled: true }, business: { enabled: true } },
-      integration_identifier: 'hosted_mobile_app_0001',
-      origin_context: 'mobile_app',
-      branding_settings: {
-        background_color: '#ffffff',
-        button_color: '#6205ad',
-        font_family: 'inter',
-        border_style: 'rounded',
-        logo: { type: 'file', file: 'file_1UVKNw91yhy0NZ59W2XMbWDC' },
-      },
+      ...(await checkoutSessionExtras('payment')),
       payment_method_types: pm === 'ach' ? ['us_bank_account'] : pm === 'bnpl' ? ['affirm', 'afterpay_clearpay', 'klarna'] : ['card'],
       customer_email: stripeSafeEmail(inv.bill_to_email),
       line_items: [

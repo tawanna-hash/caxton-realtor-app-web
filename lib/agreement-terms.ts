@@ -10,7 +10,7 @@
 
 import type { AdChannel } from '@/lib/ad-channels';
 
-const ADVERTISING_TERMS = `Advertising Agreement Terms
+export const ADVERTISING_TERMS = `Advertising Agreement Terms
 1. Agreement Overview
 These Advertising Agreement Terms (“Terms”) are incorporated into and form part of each applicable insertion order or other signing document accepted by Caxton Publications, Inc. (“Publisher”) and the advertiser identified in that document and, if applicable, its advertising agency (collectively, the “Agreement”). This Agreement governs the purchase of advertising from Publisher for the following products, as applicable: (a) the print editions of RealtyLine Austin and Newsline San Antonio (the “Print Edition”); (b) the corresponding electronic replica editions (the “e-Replica Edition”); (c) mobile app advertising products (the “Mobile App Products”); and (d) e-Blast Campaigns.
 Unless this Agreement expressly states otherwise, its terms apply to both print and digital products. If a provision applies only to a specific product type, that product-specific provision controls for that product.
@@ -279,7 +279,7 @@ Signatures delivered by PDF, electronic signature platform, scanned image, or ot
 // Terms in effect before the ACH / buy now, pay later update. Agreements signed
 // before TERMS_UPDATE_CUTOFF keep these terms; the new terms apply only to
 // agreements signed on or after the cutoff.
-const LEGACY_ADVERTISING_TERMS = `Advertising Agreement Terms
+export const LEGACY_ADVERTISING_TERMS = `Advertising Agreement Terms
 1. Agreement Overview
 These Advertising Agreement Terms (“Terms”) are incorporated into and form part of each applicable insertion order or other signing document accepted by Caxton Publications, Inc. (“Publisher”) and the advertiser identified in that document and, if applicable, its advertising agency (collectively, the “Agreement”). This Agreement governs the purchase of advertising from Publisher for the following products, as applicable: (a) the print editions of RealtyLine Austin and Newsline San Antonio (the “Print Edition”); (b) the corresponding electronic replica editions (the “e-Replica Edition”); (c) mobile app advertising products (the “Mobile App Products”); and (d) e-Blast Campaigns.
 Unless this Agreement expressly states otherwise, its terms apply to both print and digital products. If a provision applies only to a specific product type, that product-specific provision controls for that product.

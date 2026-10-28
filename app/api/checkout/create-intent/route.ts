@@ -19,6 +19,7 @@
 //   { clientSecret, publishableKey, paymentIntentId, amountCents,
 //     baseCents, surchargeCents, description }
 
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 import { NextRequest, NextResponse } from 'next/server';
 import { publicSubmitLimited } from '@/lib/server/rate-limit';
 import { z } from 'zod';
@@ -135,6 +136,7 @@ export function computeAmountCents(
 }
 
 export async function POST(req: NextRequest) {
+  await loadPaymentSettings();
   const limited = await publicSubmitLimited('checkout-intent');
   if (limited) return limited as never;
   if (!isStripeConfigured()) {

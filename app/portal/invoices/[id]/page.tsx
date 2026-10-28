@@ -10,6 +10,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import { canPayPartial } from '@/lib/server/partial-payments';
 import InvoicePayClient from './InvoicePayClient';
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -123,6 +124,7 @@ export default async function InvoicePayPage({
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">
       <InvoicePayClient
+        fees={(await loadPaymentSettings()).fees}
         invoice={invoice}
         accountSummary={{
           balanceForwardCents,

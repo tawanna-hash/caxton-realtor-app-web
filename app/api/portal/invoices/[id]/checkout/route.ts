@@ -8,6 +8,7 @@
 // Body: { ui_mode?: 'hosted' | 'embedded', payment_method?: 'card' | 'ach' | 'bnpl' }
 // Returns: { url } for hosted, { client_secret } for embedded.
 
+import { checkoutSessionExtras, loadPaymentSettings } from '@/lib/server/payment-settings';
 import { stripeSafeEmail } from '@/lib/stripe-email';
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema } from '@/lib/db';
@@ -49,6 +50,7 @@ interface InvoiceRow {
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  await loadPaymentSettings();
   const { id } = await params;
   if (!isStripeConfigured()) {
     return NextResponse.json({ error: 'Payments are not configured yet.' }, { status: 503 });
@@ -125,23 +127,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const sessionParams: Record<string, unknown> = {
       mode: 'payment' as const,
-      ui_mode: 'hosted_page',
-      billing_address_collection: 'auto',
-      phone_number_collection: { enabled: true },
-      automatic_tax: { enabled: false },
-      allow_promotion_codes: false,
-      submit_type: 'auto',
-      consent_collection: { terms_of_service: 'required' },
-      name_collection: { individual: { enabled: true }, business: { enabled: true } },
-      integration_identifier: 'hosted_mobile_app_0001',
-      origin_context: 'mobile_app',
-      branding_settings: {
-        background_color: '#ffffff',
-        button_color: '#6205ad',
-        font_family: 'inter',
-        border_style: 'rounded',
-        logo: { type: 'file', file: 'file_1UVKNw91yhy0NZ59W2XMbWDC' },
-      },
+      ...(await checkoutSessionExtras('payment')),
       payment_method_types: stripePaymentMethodTypes,
       customer: inv.stripe_customer_id ?? undefined,
       customer_email: inv.stripe_customer_id ? undefined : stripeSafeEmail(inv.bill_to_email),
@@ -193,7 +179,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     // Saved-payment-method opt-in is only valid when a Stripe customer is attached.
     if (sessionParams.customer) {
-      sessionParams.saved_payment_method_options = { payment_method_save: 'enabled' };
+      const withCustomer = await checkoutSessionExtras('payment', { hasCustomer: true });
+      if (withCustomer.saved_payment_method_options) {
+        sessionParams.saved_payment_method_options = withCustomer.saved_payment_method_options;
+      }
     }
 
     if (uiMode === 'embedded') {

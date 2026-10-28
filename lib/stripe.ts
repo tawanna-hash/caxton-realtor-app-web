@@ -2,8 +2,8 @@
 //
 // Server-side Stripe SDK init. Singleton.
 // Reads STRIPE_SECRET_KEY from env. Lazy — never throws at import time.
-
 import Stripe from 'stripe';
+import { processingFeeCents } from '@/lib/payment-processing-fees';
 
 let _stripe: Stripe | null = null;
 
@@ -29,9 +29,9 @@ export function getStripe(): Stripe {
   return _stripe;
 }
 
-/** Apply the 3% credit-card surcharge that's shown in the Sign Wizard. */
+/** Apply the credit-card processing fee (editable in Payment settings; default 3%). */
 export function withSurcharge(amountCents: number): number {
-  return Math.round(amountCents * 1.03);
+  return Math.round(amountCents) + processingFeeCents(amountCents, 'card');
 }
 
 export function isStripeConfigured(): boolean {

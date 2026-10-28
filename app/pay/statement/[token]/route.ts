@@ -1,6 +1,7 @@
 // Public, token-signed statement pay link. GET shows a confirm page (so email
 // scanners that prefetch links don't spend or invalidate checkout sessions);
 // POST creates a fresh Stripe Checkout Session and redirects to it.
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyStatementPayToken } from '@/lib/server/statement-pay-token';
 import { INVOICE_PAYMENT_METHODS, isInvoicePaymentMethod } from '@/lib/payment-processing-fees';
@@ -20,6 +21,7 @@ ${chooser}${button ? `<form id="pay" method="post"><button style="margin-top:12p
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  await loadPaymentSettings();
   const { token } = await params;
   const v = verifyStatementPayToken(token);
   if (!v.ok) return page('Link not valid', v.reason === 'expired' ? 'This payment link has expired. Please contact us for a new statement.' : 'This payment link is not valid. Please contact us for a new statement.', 400);
@@ -27,6 +29,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  await loadPaymentSettings();
   const { token } = await params;
   const v = verifyStatementPayToken(token);
   if (!v.ok) return page('Link not valid', 'This payment link is not valid or has expired. Please contact us for a new statement.', 400);

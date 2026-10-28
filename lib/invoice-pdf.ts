@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 import path from 'node:path';
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import { WAYS_TO_PAY_TITLE, waysToPayLines } from '@/lib/payment-options-copy';
@@ -82,6 +83,7 @@ export function invoicePdfFilename(number: string | null, id: string) {
 
 /** Render a customer-facing invoice PDF matching /admin/invoices/[id]/preview. */
 export async function generateInvoicePdf(invoiceId: string): Promise<{ bytes: Uint8Array; filename: string } | null> {
+  await loadPaymentSettings();
   const sql = getSql();
   const rows = (await sql`
     SELECT i.*, a.name AS advertiser_name,

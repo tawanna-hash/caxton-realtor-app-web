@@ -8,6 +8,7 @@ import { verifyToken } from '@/lib/sign-token';
 import { getSql } from '@/lib/db';
 import type { Agreement } from '@/lib/agreements';
 import SignWizard from './SignWizard';
+import { termsTextFor } from '@/lib/server/agreement-terms-store';
 import { checkRequestState, prepayRequired } from '@/lib/agreements-v2/prepay';
 import {
   formatRenewalOfferDeadline,
@@ -167,5 +168,5 @@ export default async function SignPage({ params }: PageProps) {
     lineItemRows.map((li) => li.channel),
   );
   const checkState = checkRequestState(ag.audit_log);
-  return <SignWizard ag={ag} token={token} lineItems={lineItemRows} prepay={prepay} checkState={checkState} />;
+  return <SignWizard terms={await termsTextFor(ag.signed_at)} ag={ag} token={token} lineItems={lineItemRows} prepay={prepay} checkState={checkState} />;
 }

@@ -11,8 +11,7 @@ import fontkit from '@pdf-lib/fontkit';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Agreement } from '@/lib/agreements';
-import { termsForAgreement } from '@/lib/agreement-terms';
-import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
+import { termsTextFor } from '@/lib/server/agreement-terms-store';
 
 // Resolve bundled Georgia TTFs at lib/pdf/fonts/. Load once at module init.
 const FONT_DIR = path.join(process.cwd(), 'lib', 'pdf', 'fonts');
@@ -349,7 +348,7 @@ async function generateAgreementPdfBufferInner(ag: Agreement): Promise<Uint8Arra
   // ─── Terms & Conditions ─────────────────────────────────────────────────────
   drawSectionHeader(ctx, 'Terms & Conditions');
 
-  const termsLines = termsForAgreement(deriveChannelFromAgreementType(ag.type), ag.publication, ag.signed_at).split('\n');
+  const termsLines = (await termsTextFor(ag.signed_at)).split('\n');
   for (const ln of termsLines) {
     const trimmed = ln.trim();
     if (!trimmed) {

@@ -8,6 +8,7 @@
 // Uses the stored stripe_payment_method_id + stripe_customer_id from the agreement.
 // Creates an issue_charges row, fires Stripe PaymentIntent with confirm:true off_session.
 
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
@@ -24,6 +25,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 type RouteCtx = { params: Promise<{ id: string }> };
 
 export const POST = withAdminTracking(async function POST(req: NextRequest, ctx: RouteCtx) {
+  await loadPaymentSettings();
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

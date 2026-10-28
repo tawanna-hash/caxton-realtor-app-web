@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { upload } from '@vercel/blob/client';
 import { loadStripe, type Stripe as StripeJS } from '@stripe/stripe-js';
 import {
@@ -49,6 +49,21 @@ function dateOffset(days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+
+function useCardFeeRate(): number {
+  const [rate, setRate] = useState(0.03);
+  useEffect(() => {
+    fetch('/api/payment-settings/fees')
+      .then((r) => r.json())
+      .then((d: { fees?: { card?: { percent?: number } } }) => {
+        const p = d.fees?.card?.percent;
+        if (typeof p === 'number') setRate(p / 100);
+      })
+      .catch(() => {});
+  }, []);
+  return rate;
+}
+
 export default function EblastOrderForm({
   packages,
   initialPackageId,
@@ -88,11 +103,12 @@ export default function EblastOrderForm({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<{ agreementId: string } | null>(null);
 
+  const cardFeeRate = useCardFeeRate();
   const baseCents = Math.round(
     (selectedPackage?.priceByPub?.[publication] ?? selectedPackage?.price ?? 0) *
       100,
   );
-  const surchargeCents = Math.round(baseCents * 0.03);
+  const surchargeCents = Math.round(baseCents * cardFeeRate);
   const totalCents = baseCents + surchargeCents;
   const sendCount =
     selectedPackage?.sendsByPub?.[publication] ?? selectedPackage?.sends ?? 1;

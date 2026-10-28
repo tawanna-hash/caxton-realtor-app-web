@@ -103,6 +103,21 @@ function addDaysISO(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+
+function useCardFeeRate(): number {
+  const [rate, setRate] = useState(0.03);
+  useEffect(() => {
+    fetch('/api/payment-settings/fees')
+      .then((r) => r.json())
+      .then((d: { fees?: { card?: { percent?: number } } }) => {
+        const p = d.fees?.card?.percent;
+        if (typeof p === 'number') setRate(p / 100);
+      })
+      .catch(() => {});
+  }, []);
+  return rate;
+}
+
 export default function CheckoutForm({
   slot,
   initialPub,
@@ -215,6 +230,7 @@ export default function CheckoutForm({
   // All four single-pub markets use the same single-pub rate. (Houston/
   // Dallas were priced equal to a solo RealtyLine booking when those
   // markets were activated in Phase 2 PR D.)
+  const cardFeeRate = useCardFeeRate();
   const previewBaseCents = useMemo(() => {
     if (perUnit) {
       const rate = weeklyRateForMarkets(slot, marketCount);
@@ -229,7 +245,7 @@ export default function CheckoutForm({
     return rate * 100 * weeks;
   }, [slot, billingPeriod, weeks, months, units, perUnit, hasMonthly, marketCount]);
 
-  const previewSurcharge = Math.round(previewBaseCents * 0.03);
+  const previewSurcharge = Math.round(previewBaseCents * cardFeeRate);
   const previewTotal = previewBaseCents + previewSurcharge;
 
   // Per-week equivalent for the Monthly toggle. Makes it easy to compare

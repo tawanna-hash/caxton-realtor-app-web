@@ -21,6 +21,7 @@
 // That is why it takes the pooled tagged-template `sql` client (or defaults to
 // getSql()) rather than a PoolClient bound to a live transaction.
 
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 import { waysToPayHtml, waysToPayText } from '@/lib/payment-options-copy';
 import { isBillingEmailBlocked } from '@/lib/server/inactive-guard';
 import { Resend } from 'resend';
@@ -101,6 +102,7 @@ export interface SendInvoiceEmailResult {
 export async function sendInvoiceEmail(
   params: SendInvoiceEmailParams,
 ): Promise<SendInvoiceEmailResult> {
+  await loadPaymentSettings();
   const sql = params.sql ?? getSql();
   const reminder = params.reminder === true;
 

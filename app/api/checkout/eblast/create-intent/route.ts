@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 import { z } from 'zod';
 import {
   getPublishableKey,
@@ -46,6 +47,7 @@ function packageId(pkg: EBlast): string {
 }
 
 export async function POST(request: NextRequest) {
+  await loadPaymentSettings();
   if (!isStripeConfigured()) {
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 });
   }
