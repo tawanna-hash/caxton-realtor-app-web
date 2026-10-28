@@ -8,34 +8,34 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isId = (x: unknown): x is number | string => (typeof x === 'number' && Number.isInteger(x)) || (typeof x === 'string' && /^[0-9a-f-]{1,40}$/i.test(x));
 const norm = (s: string | null) => (s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-type Adv = Record<string, unknown> & { id: string; company: string | null; name: string | null; contact_email: string | null; billing_email: string | null; created_at: string };
+type Adv = Record<string, unknown> & { id: number | string; company: string | null; name: string | null; contact_email: string | null; billing_email: string | null; created_at: string };
 
 export async function GET() {
   if (!(await getCurrentAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   await ensureSchema();
   const rows = (await getSql()`SELECT id, company, name, contact_email, billing_email, publication, current_agreement_id, created_at FROM advertisers ORDER BY created_at`) as unknown as Adv[];
-  const parent = new Map<string, string>();
-  const find = (x: string): string => { let p = parent.get(x) ?? x; while (p !== (parent.get(p) ?? p)) p = parent.get(p) ?? p; return p; };
-  const union = (a: string, b: string) => parent.set(find(a), find(b));
-  const seen = new Map<string, string>();
+  const parent = new Map<number | string, number | string>();
+  const find = (x: number | string): number | string => { let p = parent.get(x) ?? x; while (p !== (parent.get(p) ?? p)) p = parent.get(p) ?? p; return p; };
+  const union = (a: number | string, b: number | string) => parent.set(find(a), find(b));
+  const seen = new Map<string, number | string>();
   for (const r of rows) {
-    const keys = [`n:${norm(r.company || r.name)}`, ...[r.contact_email, r.billing_email].filter(Boolean).map((e) => `e:${String(e).toLowerCase()}`)].filter((k) => k !== 'n:');
+    const keys = [`n:${norm(r.company || r.name)}`].filter((k) => k !== 'n:');
     for (const k of keys) { const o = seen.get(k); if (o) union(r.id, o); else seen.set(k, r.id); }
   }
-  const groups = new Map<string, Adv[]>();
+  const groups = new Map<number | string, Adv[]>();
   for (const r of rows) { const g = find(r.id); groups.set(g, [...(groups.get(g) ?? []), r]); }
   return NextResponse.json({ groups: [...groups.values()].filter((g) => g.length > 1) });
 }
 
 export async function POST(req: NextRequest) {
   if (!(await getCurrentAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { keepId?: string; mergeIds?: string[]; dryRun?: boolean };
-  const keepId = b.keepId ?? '';
+  const b = (await req.json().catch(() => ({}))) as { keepId?: number | string; mergeIds?: Array<number | string>; dryRun?: boolean };
+  const keepId = b.keepId as number | string;
   const mergeIds = (b.mergeIds ?? []).filter((x) => x !== keepId);
-  if (!UUID.test(keepId) || !mergeIds.length || !mergeIds.every((x) => UUID.test(x))) return NextResponse.json({ error: 'keepId and mergeIds required' }, { status: 400 });
+  if (!isId(keepId) || !mergeIds.length || !mergeIds.every(isId)) return NextResponse.json({ error: 'keepId and mergeIds required' }, { status: 400 });
   await ensureSchema();
   const sql = getSql();
   const tables = (await sql`SELECT table_name FROM information_schema.columns WHERE table_schema = 'public' AND column_name = 'advertiser_id' AND table_name <> 'advertisers'`) as unknown as Array<{ table_name: string }>;
@@ -68,6 +68,8 @@ export async function POST(req: NextRequest) {
         keep[col] = m[col];
       }
     }
+    const extra = [m.contact_email, m.billing_email].filter((e): e is string => typeof e === 'string' && !!e && e.toLowerCase() !== String(keep.contact_email ?? '').toLowerCase() && e.toLowerCase() !== String(keep.billing_email ?? '').toLowerCase());
+    if (extra.length) await sql`UPDATE advertisers SET notes = trim(both E'\n' from coalesce(notes, '') || ${`\nMerged duplicate contact: ${Array.from(new Set(extra)).join(', ')}`}) WHERE id = ${keepId}`;
     await sql`DELETE FROM advertisers WHERE id = ${mid}`;
   }
   return NextResponse.json({ ok: true, report });
