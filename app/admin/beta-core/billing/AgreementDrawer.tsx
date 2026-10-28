@@ -1121,7 +1121,7 @@ export function AgreementDrawer({
     company: form.company_name, rep: form.rep_name, email: form.email, phone: form.phone,
     address: form.address, city: form.city, state: form.state, zip: form.zip,
     billingEmail: form.billing_email, askAddress: form.ask_billing_address,
-    timing: nonPrint ? [] : MONTHS_LIST.filter((m) => form.ad_timing_months[m.k]).map((m) => `${m.l} ${form.ad_timing_years[m.k] ?? ""}`.trim()),
+    timing: nonPrint ? [] : MONTHS_LIST.map((m, i) => ({ m, i, y: parseInt(form.ad_timing_years[m.k] ?? "", 10) })).filter((x) => form.ad_timing_months[x.m.k]).sort((a, b) => (Number.isNaN(a.y) ? 9999 : a.y) - (Number.isNaN(b.y) ? 9999 : b.y) || a.i - b.i).map((x) => `${x.m.l} ${form.ad_timing_years[x.m.k] ?? ""}`.trim()),
     lines: nonPrint
       ? prodLines(product, prod)
       : ([["Ad size", form.ad_size], ["Frequency", form.frequency], ["Monthly rate", totalMonthly > 0 ? `$${totalMonthly.toFixed(2)}` : ""]].filter(([, v]) => v) as Array<[string, string]>),
