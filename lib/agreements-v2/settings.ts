@@ -3,6 +3,7 @@
 // Agreements (Beta): default settings and agreement templates. Own tables,
 // created lazily; nothing in the live agreement flow reads them.
 
+import { PUBLICATION_LABELS, type PublicationId } from '@/lib/publications';
 import { getSql } from '@/lib/db';
 
 type Sql = ReturnType<typeof getSql>;
@@ -19,9 +20,9 @@ export type AgreementDefaults = {
 };
 
 export const DEFAULT_INTRO_NEW =
-  'Your advertising agreement is ready. Review the details, choose how to pay, and sign. It takes about two minutes.';
+  'Welcome to {market}! We\u2019re excited to partner with you and promote your business to our real estate community. This Print Advertising Agreement outlines your selected publication(s), ad placement, issue schedule, pricing, and payment terms. Thank you for choosing {market}\u2014we look forward to supporting your marketing goals and building a lasting partnership.';
 export const DEFAULT_INTRO_RENEWAL =
-  'Your advertising agreement is coming up for renewal. We pre-filled everything, so renewing takes about a minute.';
+  'Thank you for continuing your advertising partnership with {market}. This Print Advertising Renewal Agreement outlines your selected publication(s), advertising placement, insertion schedule, rates, and payment terms for the upcoming advertising period.';
 
 export const FALLBACK_DEFAULTS: AgreementDefaults = {
   due_days: 20,
@@ -89,10 +90,11 @@ export async function saveDefaults(input: Record<string, unknown>, sql: Sql = ge
   return v;
 }
 
-/** Fill {first_name} and {company} in an intro message. */
-export function renderIntro(text: string, ag: { rep_name?: string | null; company_name?: string | null }): string {
+/** Fill {first_name}, {company} and {market} in an intro message. */
+export function renderIntro(text: string, ag: { rep_name?: string | null; company_name?: string | null; publication?: string | null }): string {
   const first = (ag.rep_name ?? '').trim().split(/\s+/)[0] || 'there';
-  return text.replace(/\{first_name\}/g, first).replace(/\{company\}/g, ag.company_name ?? 'your company');
+  const market = ag.publication && ag.publication in PUBLICATION_LABELS ? PUBLICATION_LABELS[ag.publication as PublicationId] : 'RealtyLine';
+  return text.replace(/\{first_name\}/g, first).replace(/\{company\}/g, ag.company_name ?? 'your company').replace(/\{market\}/g, market);
 }
 
 /* ---------- Notification settings ---------- */

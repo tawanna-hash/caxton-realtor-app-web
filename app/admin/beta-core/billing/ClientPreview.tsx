@@ -32,7 +32,7 @@ export default function ClientPreview({ d }: { d: PreviewData }) {
     return () => { alive = false; };
   }, []);
   const first = d.rep.trim().split(/\s+/)[0] || 'there';
-  const introText = ((d.renewal ? intros?.r : intros?.n) ?? 'Loading...').replace(/\{first_name\}/g, first).replace(/\{company\}/g, d.company || 'your company');
+  const introText = ((d.renewal ? intros?.r : intros?.n) ?? 'Loading...').replace(/\{first_name\}/g, first).replace(/\{company\}/g, d.company || 'your company').replace(/\{market\}/g, d.market || 'RealtyLine');
   return (
     <div className="flex h-full flex-col bg-[#F3F4F7]">
       <div className="shrink-0 border-b border-gray-200 bg-white px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Client view, live</div>
