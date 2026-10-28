@@ -2,7 +2,7 @@
 //
 // POST: PaymentIntent for paying a new-partner agreement by bank (ACH debit)
 // at signing. Separate from the live card endpoint, which is left untouched.
-// The partner pays the existing ACH processing fee (0.8%, capped at $5.00).
+// The partner pays the existing ACH processing fee (1%, capped at $5.00).
 // Nothing is stored on the agreement here; the sign step verifies the intent.
 
 import { loadPaymentSettings } from '@/lib/server/payment-settings';
