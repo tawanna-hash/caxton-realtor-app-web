@@ -23,12 +23,16 @@ type Props = {
   // Builder's website URL (derived from the first non-PDF source_url across
   // their inventory rows). When present, a "Website" overflow row opens it.
   websiteUrl?: string | null;
+  // Developers (e.g. La Cima) own homes filed under their builders, so the
+  // Inventory pill filters by developer instead of builder.
+  isDeveloper?: boolean;
 };
 
 export default function BuilderDetailFloater({
   builderName,
   slug,
   websiteUrl,
+  isDeveloper = false,
 }: Props) {
   const shareTitle = `${builderName} — Realty News Now`;
 
@@ -54,7 +58,9 @@ export default function BuilderDetailFloater({
         : null,
       flyerPdfUrl: `https://realtynewsnow.app/api/builders/${slug}/pdf`,
       downloadLabel: 'Download',
-      inventoryRoute: `/inventory?builder=${encodeURIComponent(builderName)}`,
+      inventoryRoute: isDeveloper
+        ? `/inventory?kind=listing&developer=${encodeURIComponent(builderName)}`
+        : `/inventory?builder=${encodeURIComponent(builderName)}`,
     });
 
   return (

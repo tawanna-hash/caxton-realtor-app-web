@@ -22,6 +22,8 @@ export interface InventoryFilterState {
   priceMin: number | null;
   priceMax: number | null;
   builder: string | null;
+  // Deep-link-only: rows whose developer (e.g. La Cima) matches.
+  developer?: string | null;
   city: string | null;
   promo: PromoType | null;
   // Deep-link-only kind filter (no UI tab): ?kind=promotion shows just
@@ -53,6 +55,7 @@ const SORT_VALUES: SortKey[] = ['featured', 'price-asc', 'price-desc', 'newest']
 export function matchesFilter(row: BuilderInventoryRow, f: InventoryFilterState): boolean {
   if (f.kind && row.kind !== f.kind) return false;
   if (f.builder && row.builderName !== f.builder) return false;
+  if (f.developer && (row.developerName || '').toLowerCase() !== f.developer.toLowerCase()) return false;
   if (f.beds > 0 && (row.bedsMax == null || row.bedsMax < f.beds)) return false;
   if (f.baths > 0 && (row.bathsMax == null || row.bathsMax < f.baths)) return false;
   if (f.city && row.city !== f.city) return false;
@@ -107,6 +110,7 @@ export function activeFilterCount(f: InventoryFilterState): number {
     (f.baths > 0 ? 1 : 0) +
     (f.priceMin != null || f.priceMax != null ? 1 : 0) +
     (f.builder ? 1 : 0) +
+    (f.developer ? 1 : 0) +
     (f.city ? 1 : 0) +
     (f.promo ? 1 : 0)
   );
@@ -145,6 +149,7 @@ export function parseFilters(
       priceMin: parseNum(get('pmin')),
       priceMax: parseNum(get('pmax')),
       builder: get('builder') || null,
+      developer: get('developer') || null,
       city: get('city') || null,
       promo,
       kind,
@@ -166,6 +171,7 @@ export function serializeFilters(f: InventoryFilterState, sort: SortKey): string
   if (f.priceMin != null) p.set('pmin', String(f.priceMin));
   if (f.priceMax != null) p.set('pmax', String(f.priceMax));
   if (f.builder) p.set('builder', f.builder);
+  if (f.developer) p.set('developer', f.developer);
   if (f.city) p.set('city', f.city);
   if (f.promo) p.set('promo', f.promo);
   if (f.kind) p.set('kind', f.kind);

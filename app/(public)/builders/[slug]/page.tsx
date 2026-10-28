@@ -242,7 +242,7 @@ export default async function Page({ params }: PageProps) {
         />
       </div>
 
-      <BuilderDetailFloater builderName={builderName} slug={slug} websiteUrl={websiteUrl} />
+      <BuilderDetailFloater builderName={builderName} slug={slug} websiteUrl={websiteUrl} isDeveloper={isDeveloper} />
     </div>
   );
 }
