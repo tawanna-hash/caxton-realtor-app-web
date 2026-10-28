@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import BillingTimeline, { type TimelineView } from '@/components/anchor/TimelineView';
 import EmbeddedPay from './EmbeddedPay';
+import SignaturePad, { type SignatureValue } from '@/app/admin/billing/sign/[token]/SignaturePad';
 
 type Fields = Record<string, string>;
 type PlacementNeed = { line_no: number; label: string; channel: 'email' | 'app'; start_date: string | null; preferred_send_dates: string[] };
@@ -70,6 +71,7 @@ export default function AgreeClient({ token }: { token: string }) {
   const [apEmail, setApEmail] = useState('');
   const [apSentTo, setApSentTo] = useState('');
   const [name, setName] = useState('');
+  const [sig, setSig] = useState<SignatureValue>({ method: 'type', signerName: '' });
   const [agree, setAgree] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -214,10 +216,22 @@ export default function AgreeClient({ token }: { token: string }) {
     if (!agree) return setError('Please accept the agreement terms to continue.');
     setSubmitting(true);
     try {
+      let signedDocumentUrl: string | undefined;
+      const blob = sig.method === 'draw' ? sig.pngBlob : sig.method === 'upload' ? sig.file : null;
+      if (sig.method !== 'type') {
+        if (!blob) throw new Error(sig.method === 'draw' ? 'Please draw your signature before continuing.' : 'Please choose a signature file to upload.');
+        const fd = new FormData();
+        fd.append('file', blob, sig.method === 'draw' ? 'signature.png' : (sig.file?.name ?? 'signature'));
+        fd.append('kind', 'signature');
+        const up = await fetch(`/api/sign/${encodeURIComponent(token)}/upload`, { method: 'POST', body: fd });
+        const uj = await up.json().catch(() => ({}));
+        if (!up.ok || !uj.url) throw new Error(uj.error || 'Could not upload your signature.');
+        signedDocumentUrl = uj.url as string;
+      }
       const res = await fetch(`/api/agree-v2/${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ signerName: name.trim(), termsAccepted: true, paymentMode: pay, checkoutSessionId: sessionId ?? undefined, fields, placement: buildPlacement() }),
+        body: JSON.stringify({ signMethod: sig.method, signedDocumentUrl, signerName: name.trim(), termsAccepted: true, paymentMode: pay, checkoutSessionId: sessionId ?? undefined, fields, placement: buildPlacement() }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -584,14 +598,7 @@ export default function AgreeClient({ token }: { token: string }) {
         <div className={card}>
           <h2 className="text-lg font-semibold text-[color:var(--ds-ink)]">Review and sign</h2>
           <div className="mt-3">{summary}</div>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Type your full name"
-            autoComplete="name"
-            className="mt-4 w-full rounded-[10px] border border-[color:var(--ds-line)] px-3 py-3 text-base"
-            style={{ fontFamily: 'cursive' }}
-          />
+          <div className="mt-4"><SignaturePad initialSignerName={name} enabled onChange={(v) => { setSig(v); setName(v.signerName); }} /></div>
           <label className="mt-3 flex items-start gap-3 text-sm text-[color:var(--ds-body)]">
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-1" />
             <span>

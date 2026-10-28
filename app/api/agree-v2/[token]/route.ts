@@ -325,7 +325,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         signerName,
         signedAt: new Date().toISOString().slice(0, 10),
         termsAccepted: true,
-        signMethod: 'type',
+        signMethod: body.signMethod === 'draw' || body.signMethod === 'upload' ? body.signMethod : 'type',
+        signedDocumentUrl: typeof body.signedDocumentUrl === 'string' ? body.signedDocumentUrl : undefined,
         patches,
       }),
     });

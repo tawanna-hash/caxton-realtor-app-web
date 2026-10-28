@@ -22,6 +22,8 @@ function Row({ label, value }: { label: string; value: string }) {
 
 export default function ClientPreview({ d }: { d: PreviewData }) {
   const [step, setStep] = useState(1);
+  const [terms, setTerms] = useState<string | null>(null);
+  const [sigTab, setSigTab] = useState<'type' | 'draw' | 'upload'>('type');
   const [intros, setIntros] = useState<{ n: string; r: string } | null>(null);
   useEffect(() => {
     let alive = true;
@@ -29,6 +31,20 @@ export default function ClientPreview({ d }: { d: PreviewData }) {
       .then((r) => r.json())
       .then((j) => { if (alive && j.defaults) setIntros({ n: String(j.defaults.intro_new ?? ''), r: String(j.defaults.intro_renewal ?? '') }); })
       .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/admin/agreement-terms', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => {
+        const now = Date.now();
+        const v = ((j.versions ?? []) as Array<{ body: string; effective_at: string }>)
+          .filter((x) => new Date(x.effective_at).getTime() <= now)
+          .sort((a, b) => new Date(b.effective_at).getTime() - new Date(a.effective_at).getTime())[0];
+        if (alive) setTerms(v?.body ?? '');
+      })
+      .catch(() => { if (alive) setTerms(''); });
     return () => { alive = false; };
   }, []);
   const first = d.rep.trim().split(/\s+/)[0] || 'there';
@@ -71,15 +87,15 @@ export default function ClientPreview({ d }: { d: PreviewData }) {
             <button type="button" onClick={() => setStep(4)} className="mt-3 w-full rounded-md bg-[#5B2BE0] py-2 text-center text-xs text-white">Continue To Payment</button>
           </div>
           )}
-          {step === 2 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Terms Of Service</div><p className="mt-1 text-gray-700">The Advertising Agreement Terms the client must read and accept.</p></div>)}
-          {step === 3 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Additional Terms</div><p className="mt-1 text-gray-700">Product-specific terms for this agreement, shown after the standard terms.</p></div>)}
+          {step === 2 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Review Terms of Service</div><pre className="mt-2 max-h-72 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-gray-700" style={{ fontFamily: 'inherit' }}>{terms === null ? 'Loading...' : terms || 'No terms of service are on file yet. Add them under Agreement terms.'}</pre></div>)}
+          {step === 3 && (<div className="mt-3 space-y-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Review Additional Terms</div><div><div className="font-semibold text-[#1B1740]">Effective Date of Agreement</div><div className="text-gray-700">On acceptance</div></div><div><div className="font-semibold text-[#1B1740]">Payment Terms</div><div className="text-gray-700">Payment is due as shown on your agreement.</div></div><div><div className="font-semibold text-[#1B1740]">Amendments</div><div className="text-gray-700">Any change to the agreement will require your approval.</div></div></div>)}
           {step === 4 && (
           <div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm">
             <div className="font-semibold text-[#1B1740]">How would you like to pay?</div>
             <ul className="mt-1 list-disc pl-4 text-gray-700">{d.methods.map((m) => <li key={m}>{m}</li>)}</ul>
           </div>
           )}
-          {step === 5 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Sign &amp; Approve</div><div className="mt-2 flex justify-between border-t border-gray-100 pt-2"><span className="text-gray-600">Agreement total</span><span className="font-semibold">{usd(d.totalCents)}</span></div><div className="mt-2 rounded-md border border-gray-200 px-2 py-1.5 text-gray-300">Type your full name to sign</div><label className="mt-2 flex items-center gap-2 text-gray-600"><input type="checkbox" disabled /> I accept the agreement terms</label><div className="mt-3 rounded-md bg-[#5B2BE0] py-2 text-center text-white">Sign &amp; Approve</div></div>)}
+          {step === 5 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Sign &amp; Approve</div><div className="mt-2 flex justify-between border-t border-gray-100 pt-2"><span className="text-gray-600">Agreement total</span><span className="font-semibold">{usd(d.totalCents)}</span></div><div className="mt-3 flex gap-1">{(['type', 'draw', 'upload'] as const).map((t) => (<button key={t} type="button" onClick={() => setSigTab(t)} className={`rounded-md border px-3 py-1 capitalize ${sigTab === t ? 'border-[#5B2BE0] bg-[#F1ECFF] font-semibold text-[#5B2BE0]' : 'border-gray-200 text-gray-600'}`}>{t}</button>))}</div><div className="mt-2 flex h-20 items-center justify-center rounded-md border border-gray-200 px-2 text-gray-400">{sigTab === 'type' ? <span style={{ fontFamily: 'cursive', fontSize: 20 }}>{d.rep || 'Type your full name'}</span> : sigTab === 'draw' ? 'Draw your signature here' : 'Upload a signature image or signed PDF'}</div><label className="mt-2 flex items-center gap-2 text-gray-600"><input type="checkbox" disabled /> I accept the agreement terms</label><div className="mt-3 rounded-md bg-[#5B2BE0] py-2 text-center text-white">Sign &amp; Approve</div></div>)}
         </div>
       </div>
     </div>
