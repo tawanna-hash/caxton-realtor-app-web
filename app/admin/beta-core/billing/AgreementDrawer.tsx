@@ -169,7 +169,7 @@ export function AgreementDrawer({
   onClose,
   onSaved,
   onRefresh,
-  onError,
+  onError: onErrorProp,
   onGenerateInvoice,
 }: {
   existing?: AgreementWithAdvertiser;
@@ -191,6 +191,12 @@ export function AgreementDrawer({
   }) => void;
 }) {
   const currentTerms = useCurrentTerms();
+  // Show errors inside the drawer too; the page banner sits behind the overlay.
+  const [drawerError, setDrawerError] = useState<string | null>(null);
+  const onError = (msg: string) => {
+    setDrawerError(msg);
+    onErrorProp(msg);
+  };
   const linkedCampaign = useMemo(
     () =>
       existing
@@ -844,6 +850,7 @@ export function AgreementDrawer({
   const sendSigningLink = async () => {
     setSaving(true);
     setSigningMsg(null);
+    setDrawerError(null);
     try {
       // 1. Save/create the agreement first as draft
       const saved = await persistAgreement(false);
@@ -891,6 +898,7 @@ export function AgreementDrawer({
   const sendTestEmail = async () => {
     setSaving(true);
     setSigningMsg(null);
+    setDrawerError(null);
     try {
       const saved = await persistAgreement(false);
       const agreementId: string = saved.agreement?.id ?? existing?.id ?? "";
@@ -2026,6 +2034,11 @@ export function AgreementDrawer({
         </div>
       </Section>
       {/* ── Footer ── */}
+      {drawerError && (
+        <div role="alert" className="sticky bottom-[72px] -mx-6 px-6 py-2 bg-[#FDECEC] border-t border-[#F3B6B6] text-xs text-[#9B1C1C]">
+          {drawerError}
+        </div>
+      )}
       {signingMsg && (
         <div className="sticky bottom-[72px] -mx-6 px-6 py-2 bg-[#F6F3FB] border-t border-[#D9CFF0] text-xs text-[#301D5D]">
           {signingMsg}
