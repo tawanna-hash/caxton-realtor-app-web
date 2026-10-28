@@ -65,6 +65,7 @@ import { toISODateString, humanDate, formatDateISO } from "@/app/admin/beta-core
 import type { AdvertiserOption, AdCampaignOption } from "@/app/admin/beta-core/billing/types";
 import {
   PUBLICATION_IDS,
+  PUBLICATION_LABELS,
   PUBLICATION_LABELS_WITH_BOTH,
   type PublicationScope,
 } from "@/lib/publications";
@@ -1120,7 +1121,7 @@ export function AgreementDrawer({
   const previewData = {
     company: form.company_name, rep: form.rep_name, email: form.email, phone: form.phone,
     address: form.address, city: form.city, state: form.state, zip: form.zip,
-    billingEmail: form.billing_email, askAddress: form.ask_billing_address, renewal: form.is_renewal || !!renewedFrom, market: form.publication === "san_antonio" ? "Newsline San Antonio" : form.publication === "austin" ? "RealtyLine Austin" : "",
+    billingEmail: form.billing_email, askAddress: form.ask_billing_address, renewal: form.is_renewal || !!renewedFrom, market: form.publication && form.publication !== "both" ? PUBLICATION_LABELS[form.publication] : "",
     timing: nonPrint ? [] : MONTHS_LIST.map((m, i) => ({ m, i, y: parseInt(form.ad_timing_years[m.k] ?? "", 10) })).filter((x) => form.ad_timing_months[x.m.k]).sort((a, b) => (Number.isNaN(a.y) ? 9999 : a.y) - (Number.isNaN(b.y) ? 9999 : b.y) || a.i - b.i).map((x) => `${x.m.l} ${form.ad_timing_years[x.m.k] ?? ""}`.trim()),
     lines: nonPrint
       ? prodLines(product, prod)
@@ -1307,6 +1308,8 @@ export function AgreementDrawer({
             <option value="">Select a market</option>
             <option value="austin">Austin (RealtyLine)</option>
             <option value="san_antonio">San Antonio (Newsline)</option>
+            <option value="houston">Houston (RealtyLine)</option>
+            <option value="dallas">Dallas / Ft. Worth (RealtyLine)</option>
           </select>
         </Field>
         <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 text-sm">
