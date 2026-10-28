@@ -452,7 +452,7 @@ export default function AgreeClient({ token }: { token: string }) {
             <label className="block text-sm text-[color:var(--ds-body)]">Contact name<input className={input} value={fields.rep_name ?? ''} onChange={set('rep_name')} autoComplete="name" /></label>
             <label className="block text-sm text-[color:var(--ds-body)]">Email<input className={input} type="email" value={fields.advertiser_email ?? ''} onChange={set('advertiser_email')} autoComplete="email" /></label>
             <label className="block text-sm text-[color:var(--ds-body)]">Phone<input className={input} type="tel" value={fields.advertiser_phone ?? ''} onChange={set('advertiser_phone')} autoComplete="tel" /></label>
-            <label className="block text-sm text-[color:var(--ds-body)]">Street address<input className={input} value={fields.address ?? ''} onChange={set('address')} autoComplete="street-address" /></label>
+            <label className="block text-sm text-[color:var(--ds-body)]">Billing address<input className={input} value={fields.address ?? ''} onChange={set('address')} autoComplete="street-address" /></label>
             <div className="grid grid-cols-5 gap-3">
               <label className="col-span-3 block text-sm text-[color:var(--ds-body)]">City<input className={input} value={fields.city ?? ''} onChange={set('city')} autoComplete="address-level2" /></label>
               <label className="col-span-1 block text-sm text-[color:var(--ds-body)]">State<input className={input} value={fields.state ?? ''} onChange={set('state')} autoComplete="address-level1" /></label>

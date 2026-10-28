@@ -71,7 +71,7 @@ export default function AgreementsBeta() {
         <h1 className={A.title}>Agreements</h1>
         {tab !== 'board' && <p className={A.subtitle}>{SUB[tab]}</p>}
         </div>
-        <div id="agr-actions" className="flex flex-wrap items-center gap-3" />
+        <div id="agr-actions" className="flex flex-wrap items-center gap-3">{tab !== 'board' && <a href="/admin/agreements/renewals-v2?tab=board&new=1" className={A.primary}>Create Agreement</a>}</div>
       </div>
       <div className="flex gap-x-8 overflow-x-auto whitespace-nowrap border-b border-[color:var(--ds-line)]" role="tablist" aria-label="Agreements beta">
         {TABS.map(([key, label]) => (

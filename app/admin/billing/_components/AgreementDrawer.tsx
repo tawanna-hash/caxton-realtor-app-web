@@ -1802,7 +1802,7 @@ export function AgreementDrawer({
           Uploaded paper agreements are amended via “Save & send amended
           PDF” below instead — the advertiser doesn’t need to re-sign,
           they just receive the updated PDF for their records. */}
-      {!isUploaded && (
+      {false && !isUploaded && (
         <Section title="Terms &amp; Digital Signature">
           <div className="max-h-40 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
             {currentTerms ?? termsForChannel(
@@ -2309,7 +2309,7 @@ export function AgreementDrawer({
             {sendingAmended ? "Sending…" : "Save & send amended PDF"}
           </button>
         )}
-        <button
+        {false && (<button
           onClick={() => save(true)}
           disabled={saving || !canSign}
           className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -2322,7 +2322,7 @@ export function AgreementDrawer({
           }
         >
           {saving ? "Saving…" : "Sign & Save"}
-        </button>
+        </button>)}
       </div>
 
       {showAddCard && existing?.id && (
