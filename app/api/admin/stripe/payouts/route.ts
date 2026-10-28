@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import type Stripe from 'stripe';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { matchPartners } from '@/lib/server/stripe-partner-match';
@@ -20,6 +21,7 @@ export type ProcessingRow = {
 // GET ?starting_after=<po_id>&limit=<=100&status=&from=&to=
 // Balance, payouts, and payments still processing (ACH not yet settled). Live from Stripe. Admin only.
 export async function GET(req: NextRequest) {
+  if (!(await getCurrentAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!isStripeConfigured()) return NextResponse.json({ error: 'Stripe is not configured.' }, { status: 503 });
   const u = req.nextUrl.searchParams;
   const limit = Math.min(100, Math.max(1, Number(u.get('limit')) || 50));

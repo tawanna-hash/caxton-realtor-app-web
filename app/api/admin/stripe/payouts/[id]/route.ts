@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import type Stripe from 'stripe';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { matchPartners } from '@/lib/server/stripe-partner-match';
@@ -13,6 +14,7 @@ export type PayoutLine = {
 
 // GET: every balance transaction inside one payout (charges, refunds, fees, adjustments), matched to partners.
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  if (!(await getCurrentAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!isStripeConfigured()) return NextResponse.json({ error: 'Stripe is not configured.' }, { status: 503 });
   const { id } = await ctx.params;
   if (!/^po_[A-Za-z0-9]+$/.test(id)) return NextResponse.json({ error: 'bad id' }, { status: 400 });

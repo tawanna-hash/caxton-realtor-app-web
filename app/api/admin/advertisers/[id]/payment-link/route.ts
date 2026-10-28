@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getSql, ensureSchema } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { signPaymentSetupToken, paymentSetupUrl } from '@/lib/payment-setup-token';
@@ -9,8 +10,9 @@ export const dynamic = 'force-dynamic';
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string));
 
 // POST { send?: boolean, to?: string }: returns the permanent client payment-method link,
-// and emails it when send is true. Admin access is enforced by the /api/admin middleware.
+// and emails it when send is true.
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  if (!(await getCurrentAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await ctx.params;
   const advId = Number(id);
   if (!Number.isInteger(advId)) return NextResponse.json({ error: 'bad id' }, { status: 400 });

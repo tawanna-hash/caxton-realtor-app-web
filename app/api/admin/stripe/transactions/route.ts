@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import type Stripe from 'stripe';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
@@ -31,8 +32,9 @@ function statusOf(c: Stripe.Charge): StripeTxn['status'] {
 }
 
 // GET ?advertiser_id=<n>&starting_after=<ch_id>&limit=<=100&from=YYYY-MM-DD&to=YYYY-MM-DD
-// Live read from Stripe, joined to partners by customer id or charge metadata. Admin only (middleware).
+// Live read from Stripe, joined to partners by customer id or charge metadata. Admin only.
 export async function GET(req: NextRequest) {
+  if (!(await getCurrentAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!isStripeConfigured()) return NextResponse.json({ error: 'Stripe is not configured.' }, { status: 503 });
   const u = req.nextUrl.searchParams;
   const limit = Math.min(100, Math.max(1, Number(u.get('limit')) || 50));
