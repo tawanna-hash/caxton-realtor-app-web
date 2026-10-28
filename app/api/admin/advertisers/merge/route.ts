@@ -68,6 +68,10 @@ export async function POST(req: NextRequest) {
         keep[col] = m[col];
       }
     }
+    const pubs = Array.from(new Set(`${keep.publication ?? ''},${m.publication ?? ''}`.split(',').map((x) => x.trim()).filter(Boolean)));
+    if (pubs.length) { const v = pubs.join(','); await sql`UPDATE advertisers SET publication = ${v} WHERE id = ${keepId}`; keep.publication = v; }
+    const mName = String(m.company || m.name || '');
+    if (mName && norm(mName) !== norm(String(keep.company || keep.name || ''))) await sql`UPDATE advertisers SET notes = trim(both E'\n' from coalesce(notes, '') || ${`\nMerged record: ${mName}`}) WHERE id = ${keepId}`;
     const extra = [m.contact_email, m.billing_email].filter((e): e is string => typeof e === 'string' && !!e && e.toLowerCase() !== String(keep.contact_email ?? '').toLowerCase() && e.toLowerCase() !== String(keep.billing_email ?? '').toLowerCase());
     if (extra.length) await sql`UPDATE advertisers SET notes = trim(both E'\n' from coalesce(notes, '') || ${`\nMerged duplicate contact: ${Array.from(new Set(extra)).join(', ')}`}) WHERE id = ${keepId}`;
     await sql`DELETE FROM advertisers WHERE id = ${mid}`;
