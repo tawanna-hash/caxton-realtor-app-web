@@ -305,7 +305,7 @@ function buildRow(home: PipsyHome): UpsertScrapedInput | null {
   // Detail link — Pipsy's shop-homes widget uses an in-page selection
   // model, not URL routing, but the home anchor `#home-<id>` is what
   // their built-in share button generates.
-  const detailUrl = `${SHOP_HOMES_URL}#home-${home.id}`;
+  const detailUrl = `${SHOP_HOMES_URL}?lot_id=${home.id}`;
 
   // Property details + geo + floorplan + virtual tour (Pipsy exposes all per
   // home). _-prefixed keys are meta (map / floorplan / tour); the rest
