@@ -41,7 +41,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
           <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', maxHeight: 320, overflowY: 'auto', fontSize: 12 }}>{terms}</pre>
         </details>
       </div>
-      <p style={{ fontSize: 13, color: '#6b6b6b' }}>The agreement is signed by the advertiser&apos;s authorized representative. Use this page to pay by bank (ACH).</p>
+      <p style={{ fontSize: 13, color: '#6b6b6b' }}>The agreement is signed by the advertiser&apos;s authorized representative. Use this page to pay by bank account (ACH) or credit card.</p>
       {isStripeConfigured() ? <ApPay token={token} publishableKey={getPublishableKey() ?? ''} /> : <p>Online payment is not available right now.</p>}
     </>,
   );

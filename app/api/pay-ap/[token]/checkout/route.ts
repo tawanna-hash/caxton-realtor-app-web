@@ -11,10 +11,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
   const { token } = await ctx.params;
   const v = verifyPaymentSetupToken(token);
   if (!v.ok || v.subject.kind !== 'agreement') return NextResponse.json({ error: 'invalid link' }, { status: 401 });
+  const body = (await req.json().catch(() => ({}))) as { method?: string };
+  const method = body.method === 'card' ? 'card' : 'bank';
   try {
     const r = await createAgreementCheckout({
       agreementId: v.subject.id,
-      method: 'bank',
+      method,
       returnUrl: `${req.nextUrl.origin}/pay/ap/${encodeURIComponent(token)}`,
       extraMetadata: { ap: '1' },
     });
