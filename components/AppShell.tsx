@@ -472,7 +472,7 @@ export default function AppShell({
             {isAdmin ? (
               <div className="inline-flex items-center gap-2">
               <a
-                href="/admin/dashboard-beta"
+                href="/admin/get-paid"
                 aria-label="Open Get Paid"
                 className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs uppercase tracking-[0.1em] font-medium text-white bg-brand-700 border border-brand-700 hover:bg-brand-800 transition"
               >
