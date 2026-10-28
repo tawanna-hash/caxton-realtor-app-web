@@ -703,7 +703,7 @@ export function AgreementDrawer({
     if (form.address.trim() || form.city.trim() || form.state.trim() || form.zip.trim()) {
       const missing = ([["street address", form.address], ["city", form.city], ["state", form.state], ["ZIP code", form.zip]] as const)
         .filter(([, v]) => !v.trim()).map(([l]) => l);
-      if (missing.length) throw new Error(`Mailing address is incomplete: add ${missing.join(", ")}.`);
+      if (missing.length) throw new Error(`Billing address is incomplete: add ${missing.join(", ")}.`);
       if (!/^[A-Za-z]{2}$/.test(form.state.trim()) || !/^\d{5}(-\d{4})?$/.test(form.zip.trim())) throw new Error("Use a 2-letter state and a 5-digit ZIP code.");
     }
     const payload = buildRequestPayload(isSigning);
@@ -1169,7 +1169,7 @@ export function AgreementDrawer({
               placeholder="email@company.com"
             />
           </Field>
-          <Field label="Mailing Address">
+          <Field label="Billing Address">
             <input
               value={form.address}
               onChange={(e) => upd("address", e.target.value)}
