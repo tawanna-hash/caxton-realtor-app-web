@@ -25,6 +25,8 @@ export const dynamic = 'force-dynamic';
 type RouteCtx = { params: Promise<{ token: string }> };
 
 export async function POST(req: NextRequest, ctx: RouteCtx) {
+  const wantLink = new URL(req.url).searchParams.get('method') === 'link';
+  const wantTypes = wantLink ? ['link'] : ['card'];
   await loadPaymentSettings();
   if (!isStripeConfigured()) {
     return NextResponse.json(
@@ -128,7 +130,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       // Reuse if still chargeable
       try {
         const existing = await stripe.paymentIntents.retrieve(piId);
-        const cardOnly = existing.payment_method_types.length > 0 && existing.payment_method_types.every((t) => t === 'card');
+        const cardOnly = existing.payment_method_types.length > 0 && existing.payment_method_types.length === wantTypes.length && existing.payment_method_types.every((t) => wantTypes.includes(t));
         if (
           cardOnly && (
           existing.status === 'requires_payment_method' ||
@@ -162,7 +164,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         customer: customerId,
         // Save the payment method for future off-session issue charges
         setup_future_usage: 'off_session',
-        payment_method_types: ['card'],
+        payment_method_types: wantTypes,
         description: `${ag.company_name ?? 'Partner'} \u2014 ${ag.ad_size ?? 'ad'} \u2014 first issue`,
         statement_descriptor_suffix: 'REALTYLINE AUSTIN',
         receipt_email: ag.advertiser_email ?? ag.billing_email ?? undefined,
