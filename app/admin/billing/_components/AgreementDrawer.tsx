@@ -22,6 +22,7 @@ import {
   FREQ_PKG_AG,
   FREQ_MONTHS,
   buildTimingRun,
+  timingRunStart,
   AD_SIZES,
   FREQUENCIES,
   PAYMENT_TYPES,
@@ -1319,10 +1320,9 @@ export function AgreementDrawer({
                       checked={form.frequency === f}
                       onChange={() => {
                         const n = FREQ_MONTHS[f] ?? 0;
-                        const picked = Object.entries(form.ad_timing_months).filter(([, on]) => on);
-                        const firstYear = picked.length === 1 ? form.ad_timing_years[picked[0][0]] : "";
-                        if (n > 1 && picked.length === 1 && /^\d{4}$/.test(firstYear ?? "")) {
-                          const run = buildTimingRun(picked[0][0], Number(firstYear), n);
+                        const start = timingRunStart(form.ad_timing_months, form.ad_timing_years);
+                        if (n > 1 && start) {
+                          const run = buildTimingRun(start.key, start.year, n);
                           setForm((p) => ({
                             ...p,
                             frequency: f,
@@ -1498,9 +1498,11 @@ export function AgreementDrawer({
                   onChange={(e) => {
                     const val = e.target.value;
                     const count = FREQ_MONTHS[form.frequency] ?? 0;
+                    const start = timingRunStart(form.ad_timing_months, form.ad_timing_years);
+                    const isStart = !!start && start.key === m.k;
                     const onlyThis =
-                      Object.entries(form.ad_timing_months).filter(([, on]) => on).length === 1;
-                    if (count > 1 && onlyThis && /^\d{4}$/.test(val)) {
+                      Object.values(form.ad_timing_months).filter(Boolean).length === 1;
+                    if (count > 1 && (onlyThis || isStart) && /^\d{4}$/.test(val)) {
                       const run = buildTimingRun(m.k, Number(val), count);
                       setForm((f) => ({
                         ...f,

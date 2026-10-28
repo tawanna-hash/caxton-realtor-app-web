@@ -24,3 +24,11 @@ test('12x from August 2026 covers every month, wrapping to 2027', () => {
   assert.equal(r.years.july, '2027');
   assert.equal(r.years.january, '2027');
 });
+
+test('timingRunStart finds the first month of a consecutive run', async () => {
+  const { timingRunStart } = await import('data:text/javascript;base64,' + Buffer.from(js).toString('base64'));
+  const r = buildTimingRun('november', 2026, 3);
+  assert.deepEqual(timingRunStart(r.months, r.years), { key: 'november', year: 2026 });
+  const gap = { ...r.months, june: true };
+  assert.equal(timingRunStart(gap, { ...r.years, june: '2026' }), null);
+});

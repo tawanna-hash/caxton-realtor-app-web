@@ -71,3 +71,22 @@ export function buildTimingRun(
   }
   return { months, years };
 }
+
+/**
+ * If the checked timing months form one consecutive run (every checked month
+ * has a 4-digit year), returns the first month and year of that run so the
+ * run can be re-generated when the frequency changes. Otherwise null.
+ */
+export function timingRunStart(
+  months: Record<string, boolean>,
+  years: Record<string, string>,
+): { key: string; year: number } | null {
+  const picked = MONTHS_LIST.map((m, i) => ({ k: m.k, i, y: Number(years[m.k]) }))
+    .filter((m) => months[m.k]);
+  if (picked.length === 0 || picked.some((m) => !/^\d{4}$/.test(String(m.y)))) return null;
+  const sorted = [...picked].sort((a, b) => a.y * 12 + a.i - (b.y * 12 + b.i));
+  for (let n = 1; n < sorted.length; n++) {
+    if (sorted[n].y * 12 + sorted[n].i !== sorted[n - 1].y * 12 + sorted[n - 1].i + 1) return null;
+  }
+  return { key: sorted[0].k, year: sorted[0].y };
+}
