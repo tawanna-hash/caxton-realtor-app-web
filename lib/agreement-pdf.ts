@@ -336,12 +336,12 @@ async function generateAgreementPdfBufferInner(ag: Agreement): Promise<Uint8Arra
   drawLabelValue(ctx, 'Billing Contact', ag.billing_contact_name);
   drawLabelValue(ctx, 'Billing Phone', ag.billing_contact_phone);
 
-  const paymentType = ag.card_type ? 'Credit Card' : 'Check';
+  const paymentType = ag.card_type ? (ag.card_type.replace(/\s*\(.*$/, '').replace(/\s*-.*$/, '') || 'Card') : 'Check';
   drawLabelValue(ctx, 'Payment Type', paymentType);
   if (ag.card_type) {
-    drawLabelValue(ctx, 'Card Type', ag.card_type);
+    drawLabelValue(ctx, /bank/i.test(ag.card_type) ? 'Bank' : 'Card Type', ag.card_type);
     if (ag.cardholder_name) drawLabelValue(ctx, 'Cardholder', ag.cardholder_name);
-    if (ag.card_number_last4) drawLabelValue(ctx, 'Card Last 4', ag.card_number_last4);
+    if (ag.card_number_last4) drawLabelValue(ctx, /bank/i.test(ag.card_type) ? 'Account Last 4' : 'Card Last 4', ag.card_number_last4);
     if (ag.card_expiration) drawLabelValue(ctx, 'Card Exp', ag.card_expiration);
   }
 
