@@ -470,6 +470,14 @@ export default function AppShell({
                 Public: same-size spacer keeps the centered title visually
                 balanced against the hamburger on the left. */}
             {isAdmin ? (
+              <div className="inline-flex items-center gap-2">
+              <a
+                href="/admin/dashboard-beta"
+                aria-label="Open Get Paid"
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-md text-xs uppercase tracking-[0.1em] font-medium text-white bg-brand-700 border border-brand-700 hover:bg-brand-800 transition"
+              >
+                <span>Get Paid</span>
+              </a>
               <button
                 type="button"
                 onClick={() => {
@@ -484,6 +492,7 @@ export default function AppShell({
                 </svg>
                 <span className="hidden sm:inline">App</span>
               </button>
+              </div>
             ) : (
               <span className="w-9" aria-hidden />
             )}
