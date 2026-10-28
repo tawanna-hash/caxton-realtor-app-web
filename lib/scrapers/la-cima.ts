@@ -70,10 +70,28 @@ const REQ_HEADERS = {
 // don't need every shot in the database row.
 const MAX_GALLERY = 24;
 
-// Hero image for the synthetic community summary row. Pool / amenity
-// center photo from the lacimatx.com homepage slider.
-const COMMUNITY_HERO_IMAGE =
-  'https://lacimatx.com/wp-content/uploads/LaCima_9424.jpg';
+// Hero image for the synthetic community summary row. The old homepage
+// slider photo (LaCima_9424.jpg) was removed in the site redesign, so the
+// scraper now reads the current og:image from the redesigned page on every
+// run and only falls back to this static URL if that lookup fails.
+const FALLBACK_HERO_IMAGE =
+  'https://lacimatx.com/wp-content/uploads/2026/09/Perry-Homes-Design-4192S-E1.jpg';
+let COMMUNITY_HERO_IMAGE = FALLBACK_HERO_IMAGE;
+
+async function resolveHeroImage(): Promise<string> {
+  try {
+    const res = await fetch(SHOP_HOMES_URL, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(15_000), cache: 'no-store' });
+    if (!res.ok) return FALLBACK_HERO_IMAGE;
+    const html = await res.text();
+    const m = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    const url = m?.[1];
+    if (!url || !/^https:\/\/lacimatx\.com\//.test(url)) return FALLBACK_HERO_IMAGE;
+    const head = await fetch(url, { method: 'HEAD', headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(10_000) });
+    return head.ok ? url : FALLBACK_HERO_IMAGE;
+  } catch {
+    return FALLBACK_HERO_IMAGE;
+  }
+}
 
 export type LaCimaScrapeResult = {
   rows: UpsertScrapedInput[];
@@ -342,6 +360,7 @@ function buildRow(home: PipsyHome): UpsertScrapedInput | null {
 // ─────────────────────────────────────────────────────────────────────────
 
 export async function fetchLaCima(): Promise<LaCimaScrapeResult> {
+  COMMUNITY_HERO_IMAGE = await resolveHeroImage();
   const rows: UpsertScrapedInput[] = [];
   const skipped: { reason: string; address?: string; id?: number }[] = [];
   let rawCount = 0;
