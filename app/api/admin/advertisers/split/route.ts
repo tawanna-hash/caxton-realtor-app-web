@@ -23,22 +23,24 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(out);
 }
 
-type Rules = { magazineIds?: number[]; segments?: string[]; invoiceTotalCents?: number; scheduleIds?: string[]; hotspotNameLike?: string };
+type Rules = { hotspotNames?: string[]; extraTables?: string[]; magazineIds?: number[]; segments?: string[]; invoiceTotalCents?: number; scheduleIds?: string[]; hotspotNameLike?: string };
 
 export async function POST(req: NextRequest) {
   if (!(await getCurrentAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { id?: number; newPublication?: string; keepPublication?: string; rules?: Rules; dryRun?: boolean; slug?: string };
+  const b = (await req.json().catch(() => ({}))) as { id?: number; newPublication?: string; keepPublication?: string; rules?: Rules; dryRun?: boolean; slug?: string; minimal?: boolean; name?: string };
   const id = Number(b.id);
   if (!Number.isInteger(id) || !b.newPublication || !b.slug) return NextResponse.json({ error: 'id, newPublication, slug required' }, { status: 400 });
   await ensureSchema();
   const sql = getSql();
   const r = b.rules ?? {};
-  const cols = ((await sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'advertisers' AND column_name NOT IN ('id','slug','share_token','submission_token','portal_email','portal_activated_at','portal_onboarded_at','created_at','updated_at','publication','current_agreement_id','stripe_customer_id','stripe_payment_method_id','payment_method_label','payment_method_saved_at','payment_method_expiration','card_last4','hotspot_count','clicks_30d') AND is_generated = 'NEVER'`) as unknown as Array<{ column_name: string }>).map((c) => `"${c.column_name}"`);
+  const cols = ((await sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'advertisers' AND column_name NOT IN ('id','slug','share_token','submission_token','portal_email','portal_activated_at','portal_onboarded_at','created_at','updated_at','publication','current_agreement_id','stripe_customer_id','stripe_payment_method_id','payment_method_label','payment_method_saved_at','payment_method_expiration','card_last4','hotspot_count','clicks_30d') AND is_generated = 'NEVER'`) as unknown as Array<{ column_name: string }>).filter((c) => !b.minimal || ['name', 'company', 'contact_email', 'billing_email', 'type', 'status', 'first_name', 'last_name', 'requires_email_gate', 'header_style', 'footer_template'].includes(c.column_name)).map((c) => `"${c.column_name}"`);
   const plan = {
     hotspots: r.magazineIds?.length ? ((await sql`SELECT count(*)::int AS n FROM magazine_hotspots WHERE advertiser_id = ${id} AND magazine_id = ANY(${r.magazineIds})`)[0] as { n: number }).n : 0,
     mailing: r.segments?.length ? ((await sql`SELECT count(*)::int AS n FROM mailing_contacts WHERE advertiser_id = ${id} AND segment = ANY(${r.segments})`)[0] as { n: number }).n : 0,
     invoices: r.invoiceTotalCents ? ((await sql`SELECT count(*)::int AS n FROM invoices WHERE advertiser_id = ${id} AND total_cents = ${r.invoiceTotalCents}`)[0] as { n: number }).n : 0,
     schedules: r.scheduleIds?.length ?? 0,
+    hotspotsByName: r.hotspotNames?.length ? ((await sql`SELECT count(*)::int AS n FROM magazine_hotspots WHERE advertiser_id = ${id} AND advertiser_name = ANY(${r.hotspotNames})`)[0] as { n: number }).n : 0,
+    extra: Object.fromEntries(await Promise.all((r.extraTables ?? []).filter((t) => /^[a-z_]+$/.test(t)).map(async (t) => [t, ((await sql.query(`SELECT count(*)::int AS n FROM "${t}" WHERE advertiser_id = $1`, [id])) as unknown as Array<{ n: number }>)[0]?.n ?? 0]))),
   };
   if (b.dryRun) return NextResponse.json({ dryRun: true, plan });
   const token = () => randomBytes(16).toString('hex');
@@ -48,6 +50,9 @@ export async function POST(req: NextRequest) {
     [id, b.slug, token(), token(), b.newPublication],
   )) as unknown as Array<{ id: number }>;
   const nid = ins[0].id;
+  if (b.name) await sql`UPDATE advertisers SET name = ${b.name}, company = ${b.name} WHERE id = ${nid}`;
+  if (r.hotspotNames?.length) await sql`UPDATE magazine_hotspots SET advertiser_id = ${nid} WHERE advertiser_id = ${id} AND advertiser_name = ANY(${r.hotspotNames})`;
+  for (const t of (r.extraTables ?? []).filter((x) => /^[a-z_]+$/.test(x))) await sql.query(`UPDATE "${t}" SET advertiser_id = $1 WHERE advertiser_id = $2`, [nid, id]);
   if (b.keepPublication) await sql`UPDATE advertisers SET publication = ${b.keepPublication}, updated_at = NOW() WHERE id = ${id}`;
   if (r.magazineIds?.length) await sql`UPDATE magazine_hotspots SET advertiser_id = ${nid} WHERE advertiser_id = ${id} AND magazine_id = ANY(${r.magazineIds})`;
   if (r.segments?.length) await sql`UPDATE mailing_contacts SET advertiser_id = ${nid} WHERE advertiser_id = ${id} AND segment = ANY(${r.segments})`;
