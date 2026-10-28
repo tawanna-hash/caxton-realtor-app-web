@@ -227,7 +227,8 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     // into the correct Print / Digital / Email tab. Wrapped in try/catch
     // in case an older deploy doesn't yet have the channel column.
     {
-      const derivedChannel = deriveChannelFromAgreementType(type);
+      // A drawer-built print ad has an ad size but no type; treat it as print so it is invoiced, not prepaid.
+      const derivedChannel = !type && body.ad_size ? 'print' : deriveChannelFromAgreementType(type);
       try {
         await sql`UPDATE agreements SET channel = ${derivedChannel} WHERE id = ${createdAg.id}`;
         (createdAg as { channel?: string }).channel = derivedChannel;
