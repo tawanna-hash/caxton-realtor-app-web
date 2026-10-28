@@ -1080,6 +1080,19 @@ export async function upsertBuilderInventoryByExternalId(
     if (!updated) {
       throw new Error(`Upsert: row ${existingRow.id} vanished mid-update`);
     }
+    // A listing that is back in the live feed was only expired by the stale
+    // sweep (e.g. while the source site was changing), so bring it back.
+    if (input.kind === 'listing' && existingRow.status === 'expired') {
+      await sql`
+        UPDATE builder_inventory
+        SET status = 'active',
+            reviewed_at = NOW(),
+            reviewed_by = 'system:scraper-trusted'
+        WHERE id = ${existingRow.id}
+      `;
+      const reactivated = await getBuilderInventoryById(existingRow.id, true);
+      return { row: reactivated ?? updated, created: false };
+    }
     return { row: updated, created: false };
   }
 

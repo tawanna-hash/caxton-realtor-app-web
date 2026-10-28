@@ -76,20 +76,31 @@ export default function BuilderInventoryRowCard({
     !!u && u.toLowerCase().endsWith('.pdf');
   const communityHref = `/communities/${row.id}`;
   const listingHref = `/inventory/${row.id}`;
+  // La Cima rows: promotions open the incentive flyer, move-in ready homes
+  // open the property on the La Cima website.
+  const isLaCima = (row.developerName || '').toLowerCase() === 'la cima';
+  const laCimaUrl =
+    isLaCima && variant === 'promotion'
+      ? row.flyerPdfUrl || null
+      : isLaCima && variant === 'listing'
+        ? row.sourceUrl || row.flyerPdfUrl || null
+        : null;
   const externalUrl =
-    variant === 'community' || variant === 'listing'
+    laCimaUrl ??
+    (variant === 'community' || variant === 'listing'
       ? null
       : (row.sourceUrl && !isPdf(row.sourceUrl)
             ? row.sourceUrl
             : row.flyerPdfUrl && !isPdf(row.flyerPdfUrl)
               ? row.flyerPdfUrl
-              : null) ?? null;
-  const href =
-    variant === 'community'
+              : null) ?? null);
+  const href = externalUrl
+    ? externalUrl
+    : variant === 'community'
       ? communityHref
       : variant === 'listing'
         ? listingHref
-        : externalUrl || listingHref;
+        : listingHref;
   const external = !!externalUrl;
 
   const onClick = () => {
