@@ -21,7 +21,7 @@ import { rateLimit } from '@/lib/server/rate-limit';
 import { ApiError } from '@/lib/server/error';
 import { type Agreement } from '@/lib/agreements';
 import { allowsCheckPayment } from '@/lib/ad-channels';
-import { termsForChannel } from '@/lib/agreement-terms';
+import { termsForAgreement } from '@/lib/agreement-terms';
 import { brandForPublication } from '@/lib/email-templates';
 import { channelOfRow, chargeBaseCents, needsFullForm, totalCents, recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
 import { cardTimeline, checkTimeline } from '@/lib/agreements-v2/timeline';
@@ -165,7 +165,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       prepay_note: prepay ? PREPAY_NOTE : null,
       check_request: prepay ? checkState : null,
       fields: Object.fromEntries(EDITABLE.map((k) => [k, (ag as unknown as Record<string, unknown>)[k] ?? ''])),
-      terms: termsForChannel(channel, ag.publication),
+      terms: termsForAgreement(channel, ag.publication, ag.signed_at),
     });
   } catch (err) {
     return NextResponse.json({ error: 'load failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });

@@ -14,9 +14,9 @@ import StripePaymentBlock, { type StripePaymentHandle } from './StripePaymentBlo
 import SignaturePad, { type SignatureValue } from './SignaturePad';
 import { useRouter } from 'next/navigation';
 import type { Agreement } from '@/lib/agreements';
-import { termsForChannel } from '@/lib/agreement-terms';
+import { termsForAgreement } from '@/lib/agreement-terms';
 import { cleanRepNote } from '@/lib/agreement-notes';
-import { allowsCheckPayment, deriveChannelFromAgreementType } from '@/lib/ad-channels';
+import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 import {
   AD_SIZES,
   FREQUENCIES,
@@ -2081,7 +2081,7 @@ export default function SignWizard({
 
         {/* Scrollable terms */}
         <div className="h-52 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
-          {termsForChannel(channel, ag.publication)}
+          {termsForAgreement(channel, ag.publication, ag.signed_at)}
         </div>
 
         <label className="flex items-start gap-3 cursor-pointer">
