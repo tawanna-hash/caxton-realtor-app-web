@@ -1120,7 +1120,7 @@ export function AgreementDrawer({
   const previewData = {
     company: form.company_name, rep: form.rep_name, email: form.email, phone: form.phone,
     address: form.address, city: form.city, state: form.state, zip: form.zip,
-    billingEmail: form.billing_email, askAddress: form.ask_billing_address,
+    billingEmail: form.billing_email, askAddress: form.ask_billing_address, renewal: form.is_renewal || !!renewedFrom,
     timing: nonPrint ? [] : MONTHS_LIST.map((m, i) => ({ m, i, y: parseInt(form.ad_timing_years[m.k] ?? "", 10) })).filter((x) => form.ad_timing_months[x.m.k]).sort((a, b) => (Number.isNaN(a.y) ? 9999 : a.y) - (Number.isNaN(b.y) ? 9999 : b.y) || a.i - b.i).map((x) => `${x.m.l} ${form.ad_timing_years[x.m.k] ?? ""}`.trim()),
     lines: nonPrint
       ? prodLines(product, prod)

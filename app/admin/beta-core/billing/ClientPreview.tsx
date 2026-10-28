@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // Live preview of what the client sees on their sign page. Updates as the form changes.
 const STEPS = ['Introduction', 'Review Services', 'Terms Of Service', 'Additional Terms', 'Payment', 'Sign & Approve'];
 export type PreviewData = {
   company: string; rep: string; email: string; phone: string;
   address: string; city: string; state: string; zip: string; billingEmail: string;
-  askAddress: boolean; timing: string[]; lines: Array<[string, string]>; totalCents: number; methods: string[];
+  askAddress: boolean; renewal: boolean; timing: string[]; lines: Array<[string, string]>; totalCents: number; methods: string[];
 };
 const usd = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
@@ -22,6 +22,17 @@ function Row({ label, value }: { label: string; value: string }) {
 
 export default function ClientPreview({ d }: { d: PreviewData }) {
   const [step, setStep] = useState(1);
+  const [intros, setIntros] = useState<{ n: string; r: string } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/admin/agreements-v2/defaults', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => { if (alive && j.defaults) setIntros({ n: String(j.defaults.intro_new ?? ''), r: String(j.defaults.intro_renewal ?? '') }); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const first = d.rep.trim().split(/\s+/)[0] || 'there';
+  const introText = ((d.renewal ? intros?.r : intros?.n) ?? 'Loading...').replace(/\{first_name\}/g, first).replace(/\{company\}/g, d.company || 'your company');
   return (
     <div className="flex h-full flex-col bg-[#F3F4F7]">
       <div className="shrink-0 border-b border-gray-200 bg-white px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Client view, live</div>
@@ -31,7 +42,7 @@ export default function ClientPreview({ d }: { d: PreviewData }) {
           <ol className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500">
             {STEPS.map((s, i) => <li key={s}><button type="button" onClick={() => setStep(i)} className={i === step ? 'font-semibold text-[#5B2BE0]' : 'hover:text-gray-800'}>{s}</button></li>)}
           </ol>
-          {step === 0 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Introduction</div><p className="mt-1 text-gray-700">A short welcome and a summary of the agreement, shown before the client reviews anything.</p></div>)}
+          {step === 0 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="text-[10px] font-medium uppercase tracking-wider text-gray-400">{d.renewal ? 'Renewal' : 'New partner'}</div><div className="mt-1 font-semibold text-[#1B1740]">Introduction</div><p className="mt-1 whitespace-pre-line text-gray-700">{introText}</p></div>)}
           {step === 1 && (
           <div className="mt-3 rounded-xl bg-white p-4 shadow-sm">
             <div className="text-sm font-semibold text-[#1B1740]">Review Your Details</div>
