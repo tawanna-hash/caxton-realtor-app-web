@@ -93,7 +93,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     const meta = await getAgreementMeta(ag.id, sql);
     const expired = Boolean(meta?.expires_at && meta.expires_at < new Date().toISOString().slice(0, 10) && !ag.signed_at);
     const tlAgreement = { ...ag, ad_rate_cents: ag.ad_rate_cents, amount_cents: (ag.lines_total ?? 0) > 0 ? ag.lines_total : ag.amount_cents } as Agreement;
-    const payOpts: PaymentSettings = { annual_increase_pct: cleanPayment(meta?.payment).annual_increase_pct, card: meta?.payment?.card !== false, check: meta?.payment?.check !== false, bank_now: meta?.payment ? meta.payment.bank_now === true : true, bank_invoice: meta?.payment?.bank_invoice === true, due_days: meta?.payment?.due_days ?? null, show_schedule: meta?.payment?.show_schedule !== false, schedule_view: meta?.payment?.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
+    const payOpts: PaymentSettings = { annual_increase_pct: cleanPayment(meta?.payment).annual_increase_pct, card: meta?.payment?.card !== false, check: meta?.payment?.check !== false, bank_now: meta?.payment ? meta.payment.bank_now === true : true, bank_invoice: meta?.payment ? meta.payment.bank_invoice === true : true, due_days: meta?.payment?.due_days ?? null, show_schedule: meta?.payment?.show_schedule !== false, schedule_view: meta?.payment?.schedule_view === 'occurrence' ? 'occurrence' : 'timeline' };
     // Per-service billing options saved with the agreement drive the schedule the partner sees.
     let perService: ReturnType<typeof checkTimeline> | null = null;
     const startIso = ag.start_date ? new Date(ag.start_date as unknown as string).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     }
     if (mode === 'bank_now') {
       if (!isStripeConfigured()) return NextResponse.json({ error: 'Bank payment is not available right now.' }, { status: 402 });
-      if (meta?.payment?.bank_now !== true) return NextResponse.json({ error: 'Bank payment is not available for this agreement.' }, { status: 400 });
+      if (meta?.payment && meta.payment.bank_now !== true) return NextResponse.json({ error: 'Bank payment is not available for this agreement.' }, { status: 400 });
       const piId = typeof body.bankPaymentIntentId === 'string' ? body.bankPaymentIntentId : '';
       if (!piId) return NextResponse.json({ error: 'Please connect your bank account on the payment step.' }, { status: 402 });
       try {
@@ -272,7 +272,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     if (mode === 'bank_invoice' && prepay) {
       return NextResponse.json({ error: 'Digital products are paid before signing. Please pay by bank account or credit card.' }, { status: 400 });
     }
-    if (mode === 'bank_invoice' && meta?.payment?.bank_invoice !== true) {
+    if (mode === 'bank_invoice' && meta?.payment && meta.payment.bank_invoice !== true) {
       return NextResponse.json({ error: 'Bank payment on invoices is not available for this agreement.' }, { status: 400 });
     }
     if (mode === 'card') {
