@@ -128,7 +128,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       // Reuse if still chargeable
       try {
         const existing = await stripe.paymentIntents.retrieve(piId);
-        const cardOnly = existing.payment_method_types.length > 0 && existing.payment_method_types.every((t) => t === 'card' || t === 'link');
+        const cardOnly = existing.payment_method_types.length > 0 && existing.payment_method_types.every((t) => t === 'card');
         if (
           cardOnly && (
           existing.status === 'requires_payment_method' ||
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         customer: customerId,
         // Save the payment method for future off-session issue charges
         setup_future_usage: 'off_session',
-        payment_method_types: ['card', 'link'],
+        payment_method_types: ['card'],
         description: `${ag.company_name ?? 'Partner'} \u2014 ${ag.ad_size ?? 'ad'} \u2014 first issue`,
         statement_descriptor_suffix: 'REALTYLINE AUSTIN',
         receipt_email: ag.advertiser_email ?? ag.billing_email ?? undefined,

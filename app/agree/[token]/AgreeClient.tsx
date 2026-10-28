@@ -532,12 +532,12 @@ export default function AgreeClient({ token }: { token: string }) {
               <>
                 <label className={`flex cursor-pointer items-center gap-3 rounded-[10px] border p-4 text-sm ${pay === 'bank_now' ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)]' : 'border-[color:var(--ds-line)]'}`}>
                   <input type="radio" name="pay" checked={pay === 'bank_now'} disabled={cardPaid} onChange={() => setPay('bank_now')} className="accent-[color:var(--ds-primary)]" />
-                  <span>Bank account (ACH), pay now <span className="text-[color:var(--ds-body)]">(debited today)</span></span>
+                  <span>Bank account (ACH), pay now <span className="text-[color:var(--ds-body)]">(debited today, 1% fee, $5 maximum)</span></span>
                 </label>
                 {pay === 'bank_now' && (
                   <div className="rounded-[10px] border border-[color:var(--ds-line)] p-4">
                     <p className="mb-3 rounded-[10px] bg-[#FEF8CC] p-3 text-xs text-[#645600]">
-                      A bank payment fee of {money(data.bank_fee_cents ?? 0)} is added. {money(data.bank_charge_cents ?? null)} will be debited from your bank account{data.lines.length > 0 ? ' for the items due now' : ' for the first issue'}. Bank payments can take a few business days to clear.
+                      A bank payment fee of 1% (maximum $5) is added: {money(data.bank_fee_cents ?? 0)} on this order. {money(data.bank_charge_cents ?? null)} will be debited from your bank account{data.lines.length > 0 ? ' for the items due now' : ' for the first issue'}. Bank payments can take a few business days to clear.
                     </p>
                     <StripePaymentBlock ref={bankRef} token={token} endpoint={`/api/agree-v2/${encodeURIComponent(token)}/bank-intent`} adRateCents={data.card_base_cents ?? data.bank_charge_cents ?? 0} onReadyChange={setBankReady} />
                   </div>
