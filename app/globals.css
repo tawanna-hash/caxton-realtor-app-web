@@ -1610,7 +1610,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 [data-admin-ui='true'] button[class*='px-']:not([class*='w-full']):not([class*='text-left']):not([class~='block']):not([class*='rounded-full-none']),
 [data-admin-ui='true'] a[class*='px-'][class*='border']:is([class~='inline-flex'], [class~='inline-block']),
 [data-admin-ui='true'] a[class*='px-'][class*='bg-']:is([class~='inline-flex'], [class~='inline-block']) {
-  border-radius: var(--admin-pill-radius);
+  border-radius: 6px;
 }
 }
 
@@ -1630,7 +1630,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   --ds-selected: #EEE8FD;
   --ds-page: #F3F4F7;
   --ds-placeholder: #8E8BA6;
-  --ds-r-control: 9999px;
+  --ds-r-control: 6px;
   --ds-r-card: 14px;
 }
 @layer overrides {
@@ -1653,7 +1653,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 [data-admin-ui='true'] .anchor-primary {
   background-color: var(--ds-primary) !important;
   border: 1px solid var(--ds-primary) !important;
-  border-radius: var(--ds-r-control) !important;
+  border-radius: 6px !important;
   color: #ffffff !important;
 }
 [data-admin-ui='true'] .anchor-primary:hover:not(:disabled) {
@@ -1663,7 +1663,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 [data-admin-ui='true'] .anchor-outline {
   background-color: #ffffff !important;
   border: 1px solid var(--ds-primary) !important;
-  border-radius: var(--ds-r-control) !important;
+  border-radius: 6px !important;
   color: var(--ds-primary) !important;
 }
 [data-admin-ui='true'] .anchor-outline:hover:not(:disabled) {
@@ -1672,7 +1672,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 [data-admin-ui='true'] .anchor-chip {
   background-color: #ffffff !important;
   border: 1px solid var(--ds-ink) !important;
-  border-radius: var(--ds-r-control) !important;
+  border-radius: 6px !important;
   color: var(--ds-ink) !important;
 }
 [data-admin-ui='true'] .anchor-tab {
@@ -1702,7 +1702,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 [data-admin-ui='true'] .anchor-input {
   background-color: #ffffff !important;
   border: 1px solid var(--ds-line) !important;
-  border-radius: var(--ds-r-control) !important;
+  border-radius: 6px !important;
   color: var(--ds-ink) !important;
 }
 [data-admin-ui='true'] .anchor-input:focus {
@@ -1731,12 +1731,12 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 }
 [data-admin-ui='true'] [data-anchor-ui='true'] table thead th:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
 [data-admin-ui='true'] [data-anchor-ui='true'] table thead th:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
-/* Pill shape (border-radius: 9999px) for every admin control: dropdowns,
+/* Pill shape (border-radius: 6px) for every admin control: dropdowns,
    text inputs and buttons. Textareas, checkboxes and radios keep their shape. */
 [data-admin-ui='true'] select,
 [data-admin-ui='true'] input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']),
 [data-admin-ui='true'] button:not([role='tab']):not(.anchor-toggle):not([role='switch']):not([role='checkbox']) {
-  border-radius: 9999px;
+  border-radius: 6px;
 }
 /* Underline tabs on Anchor-style pages: the selected tab is dark text with a
    purple underline, never a filled button (the generic selected-button rule
@@ -1755,7 +1755,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
   font-weight: 600;
 }
 /* ONE pill rule for every Beta (Anchor-style) page: dropdowns, text inputs,
-   buttons and chips are fully rounded (border-radius: 9999px). Multi-line
+   buttons and chips are fully rounded (border-radius: 6px). Multi-line
    textareas get a large radius instead. Checkboxes, radios, switches and
    underline tabs are excluded. Beats the generic admin field radius. */
 [data-admin-ui='true'] [data-anchor-ui='true'] select,
@@ -1766,17 +1766,17 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 [data-admin-ui='true'] [data-anchor-ui='true'] .anchor-outline,
 [data-admin-ui='true'] [data-anchor-ui='true'] .anchor-primary,
 [data-admin-ui='true'] [data-anchor-ui='true'] .anchor-chip {
-  border-radius: 9999px !important;
+  border-radius: 6px !important;
 }
 [data-admin-ui='true'] [data-anchor-ui='true'] textarea,
 [data-admin-ui='true'] [data-anchor-ui='true'] textarea.anchor-input,
 [data-admin-ui='true'] [data-anchor-ui='true'] textarea.anchor-input:focus {
-  border-radius: 14px !important;
+  border-radius: 6px !important;
   padding: 0.75rem 1rem !important;
   line-height: 1.5;
 }
 [data-admin-ui='true'] [data-anchor-ui='true'] select { padding-left: 1.25rem; }
-/* Pills, once and for all: border-radius 9999px (Tailwind rounded-full) on every
+/* Pills, once and for all: border-radius 6px (Tailwind rounded-full) on every
    admin nav pill (Quick Links) and every control that opens a menu or popover
    (dropdown triggers, filter chips, More Actions, Bulk actions, row menus).
    Underline tabs and toggle switches keep their own shapes. */
@@ -1785,7 +1785,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 [data-admin-ui='true'] :is(button, a, [role='button'])[aria-expanded]:not([role='tab']):not([role='switch']):not([aria-controls^='sidebar']),
 [data-admin-ui='true'] [data-anchor-ui='true'] :is(button, a)[aria-haspopup],
 [data-admin-ui='true'] [data-anchor-ui='true'] :is(button, a)[aria-expanded] {
-  border-radius: 9999px !important;
+  border-radius: 6px !important;
 }
 /* Billing Hub dropdown caret, applied to every native select on admin and Anchor-style pages:
    small solid triangle, ink colour, 0.75rem from the right edge. */
@@ -1811,7 +1811,7 @@ body:has(.ct-help-btn) button[aria-label="Back to top"] { bottom: 72px; right: 1
 [data-admin-ui='true'] textarea.anchor-input,
 [data-admin-ui='true'] [data-anchor-ui='true'] textarea,
 [data-admin-ui='true'] [data-anchor-ui='true'] textarea.anchor-input {
-  border-radius: 14px !important;
+  border-radius: 6px !important;
   padding: 0.75rem 1rem !important;
   line-height: 1.5;
 }
