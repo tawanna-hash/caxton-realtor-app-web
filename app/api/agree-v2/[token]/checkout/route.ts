@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const v = verifyToken(token);
   if (!v) return NextResponse.json({ error: 'invalid token' }, { status: 401 });
   const body = (await req.json().catch(() => ({}))) as { method?: string };
-  const method = body.method === 'bank' ? 'bank' : body.method === 'link' ? 'link' : 'card';
+  const method = body.method === 'bank' ? 'bank' : 'card';
   try {
     await ensureSchema();
     const sql = getSql();
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       ui_mode: 'embedded_page',
       mode: 'payment',
       redirect_on_completion: 'never',
-      payment_method_types: method === 'bank' ? ['us_bank_account'] : method === 'link' ? ['link'] : ['card'],
+      payment_method_types: method === 'bank' ? ['us_bank_account'] : ['card'],
       customer_creation: 'always',
       customer_email: ag.advertiser_email ?? ag.billing_email ?? undefined,
       line_items: [

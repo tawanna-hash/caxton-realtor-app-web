@@ -65,7 +65,7 @@ export default function AgreeClient({ token }: { token: string }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [step, setStep] = useState(0);
   const [fields, setFields] = useState<Fields>({});
-  const [cardMethod, setCardMethod] = useState<'card' | 'link'>('card');
+  const cardMethod = 'card' as const;
   const [pay, setPay] = useState<'check' | 'card' | 'bank_now' | 'bank_invoice' | 'ap'>('check');
   const [apEmail, setApEmail] = useState('');
   const [apSentTo, setApSentTo] = useState('');
@@ -488,7 +488,7 @@ export default function AgreeClient({ token }: { token: string }) {
             {data.card_available && (
               <>
                 <label className={`flex cursor-pointer items-center gap-3 rounded-[10px] border p-4 text-sm ${pay === 'card' && cardMethod === 'card' ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)]' : 'border-[color:var(--ds-line)]'}`}>
-                  <input type="radio" name="pay" checked={pay === 'card' && cardMethod === 'card'} onChange={() => { setPay('card'); setCardMethod('card'); }} className="accent-[color:var(--ds-primary)]" />
+                  <input type="radio" name="pay" checked={pay === 'card' && cardMethod === 'card'} onChange={() => { setPay('card'); }} className="accent-[color:var(--ds-primary)]" />
                   <span>Credit card <span className="text-[color:var(--ds-body)]">(charged now, card saved for later issues)</span></span>
                 </label>
                 {pay === 'card' && cardMethod === 'card' && (
@@ -501,18 +501,6 @@ export default function AgreeClient({ token }: { token: string }) {
                       A 3% credit card surcharge is added. Your card will be charged {money(data.card_charge_cents)} today{data.lines.length > 0 ? ' for the items due now' : ' for the first issue'}.
                     </p>
                     <EmbeddedPay key="card" token={token} method="card" publishableKey={data.stripe_publishable_key ?? ''} onError={setError} onComplete={(sid) => { setSessionId(sid); setCardPaid(true); setStep(2); }} />
-                  </div>
-                )}
-                <label className={`flex cursor-pointer items-center gap-3 rounded-[10px] border p-4 text-sm ${pay === 'card' && cardMethod === 'link' ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)]' : 'border-[color:var(--ds-line)]'}`}>
-                  <input type="radio" name="pay" checked={pay === 'card' && cardMethod === 'link'} onChange={() => { setPay('card'); setCardMethod('link'); }} className="accent-[color:var(--ds-primary)]" />
-                  <span>Link <span className="text-[color:var(--ds-body)]">(fast checkout with your saved Link account, same 3% fee as card)</span></span>
-                </label>
-                {pay === 'card' && cardMethod === 'link' && (
-                  <div className="rounded-[10px] border border-[color:var(--ds-line)] p-4">
-                    <p className="mb-3 rounded-[10px] bg-[#FEF8CC] p-3 text-xs text-[#645600]">
-                      A 3% surcharge is added. You will be charged {money(data.card_charge_cents)} today{data.lines.length > 0 ? ' for the items due now' : ' for the first issue'}.
-                    </p>
-                    <EmbeddedPay key="link" token={token} method="link" publishableKey={data.stripe_publishable_key ?? ''} onError={setError} onComplete={(sid) => { setSessionId(sid); setCardPaid(true); setStep(2); }} />
                   </div>
                 )}
               </>
