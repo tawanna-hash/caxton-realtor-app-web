@@ -45,7 +45,6 @@ export async function createAgreementCheckout(opts: {
       metadata: { ...meta, base_cents: String(base), fee_cents: String(fee) },
     },
     metadata: meta,
-    return_url: opts.returnUrl,
   } as never);
   return { ok: true, clientSecret: String(session.client_secret), sessionId: session.id, totalCents: base + fee };
 }
