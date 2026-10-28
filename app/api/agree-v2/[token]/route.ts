@@ -36,6 +36,7 @@ import { buildPlacementPatches, placementNeeds } from '@/lib/agreements-v2/place
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
 import { withSurcharge } from '@/lib/payment-processing-fees';
 import { processingFeeCents } from '@/lib/payment-processing-fees';
+import { getStripe, getPublishableKey, isStripeConfigured } from '@/lib/stripe';
 import { POST as liveSign } from '@/app/api/ad-sign/[token]/route';
 
 export const runtime = 'nodejs';
@@ -145,13 +146,14 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       intro: renderIntro(meta?.intro || defaults.intro_new, ag),
       expired,
       placement: placementNeeds({ ...ag, channel } as never, lines as never),
-      card_available: false,
+      card_available: isStripeConfigured() && payOpts.card,
+      stripe_publishable_key: isStripeConfigured() ? getPublishableKey() ?? null : null,
       card_base_cents: base,
       card_charge_cents: surcharged,
       timeline_check: !payOpts.show_schedule || !(prepay ? checkState === 'approved' : allowsCheckPayment(channel)) ? null : perService ?? checkTimeline(tlAgreement, defaults),
       annual_increase_pct: payOpts.annual_increase_pct,
       timeline_bank_invoice: !payOpts.show_schedule || prepay ? null : perService ?? checkTimeline(tlAgreement, defaults),
-      bank_now_available: false,
+      bank_now_available: isStripeConfigured() && payOpts.bank_now,
       bank_fee_cents: base != null ? processingFeeCents(base, 'ach') : null,
       bank_charge_cents: base != null ? base + processingFeeCents(base, 'ach') : null,
       bank_invoice_available: payOpts.bank_invoice && !prepay,
@@ -244,13 +246,19 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     }
 
     const mode = typeof body.paymentMode === 'string' ? body.paymentMode : '';
-    const bankIntentId: string | null = null;
+    let bankIntentId: string | null = null;
+    if (mode === 'card' || mode === 'bank_now') {
+      const sid = typeof body.checkoutSessionId === 'string' ? body.checkoutSessionId : '';
+      if (!isStripeConfigured() || !sid) return NextResponse.json({ error: 'Please complete the payment first.' }, { status: 402 });
+      const cs = await getStripe().checkout.sessions.retrieve(sid).catch(() => null);
+      if (!cs || cs.metadata?.agreement_id !== String(id) || cs.status !== 'complete' || (mode === 'card' && cs.payment_status !== 'paid')) {
+        return NextResponse.json({ error: 'We could not confirm your payment. Please try again.' }, { status: 402 });
+      }
+      if (mode === 'bank_now') bankIntentId = typeof cs.payment_intent === 'string' ? cs.payment_intent : cs.id;
+    }
     if (mode === 'ap') {
       const sent = (await sql`SELECT 1 FROM payment_setup_requests WHERE agreement_id = ${String(id)} LIMIT 1`.catch(() => [])) as unknown[];
       if (sent.length === 0) return NextResponse.json({ error: 'Send the payment request to your accounts payable contact first.' }, { status: 400 });
-    }
-    if (mode === 'bank_now') {
-      return NextResponse.json({ error: 'Online payments are not available right now.' }, { status: 402 });
     }
     const prepayLines = (await sql`SELECT channel FROM agreement_line_items WHERE agreement_id = ${id}`.catch(() => [])) as unknown as Array<{ channel: string | null }>;
     const prepay = prepayRequired(channelOfRow(ag), prepayLines.map((l) => l.channel));
@@ -259,9 +267,6 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     }
     if (mode === 'bank_invoice' && meta?.payment && meta.payment.bank_invoice !== true) {
       return NextResponse.json({ error: 'Bank payment on invoices is not available for this agreement.' }, { status: 400 });
-    }
-    if (mode === 'card') {
-      return NextResponse.json({ error: 'Online payments are not available right now.' }, { status: 402 });
     }
     if (mode !== 'check' && mode !== 'card' && mode !== 'bank_now' && mode !== 'bank_invoice' && mode !== 'ap') {
       return NextResponse.json({ error: 'Please choose how you would like to pay.' }, { status: 400 });

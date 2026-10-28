@@ -1,11 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import BillingTimeline, { type TimelineView } from '@/components/anchor/TimelineView';
-type StripePaymentHandle = { confirm: () => Promise<{ ok: boolean; error?: string; paymentIntentId?: string }> };
-// Online payments are removed; the card/bank sections never render.
- 
-function StripePaymentBlock(_props: Record<string, unknown>) { return null; }
+import EmbeddedPay from './EmbeddedPay';
 
 type Fields = Record<string, string>;
 type PlacementNeed = { line_no: number; label: string; channel: 'email' | 'app'; start_date: string | null; preferred_send_dates: string[] };
@@ -34,6 +31,7 @@ type Summary = {
   timeline_bank_now?: TimelineView;
   timeline_bank_invoice?: TimelineView;
   card_available: boolean;
+  stripe_publishable_key?: string | null;
   card_charge_cents: number | null;
   card_base_cents: number | null;
   lines: Array<{ line_no?: number; package_label: string; description: string | null; channel: string; quantity: number; amount_cents: number; pay_now: boolean; optional?: boolean; discount_note?: string | null }>;
@@ -80,12 +78,11 @@ export default function AgreeClient({ token }: { token: string }) {
   // Anchor-style flow: landing page, introduction, then the steps. 'terms' and 'additional' sit between review and payment.
   const [phase, setPhase] = useState<'landing' | 'intro' | 'flow'>('landing');
   const [inter, setInter] = useState<null | 'terms' | 'additional'>(null);
-  const stripeRef = useRef<StripePaymentHandle>(null);
-  const [cardReady, setCardReady] = useState(false);
+  const [cardReady, _setCardReady] = useState(false);
   const [cardPaid, setCardPaid] = useState(false);
   const [bankPi, setBankPi] = useState<string | null>(null);
-  const bankRef = useRef<StripePaymentHandle>(null);
-  const [bankReady, setBankReady] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [bankReady, _setBankReady] = useState(false);
   // Placement dates keyed by line number (0 = single-product agreement). Index 0 is the start / preferred date.
   const [dates, setDates] = useState<Record<number, string[]>>({});
   const [reloadKey, setReloadKey] = useState(0);
@@ -175,19 +172,7 @@ export default function AgreeClient({ token }: { token: string }) {
     setError(null);
     if (pay === 'bank_now') {
       if (bankPi) return setStep(2);
-      if (!bankRef.current) return setError('The bank form is not ready yet. Please wait a moment and try again.');
-      setSubmitting(true);
-      try {
-        const r = await bankRef.current.confirm();
-        if ('skipped' in r) throw new Error('The bank form did not load. Please reload the page.');
-        setBankPi(r.paymentIntentId ?? null);
-        setStep(2);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Your bank payment could not be started.');
-      } finally {
-        setSubmitting(false);
-      }
-      return;
+      return setError('Please complete the bank payment above to continue.');
     }
     if (pay === 'ap') {
       const email = apEmail.trim();
@@ -209,18 +194,7 @@ export default function AgreeClient({ token }: { token: string }) {
     }
     if (pay !== 'card') return setStep(2);
     if (cardPaid) return setStep(2);
-    if (!stripeRef.current) return setError('The card form is not ready yet. Please wait a moment and try again.');
-    setSubmitting(true);
-    try {
-      const r = await stripeRef.current.confirm();
-      if ('skipped' in r) throw new Error('The card form did not load. Please reload the page.');
-      setCardPaid(true);
-      setStep(2);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Your card could not be processed.');
-    } finally {
-      setSubmitting(false);
-    }
+    return setError('Please complete the card payment above to continue.');
   }
 
   function buildPlacement() {
@@ -243,7 +217,7 @@ export default function AgreeClient({ token }: { token: string }) {
       const res = await fetch(`/api/agree-v2/${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ signerName: name.trim(), termsAccepted: true, paymentMode: pay, bankPaymentIntentId: pay === 'bank_now' ? bankPi : undefined, fields, placement: buildPlacement() }),
+        body: JSON.stringify({ signerName: name.trim(), termsAccepted: true, paymentMode: pay, checkoutSessionId: sessionId ?? undefined, fields, placement: buildPlacement() }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -526,7 +500,7 @@ export default function AgreeClient({ token }: { token: string }) {
                     <p className="mb-3 rounded-[10px] bg-[#FEF8CC] p-3 text-xs text-[#645600]">
                       A 3% credit card surcharge is added. Your card will be charged {money(data.card_charge_cents)} today{data.lines.length > 0 ? ' for the items due now' : ' for the first issue'}.
                     </p>
-                    <StripePaymentBlock key="card" ref={stripeRef} token={token} adRateCents={data.card_base_cents ?? 0} onReadyChange={setCardReady} />
+                    <EmbeddedPay key="card" token={token} method="card" publishableKey={data.stripe_publishable_key ?? ''} onError={setError} onComplete={(sid) => { setSessionId(sid); setCardPaid(true); setStep(2); }} />
                   </div>
                 )}
                 <label className={`flex cursor-pointer items-center gap-3 rounded-[10px] border p-4 text-sm ${pay === 'card' && cardMethod === 'link' ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)]' : 'border-[color:var(--ds-line)]'}`}>
@@ -538,7 +512,7 @@ export default function AgreeClient({ token }: { token: string }) {
                     <p className="mb-3 rounded-[10px] bg-[#FEF8CC] p-3 text-xs text-[#645600]">
                       A 3% surcharge is added. You will be charged {money(data.card_charge_cents)} today{data.lines.length > 0 ? ' for the items due now' : ' for the first issue'}.
                     </p>
-                    <StripePaymentBlock key="link" ref={stripeRef} token={token} endpoint={`/api/sign/${token}/payment-intent?method=link`} adRateCents={data.card_base_cents ?? 0} onReadyChange={setCardReady} />
+                    <EmbeddedPay key="link" token={token} method="link" publishableKey={data.stripe_publishable_key ?? ''} onError={setError} onComplete={(sid) => { setSessionId(sid); setCardPaid(true); setStep(2); }} />
                   </div>
                 )}
               </>
@@ -555,7 +529,7 @@ export default function AgreeClient({ token }: { token: string }) {
                     <p className="mb-3 rounded-[10px] bg-[#FEF8CC] p-3 text-xs text-[#645600]">
                       A bank payment fee of 1% (maximum $5) is added: {money(data.bank_fee_cents ?? 0)} on this order. {money(data.bank_charge_cents ?? null)} will be debited from your bank account{data.lines.length > 0 ? ' for the items due now' : ' for the first issue'}. Bank payments can take a few business days to clear.
                     </p>
-                    <StripePaymentBlock ref={bankRef} token={token} endpoint={`/api/agree-v2/${encodeURIComponent(token)}/bank-intent`} adRateCents={data.card_base_cents ?? data.bank_charge_cents ?? 0} onReadyChange={setBankReady} />
+                    <EmbeddedPay key="bank" token={token} method="bank" publishableKey={data.stripe_publishable_key ?? ''} onError={setError} onComplete={(sid) => { setSessionId(sid); setBankPi(sid); setStep(2); }} />
                   </div>
                 )}
               </>
