@@ -202,6 +202,7 @@ export const GET_PAID_NAV: AdminNavGroup[] = [
     links: [
       { label: 'Billing', href: '/admin/billing-hub', description: 'Agreement, payment methods, invoices and activity for one partner' },
       { label: 'Invoices', href: '/admin/billing-hub/invoices', description: 'Every invoice across all partners', parent: '/admin/billing-hub' },
+      { label: 'Stripe payouts', href: '/admin/billing-hub/payouts', description: 'Payouts to the bank, processing payments, balance and payout detail', parent: '/admin/billing-hub' },
     ],
   },
   {
