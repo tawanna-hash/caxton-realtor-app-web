@@ -156,7 +156,7 @@ export default function AgreeClient({ token }: { token: string }) {
     if (!fields.company_name?.trim()) return setError('Please enter your company name.');
     if (!fields.rep_name?.trim()) return setError('Please enter your contact name.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.advertiser_email ?? '')) return setError('Please enter a valid email address.');
-    if (data?.details?.ask_address) {
+    if (data?.details?.ask_address || (fields.address ?? '').trim()) {
       for (const [k, label] of [['address', 'street address'], ['city', 'city'], ['state', 'state'], ['zip', 'ZIP code']] as const) {
         if (!(fields[k] ?? '').trim()) return setError(`Please enter your ${label}.`);
       }
