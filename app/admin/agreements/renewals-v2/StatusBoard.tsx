@@ -4,6 +4,7 @@
 // Draft, Sent, Opened, Signed, with one-click resend and, for signed
 // agreements, the draft recurring-invoice schedule for review.
 
+import ApChip, { useApStatus } from '@/components/admin/ApChip';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { A, ColumnStyle, EditColumns, EmptyState, FilterChip, SearchBox, useColumns, type ColumnDef } from '@/components/anchor/ui';
 import SortTable from '@/components/anchor/SortTable';
@@ -50,6 +51,7 @@ const SCHED_LABEL: Record<NonNullable<Item['schedule_state']>, string> = {
 
 export default function StatusBoard() {
   const [items, setItems] = useState<Item[] | null>(null);
+  const ap = useApStatus((items ?? []).map((x) => x.id));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -136,6 +138,7 @@ export default function StatusBoard() {
                 <td className="text-[color:var(--ds-ink)]">{i.kind === 'renewal' ? 'Renewal' : 'New partner'}</td>
                 <td>
                   <span className={`rounded-md px-2.5 py-0.5 text-xs font-medium ${STAGE_STYLE[i.stage]}`}>{STAGE_LABEL[i.stage]}</span>
+                  <div><ApChip info={ap[i.id]} /></div>
                   <div className="mt-1 text-xs text-[color:var(--ds-body)]">{i.stage === 'signed' ? day(i.signed_at) : day(i.last_activity_at)}</div>
                 </td>
                 <td className="text-[color:var(--ds-ink)]">{money(i.rate_cents)}</td>

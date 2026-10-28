@@ -6,6 +6,7 @@
 // Add filter, Bulk actions, More Actions, Create agreement menu, sortable
 // columns and a per-row menu.
 
+import ApChip, { useApStatus } from '@/components/admin/ApChip';
 import PaymentSetupAlert from '@/components/admin/PaymentSetupAlert';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -83,6 +84,7 @@ export default function SignedAgreements() {
   const [addOpen, setAddOpen] = useState(false);
   const [sort, setSort] = useState<{ k: 'name' | 'status' | 'assignee' | 'eff' | 'pay' | 'billed'; dir: 1 | -1 }>({ k: 'eff', dir: -1 });
   const [sel, setSel] = useState<string[]>([]);
+  const ap = useApStatus(agr.data.map((a) => a.id));
   const [notice, setNotice] = useState<string | null>(null);
   const [imp, setImp] = useState(false);
   const [drawer, setDrawer] = useState<null | 'new' | AgreementWithAdvertiser>(null);
@@ -224,7 +226,7 @@ export default function SignedAgreements() {
             {rows.map((a) => { const s = stOf(a) as St; return (
               <tr key={a.id}>
                 <td><input type="checkbox" aria-label={`Select ${nameOf(a)}`} checked={sel.includes(a.id)} onChange={() => setSel((c) => (c.includes(a.id) ? c.filter((x) => x !== a.id) : [...c, a.id]))} className="h-4 w-4 accent-[color:var(--ds-primary)]" /></td>
-                <td><div className="font-semibold text-[color:var(--ds-ink)]">{nameOf(a)}</div><div className="text-xs text-[color:var(--ds-body)]">Agreement{a.ad_size ? ` · ${a.ad_size}` : ''}</div><PaymentSetupAlert ag={a} variant="chip" />{s === 'on_hold' && <div className="mt-1 text-xs text-amber-700">Services will not be scheduled until payment is received.</div>}</td>
+                <td><div className="font-semibold text-[color:var(--ds-ink)]">{nameOf(a)}</div><div className="text-xs text-[color:var(--ds-body)]">Agreement{a.ad_size ? ` · ${a.ad_size}` : ''}</div><PaymentSetupAlert ag={a} variant="chip" /><ApChip info={ap[a.id]} />{s === 'on_hold' && <div className="mt-1 text-xs text-amber-700">Services will not be scheduled until payment is received.</div>}</td>
                 <td><span className={`rounded-md border px-2 py-0.5 text-xs ${ST_STYLE[s]}`}>{s === 'on_hold' ? 'On hold' : ST_LABEL[s]}</span></td>
                 <td className="text-[color:var(--ds-ink)]">{who(a.created_by)}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(a.start_date ?? a.signed_at)}</td>

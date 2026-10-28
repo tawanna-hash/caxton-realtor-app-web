@@ -8,16 +8,17 @@ type Props = {
   token: string;
   method: 'card' | 'link' | 'bank';
   publishableKey: string;
+  endpoint?: string;
   onComplete: (sessionId: string) => void;
   onError: (message: string) => void;
 };
 
-export default function EmbeddedPay({ token, method, publishableKey, onComplete, onError }: Props) {
+export default function EmbeddedPay({ token, method, publishableKey, endpoint, onComplete, onError }: Props) {
   const stripe = useMemo(() => loadStripe(publishableKey), [publishableKey]);
   const sid = useRef('');
   const options = useMemo(() => ({
     fetchClientSecret: async () => {
-      const res = await fetch(`/api/agree-v2/${encodeURIComponent(token)}/checkout`, {
+      const res = await fetch(endpoint ?? `/api/agree-v2/${encodeURIComponent(token)}/checkout`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ method }),
@@ -31,7 +32,7 @@ export default function EmbeddedPay({ token, method, publishableKey, onComplete,
       return j.clientSecret as string;
     },
     onComplete: () => onComplete(sid.current),
-  }), [token, method, onComplete, onError]);
+  }), [token, method, endpoint, onComplete, onError]);
   return (
     <EmbeddedCheckoutProvider stripe={stripe} options={options}>
       <EmbeddedCheckout />

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getStripe, getWebhookSecret } from '@/lib/stripe';
+import { markApPaid } from '@/lib/server/ap-requests';
 import { recordNewPartnerEvent } from '@/lib/new-partner-v2/service';
 
 export const runtime = 'nodejs';
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
       const sql = getSql();
       const amt = ((s.amount_total ?? 0) / 100).toFixed(2);
       await recordNewPartnerEvent(sql, id, 'stripe_checkout', `Stripe checkout: ${types[event.type]} ($${amt}, ${s.metadata?.method ?? 'card'}, session ${s.id}, payment status ${s.payment_status}).`);
+      if (s.metadata?.ap === '1' && event.type !== 'checkout.session.async_payment_failed') await markApPaid(id, s.id);
     }
   }
   return NextResponse.json({ received: true });
