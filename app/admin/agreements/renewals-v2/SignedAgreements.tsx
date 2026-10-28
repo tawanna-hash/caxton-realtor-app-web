@@ -10,6 +10,7 @@ import PaymentSetupAlert from '@/components/admin/PaymentSetupAlert';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import NewQuoteModal from '@/app/admin/_components/NewQuoteModal';
 import { A, EmptyState, FilterChip, RowMenu, SearchBox } from '@/components/anchor/ui';
 import { SortTh } from '../clients/StatusFilter';
 import { day, money, useJson, type Inv } from '../clients/data';
@@ -85,6 +86,7 @@ export default function SignedAgreements() {
   const [sel, setSel] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [imp, setImp] = useState(false);
+  const [quoteOpen, setQuoteOpen] = useState(false);
   const [drawer, setDrawer] = useState<null | 'new' | AgreementWithAdvertiser>(null);
   const [renewing, setRenewing] = useState<AgreementWithAdvertiser | null>(null);
   const [handled, setHandled] = useState(false);
@@ -177,7 +179,7 @@ export default function SignedAgreements() {
       {dErr && <div className={A.error}>{dErr}</div>}
       {slot && createPortal(<div className="flex flex-wrap items-center gap-3 [&_*]:!normal-case">
         <Menu label="More Actions" items={[{ label: 'Import agreements', onClick: () => setImp(true) }, { label: 'Export agreements', onClick: () => exportCsv(rows) }]} />
-        <Menu primary label="Create Agreement" items={[{ label: 'Start from scratch', onClick: () => setDrawer('new') }, { label: 'Import with AI', disabled: true }]} />
+        <Menu primary label="Create Agreement" items={[{ label: 'Print agreement', onClick: () => setDrawer('new') }, { label: 'E-Blast or App product', onClick: () => setQuoteOpen(true) }, { label: 'From a template', href: '/admin/agreements/renewals-v2/new' }]} />
       </div>, slot)}
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search agreements" />
@@ -198,6 +200,7 @@ export default function SignedAgreements() {
         <div className={`ml-auto ${chosen.length === 0 ? "opacity-50" : ""}`}><Menu label="Bulk actions" items={[{ label: `Export selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => exportCsv(chosen) }, { label: `Terminate selected (${chosen.length})`, disabled: chosen.length === 0, onClick: () => terminate(chosen) }]} /></div>
       </div>
       {notice && <div className={A.notice}>{notice}</div>}
+      <NewQuoteModal open={quoteOpen} onClose={() => setQuoteOpen(false)} onDrafted={() => setVersion((v) => v + 1)} />
       {(drawer || renewing) && (
         <AgreementDrawer
           existing={drawer && drawer !== 'new' ? drawer : undefined}

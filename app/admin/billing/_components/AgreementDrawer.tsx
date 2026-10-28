@@ -848,6 +848,23 @@ export function AgreementDrawer({
     }
   };
 
+  const previewClientPage = async () => {
+    const w = window.open("", "_blank");
+    try {
+      const id: string =
+        existing?.id ?? (await persistAgreement(false)).agreement?.id ?? "";
+      if (!id) throw new Error("No agreement ID after save");
+      const res = await fetch(`/api/admin/agreements/${id}/sign-link`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const { url } = await res.json();
+      const u = String(url) + (String(url).includes("?") ? "&" : "?") + "preview=1";
+      if (w) w.location.href = u; else window.open(u, "_blank");
+    } catch (e) {
+      if (w) w.close();
+      onError(e instanceof Error ? e.message : "preview failed");
+    }
+  };
+
   const copySigningLink = async () => {
     if (!existing?.id) {
       onError("Save the agreement first");
@@ -2291,6 +2308,14 @@ export function AgreementDrawer({
               title="Copy signing link to clipboard"
             >
               Copy Link
+            </button>
+            <button
+              onClick={previewClientPage}
+              disabled={saving}
+              className="px-4 py-2 rounded-md border border-[#B9ADD6] text-[#42277C] text-sm hover:bg-[#F6F3FB] disabled:opacity-50 whitespace-nowrap"
+              title="Open the page your client will see, without sending anything"
+            >
+              Preview client page
             </button>
           </>
         )}
