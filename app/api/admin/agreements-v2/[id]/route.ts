@@ -11,6 +11,7 @@ import { saveAgreementMeta } from '@/lib/agreements-v2/builder';
 import { timelinesForAgreement } from '@/lib/agreements-v2/timeline';
 import { cleanBilling, cleanPayment } from '@/lib/agreements-v2/service-billing';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
+import { loadPaymentSettings } from '@/lib/server/payment-settings';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,7 @@ export const POST = withAdminTracking(async function POST(
   if (body.action === 'timeline') {
     try {
       await ensureSchema();
+      await loadPaymentSettings();
       const t = await timelinesForAgreement(getSql(), id);
       if (!t) return NextResponse.json({ error: 'not found' }, { status: 404 });
       return NextResponse.json(t);
