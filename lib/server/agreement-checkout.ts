@@ -32,7 +32,7 @@ export async function createAgreementCheckout(opts: {
     ui_mode: 'embedded_page',
     mode: 'payment',
     redirect_on_completion: 'never',
-    payment_method_types: method === 'bank' ? ['us_bank_account'] : ['card'],
+    allowed_payment_method_types: method === 'bank' ? ['us_bank_account'] : ['card'],
     customer_creation: 'always',
     customer_email: ag.advertiser_email ?? ag.billing_email ?? undefined,
     line_items: [
