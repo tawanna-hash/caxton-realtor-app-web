@@ -46,6 +46,8 @@ import {
 } from "@/lib/agreement-pricing";
 import { formatPhone, formatPhoneInput } from "@/lib/format-phone";
 import { sparsePatch } from "@/lib/sparse-patch";
+import ProductFields, { EMPTY_PROD, prodCents, prodLines, type Prod, type ProductKind } from "@/app/admin/beta-core/billing/ProductFields";
+import ClientPreview from "@/app/admin/beta-core/billing/ClientPreview";
 import { DrawerShell, Section, Field } from "@/app/admin/beta-core/billing/DrawerShell";
 import { AddCardDrawer, type SavedCardOnFile } from "@/app/admin/beta-core/billing/AddCardDrawer";
 import {
@@ -163,6 +165,8 @@ function initTimingYears(
   );
 }
 
+const NONPRINT_SKIP = ["ad_size","frequency","ad_rate_cents","discount_cents","ad_premium_cents","total_monthly_rate_cents","amount_cents","page_position","ad_timing_months","exp_date","end_date","type","publication","status","advertiser_id","payment_mode"];
+
 export function AgreementDrawer({
   existing,
   renewedFrom,
@@ -195,6 +199,8 @@ export function AgreementDrawer({
   const currentTerms = useCurrentTerms();
   // Show errors inside the drawer too; the page banner sits behind the overlay.
   const [drawerError, setDrawerError] = useState<string | null>(null);
+  const [product, setProduct] = useState<ProductKind>("print");
+  const [prod, setProd] = useState<Prod>(EMPTY_PROD);
   const onError = (msg: string) => {
     setDrawerError(msg);
     onErrorProp(msg);
@@ -209,6 +215,7 @@ export function AgreementDrawer({
 
   const seed: AgreementWithAdvertiser | undefined = existing ?? renewedFrom;
   const isCreate = !existing;
+  const nonPrint = isCreate && product !== "print";
   const isUploaded = !!existing?.is_uploaded;
 
   // “Send amended PDF” flow state. When an admin edits an uploaded paper
@@ -427,7 +434,7 @@ export function AgreementDrawer({
   // Hide Check only once the channel is known to be non-print; before any
   // line item or type is chosen, all three methods are offered.
   const channelKnown = lineItems.length > 0 || !!form.type;
-  const checkAllowed = !channelKnown || allowsCheckPayment(agreementChannel);
+  const checkAllowed = nonPrint ? false : !channelKnown || allowsCheckPayment(agreementChannel);
   const paymentTypes = checkAllowed
     ? PAYMENT_TYPES
     : PAYMENT_TYPES.filter((type) => type !== "Check");
@@ -729,6 +736,7 @@ export function AgreementDrawer({
     const full = buildPayload(isSigning);
     if (isCreate && createdRef.current) {
       const patch = sparsePatch(full, createdRef.current.payload);
+      if (nonPrint) for (const k of NONPRINT_SKIP) delete patch[k];
       const id = createdRef.current.id;
       if (Object.keys(patch).length > 0) {
         const r = await fetch(`/api/admin/agreements/${id}`, {
@@ -740,6 +748,44 @@ export function AgreementDrawer({
         createdRef.current.payload = full;
       }
       return { agreement: { id } };
+    }
+    if (nonPrint && !createdRef.current) {
+      const pid = prod.packageId;
+      if (!pid) throw new Error(product === "email" ? "Choose an e-blast package." : "Choose an app placement.");
+      const qres = await fetch("/api/admin/quotes", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          channel: product,
+          package_id: pid,
+          ...(product === "email"
+            ? { sends: prod.sends, publication: prod.scope, preferred_send_dates: prod.dates.filter(Boolean) }
+            : prod.cadence === "weekly"
+              ? { app_cadence: "weekly", app_weeks: prod.weeks, app_markets: prod.markets }
+              : { app_cadence: "monthly", months: prod.months, app_markets: prod.markets }),
+          advertiser: form.advertiser_id
+            ? { id: form.advertiser_id }
+            : { name: form.company_name.trim(), contact_email: form.email.trim(), publication: prod.scope },
+          rep_name: form.rep_name,
+        }),
+      });
+      if (!qres.ok) {
+        const j = await qres.json().catch(() => ({}));
+        throw new Error(String((j as { error?: string }).error ?? `HTTP ${qres.status}`));
+      }
+      const qj = await qres.json();
+      const qid: string = qj?.agreement?.id ?? "";
+      if (!qid) throw new Error("No agreement ID after save");
+      const rest: Record<string, unknown> = { ...full };
+      for (const k of NONPRINT_SKIP) delete rest[k];
+      const pr = await fetch(`/api/admin/agreements/${qid}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(rest),
+      });
+      if (!pr.ok) throw new Error(`HTTP ${pr.status}`);
+      createdRef.current = { id: qid, payload: full };
+      return { agreement: { id: qid } };
     }
     const payload = buildRequestPayload(isSigning);
     if (!isCreate && Object.keys(payload).length === 0) {
@@ -1070,6 +1116,17 @@ export function AgreementDrawer({
     });
   };
 
+  const previewData = {
+    company: form.company_name, rep: form.rep_name, email: form.email, phone: form.phone,
+    address: form.address, city: form.city, state: form.state, zip: form.zip,
+    billingEmail: form.billing_email, askAddress: form.ask_billing_address,
+    lines: nonPrint
+      ? prodLines(product, prod)
+      : ([["Ad size", form.ad_size], ["Frequency", form.frequency], ["Monthly rate", totalMonthly > 0 ? `$${totalMonthly.toFixed(2)}` : ""]].filter(([, v]) => v) as Array<[string, string]>),
+    totalCents: nonPrint ? prodCents(product, prod) : Math.round(totalMonthly * 100) * (FREQ_MONTHS[form.frequency] ?? 1),
+    methods: nonPrint ? ["Credit card (3% fee)", "ACH bank debit (1%, max $5)"] : ["Credit card (3% fee)", "ACH bank debit (1%, max $5)", ...(checkAllowed ? ["Check, if approved"] : [])],
+  };
+
   return (
     <DrawerShell
       popup
@@ -1088,6 +1145,7 @@ export function AgreementDrawer({
           : existing?.id
       }
       onClose={onClose}
+      side={isCreate ? <ClientPreview d={previewData} /> : undefined}
     >
       {!isCreate && existing && <PaymentSetupAlert ag={existing as never} variant="banner" />}
       {!isCreate && onGenerateInvoice && (
@@ -1258,8 +1316,25 @@ export function AgreementDrawer({
         </div>
       </Section>
 
+      {isCreate && !renewedFrom && (
+        <Section title="Product">
+          <div className="flex gap-2">
+            {([["print", "Print"], ["email", "E-Blast"], ["app", "App"]] as const).map(([k, l]) => (
+              <button key={k} type="button" onClick={() => { setProduct(k); setProd(EMPTY_PROD); }}
+                className={`rounded-md border px-4 py-2 text-sm ${product === k ? "border-[#301D5D] bg-[#301D5D] text-white" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}>{l}</button>
+            ))}
+          </div>
+        </Section>
+      )}
+      {nonPrint && (
+        <Section title={product === "email" ? "E-Blast Order" : "App Order"}>
+          <ProductFields kind={product as "email" | "app"} value={prod} onChange={setProd} />
+          <div className="text-sm text-gray-800">Total: <span className="font-medium">{formatCents(prodCents(product, prod))}</span></div>
+          <div className="text-xs text-gray-500">Digital products are paid in full by card or ACH before the agreement is signed.</div>
+        </Section>
+      )}
       {/* ── Insertion Order ── */}
-      <Section title="Insertion Order">
+      {!nonPrint && <Section title="Insertion Order">
         {lineItems.length > 0 ? (
           <div className="space-y-3">
             <div className="rounded-md border border-gray-200">
@@ -1623,7 +1698,7 @@ export function AgreementDrawer({
             </div>
           )}
         </div>
-      </Section>
+      </Section>}
 
       {/* ── Billing Information ── */}
       <Section title="Billing Information">

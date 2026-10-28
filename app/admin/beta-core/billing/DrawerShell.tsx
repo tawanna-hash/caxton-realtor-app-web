@@ -8,7 +8,7 @@
 import type React from 'react';
 
 export function DrawerShell({
-  title, subtitle, onClose, children, wide = false, popup = false,
+  title, subtitle, onClose, children, wide = false, popup = false, side,
 }: {
   title: string;
   subtitle?: string;
@@ -17,17 +17,22 @@ export function DrawerShell({
   wide?: boolean;
   /** Centered pop-up window instead of a right-side slide-over. */
   popup?: boolean;
+  /** Optional right-hand panel (shown on large screens, popup only). */
+  side?: React.ReactNode;
 }) {
   if (popup) {
     return (
       <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
-        <div className="flex max-h-[94dvh] w-full min-w-0 max-w-[820px] flex-col overflow-hidden rounded-t-[14px] bg-white sm:rounded-[14px]" onClick={(e) => e.stopPropagation()}>
+        <div className={`flex max-h-[94dvh] w-full min-w-0 ${side ? 'max-w-[1240px]' : 'max-w-[820px]'} flex-col overflow-hidden rounded-t-[14px] bg-white sm:rounded-[14px]`} onClick={(e) => e.stopPropagation()}>
           <div className="relative shrink-0 bg-[#F3F4F7] px-12 py-4 text-center">
             <h2 className="text-base font-medium text-[#1B1740]">{title}</h2>
             {subtitle && <div className="mt-0.5 truncate text-xs text-gray-500">{subtitle}</div>}
             <button type="button" onClick={onClose} aria-label="Close" style={{ border: 0, background: 'transparent' }} className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-2xl leading-none text-gray-600 hover:text-gray-900">×</button>
           </div>
-          <div className="min-w-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto px-4 py-4 sm:px-6">{children}</div>
+          <div className="flex min-h-0 flex-1">
+            <div className="min-w-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto px-4 py-4 sm:px-6">{children}</div>
+            {side && <div className="hidden w-[400px] shrink-0 border-l border-gray-200 lg:block">{side}</div>}
+          </div>
         </div>
       </div>
     );
