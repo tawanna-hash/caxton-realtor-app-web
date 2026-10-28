@@ -93,6 +93,14 @@ export default function ClientPreview({ d }: { d: PreviewData }) {
           <div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm">
             <div className="font-semibold text-[#1B1740]">How would you like to pay?</div>
             <ul className="mt-1 list-disc pl-4 text-gray-700">{d.methods.map((m) => <li key={m}>{m}</li>)}</ul>
+            <div className="mt-3 rounded-lg border border-[#5B2BE0] bg-[#F3EEFF] p-3">
+              <div className="flex items-center gap-2 text-gray-800"><span className="inline-block h-3 w-3 rounded-full border-2 border-[#5B2BE0]" />Ask someone else to add a card or bank account <span className="text-gray-500">(for example, Accounts Payable)</span></div>
+              <div className="mt-2 pl-5">
+                <div className="mb-1 text-[11px] text-gray-500">Their email address</div>
+                <div className="rounded-md border border-gray-300 px-2 py-1.5 text-gray-400">ap@company.com</div>
+                <div className="mt-1 text-[11px] text-gray-500">We will email them a secure link to pay by bank account or credit card. You still sign the agreement.</div>
+              </div>
+            </div>
           </div>
           )}
           {step === 5 && (<div className="mt-3 rounded-xl bg-white p-4 text-xs shadow-sm"><div className="font-semibold text-[#1B1740]">Sign &amp; Approve</div><div className="mt-2 flex justify-between border-t border-gray-100 pt-2"><span className="text-gray-600">Agreement total</span><span className="font-semibold">{usd(d.totalCents)}</span></div><div className="mt-3 flex gap-1">{(['type', 'draw', 'upload'] as const).map((t) => (<button key={t} type="button" onClick={() => setSigTab(t)} className={`rounded-md border px-3 py-1 capitalize ${sigTab === t ? 'border-[#5B2BE0] bg-[#F1ECFF] font-semibold text-[#5B2BE0]' : 'border-gray-200 text-gray-600'}`}>{t}</button>))}</div><div className="mt-2 flex h-20 items-center justify-center rounded-md border border-gray-200 px-2 text-gray-400">{sigTab === 'type' ? <span style={{ fontFamily: 'cursive', fontSize: 20 }}>{d.rep || 'Type your full name'}</span> : sigTab === 'draw' ? 'Draw your signature here' : 'Upload a signature image or signed PDF'}</div><label className="mt-2 flex items-center gap-2 text-gray-600"><input type="checkbox" disabled /> I accept the agreement terms</label><div className="mt-3 rounded-md bg-[#5B2BE0] py-2 text-center text-white">Sign &amp; Approve</div></div>)}
