@@ -21,10 +21,17 @@ export async function GET(_req: Request, { params }: RouteContext) {
     return NextResponse.json({ error: 'Builder not found' }, { status: 404 });
   }
 
-  const rows = await listBuilderInventory({
-    status: 'active',
-    builderName,
-    limit: 500,
+  // A developer's rows (e.g. La Cima) carry the real builder in builder_name
+  // and the developer in developer_name, so pull both and de-duplicate.
+  const [byBuilder, byDeveloper] = await Promise.all([
+    listBuilderInventory({ status: 'active', builderName, limit: 500 }),
+    listBuilderInventory({ status: 'active', developerName: builderName, limit: 500 }),
+  ]);
+  const seen = new Set<number>();
+  const rows = byDeveloper.concat(byBuilder).filter((r) => {
+    if (seen.has(r.id)) return false;
+    seen.add(r.id);
+    return true;
   });
 
   const bytes = await generateBuilderPdf({
