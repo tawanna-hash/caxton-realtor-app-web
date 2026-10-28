@@ -481,6 +481,19 @@ export async function createSetupCheckoutSession(
   const brand = t.brand;
   const session = await stripe.checkout.sessions.create({
     mode: 'setup',
+    ui_mode: 'hosted_page',
+    billing_address_collection: 'auto',
+    consent_collection: { terms_of_service: 'required' },
+    name_collection: { individual: { enabled: true }, business: { enabled: true } },
+    integration_identifier: 'hosted_mobile_app_0001',
+    origin_context: 'mobile_app',
+    branding_settings: {
+      background_color: '#ffffff',
+      button_color: '#6205ad',
+      font_family: 'inter',
+      border_style: 'rounded',
+      logo: { type: 'file', file: 'file_1UVKNw91yhy0NZ59W2XMbWDC' },
+    },
     customer,
     currency: 'usd',
     payment_method_types: opts.methods,

@@ -316,6 +316,23 @@ export async function getOrCreatePartnerStatementOverdueLink(
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
+        ui_mode: 'hosted_page',
+        billing_address_collection: 'auto',
+        phone_number_collection: { enabled: true },
+        automatic_tax: { enabled: false },
+        allow_promotion_codes: false,
+        submit_type: 'auto',
+        consent_collection: { terms_of_service: 'required' },
+        name_collection: { individual: { enabled: true }, business: { enabled: true } },
+        integration_identifier: 'hosted_mobile_app_0001',
+        origin_context: 'mobile_app',
+        branding_settings: {
+          background_color: '#ffffff',
+          button_color: '#6205ad',
+          font_family: 'inter',
+          border_style: 'rounded',
+          logo: { type: 'file', file: 'file_1UVKNw91yhy0NZ59W2XMbWDC' },
+        },
         payment_method_types: pm === 'ach' ? ['us_bank_account'] : pm === 'bnpl' ? ['affirm', 'afterpay_clearpay', 'klarna'] : ['card'],
         customer_email: stripeSafeEmail(statement.recipientEmail),
         line_items: [
@@ -487,6 +504,23 @@ export async function refreshPartnerStatementLinks(
     try {
       session = await stripe.checkout.sessions.create({
         mode: 'payment',
+        ui_mode: 'hosted_page',
+        billing_address_collection: 'auto',
+        phone_number_collection: { enabled: true },
+        automatic_tax: { enabled: false },
+        allow_promotion_codes: false,
+        submit_type: 'auto',
+        consent_collection: { terms_of_service: 'required' },
+        name_collection: { individual: { enabled: true }, business: { enabled: true } },
+        integration_identifier: 'hosted_mobile_app_0001',
+        origin_context: 'mobile_app',
+        branding_settings: {
+          background_color: '#ffffff',
+          button_color: '#6205ad',
+          font_family: 'inter',
+          border_style: 'rounded',
+          logo: { type: 'file', file: 'file_1UVKNw91yhy0NZ59W2XMbWDC' },
+        },
         payment_method_types: ['card'],
         customer_email: stripeSafeEmail(statement.recipientEmail),
         line_items: [

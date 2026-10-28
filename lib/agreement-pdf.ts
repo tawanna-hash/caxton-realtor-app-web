@@ -255,7 +255,7 @@ async function generateAgreementPdfBufferInner(ag: Agreement): Promise<Uint8Arra
     'Caxton Publications Inc.',
     'P.O. Box 81366',
     'Austin, Texas 78708',
-    'tawanna@realtynewsnow.app',
+    'tawanna@myrealtyline.com',
   ];
   let py = twoColY - 12;
   for (const ln of pubLines) {

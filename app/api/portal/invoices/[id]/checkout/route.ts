@@ -125,6 +125,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const sessionParams: Record<string, unknown> = {
       mode: 'payment' as const,
+      ui_mode: 'hosted_page',
+      billing_address_collection: 'auto',
+      phone_number_collection: { enabled: true },
+      automatic_tax: { enabled: false },
+      allow_promotion_codes: false,
+      submit_type: 'auto',
+      consent_collection: { terms_of_service: 'required' },
+      name_collection: { individual: { enabled: true }, business: { enabled: true } },
+      integration_identifier: 'hosted_mobile_app_0001',
+      origin_context: 'mobile_app',
+      branding_settings: {
+        background_color: '#ffffff',
+        button_color: '#6205ad',
+        font_family: 'inter',
+        border_style: 'rounded',
+        logo: { type: 'file', file: 'file_1UVKNw91yhy0NZ59W2XMbWDC' },
+      },
       payment_method_types: stripePaymentMethodTypes,
       customer: inv.stripe_customer_id ?? undefined,
       customer_email: inv.stripe_customer_id ? undefined : stripeSafeEmail(inv.bill_to_email),
@@ -174,6 +191,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       },
     };
 
+    // Saved-payment-method opt-in is only valid when a Stripe customer is attached.
+    if (sessionParams.customer) {
+      sessionParams.saved_payment_method_options = { payment_method_save: 'enabled' };
+    }
+
     if (uiMode === 'embedded') {
       sessionParams.ui_mode = 'embedded_page';
       sessionParams.return_url = `${APP_BASE_URL}/portal/invoices/${inv.id}?paid=1&session_id={CHECKOUT_SESSION_ID}`;
@@ -193,6 +215,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         const code = (firstErr as { code?: string } | null)?.code;
         if (sessionParams.customer && (code === 'resource_missing' || /no such customer/i.test(String((firstErr as Error)?.message)))) {
           delete sessionParams.customer;
+          delete sessionParams.saved_payment_method_options;
           sessionParams.customer_email = stripeSafeEmail(inv.bill_to_email);
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           session = await stripe.checkout.sessions.create(sessionParams as any);
