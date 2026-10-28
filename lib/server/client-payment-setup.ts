@@ -15,7 +15,7 @@ async function getAdvertiser(id: number): Promise<Adv | null> {
   return rows[0] ?? null;
 }
 
-export async function createClientSetupCheckout(advertiserId: number, method: 'card' | 'bank') {
+export async function createClientSetupCheckout(advertiserId: number, method: 'all' | 'card' | 'bank' = 'all') {
   const adv = await getAdvertiser(advertiserId);
   if (!adv) return { ok: false as const, status: 404, error: 'not found' };
   const stripe = getStripe();
@@ -35,7 +35,9 @@ export async function createClientSetupCheckout(advertiserId: number, method: 'c
     currency: 'usd',
     redirect_on_completion: 'never',
     customer,
-    payment_method_types: method === 'bank' ? ['us_bank_account'] : ['card'],
+    // One link, every option: cards (Apple Pay and Google Pay appear under card on supported devices),
+    // bank account (ACH) and Link. The client picks.
+    payment_method_types: method === 'bank' ? ['us_bank_account'] : method === 'card' ? ['card'] : ['card', 'us_bank_account', 'link'],
     metadata: { advertiser_id: String(adv.id), kind: 'pm_setup', method },
   } as never);
   return { ok: true as const, clientSecret: String(session.client_secret), sessionId: session.id };
@@ -59,6 +61,7 @@ export async function completeClientSetup(advertiserId: number, sessionId: strin
   } else if (pm.type === 'us_bank_account' && pm.us_bank_account) {
     mode = 'ach'; label = `Bank Account (ACH) - ${pm.us_bank_account.bank_name ?? 'US bank'}`; last4 = pm.us_bank_account.last4 ?? '';
   }
+  else if (pm.type === 'link') { mode = 'link'; label = 'Link'; last4 = ''; }
   const name = pm.billing_details?.name ?? null;
   await sql`UPDATE advertisers SET payment_mode = ${mode}, card_last4 = ${last4}, stripe_customer_id = COALESCE(${custId}::text, stripe_customer_id) WHERE id = ${advertiserId}`;
   const ag = (await sql`SELECT id FROM agreements WHERE advertiser_id = ${advertiserId} AND signed_at IS NOT NULL ORDER BY signed_at DESC LIMIT 1`) as unknown as Array<{ id: string }>;

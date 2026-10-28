@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
   if (!v.ok || v.subject.kind !== 'client') return NextResponse.json({ error: 'invalid link' }, { status: 401 });
   const body = (await req.json().catch(() => ({}))) as { method?: string };
   try {
-    const r = await createClientSetupCheckout(v.subject.id, body.method === 'card' ? 'card' : 'bank');
+    const r = await createClientSetupCheckout(v.subject.id, body.method === 'card' ? 'card' : body.method === 'bank' ? 'bank' : 'all');
     if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
     return NextResponse.json({ clientSecret: r.clientSecret, sessionId: r.sessionId });
   } catch (err) {
