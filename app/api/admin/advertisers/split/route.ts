@@ -13,13 +13,14 @@ export async function GET(req: NextRequest) {
   await ensureSchema();
   const sql = getSql();
   const id = Number(req.nextUrl.searchParams.get('id'));
-  const mags = (await sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'magazines'`) as unknown as Array<{ column_name: string }>;
-  const hot = (await sql`SELECT h.advertiser_name, m.id AS magazine_id, m.title, count(*)::int AS n FROM magazine_hotspots h JOIN magazines m ON m.id = h.magazine_id WHERE h.advertiser_id = ${id} GROUP BY 1,2,3 ORDER BY 2`).slice(0, 80);
-  const mc = await sql`SELECT segment, count(*)::int AS n FROM mailing_contacts WHERE advertiser_id = ${id} GROUP BY 1`;
-  const pml = await sql`SELECT id, created_at FROM portal_magic_links WHERE advertiser_id = ${id}`;
-  const ph = await sql`SELECT * FROM event_photos WHERE advertiser_id = ${id}`;
-  const pubCols = mags.map((c) => c.column_name).filter((c) => /pub|brand|market/i.test(c));
-  return NextResponse.json({ pubCols, hot, mc, pml, ph });
+  const out: Record<string, unknown> = {};
+  const step = async (k: string, f: () => Promise<unknown>) => { try { out[k] = await f(); } catch (e) { out[k] = `ERR ${e instanceof Error ? e.message : String(e)}`; } };
+  await step('pubCols', async () => ((await sql`SELECT column_name FROM information_schema.columns WHERE table_name = 'magazines'`) as unknown as Array<{ column_name: string }>).map((c) => c.column_name));
+  await step('hot', async () => await sql`SELECT h.advertiser_name, h.magazine_id, count(*)::int AS n FROM magazine_hotspots h WHERE h.advertiser_id = ${id} GROUP BY 1,2 ORDER BY 2`);
+  await step('mc', async () => await sql`SELECT segment, count(*)::int AS n FROM mailing_contacts WHERE advertiser_id = ${id} GROUP BY 1`);
+  await step('pml', async () => await sql`SELECT id, created_at FROM portal_magic_links WHERE advertiser_id = ${id}`);
+  await step('ph', async () => await sql`SELECT * FROM event_photos WHERE advertiser_id = ${id}`);
+  return NextResponse.json(out);
 }
 
 type Rules = { magazineIds?: number[]; segments?: string[]; invoiceTotalCents?: number; scheduleIds?: string[]; hotspotNameLike?: string };
