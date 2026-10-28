@@ -172,7 +172,7 @@ export const AGREEMENT_PATCHABLE_FIELDS = [
 ] as const;
 
 export const AGREEMENT_PUBLICATION_VALUES = new Set<NonNullable<Agreement['publication']>>([
-  'austin', 'san_antonio', 'both',
+  'austin', 'san_antonio', 'houston', 'dallas', 'both',
 ]);
 export const AGREEMENT_STATUS_VALUES = new Set<AgreementStatus>([
   'draft','proposal_sent','proposal_approved','sent','signed','active','expired','cancelled',
