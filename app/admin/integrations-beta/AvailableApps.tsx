@@ -23,12 +23,6 @@ export default function AvailableApps() {
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="mb-3 text-base font-medium text-[color:var(--ds-ink)]">Payments</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Card name="Stripe" blurb="Card and ACH payments, payment links and payouts for invoices." badge={s ? (s.stripe ? `Connected (${s.stripe_mode})` : 'Not configured') : '…'} action={<a className={A.small} href="/admin/payouts-beta">View payouts</a>} />
-        </div>
-      </section>
-      <section>
         <h2 className="mb-3 text-base font-medium text-[color:var(--ds-ink)]">Accounting software</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Card name="QuickBooks Online" blurb="Sync agreements and Stripe payments to your books." badge="Not built yet" action={<button className={A.small} disabled>Connect to QuickBooks</button>} />

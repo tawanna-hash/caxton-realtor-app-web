@@ -34,7 +34,7 @@ import { cleanPayment, invoiceRows, occurrenceGroups, plansForLines, type Paymen
 import { applyChoice } from '@/lib/agreements-v2/options';
 import { buildPlacementPatches, placementNeeds } from '@/lib/agreements-v2/placement';
 import { createDraftScheduleForAgreement } from '@/lib/agreements-v2/recurring-draft';
-import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
+import { withSurcharge } from '@/lib/payment-processing-fees';
 import { processingFeeCents } from '@/lib/payment-processing-fees';
 import { POST as liveSign } from '@/app/api/ad-sign/[token]/route';
 
@@ -145,13 +145,13 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       intro: renderIntro(meta?.intro || defaults.intro_new, ag),
       expired,
       placement: placementNeeds({ ...ag, channel } as never, lines as never),
-      card_available: isStripeConfigured() && base != null && payOpts.card,
+      card_available: false,
       card_base_cents: base,
       card_charge_cents: surcharged,
       timeline_check: !payOpts.show_schedule || !(prepay ? checkState === 'approved' : allowsCheckPayment(channel)) ? null : perService ?? checkTimeline(tlAgreement, defaults),
       annual_increase_pct: payOpts.annual_increase_pct,
       timeline_bank_invoice: !payOpts.show_schedule || prepay ? null : perService ?? checkTimeline(tlAgreement, defaults),
-      bank_now_available: isStripeConfigured() && base != null && payOpts.bank_now,
+      bank_now_available: false,
       bank_fee_cents: base != null ? processingFeeCents(base, 'ach') : null,
       bank_charge_cents: base != null ? base + processingFeeCents(base, 'ach') : null,
       bank_invoice_available: payOpts.bank_invoice && !prepay,
@@ -244,29 +244,13 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     }
 
     const mode = typeof body.paymentMode === 'string' ? body.paymentMode : '';
-    let bankIntentId: string | null = null;
+    const bankIntentId: string | null = null;
     if (mode === 'ap') {
       const sent = (await sql`SELECT 1 FROM payment_setup_requests WHERE agreement_id = ${String(id)} LIMIT 1`.catch(() => [])) as unknown[];
       if (sent.length === 0) return NextResponse.json({ error: 'Send the payment request to your accounts payable contact first.' }, { status: 400 });
     }
     if (mode === 'bank_now') {
-      if (!isStripeConfigured()) return NextResponse.json({ error: 'Bank payment is not available right now.' }, { status: 402 });
-      if (meta?.payment && meta.payment.bank_now !== true) return NextResponse.json({ error: 'Bank payment is not available for this agreement.' }, { status: 400 });
-      const piId = typeof body.bankPaymentIntentId === 'string' ? body.bankPaymentIntentId : '';
-      if (!piId) return NextResponse.json({ error: 'Please connect your bank account on the payment step.' }, { status: 402 });
-      try {
-        const pi = await getStripe().paymentIntents.retrieve(piId);
-        const expected = chargeBaseCents(ag);
-        if (pi.metadata?.agreement_id !== ag.id || !pi.payment_method_types.includes('us_bank_account') || expected == null || pi.amount !== expected + processingFeeCents(expected, 'ach')) {
-          return NextResponse.json({ error: 'That bank payment does not match this agreement. Please go back and try again.' }, { status: 402 });
-        }
-        if (!['succeeded', 'processing'].includes(pi.status)) {
-          return NextResponse.json({ error: 'Your bank payment was not completed. Please go back and try again.' }, { status: 402 });
-        }
-        bankIntentId = pi.id;
-      } catch {
-        return NextResponse.json({ error: 'We could not confirm your bank payment. Please try again.' }, { status: 402 });
-      }
+      return NextResponse.json({ error: 'Online payments are not available right now.' }, { status: 402 });
     }
     const prepayLines = (await sql`SELECT channel FROM agreement_line_items WHERE agreement_id = ${id}`.catch(() => [])) as unknown as Array<{ channel: string | null }>;
     const prepay = prepayRequired(channelOfRow(ag), prepayLines.map((l) => l.channel));
@@ -277,20 +261,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ error: 'Bank payment on invoices is not available for this agreement.' }, { status: 400 });
     }
     if (mode === 'card') {
-      // The card was charged on the Pay step through the live PaymentIntent
-      // endpoint. Only accept it if Stripe confirms that intent went through.
-      const piId = ag.stripe_payment_intent_id;
-      if (!isStripeConfigured() || !piId) {
-        return NextResponse.json({ error: 'Please enter your card on the payment step.' }, { status: 402 });
-      }
-      try {
-        const pi = await getStripe().paymentIntents.retrieve(piId);
-        if (!['succeeded', 'processing', 'requires_capture'].includes(pi.status)) {
-          return NextResponse.json({ error: 'Your card payment was not completed. Please go back and try again.' }, { status: 402 });
-        }
-      } catch {
-        return NextResponse.json({ error: 'We could not confirm your card payment. Please try again.' }, { status: 402 });
-      }
+      return NextResponse.json({ error: 'Online payments are not available right now.' }, { status: 402 });
     }
     if (mode !== 'check' && mode !== 'card' && mode !== 'bank_now' && mode !== 'bank_invoice' && mode !== 'ap') {
       return NextResponse.json({ error: 'Please choose how you would like to pay.' }, { status: 400 });

@@ -14,8 +14,6 @@ import type { getSql } from '@/lib/db';
 import type { Agreement } from '@/lib/agreements';
 import { allocateInvoiceNumber } from '@/lib/server/invoice-lifecycle';
 import { recordInvoicePayment } from '@/lib/server/invoice-payments';
-import { getStripe } from '@/lib/stripe';
-import { syncAgreementPaymentToGetPaid } from '@/lib/server/stripe-payment-ledger-sync';
 
 type Sql = ReturnType<typeof getSql>;
 
@@ -37,18 +35,7 @@ export async function ensureServiceInvoiceAfterSign(sql: Sql, ag: Agreement): Pr
 
   // Card charged at signing: build the paid receipt now (the webhook may have
   // fired before the partner existed).
-  if (ag.stripe_payment_intent_id) {
-    try {
-      const pi = await getStripe().paymentIntents.retrieve(ag.stripe_payment_intent_id);
-      if (pi.status === 'succeeded') {
-        const id = await syncAgreementPaymentToGetPaid(sql, ag, pi);
-        return id ? 'paid-receipt' : 'skipped:no-amount';
-      }
-    } catch (e) {
-      console.error('[service-invoice] card receipt failed', e instanceof Error ? e.message : e);
-    }
-    return 'skipped:card-pending';
-  }
+  if (ag.stripe_payment_intent_id) return 'skipped:card-pending';
 
   if (ag.payment_mode !== 'check') return 'skipped:awaiting-online-payment';
 

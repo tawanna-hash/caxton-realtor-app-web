@@ -12,7 +12,7 @@ import type { getSql } from '@/lib/db';
 import { getDefaults } from '@/lib/agreements-v2/settings';
 import { allowsCheckPayment } from '@/lib/ad-channels';
 import { channelOfRow, chargeBaseCents } from '@/lib/new-partner-v2/service';
-import { withSurcharge } from '@/lib/stripe';
+import { withSurcharge } from '@/lib/payment-processing-fees';
 
 export type TimelineEntry = {
   /** YYYY-MM-DD, or null for "on signing / today". */

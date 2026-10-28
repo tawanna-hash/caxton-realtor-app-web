@@ -202,7 +202,6 @@ export const GET_PAID_NAV: AdminNavGroup[] = [
     links: [
       { label: 'Billing', href: '/admin/billing-hub', description: 'Agreement, payment methods, invoices and activity for one partner' },
       { label: 'Invoices', href: '/admin/billing-hub/invoices', description: 'Every invoice across all partners', parent: '/admin/billing-hub' },
-      { label: 'Payouts', href: '/admin/payouts-beta', description: 'Stripe payouts, fees, transactions and deposit IDs' },
     ],
   },
   {
@@ -223,7 +222,6 @@ export const GET_PAID_NAV: AdminNavGroup[] = [
     label: 'Settings',
     links: [
       { label: 'Payment settings', href: '/admin/get-paid/payment-settings', description: 'Checkout options and processing fees' },
-      { label: 'Payment options', href: '/admin/integrations-beta/payment-options', description: 'Every payment method available in Stripe' },
       { label: 'Integrations', href: '/admin/integrations-beta', description: 'Stripe, QuickBooks and Gmail status' },
       { label: 'API keys', href: '/admin/integrations-beta/api-keys', description: 'Generate and revoke API keys', parent: '/admin/integrations-beta' },
       { label: 'Business details', href: '/admin/settings-beta/business-details', description: 'Business name, address, brand and billing settings' },
@@ -243,7 +241,6 @@ const GET_PAID_PREFIXES = [
   '/admin/billing-hub',
   '/admin/billing',
   '/admin/invoices',
-  '/admin/payouts-beta',
   '/admin/services-beta',
   '/admin/reports-beta',
   '/admin/integrations-beta',

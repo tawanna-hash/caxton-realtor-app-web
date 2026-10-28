@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { query } from '@/lib/server/db/neon';
-import { getStripe, isStripeConfigured, getPublishableKey } from '@/lib/stripe';
 import { DEAL_PRICE_CENTS, EXTENSION_PRICE_CENTS, FREE_DEAL_LIMIT } from '@/lib/closing-time-lifecycle';
 import { logDealEvent } from '@/lib/server/closing-time-events';
 
@@ -54,30 +54,13 @@ export async function reserveDeal(realtorId: string, email: string, dealId: stri
   return { ok: true };
 }
 
-export async function createDealPayment(realtorId: string, email: string, dealId: string) {
-  if (!isStripeConfigured()) throw new Error('Payments are not set up yet.');
-  const publishableKey = getPublishableKey();
-  if (!publishableKey) throw new Error('Payments are not set up yet.');
-  const state = await billingState(realtorId, email);
-  if (!state.paymentRequired) throw new Error('This deal does not need a payment.');
-  const intent = await getStripe().paymentIntents.create({
-    amount: DEAL_PRICE_CENTS, currency: 'usd', automatic_payment_methods: { enabled: true },
-    description: 'Closing Time deal: covers one deal from start to finish', receipt_email: email,
-    metadata: { product: 'closing_time_deal', realtor_id: realtorId, deal_id: dealId },
-  }, { idempotencyKey: `ct-deal-${realtorId}-${dealId}` });
-  return { clientSecret: intent.client_secret, publishableKey, amountCents: DEAL_PRICE_CENTS, paymentIntentId: intent.id };
+export async function createDealPayment(_realtorId: string, _email: string, _dealId: string): Promise<never> {
+  throw new Error('Payments are not set up yet.');
 }
 
-/** Confirms with Stripe that the payment went through before the deal is recorded as paid. */
-export async function confirmDealPayment(realtorId: string, dealId: string, paymentIntentId: string): Promise<boolean> {
-  await ensure();
-  const intent = await getStripe().paymentIntents.retrieve(paymentIntentId);
-  const ok = intent.status === 'succeeded' && intent.amount === DEAL_PRICE_CENTS
-    && intent.metadata?.product === 'closing_time_deal' && intent.metadata?.realtor_id === realtorId && intent.metadata?.deal_id === dealId;
-  if (!ok) return false;
-  await query(`INSERT INTO closing_time_deal_ledger (realtor_id, deal_id, kind, payment_intent_id, amount_cents) VALUES ($1,$2,'paid',$3,$4) ON CONFLICT DO NOTHING`, [realtorId, dealId, paymentIntentId, DEAL_PRICE_CENTS]);
-  await logDealEvent(realtorId, dealId, 'payment', 'Deal opened. $12.00 paid by card.');
-  return true;
+/** Online payments are removed, so no deal payment can be confirmed. */
+export async function confirmDealPayment(_realtorId: string, _dealId: string, _paymentIntentId: string): Promise<boolean> {
+  return false;
 }
 
 /** The first extension on a deal is free. Each one after that costs $5. Owner accounts are exempt. */
@@ -85,27 +68,10 @@ export function extensionNeedsPayment(email: string, extensionsSoFar: number): b
   return !isBillingExempt(email) && extensionsSoFar >= 1;
 }
 
-export async function createExtensionPayment(realtorId: string, email: string, dealId: string, extensionsSoFar: number) {
-  if (!isStripeConfigured()) throw new Error('Payments are not set up yet.');
-  const publishableKey = getPublishableKey();
-  if (!publishableKey) throw new Error('Payments are not set up yet.');
-  if (!extensionNeedsPayment(email, extensionsSoFar)) throw new Error('This extension does not need a payment.');
-  const intent = await getStripe().paymentIntents.create({
-    amount: EXTENSION_PRICE_CENTS, currency: 'usd', automatic_payment_methods: { enabled: true },
-    description: 'Closing Time deal extension: 14 more days', receipt_email: email,
-    metadata: { product: 'closing_time_extension', realtor_id: realtorId, deal_id: dealId },
-  });
-  return { clientSecret: intent.client_secret, publishableKey, amountCents: EXTENSION_PRICE_CENTS, paymentIntentId: intent.id };
+export async function createExtensionPayment(_realtorId: string, _email: string, _dealId: string, _extensionsSoFar: number): Promise<never> {
+  throw new Error('Payments are not set up yet.');
 }
 
-export async function confirmExtensionPayment(realtorId: string, dealId: string, paymentIntentId: string): Promise<boolean> {
-  await ensure();
-  const intent = await getStripe().paymentIntents.retrieve(paymentIntentId);
-  const ok = intent.status === 'succeeded' && intent.amount === EXTENSION_PRICE_CENTS
-    && intent.metadata?.product === 'closing_time_extension' && intent.metadata?.realtor_id === realtorId && intent.metadata?.deal_id === dealId;
-  if (!ok) return false;
-  const inserted = await query(`INSERT INTO closing_time_extension_ledger (payment_intent_id, realtor_id, deal_id, amount_cents) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING payment_intent_id`, [paymentIntentId, realtorId, dealId, EXTENSION_PRICE_CENTS]);
-  if (inserted.length === 0) return false; // already used for an earlier extension
-  await logDealEvent(realtorId, dealId, 'payment', 'Deal extended 14 days. $5.00 paid by card.');
-  return true;
+export async function confirmExtensionPayment(_realtorId: string, _dealId: string, _paymentIntentId: string): Promise<boolean> {
+  return false;
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 // app/admin/billing/_components/AgreementDrawer.tsx
@@ -46,7 +47,7 @@ import {
 import { formatPhone, formatPhoneInput } from "@/lib/format-phone";
 import { sparsePatch } from "@/lib/sparse-patch";
 import { DrawerShell, Section, Field } from "./DrawerShell";
-import { AddCardDrawer, type SavedCardOnFile } from "./AddCardDrawer";
+type SavedCardOnFile = { cardType: string | null; cardLast4: string | null; cardExpiration: string | null; paymentMethodId?: string | null; agreementId?: string; customerId?: string | null };
 import {
   cardExpirationStatus,
   formatCardExpiration,
@@ -2350,27 +2351,6 @@ export function AgreementDrawer({
         </button>)}
       </div>
 
-      {showAddCard && existing?.id && (
-        <AddCardDrawer
-          agreementId={existing.id}
-          agreementLabel={`${existing.advertiser_name ?? existing.company_name ?? "Partner"}${existing.type ? ` \u00b7 ${existing.type}` : ""}`}
-          currentCard={{
-            cardType: stripeCard.cardType,
-            cardLast4: stripeCard.cardLast4,
-            cardExpiration: stripeCard.cardExpiration,
-          }}
-          onClose={() => setShowAddCard(false)}
-          onSaved={(card) => {
-            setSavedCard(card);
-            // Keep the reference-metadata fields consistent with the card that
-            // was actually saved (the confirm route already persisted these
-            // columns server-side; this only refreshes what's on screen).
-            if (card.cardType) upd("card_type", card.cardType);
-            if (card.cardLast4) upd("card_number_last4", card.cardLast4);
-            if (card.cardExpiration) upd("card_expiration", card.cardExpiration);
-          }}
-        />
-      )}
     </DrawerShell>
   );
 }

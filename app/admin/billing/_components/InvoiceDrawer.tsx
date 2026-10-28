@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 // app/admin/billing/_components/InvoiceDrawer.tsx
@@ -16,7 +17,7 @@ import type { AdvertiserOption } from './types';
 import { ProductServiceSearch } from './ProductServiceSearch';
 import { sparsePatch } from '@/lib/sparse-patch';
 import { RecurringScheduleDrawer } from '@/app/admin/ar/RecurringScheduleDrawer';
-import { AddCardDrawer, type SavedCardOnFile } from './AddCardDrawer';
+type SavedCardOnFile = { cardType: string | null; cardLast4: string | null; cardExpiration: string | null; paymentMethodId: string | null; agreementId: string; customerId: string | null };
 import {
   cardExpirationStatus,
   cardExpirationWarning,
@@ -649,22 +650,6 @@ export function InvoiceDrawer({
 
       {/* Card capture stacks ABOVE this drawer (z-[60] vs z-50) so the invoice
           being composed keeps all of its in-progress state. */}
-      {showAddCard && cardTargetAgreement && (
-        <AddCardDrawer
-          agreementId={cardTargetAgreement.id}
-          agreementLabel={`${cardTargetAgreement.advertiser_name ?? cardTargetAgreement.company_name ?? 'Partner'}${cardTargetAgreement.type ? ` \u00b7 ${cardTargetAgreement.type}` : ''}`}
-          currentCard={{
-            cardType: cardTargetAgreement.card_type ?? null,
-            cardLast4: cardTargetAgreement.card_number_last4 ?? null,
-            cardExpiration: cardTargetAgreement.card_expiration ?? null,
-          }}
-          onClose={() => setShowAddCard(false)}
-          onSaved={(card) => {
-            setAddedCard(card);
-            setAutoChargeWarning(null);
-          }}
-        />
-      )}
     </DrawerShell>
   );
 }

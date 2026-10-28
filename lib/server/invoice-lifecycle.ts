@@ -14,7 +14,6 @@
 // and recalculation happen atomically with the caller's own writes.
 
 import type { PoolClient } from '@neondatabase/serverless';
-import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 
 export class InvoiceLifecycleError extends Error {
@@ -125,11 +124,8 @@ export async function invalidateInvoiceCheckoutSessions(
     [JSON.stringify([{ invoiceId }])],
   );
 
-  const stripeConfigured = isStripeConfigured();
-  const stripe = stripeConfigured ? getStripe() : null;
-
   for (const row of openSessions.rows) {
-    const terminal = await expireStripeSession(stripe, row.stripe_checkout_session_id);
+    const terminal = await expireStripeSession(row.stripe_checkout_session_id);
     if (terminal) {
       await client.query(
         `UPDATE invoice_checkout_sessions
@@ -151,7 +147,7 @@ export async function invalidateInvoiceCheckoutSessions(
   }
 
   for (const row of statementSessions.rows) {
-    const terminal = await expireStripeSession(stripe, row.stripe_checkout_session_id);
+    const terminal = await expireStripeSession(row.stripe_checkout_session_id);
     if (terminal) {
       await client.query(
         `UPDATE statement_payment_sessions SET status = 'expired' WHERE id = $1 AND status = 'open'`,
@@ -175,45 +171,16 @@ export async function invalidateStatementCheckoutSessions(client: PoolClient, in
       FOR UPDATE`,
     [JSON.stringify([{ invoiceId }])],
   );
-  const stripe = isStripeConfigured() ? getStripe() : null;
   for (const row of rows.rows) {
-    if (await expireStripeSession(stripe, row.stripe_checkout_session_id)) {
+    if (await expireStripeSession(row.stripe_checkout_session_id)) {
       await client.query(`UPDATE statement_payment_sessions SET status = 'expired' WHERE id = $1 AND status = 'open'`, [row.id]);
     }
   }
 }
 
-/**
- * Expire a Stripe Checkout Session and return whether the LOCAL record can
- * safely be marked terminal. Returns true when Stripe confirms the session
- * is expired/complete (including "already expired/complete" errors), and
- * false on any transient/ambiguous failure (network, auth, rate limit) \u2014
- * those must NOT be treated as success.
- */
-async function expireStripeSession(
-  stripe: ReturnType<typeof getStripe> | null,
-  sessionId: string | null,
-): Promise<boolean> {
-  if (!sessionId) return true;
-  if (!stripe) return false;
-  try {
-    const session = await stripe.checkout.sessions.expire(sessionId);
-    return session.status === 'expired' || session.status === 'complete';
-  } catch (err) {
-    const stripeErr = err as { code?: string; type?: string; statusCode?: number };
-    // Stripe returns an invalid_request_error / resource_missing-ish error
-    // when the session is already expired or already paid \u2014 both are
-    // genuinely terminal, so it's safe to mark local state expired.
-    if (stripeErr?.type === 'StripeInvalidRequestError') {
-      try {
-        const existing = await stripe.checkout.sessions.retrieve(sessionId);
-        return existing.status === 'expired' || existing.status === 'complete';
-      } catch {
-        return false;
-      }
-    }
-    return false;
-  }
+/** Online payments are removed, so any open checkout session can be closed locally. */
+async function expireStripeSession(_sessionId: string | null): Promise<boolean> {
+  return true;
 }
 
 /**

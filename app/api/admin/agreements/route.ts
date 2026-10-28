@@ -18,7 +18,6 @@ import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
 import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 import type { Agreement } from '@/lib/agreements';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
-import { ensurePaymentSetupRequestsSchema } from '@/lib/server/payment-setup-reminders';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
@@ -34,7 +33,6 @@ export async function GET() {
 
   try {
     await ensureSchema();
-    await ensurePaymentSetupRequestsSchema();
     const sql = getSql();
     // Use a single LEFT JOIN to invoices with conditional SUMs instead of
     // two correlated subqueries per agreement row (which were running N*2

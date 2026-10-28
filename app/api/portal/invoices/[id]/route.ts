@@ -5,7 +5,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
-import { isStripeConfigured, getPublishableKey } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,8 +32,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     void _drop;
     return NextResponse.json({
       invoice,
-      stripe_configured: isStripeConfigured(),
-      stripe_publishable_key: getPublishableKey(),
+      stripe_configured: false,
+      stripe_publishable_key: null,
     });
   } catch (err) {
     return NextResponse.json(

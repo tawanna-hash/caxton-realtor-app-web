@@ -10,7 +10,6 @@
 // Step 5: Terms & Sign
 
 import { useEffect, useRef, useState } from 'react';
-import StripePaymentBlock, { type StripePaymentHandle } from './StripePaymentBlock';
 import SignaturePad, { type SignatureValue } from './SignaturePad';
 import { useRouter } from 'next/navigation';
 import type { Agreement } from '@/lib/agreements';
@@ -440,6 +439,8 @@ type SignWizardLineItem = {
   meta: Record<string, unknown>;
   preferred_send_dates: string[] | null;
 };
+
+type StripePaymentHandle = { confirm(): Promise<{ paymentIntentId: string } | { skipped: true }>; isReady: boolean };
 
 export default function SignWizard({
   terms,
@@ -2019,13 +2020,7 @@ export default function SignWizard({
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
                   Secure Card Payment
                 </p>
-                <StripePaymentBlock
-                  ref={stripeRef}
-                  token={token}
-                  adRateCents={chargeBaseCents}
-                  refreshKey={`${adSize}|${frequency}|${chargeBaseCents}`}
-                  onReadyChange={setStripeReady}
-                />
+                <p className="text-sm text-gray-700">Online card payment is not available right now.</p>
                 <p className="text-[11px] text-gray-500 mt-2">
                   {channel === 'print' ? (
                     <>When you click <strong>Authorize Card</strong> below, your card is authorized and charged for the first issue. Your card is securely saved for future monthly issue charges. You’ll review and sign the terms on the next step.</>

@@ -21,10 +21,6 @@
       "schedule": "0 * * * *"
     },
     {
-      "path": "/api/cron/refresh-payment-links",
-      "schedule": "20 * * * *"
-    },
-    {
       "path": "/api/cron/scrape-unlockmls",
       "schedule": "0 11 * * *"
     },
@@ -223,10 +219,6 @@
     {
       "path": "/api/cron/closing-time-backups",
       "schedule": "0 9 1 * *"
-    },
-    {
-      "path": "/api/cron/payment-setup-reminders",
-      "schedule": "0 15 * * *"
     },
     {
       "path": "/api/cron/indexnow",

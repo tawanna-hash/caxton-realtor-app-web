@@ -16,7 +16,7 @@ import { deleteDraft, duplicateDraft, getDraft, listDrafts, saveDraft, setDraftK
 import { docDates, docTotalCents, type BuilderDoc, type Catalog } from '@/lib/agreements-v2/builder-doc';
 import { getDefaults } from '@/lib/agreements-v2/settings';
 import { cleanBilling, cleanPayment, invoiceRows, planServiceBilling, summarize, termMonths } from '@/lib/agreements-v2/service-billing';
-import { withSurcharge } from '@/lib/stripe';
+import { withSurcharge } from '@/lib/payment-processing-fees';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

@@ -8,7 +8,6 @@ const TILES: Array<{ title: string; items: Array<{ label: string; href: string; 
     title: 'Payments',
     items: [
       { label: 'Payment settings', href: '/admin/get-paid/payment-settings', text: 'Processing fees and Stripe Checkout options' },
-      { label: 'Payment options', href: '/admin/integrations-beta/payment-options', text: 'Every payment method available in Stripe' },
       { label: 'Integrations', href: '/admin/integrations-beta', text: 'Stripe, QuickBooks and Gmail status' },
       { label: 'API keys', href: '/admin/integrations-beta/api-keys', text: 'Generate and revoke API keys' },
     ],

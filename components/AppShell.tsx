@@ -97,7 +97,7 @@ function getLastFrontendRoute(): string {
 }
 
 // Beta pages run without the Quick Links strip.
-const BETA_PREFIXES = ['/admin/dashboard-beta', '/admin/billing-hub', '/admin/agreements', '/admin/payouts-beta', '/admin/services-beta', '/admin/reports-beta', '/admin/integrations-beta', '/admin/settings-beta', '/admin/bundles-beta'];
+const BETA_PREFIXES = ['/admin/dashboard-beta', '/admin/billing-hub', '/admin/agreements', '/admin/services-beta', '/admin/reports-beta', '/admin/integrations-beta', '/admin/settings-beta', '/admin/bundles-beta'];
 function isBetaPath(p: string | null) { return !!p && BETA_PREFIXES.some((x) => p === x || p.startsWith(x + '/')); }
 
 export default function AppShell({

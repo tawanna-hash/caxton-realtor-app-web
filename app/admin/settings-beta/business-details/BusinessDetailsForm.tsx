@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -79,7 +80,7 @@ export default function BusinessDetailsForm() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <div className="flex h-24 w-40 items-center justify-center rounded-[10px] bg-[color:var(--ds-page)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              { }
               {d.logo ? <img src={d.logo} alt="Business logo" className="max-h-20 max-w-36 object-contain" /> : <span className="text-xs text-[color:var(--ds-body)]">No logo</span>}
             </div>
             <label className={`${A.small} mt-2 cursor-pointer`}>Upload logo<input type="file" accept="image/png,image/jpeg" className="sr-only" onChange={(e) => onLogo(e.target.files?.[0])} /></label>
@@ -95,7 +96,7 @@ export default function BusinessDetailsForm() {
           </div>
           <div className="rounded-[10px] border border-dashed border-[color:var(--ds-line)] p-3" style={{ background: d.colors[1] }}>
             <div className="rounded-[8px] bg-white p-3">
-              {d.logo && /* eslint-disable-next-line @next/next/no-img-element */ <img src={d.logo} alt="" className="mb-2 h-6 object-contain" />}
+              {d.logo &&   <img src={d.logo} alt="" className="mb-2 h-6 object-contain" />}
               <div className="mb-2 h-0.5 w-16" style={{ background: d.colors[0] }} />
               {[0, 1, 2].map((i) => <div key={i} className="mb-1.5 flex justify-between rounded bg-[color:var(--ds-page)] px-2 py-1.5 text-[10px]"><span>Line item</span><span>$</span></div>)}
               <div className="mt-2 ml-auto h-4 w-16 rounded-full" style={{ background: d.colors[0] }} />
@@ -124,7 +125,6 @@ export default function BusinessDetailsForm() {
 
       <section className={SECTION}>
         <Head title="Bank account information" sub="Payouts are deposited to the bank account connected in Stripe." />
-        <a href="/admin/payouts-beta" className={A.primary}>View payouts</a>
       </section>
     </div>
   );

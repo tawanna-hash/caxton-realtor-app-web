@@ -18,7 +18,6 @@ import {
   syncAgreementToLocationsAndStaff,
 } from '@/lib/server/billing-crm-sync';
 import { notifyAgreementSigned } from '@/lib/server/agreement-signed-notify';
-import { ensurePaymentSetupRequestsSchema } from '@/lib/server/payment-setup-reminders';
 import { rateLimit } from '@/lib/server/rate-limit';
 import { ApiError } from '@/lib/server/error';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
@@ -206,7 +205,6 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
 
     // ACH must be connected, pending verification, or handed to accounts payable before signing.
     if (paymentChoice === 'ACH') {
-      await ensurePaymentSetupRequestsSchema();
       const ok = (await sql`
         SELECT 1 FROM agreements a
          WHERE a.id = ${id}
@@ -222,7 +220,6 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
 
     // A card that is not entered now must be handed to accounts payable.
     if (paymentChoice === 'Credit Card' && typeof body.stripePaymentIntentId !== 'string') {
-      await ensurePaymentSetupRequestsSchema();
       const ok = (await sql`
         SELECT 1 FROM payment_setup_requests r WHERE r.agreement_id = ${String(id)} LIMIT 1`) as unknown[];
       if (ok.length === 0) {

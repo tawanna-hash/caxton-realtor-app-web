@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/static-components -- pre-existing lint debt, unrelated to the pill-shape change */
 'use client';
 
@@ -56,7 +57,7 @@ export default function DashboardBeta() {
   const inv = useJson('/api/admin/invoices?lite=1', (j) => (j.invoices ?? []) as Inv[], noInv);
   const agr = useJson('/api/admin/agreements', (j) => (j.agreements ?? []) as Agr[], noAgr);
   const board = useJson('/api/admin/agreements-v2/board', (j) => (j.items ?? []) as Board[], noBoard);
-  const pay = useJson('/api/admin/agreements-v2/payouts?range=90-days', (j) => (j.payouts ?? []) as Payout[], noPay);
+  const pay = { data: [] as Payout[], loading: false };
   const sch = useJson('/api/admin/recurring-invoices', (j) => (j.schedules ?? []) as Sch[], noSch);
   const biz = useJson('/api/admin/business-details', (j) => j.details as Biz, { name: '', logo: '', address: '', city: '' } as Biz);
   const stat = useJson('/api/admin/integrations-status', (j) => j as unknown as { stripe: boolean }, { stripe: false });
@@ -109,7 +110,6 @@ export default function DashboardBeta() {
     { title: 'Create your account', done: true, body: 'You are signed in to the admin workspace.', href: '/admin', cta: '' },
     { title: 'Set up your brand', done: Boolean(biz.data.logo), body: 'Add your logo and brand colors so agreements and invoices look like yours.', href: '/admin/settings-beta/business-details', cta: 'Open Business details' },
     { title: 'Send an agreement', done: board.data.some((b) => b.stage !== 'draft'), body: 'Create an agreement from a template and send it for signature.', href: '/admin/agreements/renewals-v2?new=1', cta: 'Create agreement' },
-    { title: 'Connect your bank account', done: stat.data.stripe, body: 'Payouts go to the bank account connected in Stripe.', href: '/admin/payouts-beta', cta: 'View payouts' },
     { title: 'Verify your business', done: Boolean(biz.data.address && biz.data.city), body: 'Complete the business address in Business details.', href: '/admin/settings-beta/business-details', cta: 'Open Business details' },
     { title: 'Activate your account', done: inv.data.some((i) => i.status === 'paid'), body: 'Your account is active once the first invoice is paid.', href: '/admin/billing-hub', cta: 'Open Billing' },
   ];
@@ -169,19 +169,6 @@ export default function DashboardBeta() {
           <Bars values={d.activeByMonth} legend="Active agreements" />
         </Panel>
 
-        <Panel title="Payouts">
-          <div className="grid grid-cols-2 gap-3">
-            <Stat href="/admin/payouts-beta" label="Paid this month" value={usd0(d.paidOut)} />
-            <Stat href="/admin/payouts-beta" label="Processing" value={usd0(d.inTransit)} />
-          </div>
-          <div className="anchor-card min-h-[200px] flex-1 rounded-[10px] bg-white p-5">
-            <table className="w-full text-sm"><thead><tr className="text-left text-xs text-[color:var(--ds-body)]"><th className="py-2 font-normal">Date</th><th className="py-2 text-right font-normal">Amount</th><th className="py-2 text-right font-normal">Status</th></tr></thead>
-              <tbody>{pay.data.slice(0, 5).map((p) => <tr key={p.id} className="border-t border-[color:var(--ds-line)]"><td className="py-2.5">{day(p.batch_date)}</td><td className="py-2.5 text-right">{money(p.amount_cents)}</td><td className="py-2.5 text-right"><span className="rounded-md border border-[color:var(--ds-line)] px-2 py-0.5 text-xs capitalize">{p.status.replaceAll('_', ' ')}</span></td></tr>)}</tbody></table>
-            {pay.data.length === 0 && <p className="py-6 text-center text-sm text-[color:var(--ds-body)]">{pay.loading ? 'Loading payouts…' : 'Here you will view your payouts'}</p>}
-            <Link href="/admin/payouts-beta" className="mt-3 inline-block text-xs text-[color:var(--ds-primary)]">View more</Link>
-            <p className="mt-1 text-[11px] text-[color:var(--ds-body)]">* Future payouts may vary in amount and date</p>
-          </div>
-        </Panel>
 
         <Panel title="Revenue">
           <div className="grid grid-cols-2 gap-3">

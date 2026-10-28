@@ -84,3 +84,8 @@ export function paymentMethodLabel(method: InvoicePaymentMethod): string {
   return INVOICE_PAYMENT_METHODS.find((option) => option.value === method)?.label
     ?? 'Electronic payment';
 }
+
+/** Apply the credit-card processing fee (editable in Payment settings; default 3%). */
+export function withSurcharge(amountCents: number): number {
+  return Math.round(amountCents) + processingFeeCents(amountCents, 'card');
+}

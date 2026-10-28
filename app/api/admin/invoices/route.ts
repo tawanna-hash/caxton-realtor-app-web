@@ -19,12 +19,6 @@ import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 import { withNeonTransaction } from '@/lib/server/db/neon';
 import { INVOICE_NUMBER_START, allocateInvoiceNumberWithClient, nextDocumentNumber } from '@/lib/server/invoice-lifecycle';
-import {
-  appendInvoiceAudit,
-  autoChargeInvoice,
-  resolveCardOnFile,
-  type ResolvedCardOnFile,
-} from '@/lib/server/invoice-auto-charge';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -256,16 +250,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     // invoice is created as 'sent' and then marked 'paid' by the recorded
     // payment. Resolved before the insert so a partner with no saved card
     // simply falls back to the normal draft/manual behaviour.
-    let card: ResolvedCardOnFile | null = null;
-    let autoChargeError: string | null = null;
-    if (autoChargeRequested) {
-      card = await resolveCardOnFile({ advertiserId, agreementId });
-      if (!card) {
-        autoChargeError = agreementId
-          ? 'No saved card on the linked agreement — invoice created without charging.'
-          : 'No saved card on file for this partner — invoice created without charging.';
-      }
-    }
+    const card: null = null;
+    const autoChargeError: string | null = autoChargeRequested
+      ? 'Automatic card charging is no longer available — invoice created without charging.'
+      : null;
     const effectiveStatus = card ? 'sent' : status;
 
     const issuedAt =
@@ -319,33 +307,6 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     revalidateInvoiceViews(invoice?.id as string | undefined);
 
     const invoiceId = invoice?.id as string | undefined;
-    if (invoiceId && card) {
-      const charge = await autoChargeInvoice({
-        invoiceId,
-        invoiceNumber: (invoice?.number as string | null | undefined) ?? null,
-        totalCents: Number(invoice?.total_cents ?? amountCents + taxCents),
-        card,
-        adminEmail: admin.email ?? null,
-      });
-      await appendInvoiceAudit(invoiceId, {
-        event: charge.ok ? 'invoice_auto_charge_succeeded' : 'invoice_auto_charge_failed',
-        user_email: admin.email ?? null,
-        details: charge.ok
-          ? (charge.pending
-              ? `Bank payment submitted from account on file \u2014 clears in about 4 business days \u2014 payment intent ${charge.paymentIntentId}`
-              : `Charged card on file \u2014 payment intent ${charge.paymentIntentId}`)
-          : charge.error,
-      }).catch(() => { /* audit is best-effort; never fail a created invoice */ });
-      if (!charge.ok) autoChargeError = charge.error;
-      captureServerEvent(
-        charge.ok ? 'invoice_auto_charge_succeeded' : 'invoice_auto_charge_failed',
-        admin?.email ?? 'server',
-        { surface: 'admin_invoices', invoice_id: invoiceId, detail: charge.ok ? undefined : charge.error },
-      );
-      await flushServerEvents();
-      revalidateInvoiceViews(invoiceId);
-    }
-
     // The charge is deliberately non-fatal: a declined card must still leave a
     // usable invoice behind, with a warning the admin can act on.
     const fresh = invoiceId

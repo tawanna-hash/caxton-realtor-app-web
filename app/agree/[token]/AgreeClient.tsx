@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import BillingTimeline, { type TimelineView } from '@/components/anchor/TimelineView';
-import StripePaymentBlock, { type StripePaymentHandle } from '@/app/admin/billing/sign/[token]/StripePaymentBlock';
+type StripePaymentHandle = { confirm: () => Promise<{ ok: boolean; error?: string; paymentIntentId?: string }> };
+// Online payments are removed; the card/bank sections never render.
+ 
+function StripePaymentBlock(_props: Record<string, unknown>) { return null; }
 
 type Fields = Record<string, string>;
 type PlacementNeed = { line_no: number; label: string; channel: 'email' | 'app'; start_date: string | null; preferred_send_dates: string[] };
@@ -177,7 +180,7 @@ export default function AgreeClient({ token }: { token: string }) {
       try {
         const r = await bankRef.current.confirm();
         if ('skipped' in r) throw new Error('The bank form did not load. Please reload the page.');
-        setBankPi(r.paymentIntentId);
+        setBankPi(r.paymentIntentId ?? null);
         setStep(2);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Your bank payment could not be started.');
