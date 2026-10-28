@@ -128,10 +128,12 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       // Reuse if still chargeable
       try {
         const existing = await stripe.paymentIntents.retrieve(piId);
+        const cardOnly = existing.payment_method_types.length > 0 && existing.payment_method_types.every((t) => t === 'card' || t === 'link');
         if (
+          cardOnly && (
           existing.status === 'requires_payment_method' ||
           existing.status === 'requires_confirmation' ||
-          existing.status === 'requires_action'
+          existing.status === 'requires_action')
         ) {
           // Update amount if it changed (e.g. client picked a different package mid-flow)
           if (existing.amount !== totalCents) {

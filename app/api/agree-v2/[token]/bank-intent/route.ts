@@ -41,8 +41,8 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ token: st
     if (!ag || ag.is_renewal) return NextResponse.json({ error: 'not found' }, { status: 404 });
     if (ag.signed_at) return NextResponse.json({ error: 'This agreement is already signed.' }, { status: 409 });
     const meta = await getAgreementMeta(ag.id, sql);
-    if (meta?.payment?.bank_now !== true) return NextResponse.json({ error: 'Bank payment is not available for this agreement.' }, { status: 400 });
-    if ((meta.options?.length ?? 0) > 1) return NextResponse.json({ error: 'Please choose a package first.' }, { status: 400 });
+    if (meta?.payment && meta.payment.bank_now !== true) return NextResponse.json({ error: 'Bank payment is not available for this agreement.' }, { status: 400 });
+    if ((meta?.options?.length ?? 0) > 1) return NextResponse.json({ error: 'Please choose a package first.' }, { status: 400 });
     const base = chargeBaseCents(ag);
     if (!base || base <= 0) return NextResponse.json({ error: 'Nothing is due now on this agreement.' }, { status: 400 });
 
