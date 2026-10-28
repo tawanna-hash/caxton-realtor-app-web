@@ -124,7 +124,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       ad_size: ag.ad_size,
       frequency: ag.frequency,
       rate_cents: ag.ad_rate_cents,
-      total_cents: totalCents(ag),
+      total_cents: channel !== 'print' && (ag.lines_total ?? 0) === 0 && (ag.amount_cents ?? 0) > 0 ? ag.amount_cents : totalCents(ag),
       start_date: ag.start_date,
       end_date: ag.end_date,
       needs_full_form: needsFullForm(ag),

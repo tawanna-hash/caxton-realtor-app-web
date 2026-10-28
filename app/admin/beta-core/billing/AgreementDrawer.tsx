@@ -937,7 +937,8 @@ export function AgreementDrawer({
       const res = await fetch(`/api/admin/agreements/${id}/sign-link`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const { url } = await res.json();
-      const u = String(url) + (String(url).includes("?") ? "&" : "?") + "preview=1";
+      const base = String(url).replace("/admin/billing/sign/", "/agree/");
+      const u = base + (base.includes("?") ? "&" : "?") + "preview=1";
       if (w) w.location.href = u; else window.open(u, "_blank");
     } catch (e) {
       if (w) w.close();
