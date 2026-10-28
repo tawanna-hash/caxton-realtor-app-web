@@ -135,7 +135,7 @@ export default function StatusBoard() {
                 </td>
                 <td className="text-[color:var(--ds-ink)]">{i.kind === 'renewal' ? 'Renewal' : 'New partner'}</td>
                 <td>
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STAGE_STYLE[i.stage]}`}>{STAGE_LABEL[i.stage]}</span>
+                  <span className={`rounded-md px-2.5 py-0.5 text-xs font-medium ${STAGE_STYLE[i.stage]}`}>{STAGE_LABEL[i.stage]}</span>
                   <div className="mt-1 text-xs text-[color:var(--ds-body)]">{i.stage === 'signed' ? day(i.signed_at) : day(i.last_activity_at)}</div>
                 </td>
                 <td className="text-[color:var(--ds-ink)]">{money(i.rate_cents)}</td>

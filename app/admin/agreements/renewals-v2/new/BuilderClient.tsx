@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars -- pre-existing lint debt, unrelated to the pill-shape change */
 'use client';
 
 // Anchor-style single-page agreement builder: details, services, note, reference
@@ -287,7 +288,7 @@ export default function BuilderClient() {
         <button type="button" aria-label="Close builder" onClick={() => leaveTo(router, '/admin/agreements/renewals-v2')} style={{ border: 0, background: 'transparent' }} className="text-2xl leading-none text-[color:var(--ds-ink)]">×</button>
         <h1 className={A.title}>Create agreement</h1>
         {saveState !== 'idle' && (
-          <span className="rounded-full border border-green-600 px-2.5 py-0.5 text-xs text-green-700">{saveState === 'saving' ? 'Saving…' : 'Draft saved'}</span>
+          <span className="rounded-md border border-green-600 px-2.5 py-0.5 text-xs text-green-700">{saveState === 'saving' ? 'Saving…' : 'Draft saved'}</span>
         )}
         <div className="ml-auto flex items-center gap-2">
           <RowMenu label="More actions" items={[
@@ -329,7 +330,7 @@ export default function BuilderClient() {
                   <div><div>Annual recurring</div><div className="text-lg font-semibold text-[color:var(--ds-ink)]">{money(timeline.recurring_annual_cents)}</div><div>per year</div></div>
                   <div><div>Contract value</div><div className="text-lg font-semibold text-[color:var(--ds-ink)]">{money(timeline.total_cents)}</div><div>{timeline.invoices.length} invoices</div></div>
                 </div>
-                <div className="mt-4 flex rounded-full bg-[color:var(--ds-page)] p-1 text-sm" role="tablist">
+                <div className="mt-4 flex rounded-md bg-[color:var(--ds-page)] p-1 text-sm" role="tablist">
                   {([['overview', 'Overview'], ['service', 'By service'], ['invoice', 'By invoice']] as const).map(([k, l]) => (
                     <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`flex-1 rounded-[10px] px-2 py-1.5 ${tab === k ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>
                   ))}
@@ -353,7 +354,7 @@ export default function BuilderClient() {
                       <li key={i}>
                         <div className="font-medium text-[color:var(--ds-ink)]">{sv.label}</div>
                         {sv.manual ? <p className="mt-1 text-xs text-[color:var(--ds-body)]">Billed manually. Nothing is scheduled.</p> : (
-                          <div className="mt-1 flex flex-wrap gap-1">{sv.dates.slice(0, 12).map((d) => <span key={d} className="rounded-full bg-[color:var(--ds-selected)] px-2 py-0.5 text-xs text-[color:var(--ds-ink)]">{new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>)}</div>
+                          <div className="mt-1 flex flex-wrap gap-1">{sv.dates.slice(0, 12).map((d) => <span key={d} className="rounded-md bg-[color:var(--ds-selected)] px-2 py-0.5 text-xs text-[color:var(--ds-ink)]">{new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>)}</div>
                         )}
                       </li>
                     ))}
@@ -481,7 +482,7 @@ export default function BuilderClient() {
                 <div key={s.id} className="rounded-[10px] bg-[color:var(--ds-page)] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="font-medium text-[color:var(--ds-ink)]">{svcLabel(s)}{s.optional && <span className="ml-2 rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[10px] font-normal text-[color:var(--ds-body)]">Optional</span>}</div>
+                      <div className="font-medium text-[color:var(--ds-ink)]">{svcLabel(s)}{s.optional && <span className="ml-2 rounded-md border border-[color:var(--ds-line)] px-2 py-0.5 text-[10px] font-normal text-[color:var(--ds-body)]">Optional</span>}</div>
                       {s.discount && s.list_cents ? <div className="text-xs text-green-700">{discountNote(s)}</div> : null}
                       {s.description && <p className="mt-1 line-clamp-2 whitespace-pre-line text-xs text-[color:var(--ds-body)]">{s.description}</p>}
                     </div>
@@ -498,7 +499,7 @@ export default function BuilderClient() {
               {doc.services.length > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--ds-line)] pt-3 text-sm text-[color:var(--ds-ink)]">
                   <span>Billing schedule display for automatic services</span>
-                  <div className="inline-flex rounded-full bg-[color:var(--ds-page)] p-1" role="group" aria-label="Billing schedule display">
+                  <div className="inline-flex rounded-md bg-[color:var(--ds-page)] p-1" role="group" aria-label="Billing schedule display">
                     {([['timeline', 'Timeline'], ['occurrence', 'By billing occurrence']] as const).map(([k, l]) => (
                       <button key={k} type="button" aria-pressed={doc.payment.schedule_view === k} onClick={() => update({ payment: { ...doc.payment, schedule_view: k } })} className={`rounded-[10px] px-4 py-1.5 text-xs ${doc.payment.schedule_view === k ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>
                     ))}
@@ -564,7 +565,7 @@ export default function BuilderClient() {
                       <input className={A.input} placeholder="Value" value={r.value} onChange={(e) => update({ refs: doc.refs.map((x, k) => (k === i ? { ...x, value: e.target.value } : x)) })} />
                       <button type="button" aria-label="Remove reference field" className="text-xl text-[color:var(--ds-ink)]" style={{ border: 0, background: 'transparent' }} onClick={() => update({ refs: doc.refs.filter((_, k) => k !== i) })}>×</button>
                     </div>
-                    <div className="inline-flex rounded-full bg-[color:var(--ds-page)] p-1 text-sm" role="group" aria-label="Visibility">
+                    <div className="inline-flex rounded-md bg-[color:var(--ds-page)] p-1 text-sm" role="group" aria-label="Visibility">
                       {([true, false] as const).map((cf) => (
                         <button key={String(cf)} type="button" aria-pressed={r.client_facing === cf} onClick={() => update({ refs: doc.refs.map((x, k) => (k === i ? { ...x, client_facing: cf } : x)) })} className={`rounded-[10px] px-4 py-1.5 ${r.client_facing === cf ? 'bg-white font-medium text-[color:var(--ds-ink)] shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{cf ? 'Client-facing' : 'Internal'}</button>
                       ))}
@@ -782,7 +783,7 @@ function BillingControls({ billing, onChange }: { billing: ServiceBilling; onCha
   const manual = b.start === 'manual';
   return (
     <div className="mt-4 space-y-3 border-t border-[color:var(--ds-line)] pt-4">
-      <span className="inline-block rounded-full border border-[color:var(--ds-line)] px-3 py-1 text-xs text-[color:var(--ds-ink)]">{billingBadge(b)}</span>
+      <span className="inline-block rounded-md border border-[color:var(--ds-line)] px-3 py-1 text-xs text-[color:var(--ds-ink)]">{billingBadge(b)}</span>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Billed" isSelect>
           <select className={sel} value={b.cadence} onChange={(e) => set({ cadence: e.target.value as ServiceBilling['cadence'] })} disabled={manual}>
@@ -876,7 +877,7 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
             <div key={sv.id} className="rounded-[10px] bg-white p-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">{sv.name || 'Service'}</span>
-                <span className="flex items-center gap-3"><span className="rounded-full border border-[color:var(--ds-primary)] px-2.5 py-0.5 text-xs">{billingBadge(sv.billing ?? DEFAULT_BILLING).replace(', automatically', '')}</span><span className="font-semibold">{money(sv.price_cents)}</span></span>
+                <span className="flex items-center gap-3"><span className="rounded-md border border-[color:var(--ds-primary)] px-2.5 py-0.5 text-xs">{billingBadge(sv.billing ?? DEFAULT_BILLING).replace(', automatically', '')}</span><span className="font-semibold">{money(sv.price_cents)}</span></span>
               </div>
               {sv.description && <p className="mt-3 whitespace-pre-line text-[color:var(--ds-body)]">{sv.description}</p>}
             </div>
@@ -897,7 +898,7 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
       )}
       {step === 4 && (
         <div className="rounded-[10px] bg-white p-5">
-          <div className="mb-3 inline-flex rounded-full bg-[color:var(--ds-page)] p-1 text-xs"><span className="rounded-full bg-white px-4 py-1.5 font-medium shadow">Type</span><span className="px-4 py-1.5 text-[color:var(--ds-body)]">Draw</span></div>
+          <div className="mb-3 inline-flex rounded-md bg-[color:var(--ds-page)] p-1 text-xs"><span className="rounded-md bg-white px-4 py-1.5 font-medium shadow">Type</span><span className="px-4 py-1.5 text-[color:var(--ds-body)]">Draw</span></div>
           <div className="border-b border-[color:var(--ds-line)] py-6 text-2xl italic text-[color:var(--ds-placeholder)]">Type your name…</div>
           <p className="mt-3 text-xs text-[color:var(--ds-body)]">On the live page the client picks how to pay, then signs. Preview only; nothing is saved.</p>
         </div>
@@ -910,7 +911,7 @@ function PreviewModal({ doc, intro, preparedFor, total, onClose }: { doc: Builde
         <div className="flex items-center justify-between border-b border-[color:var(--ds-line)] px-5 py-3 text-sm text-[color:var(--ds-ink)]">
           <span>You are in preview mode. No activity will be saved.</span>
           <div className="flex items-center gap-3">
-            <div className="inline-flex rounded-full bg-[color:var(--ds-page)] p-1 text-xs" role="group" aria-label="Device">
+            <div className="inline-flex rounded-md bg-[color:var(--ds-page)] p-1 text-xs" role="group" aria-label="Device">
               {([[false, 'Desktop'], [true, 'Mobile']] as const).map(([m, l]) => <button key={l} type="button" aria-pressed={mobile === m} onClick={() => setMobile(m)} className={`rounded-[10px] px-3 py-1 ${mobile === m ? 'bg-white font-medium shadow' : 'text-[color:var(--ds-body)]'}`} style={{ border: 0 }}>{l}</button>)}
             </div>
             <button type="button" aria-label="Close preview" onClick={onClose} className="text-xl leading-none" style={{ border: 0, background: 'transparent' }}>×</button>

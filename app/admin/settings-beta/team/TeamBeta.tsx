@@ -74,7 +74,7 @@ export default function TeamBeta() {
               <tr key={m.id}>
                 <td><div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--ds-selected)] text-xs font-medium text-[color:var(--ds-primary)]">{initials(m.fullName)}</span><div><div className="font-semibold text-[color:var(--ds-ink)]">{m.fullName}</div><div className="text-xs text-[color:var(--ds-body)]">{m.email}</div></div></div></td>
                 <td className="text-[color:var(--ds-ink)]">{m.isOwner ? 'Owner' : 'Admin'}</td>
-                <td><span className={`rounded-full px-3 py-0.5 text-xs ${m.active ? 'bg-[#E6F6EC] text-[#1B7A3D]' : 'bg-[#EEE] text-[color:var(--ds-body)]'}`}>{m.active ? 'Active' : 'Inactive'}</span></td>
+                <td><span className={`rounded-md px-3 py-0.5 text-xs ${m.active ? 'bg-[#E6F6EC] text-[#1B7A3D]' : 'bg-[#EEE] text-[color:var(--ds-body)]'}`}>{m.active ? 'Active' : 'Inactive'}</span></td>
                 <td className="text-right">{!m.isOwner && (
                   <RowMenu items={[
                     { label: 'Edit', onClick: () => open(m) },

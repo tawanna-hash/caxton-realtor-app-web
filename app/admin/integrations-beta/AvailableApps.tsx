@@ -9,7 +9,7 @@ function Card({ name, blurb, badge, action }: { name: string; blurb: string; bad
   return (
     <div className="flex flex-col justify-between rounded-[10px] bg-white p-4">
       <div>
-        <div className="flex items-center justify-between"><h3 className="text-base font-medium text-[color:var(--ds-ink)]">{name}</h3><span className="rounded-full bg-[color:var(--ds-page)] px-2.5 py-0.5 text-xs text-[color:var(--ds-body)]">{badge}</span></div>
+        <div className="flex items-center justify-between"><h3 className="text-base font-medium text-[color:var(--ds-ink)]">{name}</h3><span className="rounded-md bg-[color:var(--ds-page)] px-2.5 py-0.5 text-xs text-[color:var(--ds-body)]">{badge}</span></div>
         <p className="mt-1 text-sm text-[color:var(--ds-body)]">{blurb}</p>
       </div>
       <div className="mt-4">{action}</div>

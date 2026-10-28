@@ -1660,7 +1660,7 @@ function PartnerMultiPicker({
           {selected.map((p) => (
             <span
               key={p.id}
-              className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-700/30 px-3 py-1 text-xs font-medium text-brand-700"
+              className="inline-flex items-center gap-1 rounded-md bg-brand-50 border border-brand-700/30 px-3 py-1 text-xs font-medium text-brand-700"
             >
               {p.name}
               <button

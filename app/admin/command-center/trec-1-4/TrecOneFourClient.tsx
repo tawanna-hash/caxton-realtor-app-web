@@ -249,7 +249,7 @@ function DeadlineMath({
                   <button
                     type="button"
                     onClick={() => onAddReminder(deadline)}
-                    className="inline-flex min-h-9 items-center gap-1 rounded-full border border-[#D9CFF0] bg-white px-3 text-xs font-semibold text-[#301D5D] hover:bg-[#F6F3FB]"
+                    className="inline-flex min-h-9 items-center gap-1 rounded-md border border-[#D9CFF0] bg-white px-3 text-xs font-semibold text-[#301D5D] hover:bg-[#F6F3FB]"
                   >
                     <Bell className="h-3.5 w-3.5" aria-hidden="true" />
                     Remind me
@@ -262,7 +262,7 @@ function DeadlineMath({
                         key={preset.id}
                         type="button"
                         onClick={() => onAddReminderPreset(deadline, preset.daysBefore)}
-                        className="inline-flex min-h-8 items-center rounded-full border border-[#B9ADD6] bg-white px-2 text-[10px] font-semibold text-[#42277C] hover:bg-[#EFEAF8]"
+                        className="inline-flex min-h-8 items-center rounded-md border border-[#B9ADD6] bg-white px-2 text-[10px] font-semibold text-[#42277C] hover:bg-[#EFEAF8]"
                       >
                         {preset.id}
                       </button>
@@ -319,10 +319,10 @@ function DateRadar({
           </div>
         </div>
         <div className="flex gap-1">
-          <button type="button" onClick={() => onMonthChange(-1)} aria-label="Previous month" className="rounded-full p-2 text-gray-600 hover:bg-gray-100">
+          <button type="button" onClick={() => onMonthChange(-1)} aria-label="Previous month" className="rounded-md p-2 text-gray-600 hover:bg-gray-100">
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </button>
-          <button type="button" onClick={() => onMonthChange(1)} aria-label="Next month" className="rounded-full p-2 text-gray-600 hover:bg-gray-100">
+          <button type="button" onClick={() => onMonthChange(1)} aria-label="Next month" className="rounded-md p-2 text-gray-600 hover:bg-gray-100">
             <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
@@ -860,7 +860,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               type="button"
               onClick={saveDeal}
               disabled={saveState === 'saving'}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C] disabled:cursor-wait disabled:opacity-70"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C] disabled:cursor-wait disabled:opacity-70"
             >
               <Save className="h-4 w-4" aria-hidden="true" />
               {saveState === 'saving' ? 'Saving…' : currentDealId ? 'Save changes' : 'Save deal prep'}
@@ -868,7 +868,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
             <button
               type="button"
               onClick={startNewDeal}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50"
             >
               <RotateCcw className="h-4 w-4" aria-hidden="true" />
               New deal
@@ -877,7 +877,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               <button
                 type="button"
                 onClick={deleteDeal}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#FF2A04]/30 bg-white px-4 text-sm font-semibold text-[#661102] hover:bg-[#FFEAE6]"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[#FF2A04]/30 bg-white px-4 text-sm font-semibold text-[#661102] hover:bg-[#FFEAE6]"
               >
                 <Trash2 className="h-4 w-4" aria-hidden="true" />
                 Delete
@@ -963,8 +963,8 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
-                  <button type="button" onClick={applyExtraction} className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#005A00] px-4 text-sm font-semibold text-white hover:bg-[#005A00]">Apply suggestions</button>
-                  <button type="button" onClick={() => setExtractionDraft(null)} className="inline-flex min-h-10 items-center justify-center rounded-full border border-[#00E200]/50 bg-white px-4 text-sm font-semibold text-[#005A00] hover:bg-[#E0FBE0]">Discard</button>
+                  <button type="button" onClick={applyExtraction} className="inline-flex min-h-10 items-center justify-center rounded-md bg-[#005A00] px-4 text-sm font-semibold text-white hover:bg-[#005A00]">Apply suggestions</button>
+                  <button type="button" onClick={() => setExtractionDraft(null)} className="inline-flex min-h-10 items-center justify-center rounded-md border border-[#00E200]/50 bg-white px-4 text-sm font-semibold text-[#005A00] hover:bg-[#E0FBE0]">Discard</button>
                 </div>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -1127,10 +1127,10 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                         <Field id="reminderDate" label="Remind me on" value={reminderDate} onChange={setReminderDate} type="date" />
                         <Textarea id="reminderNote" label="Optional note" value={reminderNote} onChange={setReminderNote} placeholder="What needs attention?" />
                         <div className="flex gap-2">
-                          <button type="button" onClick={createReminder} disabled={reminderState === 'saving' || !reminderDate} className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C] disabled:opacity-60">
+                          <button type="button" onClick={createReminder} disabled={reminderState === 'saving' || !reminderDate} className="inline-flex min-h-10 items-center justify-center rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C] disabled:opacity-60">
                             {reminderState === 'saving' ? 'Saving…' : 'Save reminder'}
                           </button>
-                          <button type="button" onClick={() => setSelectedDeadlineId('')} className="inline-flex min-h-10 items-center justify-center rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
+                          <button type="button" onClick={() => setSelectedDeadlineId('')} className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
                         </div>
                       </div>
                     </div>
@@ -1178,7 +1178,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                   <h2 className="text-lg font-semibold text-gray-950">Texas Timing Review</h2>
                   <p className="text-xs text-gray-600">Operational checks based on the values in this workspace.</p>
                 </div>
-                <span className="ml-auto rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#645600]">{validationAlerts.length} to review</span>
+                <span className="ml-auto rounded-md bg-white px-3 py-1 text-xs font-semibold text-[#645600]">{validationAlerts.length} to review</span>
               </div>
               {validationAlerts.length ? (
                 <ul className="mt-4 space-y-2">
@@ -1209,7 +1209,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                     <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value as TrecTaskPriority)} aria-label="Task priority" className="min-h-10 rounded-md border border-gray-300 px-2 text-sm outline-none focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]">
                       <option value="normal">Normal</option><option value="high">High</option><option value="critical">Critical</option><option value="low">Low</option>
                     </select>
-                    <button type="button" onClick={addTask} disabled={!taskTitle.trim() || documentState === 'saving'} className="inline-flex min-h-10 items-center justify-center rounded-full bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C] disabled:opacity-50">Add</button>
+                    <button type="button" onClick={addTask} disabled={!taskTitle.trim() || documentState === 'saving'} className="inline-flex min-h-10 items-center justify-center rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C] disabled:opacity-50">Add</button>
                   </div>
                   <ul className="mt-4 space-y-2">
                     {tasks.length ? tasks.map((task) => (
@@ -1217,7 +1217,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                         <input type="checkbox" checked={task.status === 'done'} onChange={(event) => updateTaskStatus(task, event.target.checked ? 'done' : 'todo')} aria-label={`Complete ${task.title}`} className="h-4 w-4 rounded border-gray-300 text-[#301D5D] focus:ring-[#301D5D]" />
                         <span className={task.status === 'done' ? 'min-w-0 flex-1 text-sm text-gray-500 line-through' : 'min-w-0 flex-1 text-sm font-medium text-gray-900'}>{task.title}</span>
                         {task.dueDate && <span className="text-xs text-gray-500">{formatValue(task.dueDate)}</span>}
-                        <span className={task.priority === 'critical' ? 'rounded-full bg-[#FFEAE6] px-2 py-0.5 text-[10px] font-semibold uppercase text-[#661102]' : task.priority === 'high' ? 'rounded-full bg-[#FEF8CC] px-2 py-0.5 text-[10px] font-semibold uppercase text-[#645600]' : 'rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-gray-600'}>{task.priority}</span>
+                        <span className={task.priority === 'critical' ? 'rounded-md bg-[#FFEAE6] px-2 py-0.5 text-[10px] font-semibold uppercase text-[#661102]' : task.priority === 'high' ? 'rounded-md bg-[#FEF8CC] px-2 py-0.5 text-[10px] font-semibold uppercase text-[#645600]' : 'rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-gray-600'}>{task.priority}</span>
                       </li>
                     )) : <li className="text-sm text-gray-600">No transaction tasks yet.</li>}
                   </ul>
@@ -1235,12 +1235,12 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {TREC_DOCUMENT_CHECKLIST_TEMPLATES.flatMap((template) => template.items).map((item) => (
-                    <button key={item.id} type="button" onClick={() => addDocument(item.label)} disabled={documents.some((document) => document.displayName === item.label)} className="rounded-full border border-[#D9CFF0] bg-[#F6F3FB] px-3 py-2 text-xs font-semibold text-[#301D5D] hover:bg-[#EFEAF8] disabled:cursor-default disabled:opacity-40">{item.label}</button>
+                    <button key={item.id} type="button" onClick={() => addDocument(item.label)} disabled={documents.some((document) => document.displayName === item.label)} className="rounded-md border border-[#D9CFF0] bg-[#F6F3FB] px-3 py-2 text-xs font-semibold text-[#301D5D] hover:bg-[#EFEAF8] disabled:cursor-default disabled:opacity-40">{item.label}</button>
                   ))}
                 </div>
                 <div className="mt-3 flex gap-2">
                   <input value={documentName} onChange={(event) => setDocumentName(event.target.value)} placeholder="Custom document request" className="min-h-10 min-w-0 flex-1 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-[#301D5D] focus:ring-2 focus:ring-[#EFEAF8]" />
-                  <button type="button" onClick={() => addDocument()} disabled={!documentName.trim() || documentState === 'saving'} className="inline-flex min-h-10 items-center justify-center rounded-full border border-[#B9ADD6] bg-white px-4 text-sm font-semibold text-[#301D5D] hover:bg-[#F6F3FB] disabled:opacity-50">Add</button>
+                  <button type="button" onClick={() => addDocument()} disabled={!documentName.trim() || documentState === 'saving'} className="inline-flex min-h-10 items-center justify-center rounded-md border border-[#B9ADD6] bg-white px-4 text-sm font-semibold text-[#301D5D] hover:bg-[#F6F3FB] disabled:opacity-50">Add</button>
                 </div>
                 <ul className="mt-4 space-y-2">
                   {documents.length ? documents.map((document) => (
@@ -1408,7 +1408,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
                     and the licensed professional or attorney handling the transaction.
                   </p>
                 </div>
-                <button type="button" onClick={exportSummary} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
+                <button type="button" onClick={exportSummary} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
                   <Download className="h-4 w-4" aria-hidden="true" />
                   Export summary
                 </button>
@@ -1440,7 +1440,7 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               type="button"
               onClick={() => setActiveStep((step) => Math.max(step - 1, 0))}
               disabled={activeStep === 0}
-              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 enabled:hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 enabled:hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Back
@@ -1449,13 +1449,13 @@ export default function TrecOneFourClient({ initialDeals }: { initialDeals: Trec
               <button
                 type="button"
                 onClick={() => setActiveStep((step) => Math.min(step + 1, STEPS.length - 1))}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]"
               >
                 Continue
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </button>
             ) : (
-              <Link href="/admin/dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
+              <Link href="/admin/dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white hover:bg-[#42277C]">
                 Return to Closing Time
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>

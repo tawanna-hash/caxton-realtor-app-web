@@ -88,7 +88,7 @@ export default function PaymentLinksPanel({ clientId }: { clientId?: number }) {
         <SearchBox value={q} onChange={(v) => { setQ(v); setPage(0); }} label="Search payment links" />
         <div role="group" aria-label="Status" className="flex flex-wrap gap-2">
           {(['all', 'open', 'overdue', 'paid', 'void'] as const).map((k) => (
-            <button key={k} type="button" aria-pressed={status === k} onClick={() => { setStatus(k); setPage(0); }} style={{ background: status === k ? 'var(--ds-selected)' : 'transparent' }} className={`rounded-full border px-4 py-1.5 text-sm ${status === k ? 'border-[color:var(--ds-primary)] text-[color:var(--ds-primary)]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{k === 'all' ? 'All' : LABEL[k]}</button>
+            <button key={k} type="button" aria-pressed={status === k} onClick={() => { setStatus(k); setPage(0); }} style={{ background: status === k ? 'var(--ds-selected)' : 'transparent' }} className={`rounded-md border px-4 py-1.5 text-sm ${status === k ? 'border-[color:var(--ds-primary)] text-[color:var(--ds-primary)]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{k === 'all' ? 'All' : LABEL[k]}</button>
           ))}
         </div>
         <button type="button" className={`${A.primary} ml-auto`} onClick={() => setCreating(true)}>Create payment link</button>
@@ -107,7 +107,7 @@ export default function PaymentLinksPanel({ clientId }: { clientId?: number }) {
                 <td className="text-[color:var(--ds-ink)]">{i.advertiser_name ?? i.bill_to_name ?? '—'}</td>
                 <td className="text-[color:var(--ds-body)]">{i.bill_to_email ?? '—'}</td>
                 <td className="whitespace-nowrap font-medium text-[color:var(--ds-ink)]">{formatCents(amountOf(i))}</td>
-                <td><span className={`rounded-full px-3 py-0.5 text-xs ${PILL[stOf(i)]}`}>{LABEL[stOf(i)]}</span></td>
+                <td><span className={`rounded-md px-3 py-0.5 text-xs ${PILL[stOf(i)]}`}>{LABEL[stOf(i)]}</span></td>
                 <td className="whitespace-nowrap text-right">
                   <span className="inline-flex items-center gap-3 text-sm">
                     <button type="button" className="text-[color:var(--ds-primary)]" style={{ border: 0, background: 'transparent' }} onClick={() => setSelected(i.id)}>View/Edit</button>

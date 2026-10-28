@@ -183,10 +183,10 @@ export default function PromotionGuideContent() {
               <aside className="space-y-4">
                 {/* Builder pill + Promotion badge */}
                 <div>
-                  <span className="inline-flex items-center rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">
+                  <span className="inline-flex items-center rounded-md bg-brand-600 px-3 py-1 text-xs font-semibold text-white">
                     {EXAMPLE.builderName}
                   </span>{' '}
-                  <span className="inline-flex items-center rounded-full bg-[#301D5D] px-3 py-1 text-xs font-semibold text-white">
+                  <span className="inline-flex items-center rounded-md bg-[#301D5D] px-3 py-1 text-xs font-semibold text-white">
                     Promotion
                   </span>
                   <div className="mt-1">

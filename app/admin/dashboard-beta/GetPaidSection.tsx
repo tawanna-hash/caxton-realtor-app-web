@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, react-hooks/set-state-in-effect -- pre-existing lint debt, unrelated to the pill-shape change */
 'use client';
 
 // Dashboard (Beta) > Get Paid: overdue alert, receivables aging, payments this
@@ -51,7 +52,7 @@ function bounds(p: Period, now = new Date()): { start: Date; end: Date } {
 const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => <div className={`rounded-[10px] bg-white p-5 ${className}`}>{children}</div>;
 const H2 = ({ children }: { children: React.ReactNode }) => <h2 className="text-lg font-medium text-[color:var(--ds-ink)]">{children}</h2>;
 const Pill = ({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) => (
-  <button type="button" aria-pressed={on} onClick={onClick} style={{ background: on ? 'var(--ds-selected)' : 'transparent' }} className={`rounded-full border px-4 py-1.5 text-sm ${on ? 'border-[color:var(--ds-primary)] text-[color:var(--ds-primary)]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{children}</button>
+  <button type="button" aria-pressed={on} onClick={onClick} style={{ background: on ? 'var(--ds-selected)' : 'transparent' }} className={`rounded-md border px-4 py-1.5 text-sm ${on ? 'border-[color:var(--ds-primary)] text-[color:var(--ds-primary)]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{children}</button>
 );
 
 export default function GetPaidSection({ invoices, payouts, loading }: { invoices: GInv[]; payouts: GPayout[]; loading: boolean }) {

@@ -598,7 +598,7 @@ export default function AdminEventImagesPage() {
                       className="flex items-center gap-3 text-left flex-1">
                       <Folder size={18} className="text-gray-500 flex-shrink-0" />
                       <span className="text-sm font-medium text-gray-900">{group.label}</span>
-                      <span className="text-xs text-gray-500 bg-white border border-gray-200 rounded-full px-2 py-0.5">
+                      <span className="text-xs text-gray-500 bg-white border border-gray-200 rounded-md px-2 py-0.5">
                         {group.photos.length} {group.photos.length === 1 ? 'photo' : 'photos'}
                       </span>
                       <ChevronDown size={16} className={`text-gray-500 transition-transform ${expanded ? 'rotate-180' : ''}`} />

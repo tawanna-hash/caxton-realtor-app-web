@@ -963,7 +963,7 @@ function EditorPage({
             style={{ left: cx, top: cy, transform: 'translate(-50%, -50%)', zIndex: 45 }}
           >
             <span
-              className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[11px] font-semibold text-white rounded-full shadow ring-2 ring-white"
+              className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[11px] font-semibold text-white rounded-md shadow ring-2 ring-white"
               style={{ background: colors.stroke }}
             >
               {num}
@@ -1126,7 +1126,7 @@ function DraggableHotspot({
         }}
       >
         <span
-          className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold text-white rounded-full shadow-sm ring-1 ring-white"
+          className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold text-white rounded-md shadow-sm ring-1 ring-white"
           style={{ background: colors.stroke }}
         >
           {number}
@@ -1476,7 +1476,7 @@ function SidebarRow({
     >
       {/* Numbered chip — matches the pin on the canvas box. */}
       <span
-        className="mt-0.5 inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[11px] font-semibold text-white rounded-full shrink-0 ring-1 ring-white"
+        className="mt-0.5 inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[11px] font-semibold text-white rounded-md shrink-0 ring-1 ring-white"
         style={{ background: colors.stroke }}
         aria-hidden
       >

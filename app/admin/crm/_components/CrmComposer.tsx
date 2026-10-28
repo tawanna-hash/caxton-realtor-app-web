@@ -692,7 +692,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                             setSelectedRecipientIds(null);
                             toggleFrom<AdvertiserStatus>(setStatuses, opt.value);
                           }}
-                          className={`rounded-full border px-3 py-1 text-xs ${on ? 'border-[#301D5D] bg-[#EFEAF8] text-[#301D5D]' : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'}`}
+                          className={`rounded-md border px-3 py-1 text-xs ${on ? 'border-[#301D5D] bg-[#EFEAF8] text-[#301D5D]' : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'}`}
                         >
                           {opt.label}
                         </button>
@@ -714,7 +714,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                             setSelectedRecipientIds(null);
                             toggleFrom<PublicationKey>(setPublications, p);
                           }}
-                          className={`rounded-full border px-3 py-1 text-xs ${on ? 'border-[#301D5D] bg-[#EFEAF8] text-[#301D5D]' : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'}`}
+                          className={`rounded-md border px-3 py-1 text-xs ${on ? 'border-[#301D5D] bg-[#EFEAF8] text-[#301D5D]' : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'}`}
                         >
                           {p}
                         </button>

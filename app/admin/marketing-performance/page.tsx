@@ -370,14 +370,14 @@ export default function MarketingPerformancePage() {
                   const on = channels.has(c.id);
                   return (
                     <button key={c.id} type="button" onClick={() => toggleChannel(c.id)} aria-pressed={on} title={c.hint}
-                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${on ? 'border-gray-300 bg-gray-50 text-gray-900' : 'border-gray-200 bg-white text-gray-500'}`}>
+                      className={`inline-flex items-center gap-2 rounded-md border px-3 py-1 text-xs font-medium transition-colors ${on ? 'border-gray-300 bg-gray-50 text-gray-900' : 'border-gray-200 bg-white text-gray-500'}`}>
                       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: on ? c.color : '#D9CFF0' }} />
                       {c.label}
                     </button>
                   );
                 })}
                 <button type="button" onClick={() => toggleChannel('all')} aria-pressed={channels.size === CHANNELS.length}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium ${channels.size === CHANNELS.length ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-gray-200 text-gray-500'}`}>
+                  className={`rounded-md border px-3 py-1 text-xs font-medium ${channels.size === CHANNELS.length ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-gray-200 text-gray-500'}`}>
                   All
                 </button>
               </div>
@@ -674,6 +674,7 @@ function FunnelBars({ t }: { t: Totals }) {
 
 function SpendPanel({ months, entries, pub, onSaved }: { months: string[]; entries: SpendEntry[]; pub: PubFilter; onSaved: () => void }) {
   const [spendPub, setSpendPub] = useState<'all' | PubBucket>(pub === 'all' ? 'all' : pub);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setSpendPub(pub === 'all' ? 'all' : pub); }, [pub]);
   const [month, setMonth] = useState(months[months.length - 1]);
   const [channel, setChannel] = useState<Channel>('paid');
@@ -856,7 +857,7 @@ function Connections({ sources, pub, mailchimp, byPub, meta, instagram, monthsSe
   };
 
   const status = (ok: boolean, label: string) => (
-    <span className={`inline-flex items-center gap-2 rounded-full px-2 py-0.5 text-xs font-medium ${ok ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-gray-100 text-gray-600'}`}>
+    <span className={`inline-flex items-center gap-2 rounded-md px-2 py-0.5 text-xs font-medium ${ok ? 'bg-[#E0FBE0] text-[#005A00]' : 'bg-gray-100 text-gray-600'}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-[#005A00]' : 'bg-gray-400'}`} />{label}
     </span>
   );

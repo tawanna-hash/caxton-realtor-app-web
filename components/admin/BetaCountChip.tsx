@@ -21,5 +21,5 @@ export default function BetaCountChip({ href }: { href: string }) {
     return () => { alive = false; };
   }, [href]);
   if (n === null) return null;
-  return <span className="ml-auto shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium leading-none text-brand-700" aria-label={`${n} documents`}>{n}</span>;
+  return <span className="ml-auto shrink-0 rounded-md bg-brand-50 px-2 py-0.5 text-[11px] font-medium leading-none text-brand-700" aria-label={`${n} documents`}>{n}</span>;
 }

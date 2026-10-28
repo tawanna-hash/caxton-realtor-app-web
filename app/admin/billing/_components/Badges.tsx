@@ -37,7 +37,7 @@ export function StatusPill({
   options: { value: string; label: string; tone: string }[];
 }) {
   const opt = options.find((o) => o.value === value) ?? options[0];
-  return <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium border ${opt.tone}`}>{opt.label}</span>;
+  return <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium border ${opt.tone}`}>{opt.label}</span>;
 }
 
 export function DaysBadge({ days }: { days: number | null }) {
@@ -57,7 +57,7 @@ export function ReminderStatusBadge({ status }: { status: string }) {
     : status === 'Completed'
       ? 'bg-[#E0FBE0] text-[#005A00] border-[#00E200]/30'
       : 'bg-gray-100 text-gray-600 border-gray-200';
-  return <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium border ${cls}`}>{status}</span>;
+  return <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium border ${cls}`}>{status}</span>;
 }
 
 export function PaidStamp({ paidAt }: { paidAt: string | null }) {

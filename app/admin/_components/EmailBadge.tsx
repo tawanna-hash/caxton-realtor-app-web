@@ -81,7 +81,7 @@ export default function EmailBadge({ status, title, size = 'xs', className = '' 
   return (
     <span
       title={title || s.label}
-      className={`inline-flex items-center gap-1 rounded-full border font-medium ${sz} ${s.bg} ${s.fg} ${s.border} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-md border font-medium ${sz} ${s.bg} ${s.fg} ${s.border} ${className}`}
     >
       <span className="leading-none">{s.icon}</span>
       <span>{s.label}</span>

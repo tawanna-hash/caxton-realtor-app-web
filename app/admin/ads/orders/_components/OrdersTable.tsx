@@ -251,7 +251,7 @@ export default function OrdersTable() {
                 aria-current={active ? 'page' : undefined}
               >
                 {label}
-                <span className="ml-2.5 inline-block px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
+                <span className="ml-2.5 inline-block px-2.5 py-0.5 rounded-md bg-gray-100 text-gray-700 text-xs">
                   {count}
                 </span>
               </button>
@@ -266,7 +266,7 @@ export default function OrdersTable() {
           <button
             type="button"
             onClick={() => setUrl({ source: null })}
-            className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
+            className={`px-3 py-2 rounded-md text-xs font-medium border transition ${
               activeSource === 'all'
                 ? 'bg-gray-900 text-white border-gray-900'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -279,7 +279,7 @@ export default function OrdersTable() {
               key={s}
               type="button"
               onClick={() => setUrl({ source: s })}
-              className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
+              className={`px-3 py-2 rounded-md text-xs font-medium border transition ${
                 activeSource === s
                   ? 'bg-gray-900 text-white border-gray-900'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -294,7 +294,7 @@ export default function OrdersTable() {
           <button
             type="button"
             onClick={() => setUrl({ status: null })}
-            className={`px-3 py-2 rounded-full text-xs font-medium border transition ${
+            className={`px-3 py-2 rounded-md text-xs font-medium border transition ${
               activeStatus === 'all'
                 ? 'bg-gray-900 text-white border-gray-900'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -307,7 +307,7 @@ export default function OrdersTable() {
               key={s}
               type="button"
               onClick={() => setUrl({ status: s })}
-              className={`px-3 py-2 rounded-full text-xs font-medium border capitalize transition ${
+              className={`px-3 py-2 rounded-md text-xs font-medium border capitalize transition ${
                 activeStatus === s
                   ? 'bg-gray-900 text-white border-gray-900'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'

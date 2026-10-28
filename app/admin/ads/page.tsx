@@ -336,7 +336,7 @@ function SectionCard({
           {title}
         </h3>
         {badge && (
-          <span className="inline-flex rounded-full bg-[#EFEAF8] text-[#301D5D] text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 ring-1 ring-[#D9CFF0]">
+          <span className="inline-flex rounded-md bg-[#EFEAF8] text-[#301D5D] text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 ring-1 ring-[#D9CFF0]">
             {badge}
           </span>
         )}

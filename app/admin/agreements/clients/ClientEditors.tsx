@@ -74,9 +74,9 @@ export function EditClientModal({ client, onClose }: { client: Adv; onClose: () 
     <Modal title="Edit partner" onClose={onClose} onSave={save} saving={saving} error={error}>
       <div className="mb-6 flex items-center justify-between gap-3">
         <span className="text-base font-semibold text-[color:var(--ds-ink)]">Partner type</span>
-        <div role="radiogroup" aria-label="Partner type" className="flex w-[246px] max-w-[62%] rounded-full bg-[#ECECF1] p-[3px]">
+        <div role="radiogroup" aria-label="Partner type" className="flex w-[246px] max-w-[62%] rounded-md bg-[#ECECF1] p-[3px]">
           {(['business', 'individual'] as const).map((k) => (
-            <button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => setKind(k)} style={{ border: kind === k ? '1px solid #D5D3DE' : '1px solid transparent' }} className={`h-10 flex-1 rounded-full text-sm ${kind === k ? 'bg-white font-semibold text-[color:var(--ds-ink)] shadow-sm' : 'bg-transparent font-medium text-[color:var(--ds-body)]'}`}>{k === 'business' ? 'Business' : 'Individual'}</button>
+            <button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => setKind(k)} style={{ border: kind === k ? '1px solid #D5D3DE' : '1px solid transparent' }} className={`h-10 flex-1 rounded-md text-sm ${kind === k ? 'bg-white font-semibold text-[color:var(--ds-ink)] shadow-sm' : 'bg-transparent font-medium text-[color:var(--ds-body)]'}`}>{k === 'business' ? 'Business' : 'Individual'}</button>
           ))}
         </div>
       </div>

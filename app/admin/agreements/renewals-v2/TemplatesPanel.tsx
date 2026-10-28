@@ -59,7 +59,7 @@ export default function TemplatesPanel() {
             {rows === null && <tr><td colSpan={3} className="text-center text-[color:var(--ds-body)]">Loading…</td></tr>}
             {showBuiltIn && (
               <tr>
-                <td className="font-medium text-[color:var(--ds-ink)]">{PAYMENT_METHOD_TEMPLATE_NAME} <span className="ml-2 rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[11px] font-normal text-[color:var(--ds-body)]">Email · by market</span></td>
+                <td className="font-medium text-[color:var(--ds-ink)]">{PAYMENT_METHOD_TEMPLATE_NAME} <span className="ml-2 rounded-md border border-[color:var(--ds-line)] px-2 py-0.5 text-[11px] font-normal text-[color:var(--ds-body)]">Email · by market</span></td>
                 <td className="whitespace-nowrap text-[color:var(--ds-body)]">Built-in</td>
                 <td className="whitespace-nowrap text-right"><button type="button" className={A.small} onClick={() => setPmOpen(true)}>Use template</button></td>
               </tr>

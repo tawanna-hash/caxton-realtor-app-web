@@ -45,7 +45,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
-const ctl = 'w-full rounded-full border border-[color:var(--ds-ink)]/60 bg-transparent px-5 py-3 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
+const ctl = 'w-full rounded-md border border-[color:var(--ds-ink)]/60 bg-transparent px-5 py-3 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
 
 function ServiceForm({ initial, onCancel, onSaved, bundle, services }: { initial: Draft; onCancel: () => void; onSaved: (msg: string) => void; bundle: boolean; services: ProductService[] }) {
   const noun = bundle ? 'Bundle' : 'Service';
@@ -101,7 +101,7 @@ function ServiceForm({ initial, onCancel, onSaved, bundle, services }: { initial
             <div className="relative">
               <div className="mb-2 text-sm font-semibold text-[color:var(--ds-ink)]">Included services</div>
               {d.bundle_items.map((id) => { const sv = services.find((x) => x.id === id); return (
-                <div key={id} className="mb-2 flex items-center justify-between gap-2 rounded-full border border-[color:var(--ds-line)] px-4 py-2 text-sm"><span>{sv ? `${sv.name} · ${sv.price_cents != null ? `$${(sv.price_cents / 100).toLocaleString('en-US')}` : '—'}` : 'Removed service'}</span><button type="button" aria-label="Remove" onClick={() => set('bundle_items', d.bundle_items.filter((x) => x !== id))} style={{ border: 0, background: 'transparent' }}>×</button></div>
+                <div key={id} className="mb-2 flex items-center justify-between gap-2 rounded-md border border-[color:var(--ds-line)] px-4 py-2 text-sm"><span>{sv ? `${sv.name} · ${sv.price_cents != null ? `$${(sv.price_cents / 100).toLocaleString('en-US')}` : '—'}` : 'Removed service'}</span><button type="button" aria-label="Remove" onClick={() => set('bundle_items', d.bundle_items.filter((x) => x !== id))} style={{ border: 0, background: 'transparent' }}>×</button></div>
               ); })}
               <button type="button" onClick={() => { setPick(d.bundle_items); setPicker(true); }} style={{ border: 0, background: 'transparent' }} className="text-sm text-[color:var(--ds-primary)]">＋ Add services</button>
               {picker && (

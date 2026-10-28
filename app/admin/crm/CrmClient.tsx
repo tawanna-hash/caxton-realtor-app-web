@@ -653,7 +653,7 @@ function CrmRow({
   const opensCell = row.last_bounced_at ? (
     <div className="flex flex-col leading-tight gap-0.5">
       <span
-        className="inline-flex items-center gap-1 rounded-full bg-[#FFEAE6] text-[#661102] border border-[#FF2A04]/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit"
+        className="inline-flex items-center gap-1 rounded-md bg-[#FFEAE6] text-[#661102] border border-[#FF2A04]/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit"
         title={`Last bounce: ${row.last_bounce_type ?? 'unknown'} on ${formatShortDate(row.last_bounced_at)}`}
       >
         Bounced
@@ -767,7 +767,7 @@ function PublicationBadge({ publication }: { publication?: Publication | string 
         return (
           <span
             key={p}
-            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${publicationTone(p)}`}
+            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${publicationTone(p)}`}
           >
             {theme.shortName}
           </span>
@@ -791,7 +791,7 @@ function StatusChip({
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1 rounded-full border text-xs font-medium ${base}`}
+      className={`px-3 py-1 rounded-md border text-xs font-medium ${base}`}
     >
       {label} <span className="opacity-70">({count})</span>
     </button>
@@ -801,7 +801,7 @@ function StatusChip({
 function StatusBadge({ status }: { status: AdvertiserStatus }) {
   const opt = STATUS_OPTIONS.find((s) => s.value === status) ?? STATUS_OPTIONS[0];
   return (
-    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium border ${opt.tone}`}>
+    <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium border ${opt.tone}`}>
       {opt.label}
     </span>
   );

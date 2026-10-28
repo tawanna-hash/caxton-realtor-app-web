@@ -77,7 +77,7 @@ function EmailPreview({
         <div className="text-2xl font-semibold text-gray-900">{formatCents(amount)}</div>
       </div>
       <div className="space-y-4 px-6 py-4">
-        <button type="button" className="rounded-full bg-[#301D5D] px-8 py-3 text-sm font-semibold text-white hover:bg-[#42277C]">{actionLabel}</button>
+        <button type="button" className="rounded-md bg-[#301D5D] px-8 py-3 text-sm font-semibold text-white hover:bg-[#42277C]">{actionLabel}</button>
         <p className="border-t border-gray-200 pt-4 text-sm text-gray-600">{message}</p>
       </div>
       <div className="bg-[#F6F3FB] px-6 py-4 text-xs leading-5 text-gray-600">

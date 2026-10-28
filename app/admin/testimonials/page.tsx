@@ -201,7 +201,7 @@ export default function AdminTestimonialsPage() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     {item.format === 'video' ? <Video size={17} className="text-[#301D5D]" /> : item.format === 'audio' ? <AudioLines size={17} className="text-[#301D5D]" /> : <FileText size={17} className="text-[#301D5D]" />}
-                    <span className={`rounded-full border px-3 py-1 text-xs font-medium capitalize ${badge(item.status)}`}>{item.status}</span>
+                    <span className={`rounded-md border px-3 py-1 text-xs font-medium capitalize ${badge(item.status)}`}>{item.status}</span>
                     <span className="text-xs text-gray-500">{item.submitted_via === 'collection_link' ? 'Client submitted' : 'Subscriber added'}</span>
                   </div>
                   {item.rating && <div className="mt-3 flex gap-0.5 text-[#645600]">{Array.from({ length: item.rating }).map((_, index) => <Star key={index} size={14} fill="currentColor" />)}</div>}

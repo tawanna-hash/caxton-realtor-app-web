@@ -293,17 +293,17 @@ export default function EventsPage() {
               type="button"
               onClick={() => { setShowPast((v) => !v); setPage(1); }}
               aria-pressed={showPast}
-              className={`inline-flex items-center px-2 py-1 rounded-full border font-medium ${showPast ? 'bg-brand-50 border-brand-300 text-brand-800' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+              className={`inline-flex items-center px-2 py-1 rounded-md border font-medium ${showPast ? 'bg-brand-50 border-brand-300 text-brand-800' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
             >
               {showPast ? 'Hide past events' : `Show past events (${pastCount})`}
             </button>
-            <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 border border-gray-200 font-medium">
+            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 border border-gray-200 font-medium">
               {items.length} total
             </span>
-            <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 border border-gray-200">
+            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 border border-gray-200">
               {items.filter((e) => !e.hidden).length} visible
             </span>
-            <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 border border-gray-200">
+            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 border border-gray-200">
               {items.filter((e) => e.hidden).length} hidden
             </span>
           </div>

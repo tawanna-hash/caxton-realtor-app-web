@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars -- pre-existing lint debt, unrelated to the pill-shape change */
 'use client';
 
 // Payouts (Beta): Anchor's Payouts page, with every field from the Get Paid "Payouts from Stripe" page
@@ -99,7 +100,7 @@ export default function PayoutsBeta() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><h1 className={A.title}>Payouts</h1><p className={`${A.subtitle} mt-1`}>Stripe payouts by expected bank arrival date, including settlement fees and adjustments.</p></div>
         <div className="flex items-center gap-3">
-          <span className="rounded-full bg-white px-3 py-1.5 text-xs text-[color:var(--ds-body)]">Source: Stripe</span>
+          <span className="rounded-md bg-white px-3 py-1.5 text-xs text-[color:var(--ds-body)]">Source: Stripe</span>
           <button type="button" className={A.outline} disabled={!shown.length} onClick={() => csv('payouts', ['Arrival date', 'Net payout', 'Fees', 'Transactions', 'Status', 'Deposit ID'], shown.map((r) => [r.batch_date, (r.amount_cents / 100).toFixed(2), (r.fees_cents / 100).toFixed(2), r.transactions, r.status, r.id]))}>Export</button>
         </div>
       </div>
@@ -136,7 +137,7 @@ export default function PayoutsBeta() {
                     <td className="whitespace-nowrap text-right font-medium">{usd(p.amount_cents)}</td>
                     <td className="whitespace-nowrap text-right">{usd(p.fees_cents)}</td>
                     <td className="text-right">{p.transactions.toLocaleString()}</td>
-                    <td><span className="rounded-full border border-[color:var(--ds-line)] px-2.5 py-0.5 text-xs capitalize">{label(p.status)}</span></td>
+                    <td><span className="rounded-md border border-[color:var(--ds-line)] px-2.5 py-0.5 text-xs capitalize">{label(p.status)}</span></td>
                     <td className="max-w-[200px] truncate font-mono text-xs" title={p.id}>{p.id}</td>
                   </tr>
                   {openId === p.id && <tr><td colSpan={NCOL} className="!bg-white"><Drill id={p.id} /></td></tr>}

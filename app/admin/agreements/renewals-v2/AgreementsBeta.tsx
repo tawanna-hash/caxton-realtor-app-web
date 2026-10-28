@@ -82,7 +82,7 @@ export default function AgreementsBeta() {
             onClick={() => setTab(key)}
             className={`anchor-tab -mb-px border-b-2 pb-3 text-[15px] ${tab === key ? 'border-[color:var(--ds-primary)] font-medium text-[color:var(--ds-ink)]' : 'border-transparent text-[color:var(--ds-body)] hover:text-[color:var(--ds-ink)]'}`}
           >
-            {label}{typeof counts[key] === 'number' && <span className="ml-2 rounded-full bg-[#E4E3F1] px-2 py-0.5 align-middle text-[11px] font-medium leading-none text-[color:var(--ds-body)]">{counts[key]}</span>}
+            {label}{typeof counts[key] === 'number' && <span className="ml-2 rounded-md bg-[#E4E3F1] px-2 py-0.5 align-middle text-[11px] font-medium leading-none text-[color:var(--ds-body)]">{counts[key]}</span>}
           </button>
         ))}
       </div>

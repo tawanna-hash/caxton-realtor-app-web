@@ -255,10 +255,10 @@ export default async function MailingHubPage() {
                   <Link
                     href={l.href}
                     title={`${l.count.toLocaleString()} unique deliverable emails`}
-                    className="flex items-center justify-between gap-3 rounded-full border border-[#ECE8F5] px-4 py-2.5 text-sm font-medium text-[#301D5D] hover:bg-[#F6F5FB]"
+                    className="flex items-center justify-between gap-3 rounded-md border border-[#ECE8F5] px-4 py-2.5 text-sm font-medium text-[#301D5D] hover:bg-[#F6F5FB]"
                   >
                     <span>{l.label}</span>
-                    <span className="rounded-full bg-[#EEE9FA] px-2.5 py-0.5 text-xs font-bold text-[#6D3FD6]">{l.count.toLocaleString()}</span>
+                    <span className="rounded-md bg-[#EEE9FA] px-2.5 py-0.5 text-xs font-bold text-[#6D3FD6]">{l.count.toLocaleString()}</span>
                   </Link>
                 </li>
               ))}
@@ -281,7 +281,7 @@ export default async function MailingHubPage() {
                 ['Bulk email verify', '/admin/mailing/bulk-verify'],
                 ['Suppression list', '/admin/mailing/suppressions'],
               ].map(([label, href]) => (
-                <Link key={href} href={href} className="inline-flex rounded-full border border-[#ECE8F5] px-4 py-1.5 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]">
+                <Link key={href} href={href} className="inline-flex rounded-md border border-[#ECE8F5] px-4 py-1.5 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]">
                   {label}
                 </Link>
               ))}

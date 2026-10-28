@@ -270,11 +270,11 @@ export default function TrendingAdminClient() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full ${badge.className}`}>
+                    <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md ${badge.className}`}>
                       {badge.label}
                     </span>
                     {it.markets.map((m) => (
-                      <span key={m} className="text-[10px] uppercase tracking-wider font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                      <span key={m} className="text-[10px] uppercase tracking-wider font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md">
                         {MARKET_LABELS[m]}
                       </span>
                     ))}

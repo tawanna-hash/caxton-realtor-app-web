@@ -60,7 +60,7 @@ export default function PaymentSetupHistory({ id, ids }: { id: number; ids: numb
             {rows.map((e) => (
               <li key={e.id} className="rounded-[10px] border border-[color:var(--ds-line)] p-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${TONE[e.event]}`}>{TITLE[e.event]}</span>
+                  <span className={`rounded-md border px-2 py-0.5 text-xs font-medium ${TONE[e.event]}`}>{TITLE[e.event]}</span>
                   <span className="text-xs text-[color:var(--ds-body)]">{when(e.created_at)}</span>
                 </div>
                 {e.event === 'request_sent' ? (

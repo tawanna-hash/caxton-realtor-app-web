@@ -184,7 +184,7 @@ export default function ReportPicker({
                 {it.pub ? (
                   <span
                     className={[
-                      'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider',
+                      'shrink-0 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider',
                       it.pub.toLowerCase() === 'realtyline'
                         ? 'bg-[#FEF8CC] text-[#645600]'
                         : it.pub.toLowerCase() === 'newsline'
@@ -195,7 +195,7 @@ export default function ReportPicker({
                     {it.pub}
                   </span>
                 ) : (
-                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-500">
+                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-500">
                     no pub
                   </span>
                 )}

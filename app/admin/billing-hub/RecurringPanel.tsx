@@ -175,13 +175,13 @@ export default function RecurringPanel({ clientId = null }: { clientId?: number 
             {(rws) => (<>
               {rws.map((s) => (
                 <tr key={s.id}>
-                  <td className="max-w-[260px] truncate font-medium text-[color:var(--ds-ink)]" title={s.name}>{s.name}{s.source === 'agreement' && <span className="ml-2 rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[10px] font-normal text-[color:var(--ds-body)]">From agreement</span>}</td>
+                  <td className="max-w-[260px] truncate font-medium text-[color:var(--ds-ink)]" title={s.name}>{s.name}{s.source === 'agreement' && <span className="ml-2 rounded-md border border-[color:var(--ds-line)] px-2 py-0.5 text-[10px] font-normal text-[color:var(--ds-body)]">From agreement</span>}</td>
                   <td className="min-w-[160px]">{s.advertiser_name ?? s.bill_to_name ?? `Partner ${s.advertiser_id}`}</td>
                   <td className="whitespace-nowrap">{every(s)}</td>
                   <td className="whitespace-nowrap">{day(s.next_run_at)}</td>
                   <td className="whitespace-nowrap text-right font-medium">{formatCents(amountOf(s))}</td>
                   <td className="whitespace-nowrap">{s.auto_send ? 'Auto-send' : 'Manual'}</td>
-                  <td><span className={`whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs ${s.status === 'active' ? 'border-green-600 text-green-700' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{statusLabel(s)}</span></td>
+                  <td><span className={`whitespace-nowrap rounded-md border px-2.5 py-0.5 text-xs ${s.status === 'active' ? 'border-green-600 text-green-700' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{statusLabel(s)}</span></td>
                   <td className="whitespace-nowrap text-right">
                     <button type="button" className={`${A.small} mr-2`} onClick={() => setEditingId(s.id)}>View/Edit</button>
                     <RowMenu label={`More actions for ${s.name}`} items={[

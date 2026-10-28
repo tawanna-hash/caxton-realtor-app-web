@@ -44,7 +44,7 @@ export default function PaymentSetupAlert({ ag, variant }: { ag: Ag; variant: "c
 
   if (verifying) {
     return variant === "chip" ? (
-      <div role="alert" className="mt-1 inline-block rounded-full border border-sky-400 bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-900">Bank verification pending</div>
+      <div role="alert" className="mt-1 inline-block rounded-md border border-sky-400 bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-900">Bank verification pending</div>
     ) : (
       <div role="alert" className="rounded-md border border-sky-300 bg-sky-50 p-3 text-sm text-sky-900">
         <strong>Bank verification pending.</strong> The client connected a bank account and Stripe is still verifying it (usually 1 to 2 business days). This clears when verification finishes.
@@ -53,7 +53,7 @@ export default function PaymentSetupAlert({ ag, variant }: { ag: Ag; variant: "c
   }
   if (variant === "chip") {
     return (
-      <div role="alert" className="mt-1 inline-block rounded-full border border-amber-400 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900">
+      <div role="alert" className="mt-1 inline-block rounded-md border border-amber-400 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900">
         Payment method needed · link sent to {ag.payment_setup_sent_to ?? "AP"}{btn}{status}
       </div>
     );

@@ -280,7 +280,7 @@ export default function SuppressionsClient() {
               </dl>
               <div className="pt-0.5 flex items-center justify-between gap-2">
                 <span
-                  className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold text-white"
+                  className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold text-white"
                   style={{ backgroundColor: reasonColor }}
                 >
                   {reasonLabel}
@@ -346,7 +346,7 @@ export default function SuppressionsClient() {
                     <td className="px-3 py-2 text-gray-700">{snapshotSegment(r.source_snapshot) || '—'}</td>
                     <td className="px-3 py-2">
                       <span
-                        className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold text-white"
+                        className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold text-white"
                         style={{ backgroundColor: reasonColor }}
                       >
                         {reasonLabel}

@@ -63,7 +63,7 @@ function StatusBadge({ status }: { status: string }) {
           : status === 'failed' ? 'bg-[#FFEAE6] text-[#661102]'
             : status === 'cancelled' ? 'bg-gray-200 text-gray-700'
               : 'bg-gray-100 text-gray-700';
-  return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{status}</span>;
+  return <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${cls}`}>{status}</span>;
 }
 
 function FailedRecipientDropdown({ row }: { row: SentRow }) {

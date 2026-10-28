@@ -142,7 +142,7 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
                       </td>
                       <td className={`${td} text-right font-medium`}>{formatCents((s.amount_cents ?? 0) + (s.tax_cents ?? 0))}</td>
                       <td className={td}>
-                        <span className={`inline-flex rounded-full border px-3 py-0.5 text-xs font-medium ${s.auto_send ? 'border-[#FAD800]/40 bg-[#FEF8CC] text-[#645600]' : 'border-gray-300 bg-gray-100 text-gray-700'}`}>
+                        <span className={`inline-flex rounded-md border px-3 py-0.5 text-xs font-medium ${s.auto_send ? 'border-[#FAD800]/40 bg-[#FEF8CC] text-[#645600]' : 'border-gray-300 bg-gray-100 text-gray-700'}`}>
                           {s.auto_send ? 'Emails automatically' : 'Held as draft'}
                         </span>
                       </td>
@@ -242,7 +242,7 @@ export function ScheduledInvoicesPanel({ drafts, onEditDraft, onSendDraft }: {
                     <td className={td}>
                       <div>{last ? fmtDay(last) : '-'}</div>
                       {last && last.getTime() <= soon && (
-                        <span className="mt-1 inline-flex rounded-full border border-[#FF2A04]/30 bg-[#FFEAE6] px-2 py-0.5 text-[11px] font-medium text-[#661102]">Ending soon</span>
+                        <span className="mt-1 inline-flex rounded-md border border-[#FF2A04]/30 bg-[#FFEAE6] px-2 py-0.5 text-[11px] font-medium text-[#661102]">Ending soon</span>
                       )}
                     </td>
                     <td className={td}><div className="font-medium">{s.advertiser_name ?? 'Unknown client'}</div></td>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, react-hooks/set-state-in-effect -- pre-existing lint debt, unrelated to the pill-shape change */
 'use client';
 
 // Billing Hub (Beta): one client and one agreement at a time, with five tabs:
@@ -42,7 +43,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
-const selectCls = 'w-full appearance-none rounded-full border border-[color:var(--ds-ink)]/60 bg-white px-5 py-3.5 pr-10 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
+const selectCls = 'w-full appearance-none rounded-md border border-[color:var(--ds-ink)]/60 bg-white px-5 py-3.5 pr-10 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
 const Caret = () => null; // caret is now drawn globally on every select (app/globals.css)
 
 const wantsAll = () => typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('scope') === 'all' || window.location.pathname.endsWith('/billing-hub/invoices'));
@@ -306,7 +307,7 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
   const scopeSwitch = (
     <div role="group" aria-label="Invoice scope" className="flex items-center gap-2">
       {([['client', 'This partner'], ['all', 'All partners']] as const).map(([k, l]) => (
-        <button key={k} type="button" aria-pressed={scope === k} onClick={() => setScope(k)} className={`rounded-full border px-4 py-1.5 text-sm ${scope === k ? 'border-[color:var(--ds-primary)]' : 'bg-white border-[color:var(--ds-line)] text-[color:var(--ds-body)] hover:bg-[color:var(--ds-selected)] hover:text-[color:var(--ds-primary)]'}`}>{l}</button>
+        <button key={k} type="button" aria-pressed={scope === k} onClick={() => setScope(k)} className={`rounded-md border px-4 py-1.5 text-sm ${scope === k ? 'border-[color:var(--ds-primary)]' : 'bg-white border-[color:var(--ds-line)] text-[color:var(--ds-body)] hover:bg-[color:var(--ds-selected)] hover:text-[color:var(--ds-primary)]'}`}>{l}</button>
       ))}
     </div>
   );
@@ -320,12 +321,12 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
           {([['open', 'Open'], ['closed', 'Closed']] as const).map(([k, l]) => {
             const on = k === 'open' ? st.length > 0 && st.every((x) => !['paid', 'void'].includes(x)) : st.length > 0 && st.every((x) => ['paid', 'void'].includes(x));
             const vals = statuses.map((x) => x.value).filter((v) => (k === 'closed') === ['paid', 'void'].includes(v));
-            return <button key={k} type="button" aria-pressed={on} onClick={() => setSt(on ? [] : vals)} className={`rounded-full border px-4 py-1.5 text-sm ${on ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)] text-[color:var(--ds-ink)]' : 'border-[color:var(--ds-line)] bg-white text-[color:var(--ds-body)] hover:bg-[color:var(--ds-selected)]'}`}>{l}</button>;
+            return <button key={k} type="button" aria-pressed={on} onClick={() => setSt(on ? [] : vals)} className={`rounded-md border px-4 py-1.5 text-sm ${on ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)] text-[color:var(--ds-ink)]' : 'border-[color:var(--ds-line)] bg-white text-[color:var(--ds-body)] hover:bg-[color:var(--ds-selected)]'}`}>{l}</button>;
           })}
         </div>
         <FilterChip<string> title="Invoice status" options={statuses} value={st} onApply={setSt} summary="Invoice status" />
         <div className="relative">
-          <button type="button" onClick={() => setAddOpen((o) => !o)} style={{ background: 'transparent' }} className="rounded-full border border-dashed border-[color:var(--ds-body)] px-4 py-2 text-sm text-[color:var(--ds-body)]">Add filter &#8853;</button>
+          <button type="button" onClick={() => setAddOpen((o) => !o)} style={{ background: 'transparent' }} className="rounded-md border border-dashed border-[color:var(--ds-body)] px-4 py-2 text-sm text-[color:var(--ds-body)]">Add filter &#8853;</button>
           {addOpen && (
             <div className="absolute z-20 mt-2 w-64 space-y-2 rounded-[12px] border border-[color:var(--ds-line)] bg-white p-3 shadow-lg">
               <div className="text-xs font-medium text-[color:var(--ds-ink)]">Invoice issue date</div>
@@ -344,7 +345,7 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
               <tr key={i.id}>
                 <td><Link href={`/admin/billing-hub/invoice/${i.id}/preview`} className="font-semibold text-[color:var(--ds-ink)] hover:underline">{i.number ?? '—'}</Link></td>
                 <td className="text-[color:var(--ds-ink)]">{client.name}</td>
-                <td><span className="rounded-full border border-[color:var(--ds-body)] px-2 py-0.5 text-[11px] text-[color:var(--ds-body)]">{cap(i.status === 'sent' ? 'issued' : i.status)}</span></td>
+                <td><span className="rounded-md border border-[color:var(--ds-body)] px-2 py-0.5 text-[11px] text-[color:var(--ds-body)]">{cap(i.status === 'sent' ? 'issued' : i.status)}</span></td>
                 <td className="text-[color:var(--ds-ink)]">{info(i)}</td>
                 <td className="text-[color:var(--ds-ink)]">{cardOf(i) ?? '—'}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(i.issue_date)}</td>

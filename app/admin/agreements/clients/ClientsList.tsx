@@ -59,8 +59,8 @@ export default function ClientsList() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <Link href={`/admin/agreements/clients/${a.id}`} className="text-[15px] font-semibold text-[color:var(--ds-ink)]">{a.name}</Link>
-                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${a.group === 'active' ? 'border-[#047857] text-[#047857]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{GROUP_LABEL[a.group]}</span>
-                    {a.markets.map((m) => <span key={m} className="rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[11px] text-[color:var(--ds-body)]">{m}</span>)}
+                    <span className={`rounded-md border px-2.5 py-0.5 text-xs font-medium ${a.group === 'active' ? 'border-[#047857] text-[#047857]' : 'border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{GROUP_LABEL[a.group]}</span>
+                    {a.markets.map((m) => <span key={m} className="rounded-md border border-[color:var(--ds-line)] px-2 py-0.5 text-[11px] text-[color:var(--ds-body)]">{m}</span>)}
                   </div>
                   <div className="-mr-2 -mt-1 rotate-90 [&_button]:!min-h-8 [&_button]:!h-8 [&_button]:!w-8 [&_button]:!border-0 [&_button]:!bg-transparent [&_button]:!text-[color:var(--ds-body)]"><RowMenu items={[{ label: 'View partner', href: `/admin/agreements/clients/${a.id}` }]} /></div>
                 </div>
@@ -79,7 +79,7 @@ export default function ClientsList() {
             <tbody>
               {rows.map((a) => (
                 <tr key={a.id}>
-                  <td><div className="flex flex-wrap items-center gap-2"><Link href={`/admin/agreements/clients/${a.id}`} className="font-semibold text-[color:var(--ds-ink)] hover:underline">{a.name}</Link>{a.markets.map((m) => <span key={m} className="rounded-full border border-[color:var(--ds-line)] px-2 py-0.5 text-[11px] font-normal text-[color:var(--ds-body)]">{m}</span>)}</div></td>
+                  <td><div className="flex flex-wrap items-center gap-2"><Link href={`/admin/agreements/clients/${a.id}`} className="font-semibold text-[color:var(--ds-ink)] hover:underline">{a.name}</Link>{a.markets.map((m) => <span key={m} className="rounded-md border border-[color:var(--ds-line)] px-2 py-0.5 text-[11px] font-normal text-[color:var(--ds-body)]">{m}</span>)}</div></td>
                   <td className="font-semibold text-[color:var(--ds-ink)]">{GROUP_LABEL[a.group]}</td>
                   <td className="text-[color:var(--ds-ink)]">{person(a) || '—'}</td>
                   <td className="text-[color:var(--ds-ink)]">{a.contact_email ?? '—'}<div className="text-xs text-[color:var(--ds-body)]">{a.phone ?? ''}</div>{a.billing_email && <div className="text-xs text-[color:var(--ds-body)]">Billing: {a.billing_email}</div>}</td>

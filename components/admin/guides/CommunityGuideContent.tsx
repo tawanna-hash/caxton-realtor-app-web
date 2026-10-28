@@ -189,7 +189,7 @@ export default function CommunityGuideContent() {
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
                           {p.isModel && (
-                            <span className="absolute left-2 top-2 rounded-full bg-[#301D5D] px-2 py-0.5 text-[10px] font-semibold text-white">
+                            <span className="absolute left-2 top-2 rounded-md bg-[#301D5D] px-2 py-0.5 text-[10px] font-semibold text-white">
                               Model Home
                             </span>
                           )}
@@ -291,7 +291,7 @@ export default function CommunityGuideContent() {
                       {EXAMPLE.communityName} <FieldBadge name="communityName / title" />
                     </p>
                     {/* status + adultOnly badges render only when set */}
-                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">
+                    <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">
                       status badge (coming-soon / close-out)
                     </span>
                   </div>

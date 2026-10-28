@@ -153,7 +153,7 @@ export default function PaymentMethodTemplate({ open, onClose }: { open: boolean
             </div>
             <div className="flex gap-2">
               {(['preview', 'text'] as const).map((k) => (
-                <button key={k} type="button" onClick={() => setView(k)} className={`rounded-full px-3 py-1 text-xs font-medium ${view === k ? 'bg-[color:var(--ds-primary)] text-white' : 'border border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{k === 'preview' ? 'Email preview' : 'Plain text'}</button>
+                <button key={k} type="button" onClick={() => setView(k)} className={`rounded-md px-3 py-1 text-xs font-medium ${view === k ? 'bg-[color:var(--ds-primary)] text-white' : 'border border-[color:var(--ds-line)] text-[color:var(--ds-body)]'}`}>{k === 'preview' ? 'Email preview' : 'Plain text'}</button>
               ))}
             </div>
             {view === 'preview'

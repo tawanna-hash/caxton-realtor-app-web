@@ -76,11 +76,11 @@ export default function ReferralNetworkApplicationsClient() {
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Referral Network</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Review provider applications, record outreach, and approve only the companies ready for a featured agent-facing presence.</p>
         </div>
-        <a href="/agents/partner-application" target="_blank" rel="noreferrer" className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-[#301D5D] px-4 py-2 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white">Open public application <ExternalLink className="h-4 w-4" aria-hidden="true" /></a>
+        <a href="/agents/partner-application" target="_blank" rel="noreferrer" className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-[#301D5D] px-4 py-2 text-sm font-bold text-[#301D5D] transition hover:bg-[#301D5D] hover:text-white">Open public application <ExternalLink className="h-4 w-4" aria-hidden="true" /></a>
       </div>
 
       <div className="mt-6 flex flex-col gap-4 border-y border-slate-200 bg-white py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">{STATUSES.map((status) => <button key={status.id} onClick={() => { setFilter(status.id); setSelectedId(null); }} className={`min-h-[40px] rounded-full border px-4 py-2 text-sm font-semibold transition ${filter === status.id ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-200 text-slate-700 hover:border-[#301D5D]'}`}>{status.label}</button>)}</div>
+        <div className="flex flex-wrap gap-2">{STATUSES.map((status) => <button key={status.id} onClick={() => { setFilter(status.id); setSelectedId(null); }} className={`min-h-[40px] rounded-md border px-4 py-2 text-sm font-semibold transition ${filter === status.id ? 'border-[#301D5D] bg-[#301D5D] text-white' : 'border-slate-200 text-slate-700 hover:border-[#301D5D]'}`}>{status.label}</button>)}</div>
         <label className="relative block min-w-[230px]"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search applications" className="min-h-[42px] w-full rounded-full border border-slate-300 pl-8 pr-4 text-sm outline-none focus:border-[#301D5D]" /></label>
       </div>
 
@@ -106,7 +106,7 @@ export default function ReferralNetworkApplicationsClient() {
 
 function StatusPill({ status }: { status: ReferralApplicationStatus }) {
   const classes: Record<ReferralApplicationStatus, string> = { pending: 'bg-[#F4F0FC] text-[#42277C]', contacted: 'bg-[#FEF8CC] text-[#645600]', approved: 'bg-[#E0FBE0] text-[#46633D]', declined: 'bg-[#FFEAE6] text-[#661102]' };
-  return <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${classes[status]}`}>{status}</span>;
+  return <span className={`rounded-md px-3 py-1 text-xs font-bold capitalize ${classes[status]}`}>{status}</span>;
 }
 
 function Data({ label, value, icon, href }: { label: string; value: string; icon?: React.ReactNode; href?: string }) {

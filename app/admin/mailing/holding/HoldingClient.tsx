@@ -979,7 +979,7 @@ function FilterChip({
     >
       <span>{label}</span>
       <span
-        className="px-2 rounded-full text-[10px]"
+        className="px-2 rounded-md text-[10px]"
         style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : 'white', color: active ? 'white' : '#4A4757' }}
       >
         {count.toLocaleString()}
@@ -1020,9 +1020,9 @@ function VerifyCell({
 }) {
   if (!hasData) return <span className="text-xs text-gray-500">—</span>;
   const pill =
-    status === 'Valid'   ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00]">✓ Valid</span> :
-    status === 'Invalid' ? <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#FFEAE6] text-[#661102]">✗ Invalid</span> :
-                           <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Pending</span>;
+    status === 'Valid'   ? <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#E0FBE0] text-[#005A00]">✓ Valid</span> :
+    status === 'Invalid' ? <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#FFEAE6] text-[#661102]">✗ Invalid</span> :
+                           <span className="text-[11px] px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">Pending</span>;
   return (
     <div className="flex items-center gap-2">
       {pill}
@@ -1125,7 +1125,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
         <span
           key={f.label}
           title={f.title}
-          className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-medium ${f.cls}`}
+          className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-md font-medium ${f.cls}`}
         >
           {f.label}
         </span>
@@ -1159,7 +1159,7 @@ function ProximityBadges({ row }: { row: MailingContactRow }) {
                      'Five Points';
     return (
       <span
-        className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium ring-1 ring-gray-200"
+        className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-medium ring-1 ring-gray-200"
         title={`${closer.toFixed(1)} mi from nearest anchor (${anchor})`}
       >
         <span>Outside 60 mi</span>
@@ -1171,7 +1171,7 @@ function ProximityBadges({ row }: { row: MailingContactRow }) {
     <div className="flex flex-col gap-1">
       {nearA && (
         <span
-          className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#E0FBE0] text-[#005A00] font-medium"
+          className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-[#E0FBE0] text-[#005A00] font-medium"
           title={`${dA!.toFixed(1)} mi from ABoR HQ`}
         >
           <span>Near ABoR</span>
@@ -1180,7 +1180,7 @@ function ProximityBadges({ row }: { row: MailingContactRow }) {
       )}
       {nearF && (
         <span
-          className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#E3F7FF] text-[#285766] font-medium"
+          className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-[#E3F7FF] text-[#285766] font-medium"
           title={`${dF!.toFixed(1)} mi from Five Points Board of REALTORS`}
         >
           <span>Near Five Points</span>

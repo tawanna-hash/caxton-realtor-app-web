@@ -60,7 +60,7 @@ export default function SentClient() {
                   <tr key={i.id}>
                     <td><div className="font-medium text-[color:var(--ds-ink)]">{i.company_name ?? '—'}</div><div className="text-xs text-[color:var(--ds-body)]">{i.email ?? 'No email on file'}</div></td>
                     <td>{i.kind === 'renewal' ? 'Renewal' : 'New partner'}</td>
-                    <td><span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${i.stage === 'opened' ? 'bg-blue-50 text-blue-800' : 'bg-[color:var(--ds-selected)] text-[color:var(--ds-primary-press)]'}`}>{i.stage === 'opened' ? 'Opened' : 'Awaiting approval'}</span></td>
+                    <td><span className={`rounded-md px-2.5 py-0.5 text-xs font-medium ${i.stage === 'opened' ? 'bg-blue-50 text-blue-800' : 'bg-[color:var(--ds-selected)] text-[color:var(--ds-primary-press)]'}`}>{i.stage === 'opened' ? 'Opened' : 'Awaiting approval'}</span></td>
                     <td>{money(i.rate_cents)}</td>
                     <td className="whitespace-nowrap text-[color:var(--ds-body)]">{i.last_activity_at ? relTime(i.last_activity_at) : '—'}</td>
                     <td className="text-right"><button type="button" className={A.small} disabled={busy !== null || !i.email} onClick={() => resend(i)}>{busy === i.id ? '…' : 'Resend'}</button></td>

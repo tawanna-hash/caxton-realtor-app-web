@@ -1700,12 +1700,12 @@ export function AgreementDrawer({
                     : ""}
                 </span>
                 {stripeCardExpStatus === "expired" && (
-                  <span className="rounded-full border border-[#FF2A04]/50 bg-[#FFEAE6] px-2 py-0.5 text-xs font-medium text-[#661102]">
+                  <span className="rounded-md border border-[#FF2A04]/50 bg-[#FFEAE6] px-2 py-0.5 text-xs font-medium text-[#661102]">
                     Expired
                   </span>
                 )}
                 {stripeCardExpStatus === "expiring_soon" && (
-                  <span className="rounded-full border border-[#FAD800]/50 bg-[#FEF8CC] px-2 py-0.5 text-xs font-medium text-[#645600]">
+                  <span className="rounded-md border border-[#FAD800]/50 bg-[#FEF8CC] px-2 py-0.5 text-xs font-medium text-[#645600]">
                     Expiring soon
                   </span>
                 )}

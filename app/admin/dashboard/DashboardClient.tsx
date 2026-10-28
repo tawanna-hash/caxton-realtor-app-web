@@ -57,7 +57,7 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
           <h2 className="text-lg font-semibold text-gray-900">{snapshot.label}</h2>
           <span
             className={
-              'mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ' +
+              'mt-1 inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ' +
               accent.badge
             }
           >
@@ -65,7 +65,7 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
           </span>
         </div>
         {!isLive && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">
+          <span className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-gray-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-600">
             Coming soon
           </span>
         )}
@@ -134,19 +134,19 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
           <>
             <Link
               href={crmHref}
-              className="inline-flex items-center rounded-full border border-[#ECE8F5] bg-white px-4 py-2 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]"
+              className="inline-flex items-center rounded-md border border-[#ECE8F5] bg-white px-4 py-2 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]"
             >
               Open CRM
             </Link>
             <Link
               href={`/admin/ads/campaigns?market=${snapshot.market}`}
-              className="inline-flex items-center rounded-full border border-[#ECE8F5] bg-white px-4 py-2 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]"
+              className="inline-flex items-center rounded-md border border-[#ECE8F5] bg-white px-4 py-2 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]"
             >
               Campaigns
             </Link>
             <Link
               href={`/admin/magazines?publication=${snapshot.market}`}
-              className="inline-flex items-center rounded-full border border-[#ECE8F5] bg-white px-4 py-2 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]"
+              className="inline-flex items-center rounded-md border border-[#ECE8F5] bg-white px-4 py-2 text-xs font-semibold text-[#6D3FD6] hover:bg-[#F6F5FB]"
             >
               Issues
             </Link>
@@ -239,7 +239,7 @@ export default function DashboardClient({ data }: { data: DashboardData }) {
               <h2 className="mb-3 text-lg text-gray-800">Needs attention</h2>
               <div className="flex flex-wrap gap-2">
                 {data.attention.map((item, i) => (
-                  <Link key={i} href={item.href} className="inline-flex items-center rounded-full border border-[#FFE0DD] bg-[#FFF5F4] px-4 py-1.5 text-xs font-medium text-[#D9342B] hover:bg-[#FFE0DD]">
+                  <Link key={i} href={item.href} className="inline-flex items-center rounded-md border border-[#FFE0DD] bg-[#FFF5F4] px-4 py-1.5 text-xs font-medium text-[#D9342B] hover:bg-[#FFE0DD]">
                     {item.label}
                   </Link>
                 ))}

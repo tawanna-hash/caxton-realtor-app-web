@@ -65,7 +65,7 @@ function when(iso: string | null) {
 function DaysPill({ days }: { days: number | null }) {
   if (days == null) return <span className="text-gray-500">—</span>;
   const tone = days < 0 ? 'bg-red-50 text-red-700' : days <= 14 ? 'bg-amber-50 text-amber-800' : 'bg-gray-100 text-gray-700';
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tone}`}>{days < 0 ? `${-days}d ago` : `${days}d`}</span>;
+  return <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${tone}`}>{days < 0 ? `${-days}d ago` : `${days}d`}</span>;
 }
 
 export default function RenewalsV2Client() {
@@ -200,7 +200,7 @@ export default function RenewalsV2Client() {
           aria-label="Monthly batch"
           value={month}
           onChange={(e) => (e.target.value ? selectMonth(e.target.value) : (setMonth(''), setSelected(new Set()), setBatch(null)))}
-          className="anchor-chip rounded-full border border-[color:var(--ds-ink)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]"
+          className="anchor-chip rounded-md border border-[color:var(--ds-ink)] bg-white px-4 py-2 text-sm text-[color:var(--ds-ink)]"
         >
           <option value="">Monthly batch</option>
           {months.map(([k, n]) => <option key={k} value={k}>{monthLabel(k)} ({n})</option>)}
@@ -277,7 +277,7 @@ export default function RenewalsV2Client() {
                   <DaysPill days={r.days_left} />
                 </td>
                 <td>
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATE_STYLE[r.state]}`}>{STATE_LABEL[r.state]}</span>
+                  <span className={`rounded-md px-2.5 py-0.5 text-xs font-medium ${STATE_STYLE[r.state]}`}>{STATE_LABEL[r.state]}</span>
                   {r.last_sent_at && <div className="mt-1 text-xs text-[color:var(--ds-body)]">Sent {new Date(r.last_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{r.reminders_sent ? ` · ${r.reminders_sent} reminder${r.reminders_sent === 1 ? '' : 's'}` : ''}</div>}
                 </td>
                 <td>

@@ -21,7 +21,7 @@ export default function SendStatementButton({ advertiserId, to }: { advertiserId
   return (
     <>
       {msg && <span className="text-xs text-gray-500">{msg}</span>}
-      <button type="button" disabled={!BETA_EMAIL_ENABLED || busy} onClick={send} className="rounded-full bg-[color:var(--ds-primary)] px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50">{busy ? 'Sending…' : 'Send statement'}</button>
+      <button type="button" disabled={!BETA_EMAIL_ENABLED || busy} onClick={send} className="rounded-md bg-[color:var(--ds-primary)] px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50">{busy ? 'Sending…' : 'Send statement'}</button>
     </>
   );
 }

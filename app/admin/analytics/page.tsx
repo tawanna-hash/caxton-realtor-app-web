@@ -730,7 +730,7 @@ export default function AdminAnalyticsPage() {
                   key={evt}
                   type="button"
                   onClick={() => toggleConversion(evt)}
-                  className={`rounded-full border px-3 py-2 text-xs font-mono transition ${
+                  className={`rounded-md border px-3 py-2 text-xs font-mono transition ${
                     isOn
                       ? 'border-[#B9ADD6] bg-[#F6F3FB] text-[#1B1726]'
                       : 'bg-white text-gray-500 border-gray-200'

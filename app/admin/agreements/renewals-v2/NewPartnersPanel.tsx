@@ -158,7 +158,7 @@ export default function NewPartnersPanel() {
                 </td>
                 <td className="text-[color:var(--ds-ink)]">{money(r.total_cents)}</td>
                 <td>
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATE_STYLE[r.state]}`}>{STATE_LABEL[r.state]}</span>
+                  <span className={`rounded-md px-2.5 py-0.5 text-xs font-medium ${STATE_STYLE[r.state]}`}>{STATE_LABEL[r.state]}</span>
                   {r.check_request === 'requested' && <div className="mt-1 text-xs text-amber-700">Asked to pay by check</div>}
                   {r.check_request === 'approved' && <div className="mt-1 text-xs text-green-700">Check approved</div>}
                   {r.last_sent_at && <div className="mt-1 text-xs text-[color:var(--ds-body)]">{new Date(r.last_sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>}

@@ -92,7 +92,7 @@ function Table<T extends { id: string }>({ cols, rows, loading, tableClass, empt
     </div>
   );
 }
-const Pill = ({ t, tone }: { t: string; tone: 'green' | 'gray' | 'red' | 'amber' }) => <span className={`rounded-full border px-2 py-0.5 text-xs ${tone === 'green' ? 'border-green-600 text-green-700' : tone === 'red' ? 'border-red-500 text-red-600' : tone === 'amber' ? 'border-amber-500 text-amber-700' : 'border-[color:var(--ds-body)] text-[color:var(--ds-body)]'}`}>{t}</span>;
+const Pill = ({ t, tone }: { t: string; tone: 'green' | 'gray' | 'red' | 'amber' }) => <span className={`rounded-md border px-2 py-0.5 text-xs ${tone === 'green' ? 'border-green-600 text-green-700' : tone === 'red' ? 'border-red-500 text-red-600' : tone === 'amber' ? 'border-amber-500 text-amber-700' : 'border-[color:var(--ds-body)] text-[color:var(--ds-body)]'}`}>{t}</span>;
 const Name = ({ n }: { n: string }) => <div><div className="font-semibold text-[color:var(--ds-ink)]">{n}</div><div className="text-xs text-[color:var(--ds-body)]">Agreement</div></div>;
 
 // ---------- Revenue Breakdown ----------

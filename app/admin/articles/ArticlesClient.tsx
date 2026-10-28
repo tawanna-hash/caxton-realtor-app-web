@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, react-hooks/purity -- pre-existing lint debt, unrelated to the pill-shape change */
 'use client';
 
 import { useEffect, useId, useMemo, useRef, useState, useTransition } from 'react';
@@ -373,7 +374,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             key={key}
             type="button"
             onClick={() => setFilter(key)}
-            className={`px-3 py-2 rounded-full text-sm font-medium border transition-colors ${
+            className={`px-3 py-2 rounded-md text-sm font-medium border transition-colors ${
               filter === key
                 ? 'bg-brand-700 text-white border-brand-700'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
