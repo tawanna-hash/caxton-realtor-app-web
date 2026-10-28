@@ -737,7 +737,8 @@ export async function listBuilderInventory(
            OR (${isDeveloper}::boolean = true AND b.developer_name IS NOT NULL)
            OR (${isDeveloper}::boolean = false AND b.developer_name IS NULL))
       AND (${includeDisabled}::boolean = true
-           OR COALESCE(v.public_enabled, true) = true)
+           OR COALESCE(v.public_enabled, true) = true
+           OR b.developer_name IS NOT NULL)
     ORDER BY
       b.featured DESC NULLS LAST,
       b.builder_name ASC,
@@ -787,7 +788,7 @@ async function listBuilderInventorySlim(
       AND (${pub} = 'all'
         OR b.publication = ${pub}::text
         OR b.publication = 'both')
-      AND COALESCE(v.public_enabled, true) = true
+      AND (COALESCE(v.public_enabled, true) = true OR b.developer_name IS NOT NULL)
     ORDER BY
       b.featured DESC NULLS LAST,
       b.builder_name ASC,
@@ -829,7 +830,8 @@ export async function getBuilderInventoryById(
     LEFT JOIN builder_page_visibility v ON v.builder_name = b.builder_name
     WHERE b.id = ${id}
       AND (${includeDisabledBuilders}::boolean = true
-           OR COALESCE(v.public_enabled, true) = true)
+           OR COALESCE(v.public_enabled, true) = true
+           OR b.developer_name IS NOT NULL)
     LIMIT 1
   `) as Record<string, unknown>[];
   return rows[0] ? rowToBuilderInventoryRow(rows[0]) : null;

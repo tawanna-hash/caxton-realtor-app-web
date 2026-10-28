@@ -204,6 +204,7 @@ export async function fetchLaCimaPromotions(): Promise<LaCimaPromoScrapeResult> 
       expiresAt,
       sourceUrl: PROMOTIONS_URL,
       communityName: 'La Cima',
+      developerName: 'La Cima',
     });
   }
 
