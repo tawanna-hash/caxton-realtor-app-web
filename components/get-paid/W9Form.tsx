@@ -258,12 +258,16 @@ export default function W9Form() {
       .catch(() => undefined);
   }, []);
 
+  const autoNote = useRef('');
   const pickPartner = (id: string) => {
     setPartnerId(id);
     const p = partners.find((x) => String(x.id) === id);
     if (!p) return;
     setRecipient(p.billing_email || p.contact_email || '');
-    setNote((n) => n || `Hello ${p.company || p.name},\n\nAttached is our completed Form W-9 for your records. Please let me know if you need anything else.`);
+    const greeting = `Hello ${p.company || p.name} team,\n\nAttached is our completed Form W-9 for your records. Please let me know if you need anything else.`;
+    // Replace the greeting for the newly chosen partner unless the message was edited by hand.
+    setNote((n) => (n.trim() === '' || n === autoNote.current ? greeting : n));
+    autoNote.current = greeting;
   };
 
   // Load the W-9 and signature on file.
@@ -582,7 +586,7 @@ export default function W9Form() {
 
           <section className={section}>
             <h2 className="text-sm font-semibold text-[color:var(--ds-ink)]">Generate and send</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-3">
               <Field id="w9-psearch" text="Send to a partner (optional)">
                 <input id="w9-psearch" className={A.input} placeholder="Search partners" value={partnerQuery} onChange={(e) => setPartnerQuery(e.target.value)} />
               </Field>
