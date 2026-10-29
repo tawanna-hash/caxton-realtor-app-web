@@ -38,7 +38,20 @@ async function runImport(): Promise<void> {
   await ensureArticleArchiveSchema();
 
   for (const publication of WP_PUBLICATIONS) {
-    const upstream = await fetchNewsArticles(publication); // throws => not marked complete, retried later
+    let upstream: Awaited<ReturnType<typeof fetchNewsArticles>>;
+    try {
+      upstream = await fetchNewsArticles(publication); // throws => not marked complete, retried later
+    } catch (err) {
+      // realtyline.us and newslinesa.com now redirect to this app, so the old
+      // WordPress feed answers with an HTML page. That source is gone for good:
+      // keep what is already archived instead of retrying on every request.
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/Unexpected token '<'|is not valid JSON/i.test(msg)) {
+        console.warn(`[wordpress-import] ${publication} WordPress feed retired (HTML response); skipping`);
+        continue;
+      }
+      throw err;
+    }
     for (const a of upstream) {
       const slug = `${publication}-${slugify(a.head)}-${a.id}`;
       await query(

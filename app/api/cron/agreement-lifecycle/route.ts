@@ -41,7 +41,15 @@ function authorized(req: Request): boolean {
   return false; // x-vercel-cron is spoofable; only the CRON_SECRET bearer is trusted
 }
 
-function getDaysUntil(iso: string | null | undefined): number | null {
+// Postgres DATE/TIMESTAMP columns arrive as Date objects, not strings.
+function isoOf(v: string | Date | null | undefined): string | null {
+  if (!v) return null;
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? null : v.toISOString();
+  return String(v);
+}
+
+function getDaysUntil(value: string | Date | null | undefined): number | null {
+  const iso = isoOf(value);
   if (!iso) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -51,7 +59,8 @@ function getDaysUntil(iso: string | null | undefined): number | null {
   return Math.round((exp.getTime() - today.getTime()) / 86_400_000);
 }
 
-function humanDate(iso: string | null | undefined): string {
+function humanDate(value: string | Date | null | undefined): string {
+  const iso = isoOf(value);
   if (!iso) return '—';
   try {
     const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
@@ -256,7 +265,7 @@ export async function GET(req: Request) {
   const headsUp: DigestRow[] = []; // exactly 45 days out
   const countdown: DigestRow[] = []; // 30..0 days out, daily
   const expired: DigestRow[] = flipped.map((ag) => {
-    const expDate = ag.exp_date ?? ag.end_date;
+    const expDate = isoOf((ag.exp_date ?? ag.end_date) as unknown as string | Date | null);
     return {
       agreement: { ...ag, status: 'expired' },
       bucket: 'just_expired',
@@ -266,7 +275,7 @@ export async function GET(req: Request) {
   });
 
   for (const ag of live) {
-    const expDate = ag.exp_date ?? ag.end_date;
+    const expDate = isoOf((ag.exp_date ?? ag.end_date) as unknown as string | Date | null);
     const days = getDaysUntil(expDate);
     if (days == null) continue;
     if (days === 45) {

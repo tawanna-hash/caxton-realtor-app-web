@@ -14,6 +14,7 @@
 // Auth: `Authorization: Bearer $CRON_SECRET` OR `x-vercel-cron: 1`.
 
 import { NextResponse } from 'next/server';
+import { POST as verifyAllPending } from '@/app/api/admin/mailing/holding/verify-all-pending/route';
 
 export const runtime     = 'nodejs';
 export const dynamic     = 'force-dynamic';
@@ -59,14 +60,16 @@ export async function GET(req: Request) {
   const started = Date.now();
 
   try {
-    const res = await fetch(target, {
+    // Call the worker in-process. A self-fetch over the public domain goes
+    // through Cloudflare, which blocks server-to-server requests (every run 502'd).
+    const res = await verifyAllPending(new Request(target, {
       method: 'POST',
       headers: {
         'authorization': `Bearer ${process.env.CRON_SECRET}`,
         'content-type':  'application/json',
       },
       body: JSON.stringify({ batchSize, concurrency }),
-    });
+    }));
     const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     return NextResponse.json(
       {

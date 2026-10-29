@@ -37,7 +37,7 @@ export async function createClientSetupCheckout(advertiserId: number, method: 'a
     customer,
     // One link, every option: cards (Apple Pay and Google Pay appear under card on supported devices),
     // bank account (ACH) and Link. The client picks.
-    payment_method_types: method === 'bank' ? ['us_bank_account'] : method === 'card' ? ['card'] : ['card', 'us_bank_account', 'link'],
+    allowed_payment_method_types: method === 'bank' ? ['us_bank_account'] : method === 'card' ? ['card'] : ['card', 'us_bank_account', 'link'],
     metadata: { advertiser_id: String(adv.id), kind: 'pm_setup', method },
   } as never);
   return { ok: true as const, clientSecret: String(session.client_secret), sessionId: session.id };

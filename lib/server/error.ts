@@ -19,6 +19,14 @@ export class ApiError extends Error {
   }
 }
 
+// `instanceof` fails when this module is bundled into more than one server
+// chunk (each copy has its own class), so also match by shape.
+function isApiError(err: unknown): err is ApiError {
+  if (err instanceof ApiError) return true;
+  const e = err as { name?: unknown; statusCode?: unknown } | null;
+  return !!e && e.name === 'ApiError' && typeof e.statusCode === 'number' && e.statusCode >= 400 && e.statusCode < 600;
+}
+
 function handleApiError(err: unknown): NextResponse {
   // Zod validation errors → 400 with field errors
   if (err instanceof ZodError) {
@@ -29,7 +37,7 @@ function handleApiError(err: unknown): NextResponse {
   }
 
   // Our own ApiError → status + body
-  if (err instanceof ApiError) {
+  if (isApiError(err)) {
     const body: Record<string, unknown> = { error: err.message };
     if (err.details !== undefined) body.details = err.details;
     return NextResponse.json(body, { status: err.statusCode });

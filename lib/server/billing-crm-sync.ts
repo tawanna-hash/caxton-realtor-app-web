@@ -459,9 +459,9 @@ export async function syncAgreementToLocationsAndStaff(
       SELECT id FROM advertiser_staff
        WHERE advertiser_id = ${advertiserId}
          AND (
-           (${repName}  IS NOT NULL AND LOWER(REGEXP_REPLACE(name,  '\\s+', '', 'g')) = LOWER(REGEXP_REPLACE(${repName}, '\\s+', '', 'g')))
+           (${repName}::text IS NOT NULL AND LOWER(REGEXP_REPLACE(name,  '\\s+', '', 'g')) = LOWER(REGEXP_REPLACE(${repName}::text, '\\s+', '', 'g')))
            OR
-           (${repEmail} IS NOT NULL AND LOWER(email) = ${repEmail})
+           (${repEmail}::text IS NOT NULL AND LOWER(email) = ${repEmail}::text)
          )
        LIMIT 1
     `) as unknown as Array<{ id: string }>;

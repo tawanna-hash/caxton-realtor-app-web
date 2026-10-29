@@ -36,7 +36,8 @@ export class ResendEmailProvider implements EmailProvider {
     }
 
     const tagList = input.tags ?? [input.emailType];
-    const tags = tagList.map((t) => ({ name: 'category', value: sanitizeTag(t) }));
+    // Resend rejects duplicate tag names (422), so only the first tag is `category`.
+    const tags = tagList.filter(Boolean).slice(0, 10).map((t, i) => ({ name: i === 0 ? 'category' : `tag_${i + 1}`, value: sanitizeTag(t) }));
 
     const payload: Record<string, unknown> = {
       from,

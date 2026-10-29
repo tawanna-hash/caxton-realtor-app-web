@@ -138,8 +138,10 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     if (requestedName) {
       const name = requestedName;
       const baseSlug = slugify(name) || `advertiser-${idNum}`;
+      // Another advertiser may already own this slug (unique); fall back to a per-id slug.
+      const taken = (await sql`SELECT 1 FROM advertisers WHERE slug = ${baseSlug} AND id <> ${idNum} LIMIT 1`) as unknown[];
       setClauses.push({ col: 'name', val: name });
-      setClauses.push({ col: 'slug', val: baseSlug });
+      setClauses.push({ col: 'slug', val: taken.length ? `${baseSlug}-${idNum}` : baseSlug });
       // Keep the newer CRM company column identical even when an older admin
       // surface submits only `name`.
       body.company = name;
