@@ -70,7 +70,7 @@ export default function MediaKit({ mode = 'admin' }: { mode?: 'admin' | 'public'
   const isPublic = mode === 'public';
 
   return (
-    <div className={isPublic ? "max-w-3xl mx-auto px-4 py-8 sm:py-8" : "mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8 [&_section]:p-4 [&_table]:text-xs [&_th]:py-3 [&_td]:py-3"}>
+    <div className={isPublic ? "max-w-5xl mx-auto px-4 py-8 sm:py-8" : "mx-auto max-w-[1500px] space-y-4 px-4 py-6 lg:px-8 [&_section]:p-4 [&_table]:text-xs [&_th]:py-3 [&_td]:py-3"}>
       <div className="mb-4">
         {!isPublic && <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-gray-500">Admin · Sales</div>}
         <PageTitle size="md">{isPublic ? 'Advertising Media Kit — 2026' : 'Media Kit — 2026'}</PageTitle>
@@ -111,7 +111,7 @@ export default function MediaKit({ mode = 'admin' }: { mode?: 'admin' | 'public'
       <PubTabs active={activePubId} onChange={setActivePubId} />
 
       <div className="space-y-4 mt-6">
-        <AudienceSection activePub={activePub} />
+        <AudienceSection activePub={activePub} mode={mode} />
         <ExpansionSection />
         {activePub.hasPrint && <RateMatrixSection />}
         {activePub.hasPrint && <PrintSpecsSection />}
@@ -164,7 +164,7 @@ function PubTabs({ active, onChange }: { active: PubTab['id']; onChange: (id: Pu
   );
 }
 
-function AudienceSection({ activePub }: { activePub: PubTab }) {
+function AudienceSection({ activePub, mode = 'admin' }: { activePub: PubTab; mode?: 'admin' | 'public' }) {
   const pubStats = AUDIENCE_STATS_BY_PUB.find((p) => p.pub === activePub.mediaKitPub);
   return (
     <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
@@ -176,10 +176,10 @@ function AudienceSection({ activePub }: { activePub: PubTab }) {
       {pubStats ? (
         <div className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-4">
           <div className="text-base font-semibold text-gray-900 mb-3">{pubStats.name}</div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+          <div className={'grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-5 ' + (mode === 'public' ? '' : 'xl:grid-cols-8')}>
             {pubStats.stats.map((s) => (
-              <div key={s.label}>
-                <div className="text-2xl font-semibold text-brand-700 leading-tight">{s.value}</div>
+              <div key={s.label} className="min-w-0">
+                <div className="text-2xl font-semibold text-brand-700 leading-tight tabular-nums whitespace-nowrap">{s.value}</div>
                 <div className="text-xs text-gray-700 mt-1">{s.label}</div>
               </div>
             ))}
