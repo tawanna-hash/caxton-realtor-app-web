@@ -31,6 +31,10 @@ export interface AdCreative {
   height: number | null;
   click_url: string;
   alt_text: string | null;
+  /** 'image' (default) or 'video'. Older rows may omit it. */
+  media_type?: 'image' | 'video';
+  poster_url?: string | null;
+  duration_seconds?: string | number | null;
   uploaded_by: string;
   uploaded_at: string;
 }

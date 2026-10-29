@@ -43,12 +43,28 @@ export const POST = withAdminTracking(async function POST(request: Request): Pro
     const json = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async (pathname /* , clientPayload */) => {
-        // Restrict accepted types and size. Adjust as needed.
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        // Video creatives (MP4/MOV) get a larger ceiling than static
+        // images. The client sends { kind: 'video' } for video uploads;
+        // anything else is treated as an image (posters included).
+        let kind: 'image' | 'video' = 'image';
+        try {
+          const parsed = clientPayload ? (JSON.parse(clientPayload) as { kind?: string }) : null;
+          if (parsed?.kind === 'video') kind = 'video';
+        } catch {
+          /* ignore malformed payloads — default to image rules */
+        }
+        if (kind === 'video') {
+          return {
+            allowedContentTypes: ['video/mp4', 'video/quicktime'],
+            maximumSizeInBytes: 100 * 1024 * 1024, // 100MB per video creative
+            tokenPayload: JSON.stringify({ pathname, kind }),
+          };
+        }
         return {
           allowedContentTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
-          maximumSizeInBytes: 10 * 1024 * 1024, // 10MB per ad creative
-          tokenPayload: JSON.stringify({ pathname }),
+          maximumSizeInBytes: 10 * 1024 * 1024, // 10MB per image creative
+          tokenPayload: JSON.stringify({ pathname, kind }),
         };
       },
       onUploadCompleted: async ({ blob /* , tokenPayload */ }) => {

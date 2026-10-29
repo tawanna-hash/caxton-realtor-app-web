@@ -234,12 +234,31 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                 {/* Admin-only creatives gallery from arbitrary blob URLs; next/image
                     would need per-image intrinsic dimensions we don't track. Raw <img>
                     is fine here — low-traffic surface, no LCP concern. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={c.blob_url}
-                  alt={c.alt_text || c.advertiser_name}
-                  className="max-h-full max-w-full object-contain"
-                />
+                {c.media_type === 'video' ? (
+                  <div className="relative h-full w-full flex items-center justify-center">
+                    <video
+                      src={c.blob_url}
+                      poster={c.poster_url ?? undefined}
+                      muted
+                      playsInline
+                      loop
+                      controls
+                      preload="metadata"
+                      aria-label={c.alt_text || c.advertiser_name}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                    <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                      Video{c.duration_seconds ? ` · ${Math.round(Number(c.duration_seconds))}s` : ''}
+                    </span>
+                  </div>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={c.blob_url}
+                    alt={c.alt_text || c.advertiser_name}
+                    className="max-h-full max-w-full object-contain"
+                  />
+                )}
               </div>
               {isEditing && draft ? (
                 <div className="p-3 text-sm space-y-2">

@@ -6,6 +6,13 @@
  * Shields). The id is the ad_campaigns.id. We resolve to the creative's
  * blob_url and stream the bytes through so the browser sees a same-origin
  * URL with no blocker-matched pattern.
+ *
+ * Video creatives: `/c/:id` 302-redirects to the video file so browsers
+ * (iOS Safari especially) get native HTTP Range / 206 support straight from
+ * blob storage — a streamed proxy response cannot be scrubbed or played on
+ * iOS. Video files are uploaded under a neutral `media/` prefix so the
+ * redirect target does not trip ad-blocker filters either.
+ * `/c/:id?poster=1` streams the video's still poster image.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -28,12 +35,14 @@ function guessContentType(p: string): string {
     case 'gif':  return 'image/gif';
     case 'webp': return 'image/webp';
     case 'avif': return 'image/avif';
+    case 'mp4':  return 'video/mp4';
+    case 'mov':  return 'video/quicktime';
     default:     return 'application/octet-stream';
   }
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) {
   const { id } = await ctx.params;
@@ -41,8 +50,9 @@ export async function GET(
     return new NextResponse('not found', { status: 404 });
   }
 
-  const r = await getPool().query<{ blob_url: string }>(
-    `SELECT cr.blob_url
+  const wantPoster = req.nextUrl.searchParams.get('poster') === '1';
+  const r = await getPool().query<{ blob_url: string; media_type: string | null; poster_url: string | null }>(
+    `SELECT cr.blob_url, cr.media_type, cr.poster_url
        FROM ad_campaigns c
        JOIN ad_creatives cr ON cr.id = c.creative_id
       WHERE c.id = $1
@@ -54,7 +64,20 @@ export async function GET(
     return new NextResponse('not found', { status: 404 });
   }
 
-  const blobUrl = row.blob_url;
+  const isVideo = row.media_type === 'video';
+  if (isVideo && !wantPoster) {
+    const target = row.blob_url.startsWith('/')
+      ? new URL(row.blob_url, req.nextUrl.origin).toString()
+      : row.blob_url;
+    return NextResponse.redirect(target, {
+      status: 302,
+      headers: { 'cache-control': 'public, max-age=300, s-maxage=3600' },
+    });
+  }
+  const blobUrl = isVideo || wantPoster ? row.poster_url ?? row.blob_url : row.blob_url;
+  if (wantPoster && !row.poster_url && isVideo) {
+    return new NextResponse('not found', { status: 404 });
+  }
   const headers = new Headers();
   // Cache aggressively at the edge; creatives are immutable per id.
   headers.set('cache-control', 'public, max-age=300, s-maxage=86400, stale-while-revalidate=86400');

@@ -20,11 +20,16 @@
 //   - Fires `ad_impression` once per (slot, campaign_id) visible — so each
 //     rotated creative gets its own impression.
 //   - Fires `ad_click` on user click, then opens click_url in a new tab.
+//   - Video creatives (media_type 'video') autoplay muted + inline, pause
+//     when scrolled off-screen, and fire ad_video_start / ad_video_progress
+//     (25/50/75) / ad_video_complete once per (slot, campaign). In a rotating
+//     slot a video holds until it finishes, then the rotation continues.
+//     prefers-reduced-motion users see the poster still instead.
 //
 // Tracking properties (PostHog):
 //   ad_space_slug, campaign_id, advertiser, publication, rotation_index
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import { trackEvent } from '@/app/posthog-provider';
@@ -39,6 +44,9 @@ type ActiveAd = {
   height: number | null;
   href: string;
   alt: string;
+  media_type?: 'image' | 'video';
+  video?: string | null;
+  duration_seconds?: number | null;
 };
 
 type Props = {
@@ -69,7 +77,88 @@ const ROTATING_SLUGS = new Set([
 // read the creative, slow enough fade to avoid looking like a glitch.
 const DWELL_MS = 6000;
 const FADE_MS = 2000;
-const ROTATION_INTERVAL_MS = DWELL_MS + FADE_MS;
+// Safety cap so a video that never fires `ended` (stalled network) can't
+// freeze a rotating slot forever.
+const VIDEO_MAX_HOLD_MS = 65_000;
+
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener?.('change', update);
+    return () => mq.removeEventListener?.('change', update);
+  }, []);
+  return reduced;
+}
+
+type VideoCreativeProps = {
+  ad: ActiveAd;
+  width: number;
+  height: number;
+  loop: boolean;
+  onEnded: () => void;
+  onTrack: (event: string, extra?: Record<string, unknown>) => void;
+};
+
+function VideoCreative({ ad, width, height, loop, onEnded, onTrack }: VideoCreativeProps) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const fired = useRef<Set<string>>(new Set());
+
+  // Play only while at least half visible; pause off-screen to save battery
+  // and data on mobile.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) void el.play().catch(() => {});
+        else el.pause();
+      },
+      { threshold: 0.5 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ad.id]);
+
+  const once = (key: string, extra?: Record<string, unknown>) => {
+    if (fired.current.has(key)) return;
+    fired.current.add(key);
+    onTrack(key.startsWith('p') ? 'ad_video_progress' : `ad_video_${key}`, extra);
+  };
+
+  return (
+    <video
+      ref={ref}
+      key={ad.id}
+      src={ad.video ?? undefined}
+      poster={ad.image}
+      width={width}
+      height={height}
+      muted
+      playsInline
+      autoPlay
+      loop={loop}
+      preload="metadata"
+      aria-label={ad.alt}
+      className="block h-auto w-full"
+      onPlay={() => once('start')}
+      onTimeUpdate={(e) => {
+        const v = e.currentTarget;
+        if (!v.duration) return;
+        const pct = (v.currentTime / v.duration) * 100;
+        for (const q of [25, 50, 75]) if (pct >= q) once(`p${q}`, { percent: q });
+        if (loop && pct >= 97) once('complete');
+      }}
+      onEnded={() => {
+        once('complete');
+        onEnded();
+      }}
+    />
+  );
+}
 
 export function AdSlot({ slug, className = '', fallback = null, variant = 'default' }: Props) {
   const [ads, setAds] = useState<ActiveAd[]>([]);
@@ -122,18 +211,25 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
     };
   }, [slug, pub, rotating]);
 
-  // Rotation interval — only when more than one creative is active.
+  const reducedMotion = usePrefersReducedMotion();
+
+  // Rotation — only when more than one creative is active. Images dwell
+  // DWELL_MS; a playing video holds the slot until it ends (capped).
+  const total = ads.length;
+  const advance = useCallback(() => {
+    if (!rotating || total < 2) return;
+    setFading(true);
+    setTimeout(() => {
+      setIndex((i) => (i + 1) % total);
+      setFading(false);
+    }, FADE_MS);
+  }, [rotating, total]);
+  const currentIsVideo = ads[index]?.media_type === 'video' && !!ads[index]?.video && !reducedMotion;
   useEffect(() => {
     if (!rotating || ads.length < 2) return;
-    const id = setInterval(() => {
-      setFading(true);
-      setTimeout(() => {
-        setIndex((i) => (i + 1) % ads.length);
-        setFading(false);
-      }, FADE_MS);
-    }, ROTATION_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [rotating, ads.length]);
+    const id = setTimeout(advance, currentIsVideo ? VIDEO_MAX_HOLD_MS : DWELL_MS);
+    return () => clearTimeout(id);
+  }, [rotating, ads.length, index, currentIsVideo, advance]);
 
   // Fire impression once per (slot, campaign_id) — covers initial render and
   // every subsequent rotated creative.
@@ -221,14 +317,35 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
         transition: `opacity ${FADE_MS}ms ease-in-out`,
       }}
     >
-      <Image
-        src={ad.image}
-        alt={ad.alt}
-        width={w}
-        height={h}
-        className="h-auto w-full"
-        unoptimized
-      />
+      {currentIsVideo ? (
+        <VideoCreative
+          ad={ad}
+          width={w}
+          height={h}
+          loop={!rotating || ads.length < 2}
+          onEnded={advance}
+          onTrack={(event, extra) =>
+            trackEvent(event, {
+              ad_space_slug: ad.slot,
+              campaign_id: ad.id,
+              advertiser: ad.advertiser,
+              publication: pub,
+              rotation_index: index,
+              rotation_total: ads.length,
+              ...extra,
+            })
+          }
+        />
+      ) : (
+        <Image
+          src={ad.image}
+          alt={ad.alt}
+          width={w}
+          height={h}
+          className="h-auto w-full"
+          unoptimized
+        />
+      )}
       {showInquireBadge && (
         <span
           aria-hidden="true"

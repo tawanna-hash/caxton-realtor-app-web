@@ -26,6 +26,12 @@ export const createCreativeSchema = z.object({
   height: z.number().int().positive().nullable(),
   click_url: clickUrlSchema,
   alt_text: z.string().max(500).nullable(),
+  media_type: z.enum(['image', 'video']).default('image'),
+  poster_url: z.string().url().nullable().optional(),
+  duration_seconds: z.number().positive().max(600).nullable().optional(),
+}).refine((v) => v.media_type !== 'video' || !!v.poster_url, {
+  message: 'Video creatives need a poster image',
+  path: ['poster_url'],
 });
 
 export const updateCreativeSchema = z.object({

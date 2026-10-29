@@ -259,7 +259,7 @@ export function CampaignForm({ initial }: Props) {
               <option value="">— Select a creative —</option>
               {creatives.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.advertiser_name} — {c.width}×{c.height} — {c.alt_text || c.blob_url.split('/').pop()}
+                  {c.media_type === 'video' ? '[Video] ' : ''}{c.advertiser_name} — {c.width}×{c.height} — {c.alt_text || c.blob_url.split('/').pop()}
                 </option>
               ))}
             </select>
@@ -298,12 +298,32 @@ export function CampaignForm({ initial }: Props) {
           {selectedCreative && (
             <div className="rounded-md border border-gray-200 p-2 bg-white">
               <p className="text-xs text-gray-600 mb-1">Selected creative:</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={selectedCreative.blob_url}
-                alt={selectedCreative.alt_text || ''}
-                className="max-h-32 max-w-full"
-              />
+              {selectedCreative.media_type === 'video' ? (
+                <video
+                  src={selectedCreative.blob_url}
+                  poster={selectedCreative.poster_url ?? undefined}
+                  muted
+                  playsInline
+                  loop
+                  autoPlay
+                  preload="metadata"
+                  className="max-h-32 max-w-full"
+                />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={selectedCreative.blob_url}
+                  alt={selectedCreative.alt_text || ''}
+                  className="max-h-32 max-w-full"
+                />
+              )}
+              {selectedCreative.media_type === 'video' &&
+                (spaces.find((sp) => sp.slug === adSpaceSlug)?.zone === 'newsletter' ||
+                  ['feed_sticky_bottom', 'feed_top_banner', 'calendar_top_banner', 'article_top_leaderboard', 'push_sponsorship'].includes(adSpaceSlug)) && (
+                  <p className="text-xs text-[#661102] mt-1" role="alert">
+                    This placement is image-only (email or thin banner). Pick a video-ready placement or use a static image.
+                  </p>
+                )}
               <p className="text-xs text-gray-500 mt-1">
                 {selectedCreative.width}×{selectedCreative.height} → {selectedCreative.click_url}
               </p>

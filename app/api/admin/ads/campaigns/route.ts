@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
 import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
-import { listCampaigns, createCampaign } from '@/lib/server/ads-store';
+import { listCampaigns, createCampaign, creativeSpaceConflict } from '@/lib/server/ads-store';
 import { logAudit } from '@/lib/server/audit';
 import { createCampaignSchema } from '@/lib/server/schemas/ads';
 import { logger } from '@/lib/server/logger';
@@ -27,6 +27,8 @@ export const POST = withAdminTracking(async (req: Request) => {
   if (body.end_date < body.start_date) {
     throw new ApiError(400, 'end_date before start_date');
   }
+  const conflict = await creativeSpaceConflict(body.creative_id, body.ad_space_slug);
+  if (conflict) throw new ApiError(400, conflict);
 
   const created = await createCampaign({ ...body, created_by: admin.email });
 

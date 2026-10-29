@@ -49,17 +49,27 @@ type CampaignRow = {
     height: number | null;
     click_url: string;
     alt_text: string | null;
+    media_type?: string | null;
+    poster_url?: string | null;
+    duration_seconds?: string | number | null;
   };
 };
 
 function shapeAd(slot: string, campaign: CampaignRow) {
+  const isVideo = campaign.creative.media_type === 'video';
+  const duration = Number(campaign.creative.duration_seconds);
   return {
     id: campaign.id,
     slot,
     advertiser: campaign.creative.advertiser_name,
     // Route through same-origin proxy so URLs don't contain `/ads/`
     // which trips ad-blocker filters. See app/c/[id]/route.ts.
-    image: `/c/${campaign.id}`,
+    // For video creatives `image` is the poster still, so any surface that
+    // only knows how to render images keeps working.
+    image: isVideo ? `/c/${campaign.id}?poster=1` : `/c/${campaign.id}`,
+    media_type: isVideo ? 'video' : 'image',
+    video: isVideo ? `/c/${campaign.id}` : null,
+    duration_seconds: isVideo && Number.isFinite(duration) ? duration : null,
     width: campaign.creative.width,
     height: campaign.creative.height,
     href: campaign.creative.click_url,

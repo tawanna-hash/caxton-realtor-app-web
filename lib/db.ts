@@ -301,6 +301,17 @@ async function _runEnsureSchema(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_ad_creatives_advertiser
       ON ad_creatives (advertiser_name)
   `;
+  // Video creatives (2026-10-29): ad_creatives can hold a short MP4/MOV in
+  // addition to static images. media_type defaults to 'image' so every
+  // existing creative keeps rendering exactly as before. poster_url is the
+  // still frame shown before playback (and in email/no-autoplay contexts);
+  // duration_seconds is read client-side at upload time.
+  await sql`
+    ALTER TABLE ad_creatives
+      ADD COLUMN IF NOT EXISTS media_type TEXT NOT NULL DEFAULT 'image'
+  `;
+  await sql`ALTER TABLE ad_creatives ADD COLUMN IF NOT EXISTS poster_url TEXT`;
+  await sql`ALTER TABLE ad_creatives ADD COLUMN IF NOT EXISTS duration_seconds NUMERIC(6,2)`;
 
   // ── Featured social posts (curated Facebook integration) ─────────────────
   //

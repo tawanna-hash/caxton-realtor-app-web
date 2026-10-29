@@ -4,6 +4,7 @@
  */
 
 import { getPool } from './db/neon';
+import { ensureSchema } from '@/lib/db';
 import { publicationToPubId, type PublicationId, type PublicationScope } from '@/lib/publications';
 
 export type Publication = PublicationScope;
@@ -25,9 +26,31 @@ export interface AdCreative {
   height: number | null;
   click_url: string;
   alt_text: string | null;
+  /** 'image' (default) or 'video'. */
+  media_type: CreativeMediaType;
+  /** Still frame for video creatives; null for images. */
+  poster_url: string | null;
+  duration_seconds: string | number | null;
   uploaded_by: string;
   uploaded_at: string;
 }
+
+export type CreativeMediaType = 'image' | 'video';
+
+/** Zones whose surfaces cannot play video (email clients). */
+export const VIDEO_INCOMPATIBLE_ZONES = new Set(['newsletter']);
+
+/**
+ * Thin banner / icon slots where autoplay video is unreadable or intrusive
+ * (320×50 sticky bars, 728×90 leaderboards, push icons). Image-only.
+ */
+export const VIDEO_INCOMPATIBLE_SLUGS = new Set([
+  'feed_sticky_bottom',
+  'feed_top_banner',
+  'calendar_top_banner',
+  'article_top_leaderboard',
+  'push_sponsorship',
+]);
 
 export interface AdCampaign {
   id: string;
@@ -70,9 +93,10 @@ export async function listAdSpaces(): Promise<AdSpace[]> {
 // -----------------------------------------------------------------------------
 
 export async function listCreatives(): Promise<AdCreative[]> {
+  await ensureSchema();
   const r = await getPool().query<AdCreative>(
     `SELECT id, advertiser_name, blob_url, width, height, click_url, alt_text,
-            uploaded_by, uploaded_at
+            media_type, poster_url, duration_seconds, uploaded_by, uploaded_at
        FROM ad_creatives ORDER BY uploaded_at DESC`,
   );
   return r.rows;
@@ -85,12 +109,17 @@ export async function createCreative(input: {
   height: number | null;
   click_url: string;
   alt_text: string | null;
+  media_type?: CreativeMediaType;
+  poster_url?: string | null;
+  duration_seconds?: number | null;
   uploaded_by: string;
 }): Promise<AdCreative> {
+  await ensureSchema();
   const r = await getPool().query<AdCreative>(
     `INSERT INTO ad_creatives
-       (advertiser_name, blob_url, width, height, click_url, alt_text, uploaded_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+       (advertiser_name, blob_url, width, height, click_url, alt_text,
+        media_type, poster_url, duration_seconds, uploaded_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING *`,
     [
       input.advertiser_name,
@@ -99,6 +128,9 @@ export async function createCreative(input: {
       input.height,
       input.click_url,
       input.alt_text,
+      input.media_type ?? 'image',
+      input.poster_url ?? null,
+      input.duration_seconds ?? null,
       input.uploaded_by,
     ],
   );
@@ -126,7 +158,7 @@ export async function updateCreative(
   if (fields.length === 0) {
     const cur = await getPool().query<AdCreative>(
       `SELECT id, advertiser_name, blob_url, width, height, click_url, alt_text,
-              uploaded_by, uploaded_at
+              media_type, poster_url, duration_seconds, uploaded_by, uploaded_at
          FROM ad_creatives WHERE id = $1`,
       [id],
     );
@@ -137,7 +169,7 @@ export async function updateCreative(
     `UPDATE ad_creatives SET ${fields.join(', ')}
       WHERE id = $${i}
       RETURNING id, advertiser_name, blob_url, width, height, click_url, alt_text,
-                uploaded_by, uploaded_at`,
+                media_type, poster_url, duration_seconds, uploaded_by, uploaded_at`,
     values,
   );
   return r.rows[0] ?? null;
@@ -357,4 +389,50 @@ export async function getActiveCampaignsForSlot(
     [slot, publication, today, pubKey],
   );
   return r.rows;
+}
+
+/**
+ * Returns an error message when a creative cannot run in an ad space
+ * (e.g. a video creative booked into an email banner), otherwise null.
+ * Email clients cannot play inline video, so newsletter-zone slots stay
+ * image-only.
+ */
+export async function creativeSpaceConflict(
+  creativeId: string,
+  adSpaceSlug: string,
+): Promise<string | null> {
+  await ensureSchema();
+  const r = await getPool().query<{ media_type: string | null; zone: string | null; display_name: string | null }>(
+    `SELECT cr.media_type, s.zone, s.display_name
+       FROM ad_creatives cr, ad_spaces s
+      WHERE cr.id = $1 AND s.slug = $2`,
+    [creativeId, adSpaceSlug],
+  );
+  const row = r.rows[0];
+  if (!row) return null;
+  if (row.media_type === 'video' && row.zone && VIDEO_INCOMPATIBLE_ZONES.has(row.zone)) {
+    return `${row.display_name ?? adSpaceSlug} is an email placement and cannot play video. Use a static image creative.`;
+  }
+  if (row.media_type === 'video' && VIDEO_INCOMPATIBLE_SLUGS.has(adSpaceSlug)) {
+    return `${row.display_name ?? adSpaceSlug} is a thin banner placement and is image-only. Use a static image, or book a video-ready placement (Featured Builder Strip, Advertiser Directory, Giveaway Sponsor, Calendar Event Sponsor).`;
+  }
+  return null;
+}
+
+/** PATCH variant: resolves whichever of creative/space isn't being changed from the existing campaign. */
+export async function creativeSpaceConflictForCampaign(
+  campaignId: string,
+  patch: { creative_id?: string; ad_space_slug?: string },
+): Promise<string | null> {
+  if (!patch.creative_id && !patch.ad_space_slug) return null;
+  const r = await getPool().query<{ creative_id: string; ad_space_slug: string }>(
+    `SELECT creative_id::text AS creative_id, ad_space_slug FROM ad_campaigns WHERE id = $1`,
+    [campaignId],
+  );
+  const cur = r.rows[0];
+  if (!cur) return null;
+  return creativeSpaceConflict(
+    patch.creative_id ?? cur.creative_id,
+    patch.ad_space_slug ?? cur.ad_space_slug,
+  );
 }

@@ -190,6 +190,9 @@ export const adminApi = {
     height: number | null;
     click_url: string;
     alt_text: string | null;
+    media_type?: 'image' | 'video';
+    poster_url?: string | null;
+    duration_seconds?: number | null;
   }) => adminFetch('/admin/ads/creatives', { method: 'POST', body: data }),
   deleteAdCreative: (id: string) =>
     adminFetch(`/admin/ads/creatives/${id}`, { method: 'DELETE' }),

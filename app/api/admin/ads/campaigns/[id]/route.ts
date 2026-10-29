@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
 import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
-import { updateCampaign, deleteCampaign } from '@/lib/server/ads-store';
+import { updateCampaign, deleteCampaign, creativeSpaceConflictForCampaign } from '@/lib/server/ads-store';
 import { logAudit } from '@/lib/server/audit';
 import { idParamSchema, updateCampaignSchema } from '@/lib/server/schemas/ads';
 import { logger } from '@/lib/server/logger';
@@ -24,6 +24,8 @@ export const PATCH = withAdminTracking(async (req: Request, ctx: Ctx) => {
   const body = updateCampaignSchema.parse(await req.json());
 
   if ((body as { active?: boolean }).active === true) await assertCampaignNotOnHold(id);
+  const conflict = await creativeSpaceConflictForCampaign(id, body);
+  if (conflict) throw new ApiError(400, conflict);
   const updated = await updateCampaign(id, body);
   if (!updated) throw new ApiError(404, 'Campaign not found');
 
