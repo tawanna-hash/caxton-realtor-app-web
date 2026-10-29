@@ -36,32 +36,54 @@ function Field({ id, text, children, hint }: { id: string; text: string; childre
   );
 }
 
-/** Upload a signature, optionally knock out a white/near-white background. */
+/** Prepare a signature: optional white-background removal, then trim to the ink. */
 async function prepareImage(file: File, removeWhite: boolean): Promise<string> {
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((res, rej) => {
       const i = new Image();
       i.onload = () => res(i);
-      i.onerror = () => rej(new Error('That image could not be read.'));
+      i.onerror = () => rej(new Error('That image could not be read. Use a PNG or JPEG.'));
       i.src = url;
     });
     const scale = Math.min(1, 1200 / img.width);
     const c = document.createElement('canvas');
-    c.width = Math.round(img.width * scale);
-    c.height = Math.round(img.height * scale);
+    c.width = Math.max(1, Math.round(img.width * scale));
+    c.height = Math.max(1, Math.round(img.height * scale));
     const ctx = c.getContext('2d')!;
     ctx.drawImage(img, 0, 0, c.width, c.height);
-    if (removeWhite) {
+    const plain = c.toDataURL('image/png');
+    try {
       const px = ctx.getImageData(0, 0, c.width, c.height);
-      for (let i = 0; i < px.data.length; i += 4) {
-        const min = Math.min(px.data[i], px.data[i + 1], px.data[i + 2]);
-        if (min > 235) px.data[i + 3] = 0;
-        else if (min > 190) px.data[i + 3] = Math.round(((235 - min) / 45) * 255);
+      let minX = c.width, minY = c.height, maxX = -1, maxY = -1;
+      for (let y = 0; y < c.height; y++) {
+        for (let x = 0; x < c.width; x++) {
+          const i = (y * c.width + x) * 4;
+          const lo = Math.min(px.data[i], px.data[i + 1], px.data[i + 2]);
+          if (removeWhite) {
+            if (lo > 235) px.data[i + 3] = 0;
+            else if (lo > 190) px.data[i + 3] = Math.round(((235 - lo) / 45) * 255);
+          }
+          if (px.data[i + 3] > 40 && lo < 200) {
+            if (x < minX) minX = x; if (x > maxX) maxX = x;
+            if (y < minY) minY = y; if (y > maxY) maxY = y;
+          }
+        }
       }
-      ctx.putImageData(px, 0, 0);
+      // Nothing detectable as ink: keep the original image so something always shows.
+      if (maxX < 0) return plain;
+      const pad = 6;
+      minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
+      maxX = Math.min(c.width - 1, maxX + pad); maxY = Math.min(c.height - 1, maxY + pad);
+      const out = document.createElement('canvas');
+      out.width = maxX - minX + 1;
+      out.height = maxY - minY + 1;
+      const octx = out.getContext('2d')!;
+      octx.putImageData(px, -minX, -minY, minX, minY, out.width, out.height);
+      return out.toDataURL('image/png');
+    } catch {
+      return plain;
     }
-    return c.toDataURL('image/png');
   } finally {
     URL.revokeObjectURL(url);
   }
@@ -83,6 +105,17 @@ export default function W9Form() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ dx: number; dy: number } | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [over, setOver] = useState(false);
+
+  const takeFile = (f: File | undefined | null) => {
+    if (!f) return;
+    if (!/^image\/(png|jpe?g)$/.test(f.type)) { setMsg({ ok: false, text: 'Signature must be a PNG or JPEG image.' }); return; }
+    if (f.size > 8_000_000) { setMsg({ ok: false, text: 'Signature image must be under 8 MB.' }); return; }
+    setMsg(null);
+    setPos(DEFAULT_SIG);
+    setRawFile(f);
+  };
 
   const set = <K extends keyof W9Data>(k: K, v: W9Data[K]) => setD((p) => ({ ...p, [k]: v }));
   const sig: W9Signature | null = sigUrl ? { dataUrl: sigUrl, ...pos } : null;
@@ -296,16 +329,28 @@ export default function W9Form() {
               </span>
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field id="w9-sig" text="Signature image (PNG or JPEG)">
-                <input id="w9-sig" type="file" accept="image/png,image/jpeg" className="block w-full text-sm" onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  if (f.size > 4_000_000) { setMsg({ ok: false, text: 'Signature image must be under 4 MB.' }); return; }
-                  setMsg(null);
-                  setPos(DEFAULT_SIG);
-                  setRawFile(f);
-                }} />
-              </Field>
+              <div>
+                <span className={label}>Signature image (PNG or JPEG)</span>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Upload signature image. Drop a file here or press Enter to browse."
+                  onClick={() => fileInput.current?.click()}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.current?.click(); } }}
+                  onDragOver={(e) => { e.preventDefault(); setOver(true); }}
+                  onDragLeave={() => setOver(false)}
+                  onDrop={(e) => { e.preventDefault(); setOver(false); takeFile(e.dataTransfer.files?.[0]); }}
+                  className={`flex min-h-[92px] cursor-pointer flex-col items-center justify-center gap-1 rounded-[10px] border-2 border-dashed px-3 py-4 text-center text-sm transition-colors ${over ? 'border-[color:var(--ds-primary)] bg-[color:var(--ds-selected)]' : 'border-[color:var(--ds-line)] bg-white hover:bg-[color:var(--ds-hover)]'}`}
+                >
+                  {sigUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={sigUrl} alt="Uploaded signature" className="max-h-12 max-w-full object-contain" />
+                  ) : null}
+                  <span className="font-medium text-[color:var(--ds-primary)]">{rawFile ? 'Replace signature' : 'Drop signature here or click to browse'}</span>
+                  <span className="text-xs text-[color:var(--ds-body)]">{rawFile ? rawFile.name : 'PNG or JPEG, up to 8 MB'}</span>
+                </div>
+                <input ref={fileInput} id="w9-sig" type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => { takeFile(e.target.files?.[0]); e.target.value = ''; }} />
+              </div>
               <Field id="w9-date" text="Date signed">
                 <input id="w9-date" type="date" className={A.input} value={d.signedDate} onChange={(e) => set('signedDate', e.target.value)} />
               </Field>
@@ -346,10 +391,10 @@ export default function W9Form() {
 
         <div className="lg:sticky lg:top-4 lg:self-start">
           <p className="mb-2 text-xs text-[color:var(--ds-body)]">
-            Drag the signature onto the Part II line. Arrow keys nudge it (hold Shift for larger steps). The preview shows the blank form; fields are filled when the PDF is generated.
+            Drop a signature image anywhere on the form, then drag it onto the Part II line. Arrow keys nudge it (hold Shift for larger steps). The preview shows the blank form; fields are filled when the PDF is generated.
           </p>
           <div className="overflow-x-auto">
-            <div ref={pageRef} className="relative border border-slate-300 bg-white shadow-sm" style={{ width: PREVIEW_W, height: pageH }}>
+            <div ref={pageRef} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); takeFile(e.dataTransfer.files?.[0]); }} className="relative border border-slate-300 bg-white shadow-sm" style={{ width: PREVIEW_W, height: pageH }}>
               <canvas ref={canvasRef} style={{ width: PREVIEW_W, height: pageH }} aria-label="IRS Form W-9 page 1" />
               {sigUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
