@@ -241,52 +241,36 @@ export default function W9Form() {
 
 
   const firstSnap = useRef<string | null>(null);
-  const pending = useRef<(() => Promise<unknown>) | null>(null);
 
-  // Which W-9 is open: Realty News Now's own, or one partner's. null until the URL has been read.
-  const [partnerId, setPartnerId] = useState<string | null>(null);
+  // Partners are recipients only: the W-9 on file is always Realty News Now's own.
   const [partners, setPartners] = useState<PartnerOpt[]>([]);
-  const partner = partners.find((p) => String(p.id) === partnerId) ?? null;
   const [partnerQuery, setPartnerQuery] = useState('');
-  const saveKey = partnerId ?? 'company';
+  const [partnerId, setPartnerId] = useState('');
+  const partner = partners.find((p) => String(p.id) === partnerId) ?? null;
+  const partnerEmails = partner ? [...new Set([partner.billing_email, partner.contact_email].filter((e): e is string => !!e))] : [];
 
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get('partner');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPartnerId(q && /^\d+$/.test(q) ? q : 'company');
     fetch('/api/admin/get-paid/w9/profile?partners=1')
       .then((r) => r.json())
       .then((j: { partners?: PartnerOpt[] }) => setPartners(j.partners ?? []))
       .catch(() => undefined);
   }, []);
 
-  const emailOf = (p: PartnerOpt | null) => (p ? p.billing_email || p.contact_email || '' : '');
-  const prefillFromPartner = (p: PartnerOpt): W9Data => ({
-    ...EMPTY_W9,
-    name: p.company || p.name || '',
-    address: [p.address, p.address_2].filter(Boolean).join(', '),
-    cityStateZip: [p.city, [p.state, p.zip].filter(Boolean).join(' ')].filter(Boolean).join(', '),
-    signedDate: today(),
-  });
+  const pickPartner = (id: string) => {
+    setPartnerId(id);
+    const p = partners.find((x) => String(x.id) === id);
+    if (!p) return;
+    setRecipient(p.billing_email || p.contact_email || '');
+    setNote((n) => n || `Hello ${p.company || p.name},\n\nAttached is our completed Form W-9 for your records. Please let me know if you need anything else.`);
+  };
 
-  // Load the W-9 and signature on file for the selected owner (company or partner).
-  const loadedFor = useRef<string | null>(null);
+  // Load the W-9 and signature on file.
   useEffect(() => {
-    if (partnerId === null) return;
-    if (partnerId !== 'company' && partners.length === 0) return; // wait for the partner list to prefill
     let live = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoaded(false);
-    setSaved('idle');
-    setMsg(null);
-    firstSnap.current = null;
-    setRawFile(null);
-    fetch(`/api/admin/get-paid/w9/profile?partner=${partnerId}`)
+    fetch('/api/admin/get-paid/w9/profile?partner=company')
       .then((r) => r.json())
       .then((j: { profile?: { data: W9Data; signature: W9Signature | null } | null }) => {
         if (!live) return;
-        const p = partners.find((x) => String(x.id) === partnerId) ?? null;
-        setRecipient(emailOf(p));
         if (j.profile) {
           setD({ ...EMPTY_W9, ...j.profile.data, signedDate: today() });
           if (j.profile.signature) {
@@ -296,64 +280,44 @@ export default function W9Form() {
             const i = new Image();
             i.onload = () => setSigAspect(i.height / i.width);
             i.src = dataUrl;
-          } else { setSigUrl(null); setPos(DEFAULT_SIG); }
+          }
           setSaved('saved');
-        } else {
-          setD(p ? prefillFromPartner(p) : { ...EMPTY_W9, signedDate: today() });
-          setSigUrl(null);
-          setPos(DEFAULT_SIG);
         }
-        loadedFor.current = partnerId;
       })
       .catch(() => undefined)
       .finally(() => live && setLoaded(true));
     return () => { live = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [partnerId, partners.length]);
-
-  const putProfile = (owner: string, data: W9Data, signature: W9Signature | null) =>
-    fetch('/api/admin/get-paid/w9/profile', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ partner: owner, data, signature }),
-    });
+  }, []);
 
   // Keep the form and signature on file: save shortly after any change.
   const snapshot = JSON.stringify([d, sigUrl, pos]);
   useEffect(() => {
-    if (!loaded || loadedFor.current !== saveKey) return;
+    if (!loaded) return;
     if (firstSnap.current === null) { firstSnap.current = snapshot; return; }
     if (firstSnap.current === snapshot) return;
     setSaved('saving');
-    const run = () => putProfile(saveKey, d, sigUrl ? { dataUrl: sigUrl, ...pos } : null)
-      .then((r) => { pending.current = null; setSaved(r.ok ? 'saved' : 'error'); })
-      .catch(() => { pending.current = null; setSaved('error'); });
-    pending.current = run;
-    const t = setTimeout(() => void run(), 1200);
+    const t = setTimeout(() => {
+      fetch('/api/admin/get-paid/w9/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partner: 'company', data: d, signature: sigUrl ? { dataUrl: sigUrl, ...pos } : null }),
+      })
+        .then((r) => setSaved(r.ok ? 'saved' : 'error'))
+        .catch(() => setSaved('error'));
+    }, 1200);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshot, loaded]);
 
-  const switchOwner = async (next: string) => {
-    if (next === saveKey) return;
-    if (pending.current) await pending.current(); // save edits made in the last second first
-    setPartnerId(next);
-    const u = new URL(window.location.href);
-    if (next === 'company') u.searchParams.delete('partner'); else u.searchParams.set('partner', next);
-    window.history.replaceState(null, '', u);
-  };
-
   const clearOnFile = async () => {
-    const who = partner ? (partner.company || partner.name) : 'Realty News Now';
-    if (!window.confirm(`Remove the saved W-9 details and signature for ${who}?`)) return;
-    await fetch(`/api/admin/get-paid/w9/profile?partner=${saveKey}`, { method: 'DELETE' });
+    if (!window.confirm('Remove the saved W-9 details and signature from file?')) return;
+    await fetch('/api/admin/get-paid/w9/profile?partner=company', { method: 'DELETE' });
     firstSnap.current = null;
-    setD(partner ? prefillFromPartner(partner) : { ...EMPTY_W9, signedDate: today() });
+    setD({ ...EMPTY_W9, signedDate: today() });
     setSigUrl(null);
     setRawFile(null);
     setPos(DEFAULT_SIG);
     setSaved('idle');
-    setPartners((ps) => ps.map((p) => (String(p.id) === saveKey ? { ...p, w9_updated_at: null } : p)));
     setMsg({ ok: true, text: 'Saved W-9 details and signature removed.' });
   };
 
@@ -424,42 +388,16 @@ export default function W9Form() {
   return (
     <div className="mx-auto max-w-[1200px] space-y-5 p-4 sm:p-6">
       <div>
-        <h1 className={A.title}>Form W-9 for {W9_TAX_YEAR}{partner ? ` - ${partner.company || partner.name}` : ''}</h1>
+        <h1 className={A.title}>Form W-9 for {W9_TAX_YEAR}</h1>
         <p className={A.subtitle}>
           Fill the official IRS Request for Taxpayer Identification Number and Certification ({W9_REVISION}, the current final IRS revision), place a signature, then generate the PDF and email it in one step. The completed form and signature are kept on file for next time.
         </p>
       </div>
 
 
-      <section className={`${section} !space-y-2`}>
-        <label htmlFor="w9-owner" className={label}>Whose W-9 is this?</label>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <input
-            className={A.input}
-            placeholder="Search partners"
-            aria-label="Search partners"
-            value={partnerQuery}
-            onChange={(e) => setPartnerQuery(e.target.value)}
-          />
-          <select id="w9-owner" className={A.input} value={saveKey} onChange={(e) => void switchOwner(e.target.value)}>
-            <option value="company">Realty News Now (our own W-9)</option>
-            {partners
-              .filter((p) => String(p.id) === saveKey || !partnerQuery.trim() || `${p.company ?? ''} ${p.name}`.toLowerCase().includes(partnerQuery.trim().toLowerCase()))
-              .map((p) => (
-                <option key={p.id} value={String(p.id)}>
-                  {(p.company || p.name)}{p.publication ? ` (${p.publication})` : ''}{p.w9_updated_at ? ' - W-9 on file' : ''}
-                </option>
-              ))}
-          </select>
-        </div>
-        <p className="text-xs text-[color:var(--ds-body)]">
-          Each partner has its own saved W-9 and signature. New partners start with their name and address from the partner record.
-          {partners.length > 0 && ` ${partners.filter((p) => p.w9_updated_at).length} of ${partners.length} partners have a W-9 on file.`}
-        </p>
-      </section>
       <div className="flex flex-wrap items-center gap-3 text-xs text-[color:var(--ds-body)]" aria-live="polite">
         <span>
-          {saved === 'saving' ? 'Saving to file...' : saved === 'saved' ? 'Saved on file for this ' + (partner ? 'partner' : 'company') + '; it fills in automatically next time.' : saved === 'error' ? 'Could not save to file. Your changes are still on this page.' : 'Changes are saved on file automatically.'}
+          {saved === 'saving' ? 'Saving to file...' : saved === 'saved' ? 'Our W-9 and signature are saved on file and fill in automatically next time.' : saved === 'error' ? 'Could not save to file. Your changes are still on this page.' : 'Changes are saved on file automatically.'}
         </span>
         {(saved === 'saved' || sigUrl) && <button type="button" className="underline" onClick={() => void clearOnFile()}>Clear saved details</button>}
       </div>
@@ -601,6 +539,27 @@ export default function W9Form() {
 
           <section className={section}>
             <h2 className="text-sm font-semibold text-[color:var(--ds-ink)]">Generate and send</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field id="w9-psearch" text="Send to a partner (optional)">
+                <input id="w9-psearch" className={A.input} placeholder="Search partners" value={partnerQuery} onChange={(e) => setPartnerQuery(e.target.value)} />
+              </Field>
+              <Field id="w9-partner" text="Partner">
+                <select id="w9-partner" className={A.input} value={partnerId} onChange={(e) => pickPartner(e.target.value)}>
+                  <option value="">Choose a partner</option>
+                  {partners
+                    .filter((p) => String(p.id) === partnerId || !partnerQuery.trim() || `${p.company ?? ''} ${p.name}`.toLowerCase().includes(partnerQuery.trim().toLowerCase()))
+                    .map((p) => <option key={p.id} value={String(p.id)}>{p.company || p.name}{p.publication ? ` (${p.publication})` : ''}</option>)}
+                </select>
+              </Field>
+            </div>
+            {partner && partnerEmails.length > 1 && (
+              <div className="flex flex-wrap gap-2 text-xs">
+                {partnerEmails.map((em) => (
+                  <button key={em} type="button" className={A.small} onClick={() => setRecipient(em)}>{em}</button>
+                ))}
+              </div>
+            )}
+            {partner && partnerEmails.length === 0 && <p className="text-xs text-red-700">This partner has no email on file. Type one below.</p>}
             <Field id="w9-to" text="Email the completed PDF to">
               <input id="w9-to" type="email" className={A.input} value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="name@example.com" />
             </Field>
