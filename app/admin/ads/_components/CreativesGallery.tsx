@@ -149,7 +149,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
         {!showUpload ? (
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-700">
-              Upload a new creative image to the library. You can attach it to a campaign later.
+              Upload a new creative image or video (MP4/MOV, up to 60s, 100MB) to the library. You can attach it to a campaign later.
             </p>
             <button
               type="button"
