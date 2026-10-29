@@ -223,6 +223,7 @@ export const GET_PAID_NAV: AdminNavGroup[] = [
     label: 'Settings',
     links: [
       { label: 'Payment settings', href: '/admin/get-paid/payment-settings', description: 'Checkout options and processing fees' },
+      { label: 'W-9 form', href: '/admin/get-paid/w9', description: 'Fill, sign and email a completed IRS Form W-9', parent: '/admin/get-paid/payment-settings' },
       { label: 'Integrations', href: '/admin/integrations-beta', description: 'Stripe, QuickBooks and Gmail status' },
       { label: 'API keys', href: '/admin/integrations-beta/api-keys', description: 'Generate and revoke API keys', parent: '/admin/integrations-beta' },
       { label: 'Business details', href: '/admin/settings-beta/business-details', description: 'Business name, address, brand and billing settings' },
