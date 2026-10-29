@@ -64,3 +64,5 @@ async function _GET(req: Request) {
 }
 
 export const GET = withScraperRun('scrape-tmbsa', _GET);
+
+export const POST = GET;

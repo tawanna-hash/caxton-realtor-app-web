@@ -73,3 +73,5 @@ async function _GET(req: Request) {
 
 
 export const GET = withScraperRun('scrape-fpr', _GET);
+
+export const POST = GET;

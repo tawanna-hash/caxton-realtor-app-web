@@ -67,3 +67,5 @@ async function _GET(req: Request) {
 }
 
 export const GET = withScraperRun('scrape-nahrep', _GET);
+
+export const POST = GET;

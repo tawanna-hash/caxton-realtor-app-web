@@ -139,3 +139,5 @@ async function _GET(req: NextRequest) {
 }
 
 export const GET = withScraperRun('scrape-newmark', _GET);
+
+export const POST = GET;

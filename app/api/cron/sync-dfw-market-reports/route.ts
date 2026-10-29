@@ -66,5 +66,3 @@ async function _GET(req: Request) {
 
 export const GET = withScraperRun('sync-dfw-market-reports', _GET);
 export const POST = GET;
-
-export const POST = GET;

@@ -137,3 +137,5 @@ async function _GET(req: NextRequest) {
 }
 
 export const GET = withScraperRun('scrape-newmark-communities', _GET);
+
+export const POST = GET;
