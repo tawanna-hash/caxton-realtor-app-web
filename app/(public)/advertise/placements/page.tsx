@@ -20,6 +20,8 @@ import PageTitle from '@/components/ui/PageTitle';
 import TrackPageView from '@/components/analytics/TrackPageView';
 import { APP_AD_SLOTS, MARKET_MULTIPLIERS, weeklyRateForMarkets, type AppAdSlot } from '@/lib/media-kit';
 import { PlacementWireframe, hasWireframe } from '@/components/ads/PlacementWireframe';
+import { VideoBadge, VideoSpecLine } from '@/components/ads/VideoSupport';
+import { VIDEO_SPECS_PATH } from '@/lib/media-kit';
 
 // Purely static: renders from the in-repo APP_AD_SLOTS catalog, no DB
 // reads, no cookies/session, no searchParams. Content only changes when a
@@ -171,6 +173,8 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
               {slot.name}
             </h3>
           </div>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+          <VideoBadge video={slot.video} />
           {showRotationNotice && (
             <span
               className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#F6F3FB] text-[#42277C] border border-[#D9CFF0] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
@@ -183,6 +187,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
               Rotates
             </span>
           )}
+          </div>
         </div>
         {showRotationNotice && (
           <div className="text-[11px] text-[#42277C]">
@@ -203,6 +208,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
           <span className="font-semibold text-gray-700">Specs:</span>{' '}
           <span>{slot.sizes}</span>
         </div>
+        <VideoSpecLine video={slot.video} />
 
         <p className="text-[11px] text-gray-500 leading-relaxed mt-auto pt-1">
           {slot.notes}
@@ -256,6 +262,14 @@ export default function PublicAdvertisePlacementsPage() {
             </svg>
             Rotates
           </span> are shared placements: up to 5 active partners cycle through the same surface, with a 6-second view and a 2-second cross-fade between creatives.
+        </p>
+        <p className="text-sm text-gray-600 leading-relaxed max-w-3xl mt-3">
+          Placements marked <VideoBadge video={{ kind: 'video', spec: '' }} className="align-middle" /> run
+          muted, autoplaying video (MP4 or MOV, up to 60 seconds). The e-Blast runs video as an animated
+          &ldquo;click to watch&rdquo; banner.{' '}
+          <Link href={VIDEO_SPECS_PATH} className="text-brand-700 underline font-semibold">
+            Video ad specs →
+          </Link>
         </p>
         <div className="mt-4 flex flex-wrap gap-3 text-sm">
           <Link

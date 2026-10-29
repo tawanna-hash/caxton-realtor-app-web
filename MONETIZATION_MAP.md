@@ -156,6 +156,15 @@ This is a scoped inventory of every page and where ad/sponsor/affiliate inventor
 
 ---
 
+## Video ads (added Oct 29, 2026)
+
+- Admin uploads MP4/MOV (H.264, ≤60s, ≤100 MB) in `/admin/ads` like static creatives; poster frame auto-captured. Rendered by `components/ads/AdSlot.tsx` (muted, inline, pauses off-screen).
+- Video-ready: `featured_builder_strip` (6:1, 1920×320), `giveaway_prize_sponsor` (1080×600 / 16:9), `calendar_event_sponsor` (16:9), `advertisers_directory_top` (16:9).
+- e-Blast (`newsletter_banner`): email can't play video, so it takes a 600×300 animated GIF / play-button image linked to the video.
+- Image-only (server-enforced): `feed_sticky_bottom`, `feed_top_banner`, `calendar_top_banner`, `article_top_leaderboard`, `push_sponsorship`, all newsletter-zone slots.
+- Events: `ad_video_start`, `ad_video_progress` (25/50/75), `ad_video_complete`.
+- Specs: `lib/media-kit.ts` (`APP_AD_SLOTS[].video`, `VIDEO_FILE_SPECS`, `EBLAST_VIDEO_SPECS`), public page `/advertise/video-specs`, client sheet `docs/VIDEO_AD_SPECS.md`.
+
 ## Tracking — already wired
 
 Every floater Back/Share/Download click flows into PostHog and lands in [`/admin/metrics`](/admin/metrics). Adding `ad_impression` and `ad_click` events with `ad_space_slug` + `campaign_id` properties keeps everything in the same pipeline — no new analytics stack needed.

@@ -408,6 +408,9 @@ export default function EblastOrderForm({
                 <span className="mt-1 text-xs text-gray-500">
                   Optional at checkout · maximum 10 MB
                 </span>
+                <span className="mt-1 text-xs text-gray-500">
+                  Video? Email can&apos;t play it. Upload an animated GIF or play-button image and use your video link as the destination URL.
+                </span>
               </label>
             )}
           </div>

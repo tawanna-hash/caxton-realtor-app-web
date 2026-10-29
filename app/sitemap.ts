@@ -51,6 +51,7 @@ const STATIC_ENTRIES: Entry[] = [
   { path: '/advertise-to-realtors/san-antonio', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/advertise/digital',   changeFrequency: 'weekly',  priority: 0.8 },
   { path: '/advertise/placements',changeFrequency: 'weekly',  priority: 0.7 },
+  { path: '/advertise/video-specs',changeFrequency: 'monthly', priority: 0.6 },
   { path: '/advertise/print',     changeFrequency: 'monthly', priority: 0.7 },
   { path: '/advertise/email',     changeFrequency: 'monthly', priority: 0.7 },
   { path: '/advertise/eblast',    changeFrequency: 'monthly', priority: 0.7 },

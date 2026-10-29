@@ -12,6 +12,7 @@
 // itself. A placement is treated as "sold out" only when every single
 // publication scope it's available on is currently booked.
 
+import { VideoBadge, VideoSpecLine } from '@/components/ads/VideoSupport';
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import TrackPageView from '@/components/analytics/TrackPageView';
@@ -173,6 +174,12 @@ export default async function AdvertiseDigitalPage() {
               <p className={`text-xs mb-1 ${soldOut ? 'text-gray-500' : 'text-gray-600'}`}>
                 <strong>Specs:</strong> {slot.sizes}
               </p>
+              {slot.video && (
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <VideoBadge video={slot.video} />
+                  <VideoSpecLine video={slot.video} className={`text-xs ${soldOut ? 'text-gray-500' : 'text-gray-600'}`} />
+                </div>
+              )}
               <p className={`text-xs mb-4 ${soldOut ? 'text-gray-500' : 'text-gray-600'}`}>
                 {slot.notes}
               </p>

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { VideoBadge } from '@/components/ads/VideoSupport';
+import { getSlotVideoSupport } from '@/lib/media-kit';
 import { Search } from 'lucide-react';
 import type { AdCampaign, AdSpace } from './types';
 import { formatSizes, isCampaignActive, ZONE_LABELS } from './types';
@@ -125,6 +127,9 @@ export function CatalogList({ spaces, campaigns }: Props) {
                       Rotates
                     </div>
                   )}
+                  {getSlotVideoSupport(space.slug) && (
+                    <div className="mt-1"><VideoBadge video={getSlotVideoSupport(space.slug)} /></div>
+                  )}
                 </div>
               </div>
               <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
@@ -180,6 +185,12 @@ export function CatalogList({ spaces, campaigns }: Props) {
                   </td>
                   <td className="px-3 py-3 text-gray-600">
                     <div className="line-clamp-2">{formatSizes(space.sizes_json)}</div>
+                    {getSlotVideoSupport(space.slug) && (
+                      <div className="mt-0.5 line-clamp-1 text-gray-600">
+                        {getSlotVideoSupport(space.slug)?.kind === 'video' ? 'Video: ' : 'e-Blast video: '}
+                        {getSlotVideoSupport(space.slug)?.spec}
+                      </div>
+                    )}
                     {space.notes && <div className="mt-0.5 line-clamp-1 text-gray-500">{space.notes}</div>}
                   </td>
                   <td className="px-4 py-3">
@@ -191,6 +202,7 @@ export function CatalogList({ spaces, campaigns }: Props) {
                         Rotates
                       </span>
                     )}
+                    <VideoBadge video={getSlotVideoSupport(space.slug)} className="ml-2" />
                   </td>
                 </tr>
               );

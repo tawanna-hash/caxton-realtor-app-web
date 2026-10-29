@@ -201,6 +201,64 @@ export interface AppAdSlot {
    * placement is shared with up to 4 other creatives.
    */
   rotates?: boolean;
+  /**
+   * Video support. 'video' = plays MP4/MOV muted + inline (AdSlot
+   * VideoCreative). 'gif' = email placement: video runs as an animated GIF /
+   * play-button banner that links out. Omitted = image only. Keep in sync
+   * with VIDEO_INCOMPATIBLE_SLUGS in lib/server/ads-store.ts and the client
+   * sheet at docs/VIDEO_AD_SPECS.md (/advertise/video-specs).
+   */
+  video?: SlotVideoSupport;
+}
+
+export type SlotVideoSupport =
+  | { kind: 'video'; spec: string }
+  | { kind: 'gif'; spec: string };
+
+/** Shared video file requirements for every video-ready placement. */
+export const VIDEO_FILE_SPECS: Array<{ label: string; value: string }> = [
+  { label: 'File type', value: 'MP4 (preferred) or MOV' },
+  { label: 'Video codec', value: 'H.264' },
+  { label: 'Audio', value: 'AAC, optional. Videos autoplay muted, so the message must work without sound.' },
+  { label: 'Frame rate', value: '24–30 fps' },
+  { label: 'Length', value: '6–30 seconds recommended · 60 seconds max' },
+  { label: 'File size', value: 'Under 25 MB recommended · 100 MB max' },
+  { label: 'Bitrate (guide)', value: '~8–10 Mbps for 1080p' },
+  { label: 'Minimum resolution', value: '1080 px on the short side (1200×200 for the Builder Strip)' },
+  { label: 'Thumbnail', value: 'Pulled automatically from the 1-second mark. Make that frame a clear, branded shot.' },
+];
+
+/** e-Blast "click to watch" banner requirements (email can't play video). */
+export const EBLAST_VIDEO_SPECS: Array<{ label: string; value: string }> = [
+  { label: 'Format', value: 'Animated GIF (preferred) or static JPEG/PNG with a play button built into the image' },
+  { label: 'Size', value: '600×300 px (1200×600 accepted for retina)' },
+  { label: 'Animation length', value: '3–5 seconds, pulled from your video' },
+  { label: 'File size', value: 'Under 1 MB recommended · 10 MB max' },
+  { label: 'First frame', value: 'Must stand alone (some Outlook versions show only the first frame): logo, headline, play button' },
+  { label: 'Click-through link', value: 'Your video on YouTube/Vimeo (public or unlisted) or a landing page where it plays' },
+];
+
+export const VIDEO_SPECS_PATH = '/advertise/video-specs';
+
+/**
+ * Video-ready ad spaces that are live in the app but not sold on the
+ * self-serve rate card (APP_AD_SLOTS). Quoted through the inquiry /
+ * agreement flow.
+ */
+export const EXTRA_VIDEO_PLACEMENTS: Array<{ slug: string; name: string; video: SlotVideoSupport }> = [
+  {
+    slug: 'advertisers_directory_top',
+    name: 'Advertiser Directory Spotlight',
+    video: { kind: 'video', spec: '16:9 · 1920×1080 · 15–30s' },
+  },
+];
+
+/** Video support for any ad_spaces slug (rate-card slots + extras). */
+export function getSlotVideoSupport(slug: string): SlotVideoSupport | undefined {
+  return (
+    APP_AD_SLOTS.find((s) => s.slug === slug)?.video
+    ?? EXTRA_VIDEO_PLACEMENTS.find((p) => p.slug === slug)?.video
+  );
 }
 
 // Publication scope used by the rate-card and checkout system. Mirrors
@@ -348,6 +406,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     monthlyBoth: 2100,
     sizes: '1200×200 desktop · 600×160 mobile',
     notes: 'Top of /builders + /inventory. Logo + tagline + CTA.',
+    video: { kind: 'video', spec: '6:1 motion strip · 1920×320 (min 1200×200) · 6–15s' },
   },
   {
     slug: 'giveaway_prize_sponsor',
@@ -360,6 +419,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     monthlyBoth: 2100,
     sizes: '1080×600 feed card · native entry page',
     notes: 'Per giveaway, typically 2–4 weeks. Sponsor pays prize + visibility.',
+    video: { kind: 'video', spec: '1080×600 feed card (16:9 1920×1080 accepted) · 10–20s' },
   },
   {
     rotates: true,
@@ -409,6 +469,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     monthlyBoth: 1700,
     sizes: 'Native event card (gold border)',
     notes: 'Pinned to top of calendar list. “Presented by” tag. 1–2 per pub per week.',
+    video: { kind: 'video', spec: '16:9 · 1920×1080 · 15–30s' },
   },
   {
     slug: 'account_splash',
@@ -435,6 +496,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     pricingUnit: 'per send',
     sizes: '600×300 Email Banner',
     notes: 'Top of every send. Ships with the Friday Email.',
+    video: { kind: 'gif', spec: 'Animated GIF or play-button image · 600×300 · links to your video' },
   },
   {
     slug: 'splash_welcome',

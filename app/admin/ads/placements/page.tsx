@@ -6,6 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import { ExternalLink, Plus, Search } from 'lucide-react';
 import { APP_AD_SLOTS, type AppAdSlot } from '@/lib/media-kit';
 import { PlacementWireframe, hasWireframe } from '@/components/ads/PlacementWireframe';
+import { VideoBadge, VideoSpecLine } from '@/components/ads/VideoSupport';
+import { VIDEO_SPECS_PATH } from '@/lib/media-kit';
 import PageTitle from '@/components/ui/PageTitle';
 import {
   AD_OPS_CONTROL,
@@ -72,6 +74,7 @@ function PlacementRow({ slot }: { slot: AppAdSlot }) {
               Rotates
             </span>
           )}
+          <VideoBadge video={slot.video} />
         </div>
         <div className="mt-0.5 truncate font-mono text-[11px] text-gray-500">{slot.slug}</div>
         <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-gray-600">{slot.notes}</p>
@@ -87,6 +90,7 @@ function PlacementRow({ slot }: { slot: AppAdSlot }) {
       <div className="px-3 py-3 text-xs text-gray-600">
         <div className="font-medium text-gray-800">{hostPage}</div>
         <div className="mt-1.5 line-clamp-2">{slot.sizes}</div>
+        <VideoSpecLine video={slot.video} className="mt-1 text-[11px] text-gray-600" showLink={false} />
       </div>
       <div className="flex flex-col items-start px-4 py-3 text-xs">
         <div className="font-semibold tabular-nums text-gray-900">${slot.weeklySingle}{unitLabel}</div>
@@ -152,9 +156,11 @@ function PlacementsPageInner() {
           <PageTitle size="md">Placements</PageTitle>
           <p className="mt-1 max-w-2xl text-sm text-gray-600">
             Visual slot guide with host-page context, specs, pricing, and direct checkout access.
+            Video uploads (MP4/MOV, up to 60s and 100 MB) run on placements marked Video; the e-Blast takes an animated GIF.
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Link href={VIDEO_SPECS_PATH} target="_blank" className={AD_OPS_SECONDARY}>Video specs</Link>
           <Link href="/admin/ads/inventory" className={AD_OPS_SECONDARY}>Inventory</Link>
           <Link href="/admin/ads/campaigns/new" className={AD_OPS_PRIMARY}>
             <Plus className="h-4 w-4" aria-hidden="true" />
@@ -169,6 +175,7 @@ function PlacementsPageInner() {
           { label: 'Total placements', value: sorted.length },
           { label: 'Premium', value: sorted.filter((slot) => slot.tier === 'premium').length },
           { label: 'Rotating', value: sorted.filter((slot) => slot.rotates).length },
+          { label: 'Video-ready', value: sorted.filter((slot) => slot.video?.kind === 'video').length },
           { label: 'Zones', value: new Set(sorted.map((slot) => slot.zone)).size },
         ]}
       />

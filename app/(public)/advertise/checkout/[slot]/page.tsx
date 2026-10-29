@@ -6,7 +6,8 @@
 // Stripe Elements.
 
 import { notFound } from 'next/navigation';
-import { APP_AD_SLOTS } from '@/lib/media-kit';
+import { APP_AD_SLOTS, VIDEO_SPECS_PATH } from '@/lib/media-kit';
+import Link from 'next/link';
 import { getBookedPubsForSlot } from '@/lib/server/slot-availability';
 import CheckoutForm from './CheckoutForm';
 import PageTitle from '@/components/ui/PageTitle';
@@ -150,6 +151,20 @@ export default async function CheckoutPage(ctx: RouteCtx) {
               <dt className="text-gray-500">Placement notes</dt>
               <dd className="font-medium text-gray-900">{slot.notes}</dd>
             </div>
+            {slot.video && (
+              <div className="sm:col-span-2">
+                <dt className="text-gray-500">{slot.video.kind === 'video' ? 'Video option' : 'e-Blast video option'}</dt>
+                <dd className="font-medium text-gray-900">
+                  {slot.video.spec}.{' '}
+                  <span className="font-normal text-gray-700">
+                    {slot.video.kind === 'video'
+                      ? 'Running video? Upload a still image below, then email your video file to hello@myrealtyline.com and we will swap it in before launch.'
+                      : 'Upload your animated GIF or play-button banner below and include your video link in the click-through URL.'}
+                  </span>{' '}
+                  <Link href={VIDEO_SPECS_PATH} className="text-brand-700 underline">Video specs</Link>
+                </dd>
+              </div>
+            )}
           </dl>
         </div>
 

@@ -9,6 +9,8 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
+import { VideoBadge, VideoSpecLine, VideoSpecsTables } from '@/components/ads/VideoSupport';
+import { VIDEO_SPECS_PATH } from '@/lib/media-kit';
 import {
   APP_AD_SLOTS,
   PACKAGES,
@@ -117,6 +119,7 @@ export default function MediaKit({ mode = 'admin' }: { mode?: 'admin' | 'public'
         {activePub.hasPrint && <PrintSpecsSection />}
         {activePub.hasPrint && <PackagesSection />}
         <DigitalSlotsSection activePub={activePub} mode={mode} />
+        <VideoAdsSection />
         <EblastsSection activePub={activePub} />
         {activePub.hasPrint && <DeadlinesSection />}
         <PolicySection />
@@ -428,7 +431,15 @@ function DigitalSlotsSection({
                     {s.pricingUnit && (<span className="block text-[10px] text-gray-700 font-normal">{s.pricingUnit}</span>)}
                   </td>
                   <td className="px-3 py-2 align-top text-right tabular-nums text-gray-900">{fmtUSD(s.monthlySingle)}</td>
-                  <td className="px-3 py-2 align-top text-gray-700 text-xs">{s.sizes}</td>
+                  <td className="px-3 py-2 align-top text-gray-700 text-xs">
+                    {s.sizes}
+                    {s.video && (
+                      <div className="mt-1 space-y-1">
+                        <VideoBadge video={s.video} />
+                        <VideoSpecLine video={s.video} className="text-xs text-gray-700" showLink={false} />
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -449,6 +460,28 @@ function DigitalSlotsSection({
         </div>
       </div>
       {slots.length > 0 && <ExampleBundle firstSlot={slots[0]!} />}
+    </section>
+  );
+}
+
+function VideoAdsSection() {
+  return (
+    <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Video Ads</h2>
+          <p className="text-sm text-gray-700 mt-1">
+            Short video plays muted and inline, only while on screen, and links to your landing page.
+            Book any video-ready placement below and send video instead of a static image.
+          </p>
+        </div>
+        <Link href={VIDEO_SPECS_PATH} className="text-sm text-[#42277C] hover:underline">
+          Full video specs {'\u2192'}
+        </Link>
+      </div>
+      <div className="mt-4">
+        <VideoSpecsTables compact />
+      </div>
     </section>
   );
 }

@@ -577,7 +577,19 @@ export default function CheckoutForm({
           4 · Creative
         </h2>
         <p className="text-sm text-gray-600 mb-3">
-          Spec: <strong>{slot.sizes}</strong>. PNG, JPG, or WebP. Up to 10 MB.
+          Spec: <strong>{slot.sizes}</strong>. PNG, JPG, WebP, or GIF. Up to 10 MB.
+          {slot.video?.kind === 'video' && (
+            <>
+              {' '}This placement also runs video ({slot.video.spec}). Upload a still image here, then email your
+              MP4 or MOV to hello@myrealtyline.com and we&apos;ll swap it in before launch.
+            </>
+          )}
+          {slot.video?.kind === 'gif' && (
+            <>
+              {' '}Video advertisers: upload a 600×300 animated GIF or play-button image and use your video link as the
+              click-through URL.
+            </>
+          )}
         </p>
 
         {blobUrl ? (

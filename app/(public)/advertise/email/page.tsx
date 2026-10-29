@@ -8,7 +8,7 @@
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import TrackPageView from '@/components/analytics/TrackPageView';
-import { EBLASTS, EBLAST_ORDER_MARKETS } from '@/lib/media-kit';
+import { EBLASTS, EBLAST_ORDER_MARKETS, VIDEO_SPECS_PATH } from '@/lib/media-kit';
 
 export const metadata = {
   title: 'e-Blast Advertising — RealtyLine & Newsline San Antonio',
@@ -181,6 +181,15 @@ export default function AdvertiseEmailPage() {
             full HTML build or a single hero image with a destination URL.
             Banner specs match the print + digital edition (1200 × 600 px is a
             safe default).
+          </li>
+          <li>
+            <span className="font-medium">Video</span> — email apps like Gmail
+            and Outlook can&apos;t play video, so send an animated GIF (3–5
+            seconds, under 1 MB) or a still with a play button built in, linked
+            to your video on YouTube, Vimeo, or a landing page.{' '}
+            <Link href={VIDEO_SPECS_PATH} className="text-brand-700 underline">
+              Video specs
+            </Link>
           </li>
           <li>
             <span className="font-medium">Preferred send date</span> — we&apos;ll
