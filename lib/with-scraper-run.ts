@@ -49,6 +49,15 @@ function flatten(body: unknown): Record<string, unknown> {
   return merged;
 }
 
+// Multi-source scrapers return results: { key: { error } }. Surface which ones failed.
+function failedSources(results: unknown): string | null {
+  if (!results || typeof results !== 'object') return null;
+  const parts = Object.entries(results as Record<string, unknown>)
+    .filter(([, v]) => v && typeof v === 'object' && typeof (v as { error?: unknown }).error === 'string')
+    .map(([k, v]) => `${k}: ${String((v as { error: string }).error).slice(0, 80)}`);
+  return parts.length ? parts.join('; ') : null;
+}
+
 export function withScraperRun<Req extends Request>(
   scraperPath: string,
   handler: Handler<Req>,
@@ -108,6 +117,7 @@ export function withScraperRun<Req extends Request>(
     const errorMessage: string | null = !ok
       ? (typeof flat.error === 'string' && flat.error) ||
         (typeof flat.message === 'string' && flat.message) ||
+        failedSources(flat.results) ||
         `HTTP ${res.status}`
       : null;
 
