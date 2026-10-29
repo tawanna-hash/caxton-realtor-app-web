@@ -20,6 +20,8 @@ jobs:
       ADMIN_JWT_SECRET: ${{ secrets.E2E_ADMIN_JWT_SECRET || 'e2e-admin-jwt-secret-not-real' }}
       NEXT_PUBLIC_SITE_URL: 'http://localhost:3000'
       CI: 'true'
+      # '1' when no real test database secret is configured.
+      E2E_NO_DB: ${{ secrets.E2E_DATABASE_URL == '' && '1' || '0' }}
 
     steps:
       - uses: actions/checkout@v4

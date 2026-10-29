@@ -170,7 +170,7 @@ export default function RootLayout({
         {/* Vercel Speed Insights — collects real-user Core Web Vitals (LCP,
             CLS, INP, FCP, TTFB) and surfaces them in the Vercel dashboard.
             Loaded after the app tree so it never blocks initial render. */}
-        <SpeedInsights />
+        {process.env.VERCEL ? <SpeedInsights /> : null}
         {/* Google tags: Realty News Now on realtynewsnow.app (host checked in the component). */}
         <SiteGA />
       </body>

@@ -60,6 +60,8 @@ test('wrong password is rejected', async ({ page }) => {
 });
 
 test('reset page rejects a bad token and a missing token', async ({ page }) => {
+  // Token lookup needs a real database; CI builds use a placeholder one.
+  test.skip(process.env.E2E_NO_DB === '1', 'no database in this environment');
   await page.goto('/portal/reset?token=not-a-real-token-value');
   await page.waitForLoadState('networkidle');
   // Retry: WebKit can hydrate between the two fills and clear the first field.

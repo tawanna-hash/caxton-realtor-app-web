@@ -25,8 +25,12 @@ test('/sign-up lands on the sign-up modal', async ({ page }) => {
 
 test('sign-in with garbage credentials does not crash and stays on the sign-in modal', async ({ page }) => {
   await page.goto('/sign-in');
-  await page.getByPlaceholder('you@example.com').fill('definitely-not-a-real@example.com');
-  await page.getByPlaceholder('Enter your password').fill('wrong-password-123');
+  // Retry: WebKit can hydrate after the fills and clear them, leaving Sign in disabled.
+  await expect(async () => {
+    await page.getByPlaceholder('you@example.com').fill('definitely-not-a-real@example.com');
+    await page.getByPlaceholder('Enter your password').fill('wrong-password-123');
+    await expect(page.getByRole('button', { name: /^sign in$/i })).toBeEnabled({ timeout: 1000 });
+  }).toPass({ timeout: 15_000 });
   await page.getByRole('button', { name: /^sign in$/i }).click();
 
   // Invalid credentials must not sign the user in: the form stays visible.

@@ -56,7 +56,11 @@ const cspDirectives: Record<string, string[]> = {
   'base-uri': ["'self'"],
   'form-action': ["'self'"],
   'frame-ancestors': ["'none'"],          // anti-clickjacking
-  'upgrade-insecure-requests': [],
+  // Omitted only for plain-http localhost builds (CI smoke tests): WebKit
+  // applies it to localhost and breaks every same-origin request.
+  ...((process.env.NEXT_PUBLIC_SITE_URL ?? '').startsWith('http://localhost')
+    ? {}
+    : { 'upgrade-insecure-requests': [] as string[] }),
 };
 
 const cspString = Object.entries(cspDirectives)

@@ -95,6 +95,7 @@ test.describe('video ads — public docs', () => {
 
 test.describe('video ads — API + routes', () => {
   test('/api/ads/active returns a media_type for every live creative', async ({ request }) => {
+    test.skip(process.env.E2E_NO_DB === '1', 'needs a database');
     for (const pub of ['realtyline', 'newsline']) {
       for (const slot of ['featured_builder_strip', 'giveaway_prize_sponsor', 'calendar_event_sponsor', 'advertisers_directory_top']) {
         const res = await request.get(`/api/ads/active?slot=${slot}&pub=${pub}`);
@@ -123,6 +124,7 @@ test.describe('video ads — API + routes', () => {
   });
 
   test('/c/:id for an unknown creative is a 404', async ({ request }) => {
+    test.skip(process.env.E2E_NO_DB === '1', 'needs a database');
     const res = await request.get('/c/00000000-0000-4000-8000-000000000000', { maxRedirects: 0 });
     expect(res.status()).toBe(404);
     const poster = await request.get('/c/00000000-0000-4000-8000-000000000000?poster=1', { maxRedirects: 0 });
@@ -134,6 +136,8 @@ test.describe('video ads — AdSlot playback', () => {
   // The PWA service worker would answer /api/ads/active itself and bypass
   // page.route mocks in Chromium.
   test.use({ serviceWorkers: 'block' });
+  // /builders renders from the database.
+  test.skip(process.env.E2E_NO_DB === '1', 'needs a database');
   test('renders a muted, inline, autoplaying video with poster and click-through', async ({ page }) => {
     await skipMarketPicker(page);
     await mockVideoAd(page);
