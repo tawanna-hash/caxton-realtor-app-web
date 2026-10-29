@@ -64,7 +64,7 @@ export default async function MailingHubPage() {
   const counts = countsResult.status === 'fulfilled' ? countsResult.value : emptyCounts;
   const sources = sourcesResult.status === 'fulfilled'
     ? sourcesResult.value
-    : { aborMembers: 0, saborMembers: 0, appSubscribers: 0 };
+    : { aborMembers: 0, saborMembers: 0, fivePointsMembers: 0, appSubscribers: 0 };
   const publicationTotal = (
     result: PromiseSettledResult<Awaited<ReturnType<typeof countPublicationList>>>,
   ) => result.status === 'fulfilled' ? result.value.total : 0;
@@ -85,6 +85,13 @@ export default async function MailingHubPage() {
       caption: 'Austin Board of REALTORS — staging & review queue.',
       accent: '#4A4757',
       initial: 'A',
+    },
+    {
+      label: 'Five Points Board',
+      href: '/admin/mailing/five-points',
+      caption: 'Five Points Board of REALTORS (Williamson & Bastrop) — member roster.',
+      accent: '#4A4757',
+      initial: 'F',
     },
     {
       label: 'App Subscribers — RealtyLine Austin',
@@ -158,6 +165,7 @@ export default async function MailingHubPage() {
     { label: 'RealtyLine ATX Print', value: counts['realtyline-atx-print'], sub: 'partners + REALTORS' },
     { label: 'Newsline SA Print', value: counts['newsline-sa-print'], sub: 'partners + non-partners + manual' },
     { label: 'ABOR Members', value: sources.aborMembers, sub: 'UnlockMLS holding' },
+    { label: 'Five Points Board', value: sources.fivePointsMembers, sub: 'RAPAMS holding' },
     { label: 'SABOR Members', value: sources.saborMembers, sub: 'RAMCO holding' },
     { label: 'App Subscribers', value: sources.appSubscribers, sub: 'email signups' },
   ];

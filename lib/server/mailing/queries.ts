@@ -333,6 +333,7 @@ export async function countHolding(source?: string): Promise<{
 export async function countAudienceSources(): Promise<{
   aborMembers:    number;
   saborMembers:   number;
+  fivePointsMembers: number;
   appSubscribers: number;
 }> {
   const sql = getSql();
@@ -345,6 +346,11 @@ export async function countAudienceSources(): Promise<{
     SELECT COUNT(*)::int AS c
       FROM mailing_contacts
      WHERE stage = 'holding' AND external_source = 'ramco-sabor'
+  `) as unknown as Array<{ c: number }>;
+  const [fivePointsRow] = (await sql`
+    SELECT COUNT(*)::int AS c
+      FROM mailing_contacts
+     WHERE stage = 'holding' AND external_source = 'five-points-board'
   `) as unknown as Array<{ c: number }>;
   // App subscribers live in the `realtors` table (newsletter signups
   // from realtynewsnow.app). Wrapped in a try/catch so a missing/empty
@@ -361,6 +367,7 @@ export async function countAudienceSources(): Promise<{
   return {
     aborMembers:    aborRow?.c  ?? 0,
     saborMembers:   saborRow?.c ?? 0,
+    fivePointsMembers: fivePointsRow?.c ?? 0,
     appSubscribers,
   };
 }

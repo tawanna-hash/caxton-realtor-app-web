@@ -41,7 +41,23 @@ const SORTABLE: MailingColumnId[] = [
   'first_name', 'last_name', 'email', 'company', 'city', 'state', 'created_at',
 ];
 
-export default function HoldingClient() {
+export type HoldingAudience = {
+  source: string;
+  label: string;
+  blurb: string;
+  syncLabel: string;
+  /** When set, sync runs this scraper through the admin scraper proxy. */
+  syncScraperPath?: string;
+};
+
+const ABOR_AUDIENCE: HoldingAudience = {
+  source: 'unlockmls',
+  label: 'ABOR Members',
+  blurb: 'Austin Board of REALTORS agents scraped from UnlockMLS. Click any row to edit details, validate the mailing address, or verify the email. Verified members can be promoted to the active mailing list.',
+  syncLabel: 'Sync from UnlockMLS',
+};
+
+export default function HoldingClient({ audience = ABOR_AUDIENCE }: { audience?: HoldingAudience } = {}) {
   const [rows, setRows] = useState<MailingContactRow[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [counts, setCounts] = useState<Counts | null>(null);
@@ -51,7 +67,7 @@ export default function HoldingClient() {
   const [search, setSearch] = useState<string>('');
   const [filter, setFilter] = useState<FilterKey>('all');
   // ABOR page is scoped to UnlockMLS rows only. SABOR has its own page.
-  const source = 'unlockmls';
+  const source = audience.source;
   const [sort, setSort] = useState<MailingColumnId>('created_at');
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [offset, setOffset] = useState<number>(0);
@@ -362,14 +378,20 @@ export default function HoldingClient() {
   };
 
   const syncFromUnlockMLS = async () => {
-    if (!confirm('Run the UnlockMLS realtor scraper now? This may take several minutes.')) return;
+    if (!confirm(`Run the ${audience.label} scraper now? This may take several minutes.`)) return;
     setBusy('sync');
     try {
-      const res = await fetch('/api/admin/mailing/sync-realtors', {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ maxRecords: 2000 }),
-      });
+      const res = audience.syncScraperPath
+        ? await fetch('/api/admin/scrapers/run', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: audience.syncScraperPath }),
+          })
+        : await fetch('/api/admin/mailing/sync-realtors', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ maxRecords: 2000 }),
+          });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
       showToast(
@@ -387,8 +409,8 @@ export default function HoldingClient() {
   // Toolbar actions: Dedupe / Export / Refresh addresses / Delete all
   // (mirrors the segment-page toolbar but scoped to UnlockMLS holding rows).
   // ------------------------------------------------------------------
-  const HOLDING_SOURCE = 'unlockmls';
-  const AUDIENCE_LABEL = 'ABOR Members';
+  const HOLDING_SOURCE = audience.source;
+  const AUDIENCE_LABEL = audience.label;
 
   const handleDedupe = async () => {
     if (!confirm(`Dedupe ${AUDIENCE_LABEL}? Rows with the same email (or license number, or name+phone) will be merged, keeping the oldest.`)) return;
@@ -485,19 +507,16 @@ export default function HoldingClient() {
 
   return (
     <div className="mailing-admin-page">
-      <MailingBreadcrumb trail={[{ label: 'Mailing', href: '/admin/mailing' }, { label: 'ABOR Members' }]} />
+      <MailingBreadcrumb trail={[{ label: 'Mailing', href: '/admin/mailing' }, { label: audience.label }]} />
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             Audience
           </p>
-          <PageTitle size="md">ABOR Members</PageTitle>
+          <PageTitle size="md">{audience.label}</PageTitle>
           <p className="mt-2 text-sm text-gray-600 max-w-2xl">
-            Austin Board of REALTORS agents scraped from UnlockMLS. Click any
-            row to edit details, validate the mailing address, or
-            verify the email. Verified members can be promoted to the active
-            mailing list.
+            {audience.blurb}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -516,7 +535,7 @@ export default function HoldingClient() {
             onClick={syncFromUnlockMLS}
             className="mailing-primary-action"
           >
-            {busy === 'sync' ? 'Syncing…' : 'Sync from UnlockMLS'}
+            {busy === 'sync' ? 'Syncing…' : audience.syncLabel}
           </button>
         </div>
       </div>
@@ -710,7 +729,7 @@ export default function HoldingClient() {
           <div className="px-3 py-8 text-center text-sm text-gray-500">Loading…</div>
         )}
         {!loading && rows.length === 0 && (
-          <div className="px-3 py-8 text-center text-sm text-gray-500">No members. Try “Sync from UnlockMLS” above.</div>
+          <div className="px-3 py-8 text-center text-sm text-gray-500">No members. Try “{audience.syncLabel}” above.</div>
         )}
         {!loading && rows.map((r) => {
           const hasAddr = !!(r.address || r.city || r.state || r.zip);
@@ -824,7 +843,7 @@ export default function HoldingClient() {
             )}
             {!loading && rows.length === 0 && (
               <tr><td colSpan={9} className="px-3 py-8 text-center text-gray-500">
-                No members. Try “Sync from UnlockMLS” above.
+                No members. Try “{audience.syncLabel}” above.
               </td></tr>
             )}
             {!loading && rows.map((r) => {

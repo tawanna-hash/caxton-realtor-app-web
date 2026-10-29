@@ -105,6 +105,12 @@ const GROUPS: ScraperGroup[] = [
       { name: 'NAHREP',    path: 'scrape-nahrep', schedule: '9:30 AM CDT', description: 'Hispanic real estate assoc.' },
     ],
   },
+  {
+    label: 'Realtor Associations — Member Rosters',
+    scrapers: [
+      { name: 'Five Points Board', path: 'scrape-five-points', schedule: 'Sun 11:00 PM CDT', description: 'Five Points Board of REALTORS (Williamson & Bastrop) member roster → Mailing HUB' },
+    ],
+  },
 ];
 
 
