@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { A } from '@/components/anchor/ui';
 import {
-  EMPTY_W9, formatTin, validateW9, W9_CLASSIFICATIONS, W9_REVISION, W9_TAX_YEAR,
+  digitsOnly, EMPTY_W9, formatTin, validateW9, W9_CLASSIFICATIONS, W9_REVISION, W9_TAX_YEAR,
   type W9Data, type W9Signature,
 } from '@/lib/w9';
 
@@ -33,6 +33,68 @@ function Field({ id, text, children, hint }: { id: string; text: string; childre
       {children}
       {hint && <p className="mt-1 text-xs text-[color:var(--ds-body)]">{hint}</p>}
     </div>
+  );
+}
+
+
+const PW = 611.976, PH = 791.968;
+// Field rectangles [x1, y1, x2, y2] in PDF points, taken from the IRS form.
+const R = {
+  name: [59, 660, 576, 674], biz: [59, 636, 576, 650], llc: [418, 589, 446, 600], other: [162, 552, 446, 564],
+  exempt: [544, 588, 576, 600], fatca: [501, 552, 576, 564], addr: [59, 492, 388, 506], csz: [59, 468, 388, 482],
+  req: [390, 468, 576, 506], acct: [59, 444, 576, 458],
+  ssn1: [418, 396, 461, 420], ssn2: [475, 396, 504, 420], ssn3: [518, 396, 576, 420], ein1: [418, 348, 446, 372], ein2: [461, 348, 562, 372],
+} as const;
+const BOX: Record<string, readonly number[]> = {
+  individual: [73, 604, 81, 612], c_corp: [180, 604, 188, 612], s_corp: [252, 604, 260, 612], partnership: [324, 604, 332, 612],
+  trust_estate: [389, 604, 397, 612], llc: [73, 590, 81, 598], other: [73, 554, 81, 562],
+};
+const FOCUS_RECT: Record<string, readonly number[]> = {
+  'w9-name': R.name, 'w9-biz': R.biz, 'w9-llc': R.llc, 'w9-other': R.other, 'w9-exempt': R.exempt, 'w9-fatca': R.fatca,
+  'w9-addr': R.addr, 'w9-csz': R.csz, 'w9-req': R.req, 'w9-acct': R.acct,
+  'w9-class': [73, 554, 446, 612], 'w9-sig': [76, 196, 380, 230], 'w9-date': [415, 192, 520, 210],
+};
+
+function box(r: readonly number[], k: number) {
+  return { left: r[0] * k, top: (PH - r[3]) * k, width: (r[2] - r[0]) * k, height: (r[3] - r[1]) * k };
+}
+
+/** Live preview of the answers typed into the form, drawn over the blank IRS page. */
+function FilledOverlay({ d, focus }: { d: W9Data; focus: string | null }) {
+  const k = PREVIEW_W / PW;
+  const txt = (r: readonly number[], v: string, opts?: { multiline?: boolean; spaced?: boolean }) =>
+    v ? (
+      <div
+        className="pointer-events-none absolute overflow-hidden font-medium leading-[1.15] text-[#0b2a8a]"
+        style={{ ...box(r, k), fontSize: 10 * k, display: 'flex', alignItems: opts?.multiline ? 'flex-start' : 'center', whiteSpace: opts?.multiline ? 'pre-wrap' : 'nowrap', letterSpacing: opts?.spaced ? `${5 * k}px` : undefined, paddingLeft: 2 }}
+      >
+        {v}
+      </div>
+    ) : null;
+  const t = digitsOnly(d.tin);
+  const parts = d.tinType === 'ssn' ? [t.slice(0, 3), t.slice(3, 5), t.slice(5, 9)] : [t.slice(0, 2), t.slice(2, 9)];
+  const tinRects = d.tinType === 'ssn' ? [R.ssn1, R.ssn2, R.ssn3] : [R.ein1, R.ein2];
+  const check = (r: readonly number[]) => (
+    <div className="pointer-events-none absolute flex items-center justify-center font-bold text-[#0b2a8a]" style={{ ...box(r, k), fontSize: 11 * k }}>X</div>
+  );
+  const hl = focus ? FOCUS_RECT[focus] : null;
+  return (
+    <>
+      {hl && <div className="pointer-events-none absolute rounded-sm bg-yellow-300/40 ring-1 ring-yellow-500" style={box(hl, k)} />}
+      {txt(R.name, d.name)}
+      {txt(R.biz, d.businessName)}
+      {d.classification && BOX[d.classification] && check(BOX[d.classification])}
+      {d.classification === 'llc' && txt(R.llc, d.llcTaxClass)}
+      {d.classification === 'other' && txt(R.other, d.otherText)}
+      {d.foreignOwners && check([441, 521, 449, 529])}
+      {txt(R.exempt, d.exemptPayeeCode)}
+      {txt(R.fatca, d.fatcaCode)}
+      {txt(R.addr, d.address)}
+      {txt(R.csz, d.cityStateZip)}
+      {txt(R.req, d.requester, { multiline: true })}
+      {txt(R.acct, d.accountNumbers)}
+      {tinRects.map((r, i) => <div key={i}>{txt(r, parts[i], { spaced: true })}</div>)}
+    </>
   );
 }
 
@@ -107,6 +169,7 @@ export default function W9Form() {
   const drag = useRef<{ dx: number; dy: number } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
+  const [focus, setFocus] = useState<string | null>(null);
 
   const takeFile = (f: File | undefined | null) => {
     if (!f) return;
@@ -243,7 +306,7 @@ export default function W9Form() {
       )}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,680px)]">
-        <div className="space-y-5">
+        <div className="space-y-5" onFocusCapture={(e) => setFocus((e.target as HTMLElement).id || null)} onBlurCapture={() => setFocus(null)}>
           <section className={section}>
             <h2 className="text-sm font-semibold text-[color:var(--ds-ink)]">Name and classification</h2>
             <Field id="w9-name" text="1. Name of entity/individual">
@@ -391,11 +454,12 @@ export default function W9Form() {
 
         <div className="lg:sticky lg:top-4 lg:self-start">
           <p className="mb-2 text-xs text-[color:var(--ds-body)]">
-            Drop a signature image anywhere on the form, then drag it onto the Part II line. Arrow keys nudge it (hold Shift for larger steps). The preview shows the blank form; fields are filled when the PDF is generated.
+            Drop a signature image anywhere on the form, then drag it onto the Part II line. Arrow keys nudge it (hold Shift for larger steps). The preview fills in live as you type, and the field you are editing is highlighted.
           </p>
           <div className="overflow-x-auto">
             <div ref={pageRef} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); takeFile(e.dataTransfer.files?.[0]); }} className="relative border border-slate-300 bg-white shadow-sm" style={{ width: PREVIEW_W, height: pageH }}>
               <canvas ref={canvasRef} style={{ width: PREVIEW_W, height: pageH }} aria-label="IRS Form W-9 page 1" />
+              <FilledOverlay d={d} focus={focus} />
               {sigUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
