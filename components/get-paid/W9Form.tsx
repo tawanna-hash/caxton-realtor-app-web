@@ -266,8 +266,9 @@ export default function W9Form() {
     setRecipient(p.billing_email || p.contact_email || '');
     const greeting = `Hello ${p.company || p.name} team,\n\nAttached is our completed Form W-9 for your records. Please let me know if you need anything else.`;
     // Replace the greeting for the newly chosen partner unless the message was edited by hand.
-    setNote((n) => (n.trim() === '' || n === autoNote.current ? greeting : n));
+    const untouched = note.trim() === '' || note === autoNote.current;
     autoNote.current = greeting;
+    if (untouched) setNote(greeting);
   };
 
   // Load the W-9 and signature on file.
