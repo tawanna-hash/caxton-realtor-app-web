@@ -173,7 +173,9 @@ export default function W9Form() {
   const [pageH, setPageH] = useState(PREVIEW_W * (791.968 / 611.976));
   const [recipient, setRecipient] = useState('');
   const [note, setNote] = useState('');
-  const [busy, setBusy] = useState<null | 'email' | 'download'>(null);
+  const [busy, setBusy] = useState<null | 'email' | 'download' | 'review'>(null);
+  const [review, setReview] = useState<{ url: string } | null>(null);
+  const [reviewErr, setReviewErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [showErrors, setShowErrors] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -345,42 +347,83 @@ export default function W9Form() {
     setPos((p) => ({ ...p, x: Math.min(1 - p.w, Math.max(0, p.x + v[0])), y: Math.min(0.98, Math.max(0, p.y + v[1])) }));
   };
 
-  const submit = async (action: 'email' | 'download') => {
+  const post = (action: 'email' | 'download') =>
+    fetch('/api/admin/get-paid/w9', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, recipient: recipient.trim() || undefined, message: note, data: d, signature: sig }),
+    });
+  const failMsg = async (r: Response) => ((await r.json().catch(() => ({}))) as { error?: string }).error ?? 'Something went wrong.';
+
+  const closeReview = () => {
+    if (review) URL.revokeObjectURL(review.url);
+    setReview(null);
+    setReviewErr(null);
+  };
+
+  // Generate the PDF and show it in a popup so it can be checked before anything is emailed.
+  const startReview = async () => {
     setMsg(null);
     setShowErrors(true);
     if (problems.length) return;
-    if (action === 'email' && !/^\S+@\S+\.\S+$/.test(recipient.trim())) {
-      setMsg({ ok: false, text: 'Enter a valid recipient email.' });
-      return;
-    }
-    setBusy(action);
+    setBusy('review');
     try {
-      const r = await fetch('/api/admin/get-paid/w9', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, recipient: recipient.trim() || undefined, message: note, data: d, signature: sig }),
-      });
-      if (!r.ok) {
-        const j = (await r.json().catch(() => ({}))) as { error?: string };
-        throw new Error(j.error ?? 'Something went wrong.');
-      }
-      if (action === 'download') {
-        const url = URL.createObjectURL(await r.blob());
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `W-9-${W9_TAX_YEAR}-${d.name.trim().replace(/\s+/g, '-')}.pdf`;
-        a.click();
-        URL.revokeObjectURL(url);
-        setMsg({ ok: true, text: 'Completed W-9 downloaded.' });
-      } else {
-        setMsg({ ok: true, text: `Completed W-9 emailed to ${recipient.trim()} as a PDF attachment.` });
-      }
+      const r = await post('download');
+      if (!r.ok) throw new Error(await failMsg(r));
+      setReviewErr(null);
+      setReview({ url: URL.createObjectURL(await r.blob()) });
     } catch (e) {
       setMsg({ ok: false, text: e instanceof Error ? e.message : 'Something went wrong.' });
     } finally {
       setBusy(null);
     }
   };
+
+  const sendFromReview = async () => {
+    setReviewErr(null);
+    if (!/^\S+@\S+\.\S+$/.test(recipient.trim())) { setReviewErr('Enter a valid recipient email.'); return; }
+    setBusy('email');
+    try {
+      const r = await post('email');
+      if (!r.ok) throw new Error(await failMsg(r));
+      closeReview();
+      setMsg({ ok: true, text: `Completed W-9 emailed to ${recipient.trim()} as a PDF attachment.` });
+    } catch (e) {
+      setReviewErr(e instanceof Error ? e.message : 'Something went wrong.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const downloadPdf = async () => {
+    setMsg(null);
+    setShowErrors(true);
+    if (problems.length) return;
+    setBusy('download');
+    try {
+      const r = await post('download');
+      if (!r.ok) throw new Error(await failMsg(r));
+      const url = URL.createObjectURL(await r.blob());
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `W-9-${W9_TAX_YEAR}-${d.name.trim().replace(/\s+/g, '-')}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setMsg({ ok: true, text: 'Completed W-9 downloaded.' });
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : 'Something went wrong.' });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!review) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && busy === null) closeReview(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [review, busy]);
 
   const tinPlaceholder = d.tinType === 'ssn' ? '123-45-6789' : '12-3456789';
   const showForeign = d.classification === 'partnership' || d.classification === 'trust_estate' || d.classification === 'llc';
@@ -567,10 +610,10 @@ export default function W9Form() {
               <textarea id="w9-note" rows={3} className={A.input} value={note} onChange={(e) => setNote(e.target.value)} />
             </Field>
             <div className="flex flex-wrap gap-3">
-              <button type="button" className={A.primary} disabled={busy !== null} onClick={() => void submit('email')}>
-                {busy === 'email' ? 'Generating and sending...' : 'Generate PDF and email'}
+              <button type="button" className={A.primary} disabled={busy !== null} onClick={() => void startReview()}>
+                {busy === 'review' ? 'Generating...' : 'Generate PDF and review'}
               </button>
-              <button type="button" className={A.outline} disabled={busy !== null} onClick={() => void submit('download')}>
+              <button type="button" className={A.outline} disabled={busy !== null} onClick={() => void downloadPdf()}>
                 {busy === 'download' ? 'Generating...' : 'Download PDF only'}
               </button>
             </div>
@@ -609,6 +652,38 @@ export default function W9Form() {
           </div>
         </div>
       </div>
+
+      {review && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="w9-review-title"
+          onClick={(e) => { if (e.target === e.currentTarget && busy === null) closeReview(); }}>
+          <div className="flex max-h-full w-full max-w-[920px] flex-col overflow-hidden rounded-[14px] bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-[color:var(--ds-line)] px-5 py-3">
+              <h2 id="w9-review-title" className="text-base font-semibold text-[color:var(--ds-ink)]">Review your completed W-9</h2>
+              <button type="button" className="text-sm text-[color:var(--ds-body)] underline" disabled={busy !== null} onClick={closeReview}>Close</button>
+            </div>
+            <div className="grid min-h-0 flex-1 gap-0 overflow-y-auto md:grid-cols-[minmax(0,1fr)_320px]">
+              <iframe title="Completed W-9 PDF" src={`${review.url}#toolbar=0&navpanes=0`} className="h-[60vh] w-full border-0 bg-slate-100 md:h-[72vh]" />
+              <div className="space-y-3 border-t border-[color:var(--ds-line)] p-5 md:border-l md:border-t-0">
+                <p className="text-sm text-[color:var(--ds-body)]">Nothing has been sent yet. Check the form, then send it.</p>
+                {reviewErr && <div className={A.error} role="alert">{reviewErr}</div>}
+                <Field id="w9-rto" text="Send to">
+                  <input id="w9-rto" type="email" className={A.input} value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="name@example.com" />
+                </Field>
+                <Field id="w9-rnote" text="Message (optional)">
+                  <textarea id="w9-rnote" rows={5} className={A.input} value={note} onChange={(e) => setNote(e.target.value)} />
+                </Field>
+                <p className="text-xs text-[color:var(--ds-body)]">The PDF is attached to the email and contains the taxpayer identification number.</p>
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" className={A.primary} disabled={busy !== null} onClick={() => void sendFromReview()}>
+                    {busy === 'email' ? 'Sending...' : 'Send email'}
+                  </button>
+                  <button type="button" className={A.outline} disabled={busy !== null} onClick={closeReview}>Back to edit</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
