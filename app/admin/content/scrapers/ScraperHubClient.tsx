@@ -94,6 +94,7 @@ const GROUPS: ScraperGroup[] = [
       { name: 'SA Builders',       path: 'scrape-sabuilders',    schedule: '8:45 AM CDT',  description: 'San Antonio builders list' },
       { name: 'ABoR Realtors',     path: 'scrape-abor-realtors', schedule: '10:00 PM CDT', description: 'Austin realtor roster' },
       { name: 'Giddens Realtors',  path: 'scrape-giddens-realtors', schedule: '2:00 PM CDT', description: 'Realtor sync' },
+      { name: 'Five Points Board', path: 'scrape-five-points', schedule: 'Sun 11:00 PM CDT', description: 'Five Points Board of REALTORS (Williamson & Bastrop) member roster → Mailing HUB' },
     ],
   },
   {
@@ -103,12 +104,6 @@ const GROUPS: ScraperGroup[] = [
       { name: 'HBA',       path: 'scrape-hba',   schedule: '8:00 AM CDT', description: 'Home Builders Assoc.' },
       { name: 'TMB',       path: 'scrape-tmbsa', schedule: '9:15 AM CDT', description: 'Texas builders' },
       { name: 'NAHREP',    path: 'scrape-nahrep', schedule: '9:30 AM CDT', description: 'Hispanic real estate assoc.' },
-    ],
-  },
-  {
-    label: 'Realtor Associations — Member Rosters',
-    scrapers: [
-      { name: 'Five Points Board', path: 'scrape-five-points', schedule: 'Sun 11:00 PM CDT', description: 'Five Points Board of REALTORS (Williamson & Bastrop) member roster → Mailing HUB' },
     ],
   },
 ];
