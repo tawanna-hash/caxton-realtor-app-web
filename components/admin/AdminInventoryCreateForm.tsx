@@ -205,13 +205,16 @@ export default function AdminInventoryCreateForm() {
       return;
     }
     setPdfFile(f);
+    // Auto-populate as soon as a valid flyer is attached.
+    void handleAutoFill(f);
   }
 
   // Auto-populate form fields from the attached flyer PDF. Best-effort —
   // the admin reviews/tweaks before publishing. Only fills empty fields so
   // it never clobbers a manual edit.
-  async function handleAutoFill() {
-    if (!pdfFile) {
+  async function handleAutoFill(fileArg?: File) {
+    const file = fileArg ?? pdfFile;
+    if (!file) {
       setPdfError('Attach a flyer PDF first, then auto-fill.');
       return;
     }
@@ -220,7 +223,7 @@ export default function AdminInventoryCreateForm() {
     setPdfError(null);
     try {
       const fd = new FormData();
-      fd.append('flyerPdf', pdfFile);
+      fd.append('flyerPdf', file);
       const res = await fetch('/api/admin/inventory/extract-flyer', {
         method: 'POST',
         body: fd,
@@ -231,6 +234,7 @@ export default function AdminInventoryCreateForm() {
             builderName?: string | null; expiresAt?: string | null;
             priceMin?: number | null; priceMax?: number | null;
             bedsMin?: number | null; bedsMax?: number | null;
+            bathsMin?: number | null; bathsMax?: number | null;
             sqftMin?: number | null; sqftMax?: number | null; }
         | null;
       if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
@@ -244,10 +248,12 @@ export default function AdminInventoryCreateForm() {
         if (body.priceMax && !priceMax) setPriceMax(String(body.priceMax));
         if (body.bedsMin && !bedsMin) setBedsMin(String(body.bedsMin));
         if (body.bedsMax && !bedsMax) setBedsMax(String(body.bedsMax));
+        if (body.bathsMin && !bathsMin) setBathsMin(String(body.bathsMin));
+        if (body.bathsMax && !bathsMax) setBathsMax(String(body.bathsMax));
         if (body.sqftMin && !sqftMin) setSqftMin(String(body.sqftMin));
         if (body.sqftMax && !sqftMax) setSqftMax(String(body.sqftMax));
       }
-      setExtractNote('Flyer fields auto-filled — review before publishing.');
+      setExtractNote('Fields auto-filled from the flyer — review before publishing.');
     } catch (err) {
       setPdfError(err instanceof Error ? err.message : 'Auto-fill failed');
     } finally {
@@ -608,12 +614,15 @@ export default function AdminInventoryCreateForm() {
         {pdfFile && (
           <button
             type="button"
-            onClick={handleAutoFill}
+            onClick={() => handleAutoFill()}
             disabled={extracting || submitting}
             className="mt-2 inline-flex items-center gap-2 bg-brand-600 text-white px-4 py-2 text-sm font-medium hover:bg-brand-700 rounded-md transition-colors disabled:opacity-60"
           >
-            {extracting ? 'Extracting…' : 'Auto-fill from flyer'}
+            {extracting ? 'Extracting…' : 'Re-run auto-fill'}
           </button>
+        )}
+        {extracting && (
+          <p className={helpStyle}>Reading flyer and filling in fields…</p>
         )}
         {extractNote && (
           <p className="mt-1 text-xs text-[#005A00]">{extractNote}</p>

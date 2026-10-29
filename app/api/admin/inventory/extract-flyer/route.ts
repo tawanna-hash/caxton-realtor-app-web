@@ -98,6 +98,15 @@ function parseBeds(text: string): { min: number | null; max: number | null } {
   return { min: null, max: null };
 }
 
+// "2.5 baths" / "2-3 bath"
+function parseBaths(text: string): { min: number | null; max: number | null } {
+  const range = text.match(/(\d(?:\.5)?)\s*[-–]\s*(\d(?:\.5)?)\s*bath/i);
+  if (range) return { min: Number(range[1]), max: Number(range[2]) };
+  const single = text.match(/(\d(?:\.5)?)\s*bath/i);
+  if (single) return { min: Number(single[1]), max: Number(single[1]) };
+  return { min: null, max: null };
+}
+
 // "2,400 sq ft" / "2,400 sqft" / "2400 sq. ft."
 function parseSqft(text: string): { min: number | null; max: number | null } {
   const range = text.match(/(\d{1,2}(?:,\d{3})+)\s*(?:[-–to]+)\s*(\d{1,2}(?:,\d{3})+)\s*(?:sq\.?\s*ft|sqft)/i);
@@ -231,6 +240,7 @@ export const POST = withAdminTracking(async function POST(request: NextRequest) 
   const price = parsePrice(body);
   const beds = parseBeds(body);
   const sqft = parseSqft(body);
+  const baths = parseBaths(body);
 
   return NextResponse.json({
     title,
@@ -242,6 +252,8 @@ export const POST = withAdminTracking(async function POST(request: NextRequest) 
     priceMax: price.max,
     bedsMin: beds.min,
     bedsMax: beds.max,
+    bathsMin: baths.min,
+    bathsMax: baths.max,
     sqftMin: sqft.min,
     sqftMax: sqft.max,
     text: body.slice(0, 4000),
