@@ -78,34 +78,6 @@ export default function VideoSpecsPage() {
           </section>
 
           <section className="mt-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Required real estate disclosures</h2>
-            <ul className="list-disc space-y-2 pl-5 text-sm text-gray-700">
-              <li>
-                <strong className="text-gray-900">Texas license holders:</strong> show the name of the license
-                holder or team placing the ad, and the broker&apos;s name at least half the size of the largest
-                agent or team contact information. This applies to video and social ads (
-                <a
-                  href="https://www.trec.texas.gov/what-required-information-must-be-provided-advertisements-such-signs-email-and-business-cards"
-                  className="text-brand-700 underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  TREC advertising FAQ
-                </a>
-                ).
-              </li>
-              <li>
-                <strong className="text-gray-900">Fair Housing:</strong> include the Equal Housing Opportunity
-                logo or statement on the end card. Describe the property, not the buyer.
-              </li>
-              <li>
-                <strong className="text-gray-900">Builders:</strong> mark pricing, incentives, and rates as
-                &ldquo;starting at&rdquo; or &ldquo;as of [date]&rdquo; with required lender disclaimers.
-              </li>
-            </ul>
-          </section>
-
-          <section className="mt-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">What to send</h2>
             <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="What to send">
               <table className="min-w-full text-sm">

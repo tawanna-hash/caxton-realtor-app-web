@@ -79,14 +79,6 @@ Tips:
 
 ---
 
-## Required Real Estate Disclosures
-
-- **Texas license holders (agents, teams, brokers):** Show the name of the license holder or team placing the ad. Also show the broker's name at least half the size of the largest agent or team contact information. This applies to video and social ads ([TREC advertising FAQ](https://www.trec.texas.gov/what-required-information-must-be-provided-advertisements-such-signs-email-and-business-cards)).
-- **Fair Housing:** Show the Equal Housing Opportunity logo or statement on the end card. Describe the property, not the type of buyer you want.
-- **Builders:** Mark pricing, incentives, and rates as "starting at" or "as of [date]," and include the required lender disclaimers.
-
----
-
 ## What to Send
 
 | Item | Details |
