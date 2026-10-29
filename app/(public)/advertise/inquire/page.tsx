@@ -21,6 +21,7 @@ type SearchParams = {
   pub?: string;
   channel?: string;
   package?: string;
+  request?: string;
 };
 
 export default async function AdvertiseInquirePage({
@@ -31,6 +32,7 @@ export default async function AdvertiseInquirePage({
   const params = await searchParams;
   const slot = params.slot ?? '';
   const pkg = params.package ?? '';
+  const mediaKitRequest = params.request === 'media-kit';
   const pub = params.pub === 'newsline' ? 'newsline' : 'realtyline';
 
   // Resolve channel: explicit query param wins, then derive from slot/package,
@@ -55,16 +57,19 @@ export default async function AdvertiseInquirePage({
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-8">
       <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-          Reserve a spot
+          {mediaKitRequest ? 'Media Kit' : 'Reserve a spot'}
         </p>
         <PageTitle size="md">
-          {slotLabel
+          {mediaKitRequest
+            ? 'Request the Media Kit'
+            : slotLabel
             ? `Inquire about the ${slotLabel}`
             : 'Inquire about advertising'}
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed">
-          Tell us a bit about your business and we&apos;ll follow up within one
-          business day with rates, availability, and creative specs.
+          {mediaKitRequest
+            ? 'Tell us a bit about your business and we\u2019ll email the full Media Kit with print rates, availability, and creative specs within one business day.'
+            : 'Tell us a bit about your business and we\u2019ll follow up within one business day with rates, availability, and creative specs.'}
         </p>
       </header>
 
@@ -74,6 +79,7 @@ export default async function AdvertiseInquirePage({
         initialPackage={pkg}
         initialChannel={channel}
         pub={pub}
+        mediaKitRequest={mediaKitRequest}
       />
         </div>
     </div>

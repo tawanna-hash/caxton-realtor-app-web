@@ -113,7 +113,7 @@ export default function MediaKit({ mode = 'admin' }: { mode?: 'admin' | 'public'
       <div className="space-y-4 mt-6">
         <AudienceSection activePub={activePub} mode={mode} />
         <ExpansionSection />
-        {activePub.hasPrint && <RateMatrixSection />}
+        {activePub.hasPrint && <RateMatrixSection mode={mode} pub={activePub.mediaKitPub === 'newsline' ? 'newsline' : 'realtyline'} />}
         {activePub.hasPrint && <PrintSpecsSection />}
         {activePub.hasPrint && <PackagesSection />}
         <DigitalSlotsSection activePub={activePub} mode={mode} />
@@ -235,12 +235,20 @@ function ExpansionSection() {
   );
 }
 
-function RateMatrixSection() {
+function RateMatrixSection({ mode, pub }: { mode: 'admin' | 'public'; pub: 'realtyline' | 'newsline' }) {
+  // Public visitors see the matrix blurred with a "starts at" callout and a
+  // link to request the full Media Kit. Admins always see the real rates.
+  const locked = mode === 'public';
+  const quarter12 = RATE_MATRIX['Quarter-Page']?.[3] ?? 485;
   return (
     <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900">Print Rate Matrix</h2>
       <p className="text-sm text-gray-700 mt-1">Monthly print rates by size and frequency commitment. Rates locked when an agreement is signed in advance.</p>
-      <div className="overflow-x-auto mt-4" tabIndex={0} role="region" aria-label="Ad size and rate table">
+      <div className={"relative mt-4" + (locked ? " min-h-[260px]" : "")}>
+      <div
+        className={'overflow-x-auto' + (locked ? ' blur-sm select-none pointer-events-none' : '')}
+        {...(locked ? { 'aria-hidden': true } : { tabIndex: 0, role: 'region', 'aria-label': 'Ad size and rate table' })}
+      >
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-left text-gray-700">
@@ -259,7 +267,7 @@ function RateMatrixSection() {
                 <td className="px-3 py-2 font-medium text-gray-900">{size}</td>
                 {prices.map((p, i) => (
                   <td key={i} className="px-3 py-2 text-gray-900">
-                    {fmtUSD(p)}
+                    {locked ? '$0,000' : fmtUSD(p)}
                     <span className="text-xs text-gray-700">/mo</span>
                   </td>
                 ))}
@@ -267,6 +275,24 @@ function RateMatrixSection() {
             ))}
           </tbody>
         </table>
+      </div>
+      {locked && (
+        <div className="absolute inset-0 flex items-center justify-center p-4">
+          <div className="max-w-md rounded-md bg-white/95 ring-1 ring-gray-200 shadow-lg px-6 py-5 text-center">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-700">Print pricing</p>
+            <p className="mt-1 text-2xl font-semibold text-gray-900">
+              Starts as low as {fmtUSD(quarter12)}<span className="text-base font-normal text-gray-700">/mo</span>
+            </p>
+            <p className="mt-1 text-sm text-gray-700">Based on the Brand [12] Quarter-Page rate.</p>
+            <Link
+              href={`/advertise/inquire?channel=print&pub=${pub}&request=media-kit`}
+              className="mt-4 inline-block rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800"
+            >
+              Request the Media Kit
+            </Link>
+          </div>
+        </div>
+      )}
       </div>
     </section>
   );

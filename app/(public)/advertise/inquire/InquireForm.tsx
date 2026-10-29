@@ -20,6 +20,7 @@ type Props = {
   initialPackage: string;
   initialChannel: AdChannel;
   pub: PubKey;
+  mediaKitRequest?: boolean;
 };
 
 // Stable id for an e-Blast package. EBLASTS rows don't carry an id field,
@@ -35,6 +36,7 @@ export default function InquireForm({
   initialPackage,
   initialChannel,
   pub,
+  mediaKitRequest = false,
 }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>('idle');
@@ -432,7 +434,9 @@ export default function InquireForm({
           // textarea with a fresh defaultValue.
           key={`${channel}:${slot}:${pkg}`}
           defaultValue={
-            selectedLabel
+            mediaKitRequest && !pkg
+              ? 'Please send me the full 2026 Media Kit with print rates.'
+              : selectedLabel
               ? `Interested in the ${selectedLabel} (${AD_CHANNEL_LABEL[channel]}).`
               : `Interested in ${AD_CHANNEL_LABEL[channel].toLowerCase()} advertising.`
           }
