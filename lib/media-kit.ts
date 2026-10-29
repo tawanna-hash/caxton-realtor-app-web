@@ -549,9 +549,9 @@ export const PACKAGES: Package[] = [
     popular: false,
     features: ['Ad Creative in Print & Digital Editions'],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1740 },
-      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price: 1390 },
-      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  1065 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1440 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price: 1150 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  880 },
     ],
   },
   {
@@ -566,9 +566,9 @@ export const PACKAGES: Package[] = [
       'Unlimited Calendar of Events Entries Online',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1460 },
-      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  1105 },
-      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  780 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1205 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  915 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  645 },
     ],
   },
   {
@@ -588,9 +588,9 @@ export const PACKAGES: Package[] = [
       'Builder/Developer Inventory in Weekly e-Blast',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1380 },
-      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  1020 },
-      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  695 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1140 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  845 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  575 },
     ],
   },
   {
@@ -610,9 +610,9 @@ export const PACKAGES: Package[] = [
       'Builder/Developer Inventory in Weekly e-Blast',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1270 },
-      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  915 },
-      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  585 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1050 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  755 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  485 },
     ],
   },
   {
@@ -635,7 +635,7 @@ export const PACKAGES: Package[] = [
       'Logo & Link — Weekly Emails',
     ],
     sizes: [
-      { size: 'Full Page', dim: '10 × 11 in', price: 1880 },
+      { size: 'Full Page', dim: '10 × 11 in', price: 1680 },
     ],
   },
 ];
@@ -802,9 +802,9 @@ export const PRINT_DEADLINES: PrintDeadline[] = REALTYLINE_2026;
 
 export const RATE_MATRIX: Record<string, [number, number, number, number]> = {
   // [1x, 3x, 6x, 12x] per month
-  'Full Page':    [1740, 1460, 1380, 1270],
-  'Half-Page':    [1390, 1105, 1020, 915],
-  'Quarter-Page': [1065, 780, 695, 585],
+  'Full Page':    [1440, 1205, 1140, 1050],
+  'Half-Page':    [1150, 915, 845, 755],
+  'Quarter-Page': [880, 645, 575, 485],
 };
 
 export const FREQ_LABELS: [string, string, string, string] = ['1x', '3x', '6x', '12x'];
@@ -812,7 +812,7 @@ export const FREQ_TERMS:  [string, string, string, string] = [
   'No Agreement', '3-Month', '6-Month', '12-Month',
 ];
 
-// Brand[12 Plus] is a separate premium tier — Full Page only at $1,880/mo
+// Brand[12 Plus] is a separate premium tier — Full Page only at $1,680/mo
 // ── Audience stats (RealtyLine) ────────────────────────────────────────────
 
 export interface AudienceStat {
