@@ -176,6 +176,9 @@ export default function W9Form() {
   const fileInput = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
   const [focus, setFocus] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [saved, setSaved] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
 
   const takeFile = (f: File | undefined | null) => {
     if (!f) return;
@@ -229,6 +232,65 @@ export default function W9Form() {
       .catch((e: Error) => live && setMsg({ ok: false, text: e.message }));
     return () => { live = false; };
   }, [rawFile, removeWhite]);
+
+
+  // Load the saved W-9 and signature on file.
+  useEffect(() => {
+    let live = true;
+    fetch('/api/admin/get-paid/w9/profile')
+      .then((r) => r.json())
+      .then((j: { profile?: { data: W9Data; signature: W9Signature | null } | null }) => {
+        if (!live) return;
+        if (j.profile) {
+          setD({ ...EMPTY_W9, ...j.profile.data, signedDate: today() });
+          if (j.profile.signature) {
+            const { dataUrl, ...p } = j.profile.signature;
+            setSigUrl(dataUrl);
+            setPos(p);
+            const i = new Image();
+            i.onload = () => setSigAspect(i.height / i.width);
+            i.src = dataUrl;
+          }
+          setSaved('saved');
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => live && setLoaded(true));
+    return () => { live = false; };
+  }, []);
+
+  // Keep the form and signature on file: save shortly after any change.
+  const snapshot = JSON.stringify([d, sigUrl, pos]);
+  const firstSnap = useRef<string | null>(null);
+  useEffect(() => {
+    if (!loaded) return;
+    if (firstSnap.current === null) { firstSnap.current = snapshot; return; }
+    if (firstSnap.current === snapshot) return;
+    setSaved('saving');
+    const t = setTimeout(() => {
+      fetch('/api/admin/get-paid/w9/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: d, signature: sigUrl ? { dataUrl: sigUrl, ...pos } : null }),
+      })
+        .then((r) => setSaved(r.ok ? 'saved' : 'error'))
+        .catch(() => setSaved('error'));
+    }, 1200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshot, loaded]);
+
+  const clearOnFile = async () => {
+    if (!window.confirm('Remove the saved W-9 details and signature from file?')) return;
+    await fetch('/api/admin/get-paid/w9/profile', { method: 'DELETE' });
+    firstSnap.current = null;
+    setD({ ...EMPTY_W9, signedDate: today() });
+    setSigUrl(null);
+    setRawFile(null);
+    setPos(DEFAULT_SIG);
+    setSaved('idle');
+    setMsg({ ok: true, text: 'Saved W-9 details and signature removed.' });
+  };
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const box = pageRef.current!.getBoundingClientRect();
@@ -299,10 +361,16 @@ export default function W9Form() {
       <div>
         <h1 className={A.title}>Form W-9 for {W9_TAX_YEAR}</h1>
         <p className={A.subtitle}>
-          Fill the official IRS Request for Taxpayer Identification Number and Certification ({W9_REVISION}, the current final IRS revision), place a signature, then generate the PDF and email it in one step. Nothing is saved on the server.
+          Fill the official IRS Request for Taxpayer Identification Number and Certification ({W9_REVISION}, the current final IRS revision), place a signature, then generate the PDF and email it in one step. The completed form and signature are kept on file for next time.
         </p>
       </div>
 
+      <div className="flex flex-wrap items-center gap-3 text-xs text-[color:var(--ds-body)]" aria-live="polite">
+        <span>
+          {saved === 'saving' ? 'Saving to file...' : saved === 'saved' ? 'Form and signature are saved on file and fill in automatically next time.' : saved === 'error' ? 'Could not save to file. Your changes are still on this page.' : 'Changes are saved on file automatically.'}
+        </span>
+        {(saved === 'saved' || sigUrl) && <button type="button" className="underline" onClick={() => void clearOnFile()}>Clear saved details</button>}
+      </div>
       {msg && <div className={msg.ok ? A.notice : A.error} role="status">{msg.text}</div>}
       {showErrors && problems.length > 0 && (
         <div className={A.error} role="alert">
@@ -384,7 +452,7 @@ export default function W9Form() {
                 </label>
               ))}
             </div>
-            <Field id="w9-tin" text={d.tinType === 'ssn' ? 'SSN' : 'EIN'} hint="Used only to build this PDF. It is not stored or logged.">
+            <Field id="w9-tin" text={d.tinType === 'ssn' ? 'SSN' : 'EIN'} hint="Saved on file encrypted, and used to build the PDF.">
               <input id="w9-tin" className={A.input} inputMode="numeric" autoComplete="off" placeholder={tinPlaceholder} value={d.tin} onChange={(e) => set('tin', formatTin(d.tinType, e.target.value))} />
             </Field>
           </section>
