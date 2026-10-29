@@ -190,3 +190,5 @@ export async function POST(req: NextRequest) {
 }
 
 export const GET = withScraperRun('scrape-mi-homes-communities', _GET);
+
+export const POST = GET;

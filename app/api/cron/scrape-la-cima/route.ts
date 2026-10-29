@@ -105,3 +105,5 @@ async function _GET(req: NextRequest)  { return handle(req); }
 export async function POST(req: NextRequest) { return handle(req); }
 
 export const GET = withScraperRun('scrape-la-cima', _GET);
+
+export const POST = GET;

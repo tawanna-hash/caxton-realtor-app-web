@@ -156,3 +156,5 @@ export async function POST(req: NextRequest) {
 }
 
 export const GET = withScraperRun('scrape-david-weekley-communities', _GET);
+
+export const POST = GET;

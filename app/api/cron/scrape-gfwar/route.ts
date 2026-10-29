@@ -49,3 +49,5 @@ async function _GET(req: Request) {
 export const GET = withScraperRun('scrape-gfwar', _GET);
 // The admin Scraper Hub "Run now" button calls cron routes with POST.
 export const POST = GET;
+
+export const POST = GET;

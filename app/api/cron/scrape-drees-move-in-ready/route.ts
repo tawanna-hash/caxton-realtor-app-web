@@ -193,3 +193,5 @@ export async function POST(req: NextRequest) {
 }
 
 export const GET = withScraperRun('scrape-drees-move-in-ready', _GET);
+
+export const POST = GET;

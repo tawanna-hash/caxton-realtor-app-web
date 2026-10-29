@@ -44,3 +44,5 @@ async function _GET(req: Request) {
 export const GET = withScraperRun('scrape-dfw-associations', _GET);
 
 export const POST = GET;
+
+export const POST = GET;

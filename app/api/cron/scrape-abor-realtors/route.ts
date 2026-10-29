@@ -85,3 +85,5 @@ export async function POST(req: Request) {
 }
 
 export const GET = withScraperRun('scrape-abor-realtors', _GET);
+
+export const POST = GET;

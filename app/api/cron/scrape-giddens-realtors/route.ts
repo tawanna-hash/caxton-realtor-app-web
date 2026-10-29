@@ -78,3 +78,5 @@ async function _GET(req: Request)  { return handle(req); }
 export async function POST(req: Request) { return handle(req); }
 
 export const GET = withScraperRun('scrape-giddens-realtors', _GET);
+
+export const POST = GET;

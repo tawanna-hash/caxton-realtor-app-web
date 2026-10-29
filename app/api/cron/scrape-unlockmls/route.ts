@@ -69,3 +69,5 @@ async function _GET(req: Request) {
 export const GET = withScraperRun('scrape-unlockmls', _GET);
 
 export const POST = GET;
+
+export const POST = GET;
