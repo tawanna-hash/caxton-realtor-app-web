@@ -62,11 +62,11 @@ function box(r: readonly number[], k: number) {
 /** Live preview of the answers typed into the form, drawn over the blank IRS page. */
 function FilledOverlay({ d, focus }: { d: W9Data; focus: string | null }) {
   const k = PREVIEW_W / PW;
-  const txt = (r: readonly number[], v: string, opts?: { multiline?: boolean; spaced?: boolean }) =>
+  const txt = (r: readonly number[], v: string, opts?: { multiline?: boolean; center?: boolean }) =>
     v ? (
       <div
         className="pointer-events-none absolute overflow-hidden font-medium leading-[1.15] text-[#0b2a8a]"
-        style={{ ...box(r, k), fontSize: 10 * k, display: 'flex', alignItems: opts?.multiline ? 'flex-start' : 'center', whiteSpace: opts?.multiline ? 'pre-wrap' : 'nowrap', letterSpacing: opts?.spaced ? `${5 * k}px` : undefined, paddingLeft: 2 }}
+        style={{ ...box(r, k), fontSize: 10 * k, display: 'flex', alignItems: opts?.multiline ? 'flex-start' : 'center', justifyContent: opts?.center ? 'center' : undefined, whiteSpace: opts?.multiline ? 'pre-wrap' : 'nowrap', paddingLeft: opts?.center ? 0 : 2 }}
       >
         {v}
       </div>
@@ -93,7 +93,13 @@ function FilledOverlay({ d, focus }: { d: W9Data; focus: string | null }) {
       {txt(R.csz, d.cityStateZip)}
       {txt(R.req, d.requester, { multiline: true })}
       {txt(R.acct, d.accountNumbers)}
-      {tinRects.map((r, i) => <div key={i}>{txt(r, parts[i], { spaced: true })}</div>)}
+      {tinRects.map((r, i) => {
+        const cells = d.tinType === 'ssn' ? [3, 2, 4][i] : [2, 7][i];
+        const w = (r[2] - r[0]) / cells;
+        return Array.from({ length: cells }, (_, c) => (
+          <div key={`${i}-${c}`}>{txt([r[0] + c * w, r[1], r[0] + (c + 1) * w, r[3]], parts[i][c] ?? '', { center: true })}</div>
+        ));
+      })}
     </>
   );
 }
@@ -475,7 +481,7 @@ export default function W9Form() {
                   style={{ left: `${pos.x * 100}%`, top: `${pos.y * 100}%`, width: `${pos.w * 100}%` }}
                 />
               )}
-              {d.signedDate && sigUrl && (
+              {d.signedDate && (
                 <span className="pointer-events-none absolute text-[11px] text-black" style={{ left: 425 / 611.976 * PREVIEW_W, top: pageH - (196 + 10) / 791.968 * pageH }}>
                   {d.signedDate.slice(5, 7)}/{d.signedDate.slice(8)}/{d.signedDate.slice(0, 4)}
                 </span>
