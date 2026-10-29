@@ -63,6 +63,9 @@ export async function generateW9Pdf(d: W9Data, sig: W9Signature): Promise<Buffer
   const [yy, mm, dd] = d.signedDate.split('-');
   page.drawText(`${mm}/${dd}/${yy}`, { x: 425, y: 196, size: 10, font, color: rgb(0, 0, 0) });
 
+  // Only page 1 (the form itself) is needed; drop the instruction pages.
+  for (let i = pdf.getPageCount() - 1; i >= 1; i--) pdf.removePage(i);
+
   pdf.setTitle(`Form W-9 (${'Rev. March 2024'}) - ${d.name.trim()}`);
   pdf.setProducer('Realty News Now Get Paid');
   return Buffer.from(await pdf.save());
