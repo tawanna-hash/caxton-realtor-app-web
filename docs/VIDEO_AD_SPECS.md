@@ -36,13 +36,34 @@ Video ads run on the Realty News Now website and app. They play automatically wi
 
 These placements accept static images only:
 
-- e-Blast Top Banner (600 x 300). Email inboxes can't play video.
+- e-Blast Top Banner (600 x 300). Email inboxes can't play video. See the e-Blast Video Option below.
 - Feed Sticky Bottom (320 x 50 / 320 x 100)
 - Feed Top Banner and Calendar Top Banner (728 x 90 / 320 x 50)
 - Article Top Leaderboard
 - Push Notification Sponsor
 
 For these placements, send a static image (PNG, JPEG, WebP, or GIF, 10 MB max).
+
+---
+
+## e-Blast Video Option
+
+Email apps like Gmail and Outlook can't play video inside the email. Your e-Blast video ad runs as an animated "click to watch" banner instead. Readers click it to watch the full video in their browser.
+
+| Spec | Requirement |
+|---|---|
+| Format | Animated GIF (preferred) or a static JPEG/PNG with a play button built into the image |
+| Size | 600 x 300 pixels (1200 x 600 accepted for sharper display on high-resolution screens) |
+| Animation length | 3 to 5 seconds, taken from your video |
+| File size | Under 1 MB recommended for fast loading; 10 MB maximum |
+| First frame | Must work on its own. Some Outlook versions show only the first frame. Put your logo, headline, and play button on it. |
+| Play button | Include a clear play icon so readers know it's a video |
+| Click-through link | Your video on YouTube or Vimeo (public or unlisted), or a landing page where the video plays |
+
+Tips:
+- Keep the headline short and readable at phone size. Use about 6 words or fewer.
+- Use 15 frames per second or fewer and a limited color palette to keep the GIF small.
+- Bundle the e-Blast with a video-ready web or app placement, so the full video plays on Realty News Now too.
 
 ---
 
@@ -71,6 +92,7 @@ For these placements, send a static image (PNG, JPEG, WebP, or GIF, 10 MB max).
 | Item | Details |
 |---|---|
 | Video file | Per the specs above, one file per placement size |
+| e-Blast banner (if booked) | 600 x 300 animated GIF or play-button image, plus your video link |
 | Click-through URL | Full https:// link to your landing page |
 | Description | One sentence describing the video, for screen readers |
 | Placement and publication | RealtyLine (Austin), Newsline (San Antonio), or both |
