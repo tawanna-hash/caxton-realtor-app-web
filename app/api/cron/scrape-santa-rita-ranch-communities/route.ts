@@ -164,5 +164,3 @@ export async function POST(req: NextRequest) {
 }
 
 export const GET = withScraperRun('scrape-santa-rita-ranch-communities', _GET);
-
-export const POST = GET;

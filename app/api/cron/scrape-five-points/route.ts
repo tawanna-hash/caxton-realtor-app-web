@@ -68,5 +68,3 @@ export async function POST(req: Request) {
 }
 
 export const GET = withScraperRun('scrape-five-points', _GET);
-
-export const POST = GET;

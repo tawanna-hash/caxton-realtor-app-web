@@ -198,5 +198,3 @@ export async function POST(req: NextRequest) {
 }
 
 export const GET = withScraperRun('scrape-kb-home-move-in-ready', _GET);
-
-export const POST = GET;

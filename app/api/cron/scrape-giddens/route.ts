@@ -189,5 +189,3 @@ export async function POST(req: NextRequest) {
 }
 
 export const GET = withScraperRun('scrape-giddens', _GET);
-
-export const POST = GET;
