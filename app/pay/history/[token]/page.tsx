@@ -1,59 +1,29 @@
 // Public, read-only invoice history for one partner, reached through a signed link.
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { ensureSchema, getSql } from '@/lib/db';
-import { PUBLICATIONS, isPublicationId, type Publication } from '@/lib/publications';
+import { loadInvoiceHistory, historyDay, historyMethod, historyMoney, type HistoryRow } from '@/lib/server/invoice-history';
 import { verifyInvoiceHistoryToken } from '@/lib/server/invoice-history-token';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata: Metadata = { title: 'Invoice history', robots: { index: false, follow: false } };
 
-type Row = {
-  id: string; number: string | null; status: string; total_cents: number;
-  issued_at: string | Date | null; due_date: string | Date | null;
-  paid_cents: number; fee_cents: number; paid_on: string | Date | null; method: string | null;
-};
+type Row = HistoryRow;
 
-const money = (c: number) => `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const day = (v: string | Date | null, tz = 'UTC') => {
-  if (!v) return '—';
-  const d = v instanceof Date ? v : new Date(v);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: tz });
-};
-const methodLabel = (m: string | null) => (!m || m === 'unspecified' ? '—' : m === 'wave_import' ? 'Recorded payment' : m);
+const money = historyMoney;
+const day = (v: string | Date | null, tz = 'UTC') => historyDay(v, tz).replace(/^-$/, '—');
+const methodLabel = (m: string | null) => historyMethod(m).replace(/^-$/, '—');
 
 export default async function InvoiceHistoryPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const advertiserId = verifyInvoiceHistoryToken(decodeURIComponent(token));
   if (advertiserId == null) notFound();
 
-  await ensureSchema();
-  const sql = getSql();
-  const adv = (await sql`SELECT name, publication FROM advertisers WHERE id = ${advertiserId}`) as unknown as Array<{ name: string; publication: string | null }>;
-  if (!adv.length) notFound();
-  const rows = (await sql`
-    SELECT i.id, i.number, i.status, i.total_cents, i.issued_at, i.due_date,
-      COALESCE(p.paid_cents, 0)::int AS paid_cents, COALESCE(p.fee_cents, 0)::int AS fee_cents,
-      p.paid_on, p.method
-    FROM invoices i
-    LEFT JOIN LATERAL (
-      SELECT SUM(amount_cents) AS paid_cents, SUM(fee_cents) AS fee_cents, MAX(payment_date) AS paid_on,
-        (ARRAY_AGG(payment_method ORDER BY payment_date DESC, created_at DESC))[1] AS method
-      FROM invoice_payments WHERE invoice_id = i.id
-    ) p ON true
-    WHERE i.advertiser_id = ${advertiserId} AND i.status NOT IN ('void', 'draft')
-    ORDER BY i.issued_at DESC NULLS LAST, i.created_at DESC
-  `) as unknown as Row[];
-
-  // Brand and market come from the partner's own publication, not a generic company header.
-  const keys = String(adv[0].publication ?? '').split(',').map((x) => x.trim().toLowerCase()).flatMap((x) => (x === 'both' ? ['austin', 'san_antonio'] : [x]));
-  const pubs = [...new Set(keys)].filter(isPublicationId).map((k) => PUBLICATIONS.find((p) => p.id === k)).filter((p): p is Publication => Boolean(p));
-  const brand = pubs.length ? pubs.map((p) => p.label).join(' · ') : 'RealtyLine · Newsline';
-  const marketTag = pubs.length ? ` (${pubs.map((p) => p.market).join(', ')})` : '';
-  const open = rows.filter((r) => r.total_cents - r.paid_cents > 0);
-  const paid = rows.filter((r) => r.total_cents - r.paid_cents <= 0);
-  const owed = open.reduce((s, r) => s + (r.total_cents - r.paid_cents), 0);
+  const h = await loadInvoiceHistory(advertiserId);
+  if (!h) notFound();
+  const { open, paid, brand, marketTag } = h;
+  const owed = h.owedCents;
+  const adv = [{ name: h.name }];
   const th = 'px-3 py-2 text-left text-xs font-semibold text-neutral-600';
   const td = 'px-3 py-2 text-sm text-neutral-900 whitespace-nowrap';
 
@@ -91,6 +61,7 @@ export default async function InvoiceHistoryPage({ params }: { params: Promise<{
         <p className="text-sm text-neutral-600">Caxton Publications, Inc. · {brand}</p>
         <h1 className="text-2xl font-semibold text-neutral-900">Invoice history</h1>
         <p className="text-neutral-700">{adv[0].name}{marketTag}</p>
+        <a href={`/pay/history/${token}/pdf`} className="mt-3 inline-block rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-900 hover:bg-neutral-50">Download PDF</a>
         <p className="mt-1 text-sm text-neutral-600">As of {day(new Date(), 'America/Chicago')} · Questions? Reply to your invoice email or contact accounting.</p>
       </header>
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">

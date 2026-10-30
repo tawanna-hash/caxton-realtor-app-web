@@ -322,6 +322,15 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
 function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { client: Adv; invoices: FullInv[]; agreements: Agr[]; intent: InvoiceIntent | null; onIntentDone: () => void }) {
   const [scope, setScope] = useState<'client' | 'all'>(intent || wantsAll() ? 'all' : 'client');
   const [shareNote, setShareNote] = useState('');
+  const downloadHistory = async () => {
+    setShareNote('');
+    try {
+      const r = await fetch(`/api/admin/advertisers/${client.id}/history-link`, { credentials: 'include' });
+      const j = await r.json();
+      if (!r.ok || !j.url) throw new Error(j.error || 'Could not create the PDF.');
+      window.location.href = `${j.url}/pdf`;
+    } catch (e) { setShareNote(e instanceof Error ? e.message : 'Could not create the PDF.'); }
+  };
   const shareHistory = async () => {
     setShareNote('');
     try {
@@ -365,6 +374,7 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
       <div className="flex flex-wrap items-center gap-3">
         {scopeSwitch}
         <button type="button" className={A.small} onClick={() => void shareHistory()}>Share invoice history</button>
+        <button type="button" className={A.small} onClick={() => void downloadHistory()}>Download history PDF</button>
         {shareNote && <span role="status" className="text-xs text-[color:var(--ds-body)]">{shareNote}</span>}
       </div>
       <div className="flex flex-wrap items-center gap-3">
