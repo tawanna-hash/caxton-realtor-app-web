@@ -27,7 +27,7 @@ type Agr = {
   signed_at: string | null; created_at: string | null; eblast_packages: string[] | null; audit_log: AuditEntry[] | null;
   card_type: string | null; card_number_last4: string | null; card_expiration: string | null; cardholder_name: string | null; sent_to_email: string | null;
 };
-type FullInv = Inv & { issued_at?: string | null; paid_at?: string | null; created_at?: string | null; audit_log?: AuditEntry[]; bill_to_name?: string | null };
+type FullInv = Inv & { payments?: Array<{ payment_date: string | null; payment_method: string | null }>; issued_at?: string | null; paid_at?: string | null; created_at?: string | null; audit_log?: AuditEntry[]; bill_to_name?: string | null };
 type Product = { id: string | number; name: string; description?: string | null; unit_price_cents?: number | null; price_cents?: number | null; active?: boolean | null; billing_type?: string | null };
 type Tab = 'hub' | 'agreement' | 'payment' | 'invoices' | 'recurring' | 'statements' | 'paymentlinks' | 'stripe' | 'activity';
 const TABS: Array<[Tab, string]> = [['agreement', 'Agreement'], ['payment', 'Payment method'], ['invoices', 'Invoices'], ['recurring', 'Recurring invoices'], ['statements', 'Statements'], ['stripe', 'Stripe transactions'], ['activity', 'Activity Log']];
@@ -95,7 +95,12 @@ export default function BillingHub() {
 
   const client = clients.find((c) => c.id === clientId) ?? null;
   const agr = useJson(`/api/admin/agreements?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => (j.agreements ?? []) as Agr[], none as Agr[]);
-  const inv = useJson(`/api/admin/invoices?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => (j.invoices ?? []) as FullInv[], none as FullInv[]);
+  const inv = useJson(`/api/admin/invoices?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => ((j.invoices ?? []) as FullInv[]).map((i) => ({
+    ...i,
+    // The API returns issued_at / ISO due_date; the table needs plain calendar dates (Central time).
+    issue_date: i.issue_date ?? (i.issued_at ?? i.created_at ? new Date((i.issued_at ?? i.created_at) as string).toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }) : null),
+    due_date: i.due_date ? i.due_date.slice(0, 10) : null,
+  })), none as FullInv[]);
   const sch = useJson(`/api/admin/recurring-invoices?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => (j.schedules ?? []) as Sch[], none as Sch[]);
   const today = new Date().toISOString().slice(0, 10);
   const isActiveAgr = (a: Agr) => !!a.signed_at && !['expired', 'cancelled', 'canceled', 'void', 'declined', 'draft', 'terminated'].includes(String(a.status).toLowerCase()) && (!a.end_date || a.end_date.slice(0, 10) >= today);
@@ -307,7 +312,9 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
   const [sort, setSort] = useState<{ k: 'number' | 'issue' | 'due' | 'total'; dir: 1 | -1 }>({ k: 'number', dir: -1 });
   const statuses = [...new Set(invoices.map((i) => i.status))].map((s) => ({ value: s, label: cap(s) }));
   const cardOf = (i: FullInv) => { const a = agreements.find((x) => x.id === i.agreement_id) ?? agreements.find((x) => x.card_number_last4); return a?.card_number_last4 ? `${cap(a.card_type ?? 'Card')} ••${a.card_number_last4}` : null; };
-  const info = (i: FullInv) => (i.status === 'paid' ? 'Paid in full' : i.status === 'void' ? 'Voided' : !cardOf(i) ? 'Missing payment method' : 'Awaiting payment');
+  const lastPay = (i: FullInv) => (i.payments ?? []).reduce<{ payment_date: string | null; payment_method: string | null } | null>((m, p) => (!m || (p.payment_date ?? '') >= (m.payment_date ?? '') ? p : m), null);
+  const methodOf = (i: FullInv) => { const m = lastPay(i)?.payment_method?.trim(); return m ? (m === 'wave_import' ? 'Wave import' : m === 'unspecified' ? null : m) : null; };
+  const info = (i: FullInv) => (i.status === 'paid' ? `Paid in full${lastPay(i)?.payment_date ? ` · ${day(lastPay(i)?.payment_date?.slice(0, 10))}` : ''}` : i.status === 'void' ? 'Voided' : !cardOf(i) ? 'Missing payment method' : 'Awaiting payment');
   const rows = invoices.filter((i) => i.status !== 'draft' || true).filter((i) => (st.length === 0 || st.includes(i.status)) && (!q.trim() || (i.number ?? '').toLowerCase().includes(q.trim().toLowerCase())) && (!from || (i.issue_date ?? '') >= from) && (!to || (i.issue_date ?? '') <= to))
     .sort((a, b) => { const v = (i: FullInv) => (sort.k === 'number' ? i.number ?? '' : sort.k === 'issue' ? i.issue_date ?? '' : sort.k === 'due' ? i.due_date ?? '' : String(i.total_cents).padStart(12, '0')); return sort.dir * v(a).localeCompare(v(b)); });
   const th = (k: typeof sort.k, l: string, right = false) => <th className={right ? 'text-right' : ''}><button type="button" style={{ border: 0, background: 'transparent', padding: 0 }} className="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--ds-body)]" onClick={() => setSort((s) => ({ k, dir: s.k === k ? (s.dir === 1 ? -1 : 1) : 1 }))}>{l}<SortCaret dir={sort.k === k ? (sort.dir === 1 ? 'asc' : 'desc') : undefined} /></button></th>;
@@ -354,7 +361,7 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
                 <td className="text-[color:var(--ds-ink)]">{client.name}</td>
                 <td><span className="rounded-md border border-[color:var(--ds-body)] px-2 py-0.5 text-[11px] text-[color:var(--ds-body)]">{cap(i.status === 'sent' ? 'issued' : i.status)}</span></td>
                 <td className="text-[color:var(--ds-ink)]">{info(i)}</td>
-                <td className="text-[color:var(--ds-ink)]">{cardOf(i) ?? '—'}</td>
+                <td className="text-[color:var(--ds-ink)]">{(i.status === 'paid' ? methodOf(i) : cardOf(i)) ?? '—'}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(i.issue_date)}</td>
                 <td className="whitespace-nowrap text-[color:var(--ds-ink)]">{day(i.due_date)}</td>
                 <td className="text-right text-[color:var(--ds-ink)]">{money(i.total_cents)}</td>

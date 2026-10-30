@@ -16,7 +16,9 @@ export type Inv = { id: string; number: string | null; advertiser_id?: number | 
 export type Sch = { id: string; name: string; advertiser_id: number; agreement_id: string | null; status: 'active' | 'paused' | 'ended'; frequency: string; interval_count?: number | null; amount_cents: number; tax_cents: number | null; next_run_at: string; end_date?: string | null; max_occurrences?: number | null; occurrences_generated?: number | null };
 
 export const money = (c: number | null | undefined) => (c == null ? '—' : `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: (c ?? 0) % 100 ? 2 : 0, maximumFractionDigits: 2 })}`);
-export const day = (v: string | null | undefined) => (v ? new Date(v.length === 10 ? `${v}T12:00:00` : v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
+// Date-only values (YYYY-MM-DD, or midnight-UTC timestamps from date columns) must not shift a day in US time zones.
+const dateOnly = (v: string) => (v.length === 10 ? v : /^\d{4}-\d{2}-\d{2}T00:00:00(\.0+)?Z$/.test(v) ? v.slice(0, 10) : null);
+export const day = (v: string | null | undefined) => (v ? new Date(dateOnly(v) ? `${dateOnly(v)}T12:00:00` : v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
 
 export function useJson<T>(url: string, pick: (j: Record<string, unknown>) => T, empty: T): { data: T; loading: boolean; error: string | null } {
   const [state, set] = useState<{ data: T; loading: boolean; error: string | null }>({ data: empty, loading: true, error: null });
