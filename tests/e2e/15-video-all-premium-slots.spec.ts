@@ -22,17 +22,7 @@ const CASES: Case[] = [
   { slot: 'calendar_event_sponsor', path: '/calendar', w: 1920, h: 1080 },
   { slot: 'advertisers_directory_top', path: '/advertisers', w: 1920, h: 1080 },
   { slot: 'article_top_leaderboard', path: ARTICLE, w: 300, h: 250 },
-  // The sidebar rail lives in the in-feed reader overlay (hidden on /news/:id page mode).
-  {
-    slot: 'article_sidebar_desktop', path: '/dashboard', w: 300, h: 600,
-    before: async (p) => {
-      const guest = p.getByText(/continue as a guest/i).first();
-      if (await guest.waitFor({ timeout: 8_000 }).then(() => true, () => false)) await guest.click();
-      const res = await p.request.get('/api/news/austin');
-      const first = ((await res.json()).articles ?? [])[0] ?? {};
-      await p.getByText(String(first.head ?? first.title), { exact: false }).first().click();
-    },
-  },
+  { slot: 'article_sidebar_desktop', path: ARTICLE, w: 300, h: 600 },
   { slot: 'article_interstitial', path: ARTICLE, w: 288, h: 200 },
   { slot: 'account_splash', path: '/profile', w: 1080, h: 400 },
   { slot: 'splash_welcome', path: '/builders', w: 1080, h: 1920 },

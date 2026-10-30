@@ -1393,8 +1393,8 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
           Was pb-44 — the bar overlapped the last paragraph on short
           articles and the "Read on website" link (BUG-18). */}
       <div className={asPage ? "pt-8 pb-40" : "px-4 pt-6 pb-52"}>
-        <div className={asPage ? "mx-auto flex max-w-3xl items-start px-4" : "mx-auto flex max-w-[1040px] items-start justify-center gap-8"}>
-          <div className={asPage ? "w-full min-w-0 flex-1" : "w-full min-w-0 max-w-2xl"}>
+        <div className={asPage ? "mx-auto flex max-w-3xl items-start justify-center px-4 xl:max-w-[1136px] xl:gap-8" : "mx-auto flex max-w-[1040px] items-start justify-center gap-8"}>
+          <div className={asPage ? "w-full min-w-0 flex-1 xl:max-w-3xl" : "w-full min-w-0 max-w-2xl"}>
             {/* Eyebrow */}
             {(article.cat || article.category) && (
               <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>
@@ -1491,10 +1491,11 @@ export function ArticleReader({ pub, article, allArticles, onBack, onLatest, onS
             <AdSlotComponent slug="article_bottom" className="mt-10" />
           </div>
 
-          {/* Desktop article-sidebar inventory. The bare variant preserves the
-              uploaded creative's natural aspect ratio instead of stretching it
-              to fill the rail. Hidden on mobile and tablet by design. */}
-          <aside className={asPage ? "hidden" : "hidden w-[320px] shrink-0 lg:block"} aria-label="Article advertising partner">
+          {/* Desktop article-sidebar inventory (premium slot). The bare variant
+              preserves the creative's natural aspect ratio. Page mode (/news/:id)
+              shows the rail from xl (>=1280px) so the 768px reading column keeps
+              its width; the overlay reader shows it from lg. Hidden on mobile. */}
+          <aside className={asPage ? "hidden w-[300px] shrink-0 xl:block" : "hidden w-[320px] shrink-0 lg:block"} aria-label="Article advertising partner">
             <div className="sticky top-24">
               <AdSlotComponent slug="article_sidebar_desktop" variant="bare" />
             </div>
