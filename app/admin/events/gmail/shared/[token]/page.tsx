@@ -5,6 +5,7 @@
  */
 
 import { notFound } from 'next/navigation';
+import EventDescription from '@/components/events/EventDescription';
 import { verifyGmailShareToken } from '@/lib/server/gmail-share-token';
 import { collectGmailQueuePdfInputs } from '@/lib/server/gmail-queue-pdf-inputs';
 import { PUBLICATION_FILTER_LABELS } from '@/lib/publications';
@@ -94,7 +95,7 @@ export default async function SharedGmailQueuePage({ params }: PageProps) {
                 )}
               </dl>
               {event.description && (
-                <div className="mt-3 text-sm text-gray-700 whitespace-pre-wrap">{event.description}</div>
+                <div className="mt-3"><EventDescription text={event.description} /></div>
               )}
             </article>
           ))}

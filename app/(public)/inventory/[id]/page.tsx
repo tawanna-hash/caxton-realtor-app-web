@@ -14,6 +14,7 @@
 // renders the 404 page so unpublished drafts don't leak.
 
 import Link from 'next/link';
+import EventDescription from '@/components/events/EventDescription';
 import PageTitle from '@/components/ui/PageTitle';
 import { notFound } from 'next/navigation';
 import { getBuilderInventoryById, listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
@@ -229,9 +230,7 @@ function DetailView({
               <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-3">
                 About this {row.kind === 'promotion' ? 'promotion' : 'home'}
               </h2>
-              <p className="text-gray-800 leading-relaxed whitespace-pre-line">
-                {cleanedDesc}
-              </p>
+              <EventDescription text={cleanedDesc} />
             </section>
           )}
         </div>

@@ -1,3 +1,4 @@
+import { tidyDescription } from '@/lib/events/text';
 /**
  * Admin events store — manual events CRUD against the Neon `events` table.
  *
@@ -391,7 +392,7 @@ export async function createManualEvent(
       externalId,
       input.publication,
       input.title,
-      input.description ?? null,
+      tidyDescription(input.description) || null,
       input.link ?? null,
       input.startDate ?? null,
       input.endDate ?? null,
@@ -490,7 +491,7 @@ export async function createSubmittedEvent(input: {
       externalId,
       input.publication,
       input.title,
-      input.description,
+      tidyDescription(input.description),
       input.link,
       input.startDate,
       input.endDate,

@@ -9,6 +9,7 @@
 // Only rows with status='active' AND homeType='community' render publicly.
 
 import type { Metadata } from 'next';
+import EventDescription from '@/components/events/EventDescription';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getBuilderInventoryById } from '@/lib/builder-inventory';
@@ -164,9 +165,9 @@ export default async function CommunityDetailPage(
             <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               About This Community
             </h2>
-            <p className="mt-3 whitespace-pre-line text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-              {aboutDesc}
-            </p>
+            <div className="mt-3">
+              <EventDescription text={aboutDesc} />
+            </div>
           </section>
 
           {plans.length > 0 && (
