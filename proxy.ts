@@ -254,6 +254,7 @@ function handlePubPermalink(req: NextRequest): NextResponse | null {
     path: '/',
     maxAge: 60 * 60 * 24 * 365,
     sameSite: 'lax',
+    secure: req.nextUrl.protocol === 'https:',
   });
   return res;
 }

@@ -52,6 +52,9 @@ const cspDirectives: Record<string, string[]> = {
     'https:',                 // Stripe, Google Maps, YouTube, SoundCloud, PDF previews
   ],
   'media-src': ["'self'", 'https:', 'blob:'],
+  // Block inline event-handler attributes (onclick=...) even though inline
+  // <script> blocks remain allowed; React never emits them.
+  'script-src-attr': ["'none'"],
   'object-src': ["'none'"],
   'base-uri': ["'self'"],
   'form-action': ["'self'"],
@@ -97,6 +100,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Do not advertise the framework in responses.
+  poweredByHeader: false,
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 2592000,
