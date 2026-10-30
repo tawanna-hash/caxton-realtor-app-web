@@ -222,7 +222,7 @@ export function eventDescription(e: Pick<EventLike, 'description' | 'title'>) {
 }
 
 /** schema.org Event for a public calendar event (omits fields we do not have). */
-export function eventJsonLd(e: EventLike) {
+export function eventJsonLd(e: EventLike): Record<string, unknown> | null {
   const url = `${SITE_URL}${eventPath(e.publication, e.id)}`;
   const online = /online|virtual|webinar|zoom/i.test(`${e.format ?? ''} ${e.location ?? ''}`);
   const hasPlace = !!e.location && !/^online/i.test(e.location.trim());
@@ -252,6 +252,11 @@ export function eventJsonLd(e: EventLike) {
             : {}),
         }
       : undefined;
+
+  // Google treats `location` and `startDate` as required for Event rich
+  // results. Emitting an Event without them is a critical Search Console
+  // error, so skip the markup for events that lack either field.
+  if (!location || !e.startDate) return null;
 
   const out: Record<string, unknown> = {
     '@context': 'https://schema.org',

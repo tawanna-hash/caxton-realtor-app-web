@@ -80,7 +80,7 @@ export default async function CalendarDetailPage({ params }: PageProps) {
       {event && (
         <JsonLd
           data={[
-            eventJsonLd(event),
+            ...(eventJsonLd(event) ? [eventJsonLd(event)] : []),
             breadcrumbs([
               { name: 'Home', path: '/' },
               { name: 'Calendar', path: '/calendar' },
