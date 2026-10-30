@@ -375,6 +375,7 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
   const [paymentDate, setPaymentDate] = useState(todayIso());
   const [paymentMethod, setPaymentMethod] = useState('Check');
   const [reference, setReference] = useState('');
+  const [fee, setFee] = useState('');
   const [memo, setMemo] = useState('');
   const [amount, setAmount] = useState(
     initialInvoice ? (outstandingCents(initialInvoice) / 100).toFixed(2) : '',
@@ -399,6 +400,7 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
           amount_cents: amountCents,
           payment_date: paymentDate,
           payment_method: paymentMethod,
+          fee_cents: fee.trim() ? Math.round(Number(fee) * 100) : 0,
           reference,
           memo,
           source: 'manual',
@@ -451,6 +453,7 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
           </Field>
           <Field label="Reference no."><input className={INPUT} value={reference} onChange={(event) => setReference(event.target.value)} /></Field>
           <Field label="Amount received"><input type="number" min="0.01" step="0.01" className={INPUT} value={amount} onChange={(event) => setAmount(event.target.value)} /></Field>
+          <Field label="Card fee charged (optional)"><input type="number" min="0" step="0.01" placeholder="0.00" className={INPUT} value={fee} onChange={(event) => setFee(event.target.value)} /></Field>
         </div>
       </Section>
       <Section title="Memo">

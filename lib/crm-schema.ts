@@ -504,6 +504,8 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       updated_at      timestamptz NOT NULL DEFAULT now()
     )
   `);
+  // Card processing fee charged to the payer on top of the invoice amount (not part of amount_cents).
+  await step(() => sql`ALTER TABLE invoice_payments ADD COLUMN IF NOT EXISTS fee_cents integer NOT NULL DEFAULT 0 CHECK (fee_cents >= 0)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoice_payments_invoice ON invoice_payments(invoice_id, payment_date)`);
   await step(() => sql`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_invoice_payments_external

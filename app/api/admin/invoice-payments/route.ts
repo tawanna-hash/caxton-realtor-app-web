@@ -36,6 +36,10 @@ export async function POST(request: NextRequest) {
   if (!Number.isInteger(amountCents) || amountCents <= 0) {
     return NextResponse.json({ error: 'amount_cents must be a positive integer' }, { status: 400 });
   }
+  const feeCents = body.fee_cents === undefined || body.fee_cents === null || body.fee_cents === '' ? 0 : Number(body.fee_cents);
+  if (!Number.isInteger(feeCents) || feeCents < 0 || feeCents > 10_000_000) {
+    return NextResponse.json({ error: 'fee_cents must be a nonnegative integer' }, { status: 400 });
+  }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(paymentDate)) {
     return NextResponse.json({ error: 'payment_date must be YYYY-MM-DD' }, { status: 400 });
   }
@@ -51,6 +55,7 @@ export async function POST(request: NextRequest) {
       amountCents,
       paymentDate,
       paymentMethod: typeof body.payment_method === 'string' ? body.payment_method : null,
+      feeCents,
       reference: typeof body.reference === 'string' ? body.reference : null,
       memo: typeof body.memo === 'string' ? body.memo : null,
       source: 'manual',

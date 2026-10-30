@@ -15,6 +15,7 @@ type RecordInvoicePaymentInput = {
   amountCents: number;
   paymentDate: string;
   paymentMethod: string | null;
+  feeCents?: number;
   reference: string | null;
   memo: string | null;
   source: string;
@@ -113,8 +114,8 @@ export async function recordInvoicePayment(input: RecordInvoicePaymentInput) {
     const paymentResult = await client.query<PaymentRow>(
       `INSERT INTO invoice_payments (
          invoice_id, amount_cents, payment_date, payment_method,
-         reference, memo, source, external_id, created_by
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         reference, memo, source, external_id, created_by, fee_cents
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10::int, 0))
        ON CONFLICT (source, external_id) WHERE external_id IS NOT NULL
        DO UPDATE SET
          amount_cents = EXCLUDED.amount_cents,
@@ -122,6 +123,7 @@ export async function recordInvoicePayment(input: RecordInvoicePaymentInput) {
          payment_method = EXCLUDED.payment_method,
          reference = EXCLUDED.reference,
          memo = EXCLUDED.memo,
+         fee_cents = COALESCE($10::int, invoice_payments.fee_cents),
          updated_at = now()
        WHERE invoice_payments.invoice_id = EXCLUDED.invoice_id
        RETURNING *`,
@@ -135,6 +137,7 @@ export async function recordInvoicePayment(input: RecordInvoicePaymentInput) {
         input.source,
         input.externalId,
         input.createdBy,
+        input.feeCents ?? null,
       ],
     );
     const payment = paymentResult.rows[0];
