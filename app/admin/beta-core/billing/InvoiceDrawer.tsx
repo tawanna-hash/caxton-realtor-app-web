@@ -210,6 +210,8 @@ export function InvoiceDrawer({
     setForm((current) => {
       const existingTermDays = calendarDayDifference(current.billing_date, current.due_date);
       const termDays = existingTermDays !== null && existingTermDays >= 0 ? existingTermDays : 20;
+      // Existing invoices keep their due date; it only changes when edited by hand.
+      if (!isCreate) return { ...current, billing_date: billingDate };
       return {
         ...current,
         billing_date: billingDate,
