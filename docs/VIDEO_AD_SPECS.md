@@ -1,7 +1,7 @@
 # Video Ad Specifications
 
 **Realty News Now: RealtyLine (Austin) and Newsline (San Antonio)**
-Effective October 29, 2026. Questions or file delivery: tawanna@myrealtyline.com
+Effective October 30, 2026. Questions or file delivery: tawanna@myrealtyline.com
 
 Video ads run on the Realty News Now website and app. They play automatically with the sound off, play only while on screen, and link to your landing page when tapped.
 
@@ -18,7 +18,7 @@ Video ads run on the Realty News Now website and app. They play automatically wi
 | Length | 6 to 30 seconds recommended; 60 seconds maximum |
 | File size | Under 25 MB recommended; 100 MB maximum |
 | Bitrate (guide) | About 8 to 10 Mbps for 1080p |
-| Minimum resolution | 1080 pixels on the short side (1200 x 200 for the Builder Strip) |
+| Minimum resolution | 1080 pixels on the short side for full-screen and 16:9 placements; 1200 x 200 minimum for the Builder Strip; 300 x 250 and 300 x 600 boxes: deliver at 2x (600 x 500 / 600 x 1200) or 1920 x 1080 |
 | Thumbnail | Taken automatically from the 1-second mark. Make that frame a clear, branded shot. |
 
 ---

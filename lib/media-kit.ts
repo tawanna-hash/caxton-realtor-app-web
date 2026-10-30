@@ -224,7 +224,7 @@ export const VIDEO_FILE_SPECS: Array<{ label: string; value: string }> = [
   { label: 'Length', value: '6–30 seconds recommended · 60 seconds max' },
   { label: 'File size', value: 'Under 25 MB recommended · 100 MB max' },
   { label: 'Bitrate (guide)', value: '~8–10 Mbps for 1080p' },
-  { label: 'Minimum resolution', value: '1080 px on the short side (1200×200 for the Builder Strip)' },
+  { label: 'Minimum resolution', value: '1080 px on the short side for full-screen and 16:9 placements · Builder Strip 1200×200 min · 300×250 and 300×600 boxes: deliver at 2× (600×500 / 600×1200) or 1920×1080' },
   { label: 'Thumbnail', value: 'Pulled automatically from the 1-second mark. Make that frame a clear, branded shot.' },
 ];
 
