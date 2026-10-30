@@ -321,6 +321,17 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
 /* ---------------- Invoices tab ---------------- */
 function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { client: Adv; invoices: FullInv[]; agreements: Agr[]; intent: InvoiceIntent | null; onIntentDone: () => void }) {
   const [scope, setScope] = useState<'client' | 'all'>(intent || wantsAll() ? 'all' : 'client');
+  const [shareNote, setShareNote] = useState('');
+  const shareHistory = async () => {
+    setShareNote('');
+    try {
+      const r = await fetch(`/api/admin/advertisers/${client.id}/history-link`, { credentials: 'include' });
+      const j = await r.json();
+      if (!r.ok || !j.url) throw new Error(j.error || 'Could not create the link.');
+      try { await navigator.clipboard.writeText(j.url); setShareNote('Link copied. Anyone with it can view this partner\'s invoice history.'); }
+      catch { window.prompt('Copy this link to share invoice history:', j.url); setShareNote('Link ready.'); }
+    } catch (e) { setShareNote(e instanceof Error ? e.message : 'Could not create the link.'); }
+  };
   // Remember "This partner" vs "All partners" across refreshes.
   useEffect(() => {
     const u = new URL(window.location.href);
@@ -351,7 +362,11 @@ function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { c
   if (scope === 'all') return <div className="space-y-4"><div className="flex flex-wrap items-center gap-3">{scopeSwitch}<span id="invoice-search-slot" className="contents" /></div><AllInvoices intent={payIntent ?? intent} initialQuery={focusQ} onIntentDone={() => { if (payIntent) setPayIntent(null); else onIntentDone(); }} /></div>;
   return (
     <div className="space-y-4">
-      {scopeSwitch}
+      <div className="flex flex-wrap items-center gap-3">
+        {scopeSwitch}
+        <button type="button" className={A.small} onClick={() => void shareHistory()}>Share invoice history</button>
+        {shareNote && <span role="status" className="text-xs text-[color:var(--ds-body)]">{shareNote}</span>}
+      </div>
       <div className="flex flex-wrap items-center gap-3">
         <SearchBox value={q} onChange={setQ} label="Search invoices" />
         <div role="group" aria-label="Open or closed invoices" className="flex items-center gap-2">
