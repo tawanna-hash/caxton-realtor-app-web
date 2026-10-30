@@ -170,10 +170,10 @@ export default function AboutPage() {
         <p className="text-sm text-gray-500 font-light">
           Questions, story ideas, or partnership inquiries?{' '}
           <a
-            href="mailto:hello@myrealtyline.com"
+            href="mailto:tawanna@myrealtyline.com"
             className="text-brand-700 font-medium underline underline-offset-2"
           >
-            hello@myrealtyline.com
+            tawanna@myrealtyline.com
           </a>
         </p>
       </footer>

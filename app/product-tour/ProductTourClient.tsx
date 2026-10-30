@@ -924,7 +924,7 @@ export default function ProductTourClient() {
                   Explore the app <ArrowRight size={16} aria-hidden />
                 </Link>
                 <a
-                  href="mailto:hello@myrealtyline.com?subject=Realty%20News%20Now%20Partner%20Inquiry"
+                  href="mailto:tawanna@myrealtyline.com?subject=Realty%20News%20Now%20Partner%20Inquiry"
                   className="inline-flex min-h-12 items-center border border-brand-700/25 px-4 text-sm font-semibold text-brand-700 transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
                 >
                   Talk with our team

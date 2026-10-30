@@ -160,10 +160,10 @@ export default function PrivacyPage() {
               </strong>{' '}
               — email{' '}
               <a
-                href="mailto:hello@myrealtyline.com"
+                href="mailto:tawanna@myrealtyline.com"
                 className="text-brand-700 underline underline-offset-2"
               >
-                hello@myrealtyline.com
+                tawanna@myrealtyline.com
               </a>{' '}
               and we will respond.
             </li>
@@ -214,10 +214,10 @@ export default function PrivacyPage() {
             believe we have collected information from a child under 13,
             please contact us at{' '}
             <a
-              href="mailto:hello@myrealtyline.com"
+              href="mailto:tawanna@myrealtyline.com"
               className="text-brand-700 underline underline-offset-2"
             >
-              hello@myrealtyline.com
+              tawanna@myrealtyline.com
             </a>
             .
           </p>
@@ -270,10 +270,10 @@ export default function PrivacyPage() {
             is nothing to opt out of in that respect. To exercise any other
             privacy rights, email{' '}
             <a
-              href="mailto:hello@myrealtyline.com?subject=Privacy%20Request"
+              href="mailto:tawanna@myrealtyline.com?subject=Privacy%20Request"
               className="text-brand-700 underline underline-offset-2"
             >
-              hello@myrealtyline.com
+              tawanna@myrealtyline.com
             </a>{' '}
             and we&apos;ll respond within the timeframes required by your
             state&apos;s law.
@@ -305,10 +305,10 @@ export default function PrivacyPage() {
             <p>
               <strong className="font-semibold text-gray-900">Email:</strong>{' '}
               <a
-                href="mailto:hello@myrealtyline.com?subject=Privacy%20Request"
+                href="mailto:tawanna@myrealtyline.com?subject=Privacy%20Request"
                 className="text-brand-700 font-medium underline underline-offset-2"
               >
-                hello@myrealtyline.com
+                tawanna@myrealtyline.com
               </a>
             </p>
             <p>

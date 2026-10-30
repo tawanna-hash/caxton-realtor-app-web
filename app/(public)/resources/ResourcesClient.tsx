@@ -52,7 +52,7 @@ export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesVi
             <>
               {' '}Have something to add?{' '}
               <a
-                href="mailto:hello@myrealtyline.com?subject=Resources%20Page%20Suggestion"
+                href="mailto:tawanna@myrealtyline.com?subject=Resources%20Page%20Suggestion"
                 className="text-brand-700 font-medium underline underline-offset-2"
               >
                 Send us a suggestion

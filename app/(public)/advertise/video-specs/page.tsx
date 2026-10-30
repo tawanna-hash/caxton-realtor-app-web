@@ -93,7 +93,7 @@ export default function VideoSpecsPage() {
             </div>
             <p className="mt-3 text-sm text-gray-700">
               Send files at least 5 business days before your start date to{' '}
-              <a href="mailto:hello@myrealtyline.com" className="text-brand-700 underline">hello@myrealtyline.com</a>.
+              <a href="mailto:tawanna@myrealtyline.com" className="text-brand-700 underline">tawanna@myrealtyline.com</a>.
               Large files can be shared by Google Drive, Dropbox, or WeTransfer link. We review every video
               before it goes live.
             </p>

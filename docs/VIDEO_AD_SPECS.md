@@ -1,7 +1,7 @@
 # Video Ad Specifications
 
 **Realty News Now: RealtyLine (Austin) and Newsline (San Antonio)**
-Effective October 29, 2026. Questions or file delivery: hello@myrealtyline.com
+Effective October 29, 2026. Questions or file delivery: tawanna@myrealtyline.com
 
 Video ads run on the Realty News Now website and app. They play automatically with the sound off, play only while on screen, and link to your landing page when tapped.
 

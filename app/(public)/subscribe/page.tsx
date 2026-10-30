@@ -156,10 +156,10 @@ export default function SubscribePage() {
         <p className="text-sm text-gray-500 font-light">
           Questions about subscriptions?{' '}
           <a
-            href="mailto:hello@myrealtyline.com?subject=Subscription%20Question"
+            href="mailto:tawanna@myrealtyline.com?subject=Subscription%20Question"
             className="text-brand-700 font-medium underline underline-offset-2"
           >
-            hello@myrealtyline.com
+            tawanna@myrealtyline.com
           </a>
         </p>
       </footer>

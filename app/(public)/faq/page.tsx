@@ -23,7 +23,7 @@ export default function FaqPage() {
         <p className="text-base text-gray-700 font-light leading-relaxed mt-4">
           Don&apos;t see your question?{' '}
           <a
-            href="mailto:hello@myrealtyline.com?subject=App%20Question"
+            href="mailto:tawanna@myrealtyline.com?subject=App%20Question"
             className="text-brand-700 font-medium underline underline-offset-2"
           >
             Email us
@@ -142,10 +142,10 @@ export default function FaqPage() {
             <p className="text-gray-700 font-light leading-relaxed">
               Email us at{' '}
               <a
-                href="mailto:hello@myrealtyline.com?subject=Email%20Address%20Change"
+                href="mailto:tawanna@myrealtyline.com?subject=Email%20Address%20Change"
                 className="text-brand-700 underline underline-offset-2"
               >
-                hello@myrealtyline.com
+                tawanna@myrealtyline.com
               </a>{' '}
               from your current email address and let us know the new one.
               We&apos;ll update your account and reverify.
@@ -159,10 +159,10 @@ export default function FaqPage() {
             <p className="text-gray-700 font-light leading-relaxed">
               Email{' '}
               <a
-                href="mailto:hello@myrealtyline.com?subject=Account%20Deletion%20Request"
+                href="mailto:tawanna@myrealtyline.com?subject=Account%20Deletion%20Request"
                 className="text-brand-700 underline underline-offset-2"
               >
-                hello@myrealtyline.com
+                tawanna@myrealtyline.com
               </a>{' '}
               with the subject line &ldquo;Account Deletion Request.&rdquo; We&apos;ll
               confirm and then deactivate your account within 7 business days.
@@ -226,10 +226,10 @@ export default function FaqPage() {
             <p className="text-gray-700 font-light leading-relaxed">
               Email{' '}
               <a
-                href="mailto:hello@myrealtyline.com?subject=Sign-in%20Issue"
+                href="mailto:tawanna@myrealtyline.com?subject=Sign-in%20Issue"
                 className="text-brand-700 underline underline-offset-2"
               >
-                hello@myrealtyline.com
+                tawanna@myrealtyline.com
               </a>{' '}
               with the email address you&apos;re trying to use, and we&apos;ll
               look into it.
@@ -243,10 +243,10 @@ export default function FaqPage() {
             <p className="text-gray-700 font-light leading-relaxed">
               We&apos;d love to hear it. Email{' '}
               <a
-                href="mailto:hello@myrealtyline.com?subject=App%20Feedback"
+                href="mailto:tawanna@myrealtyline.com?subject=App%20Feedback"
                 className="text-brand-700 underline underline-offset-2"
               >
-                hello@myrealtyline.com
+                tawanna@myrealtyline.com
               </a>{' '}
               and include a screenshot if you can.
             </p>
@@ -258,10 +258,10 @@ export default function FaqPage() {
         <p className="text-sm text-gray-500 font-light">
           Still stuck? Email{' '}
           <a
-            href="mailto:hello@myrealtyline.com"
+            href="mailto:tawanna@myrealtyline.com"
             className="text-brand-700 font-medium underline underline-offset-2"
           >
-            hello@myrealtyline.com
+            tawanna@myrealtyline.com
           </a>{' '}
           and a real person will write back.
         </p>

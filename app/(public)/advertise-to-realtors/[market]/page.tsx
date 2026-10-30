@@ -100,7 +100,7 @@ function faqFor(m: Market) {
     },
     {
       q: `How do I get ${m.magazine} advertising rates?`,
-      a: `Current rates, print specifications, and deadlines are in the advertising media kit at ${SITE_URL}/advertise. You can also send an inquiry at ${SITE_URL}/advertise/inquire or email hello@myrealtyline.com.`,
+      a: `Current rates, print specifications, and deadlines are in the advertising media kit at ${SITE_URL}/advertise. You can also send an inquiry at ${SITE_URL}/advertise/inquire or email tawanna@myrealtyline.com.`,
     },
   ];
 }

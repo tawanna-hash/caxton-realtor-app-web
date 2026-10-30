@@ -19,9 +19,6 @@ export function resolveEmailSenderAddress(
   const value = requested?.trim().toLowerCase();
   if (!value) return null;
   if (value in EMAIL_SENDERS) return value as EmailSenderAddress;
-  // Only Tawanna's market addresses are used; legacy hello@ maps to the same domain.
-  if (value === 'hello@myrealtyline.com') return 'tawanna@myrealtyline.com';
-  if (value === 'hello@newslinesa.com') return 'tawanna@newslinesa.com';
   return null;
 }
 

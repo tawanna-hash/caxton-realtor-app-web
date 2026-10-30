@@ -151,7 +151,7 @@ primary name is already set; the alias is redundant.
   everywhere. Per-publication branding kept as a display-name-only override.
 - Removed legacy `MAGIC_LINK_FROM_EMAIL`, `MAGIC_LINK_FROM_NAME`,
   `RESEND_FROM_EMAIL`, `RESEND_FROM_ADDRESS` env-var reads from code. The
-  stale `MAGIC_LINK_FROM_EMAIL=hello@myrealtyline.com` in Vercel was deleted
+  stale `MAGIC_LINK_FROM_EMAIL` in Vercel was deleted
   so all sends now use the canonical `EMAIL_FROM_ADDRESS`.
 - Removed the orphan `REDIS_URL` env var (it was an Upstash-integration
   artefact that blocked the marketplace install, since re-injected by the

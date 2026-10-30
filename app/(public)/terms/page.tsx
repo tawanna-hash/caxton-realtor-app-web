@@ -68,10 +68,10 @@ export default function TermsPage() {
             sign-in relies on email access. Notify us if you suspect
             unauthorized use of your account at{' '}
             <a
-              href="mailto:hello@myrealtyline.com"
+              href="mailto:tawanna@myrealtyline.com"
               className="text-brand-700 underline underline-offset-2"
             >
-              hello@myrealtyline.com
+              tawanna@myrealtyline.com
             </a>
             .
           </p>
@@ -182,10 +182,10 @@ export default function TermsPage() {
           <p>
             You may delete your account at any time by emailing{' '}
             <a
-              href="mailto:hello@myrealtyline.com?subject=Account%20Deletion%20Request"
+              href="mailto:tawanna@myrealtyline.com?subject=Account%20Deletion%20Request"
               className="text-brand-700 underline underline-offset-2"
             >
-              hello@myrealtyline.com
+              tawanna@myrealtyline.com
             </a>
             . We may suspend or terminate your account at our discretion for
             violations of these Terms or other
@@ -223,10 +223,10 @@ export default function TermsPage() {
           <p>
             Questions about these Terms? Email{' '}
             <a
-              href="mailto:hello@myrealtyline.com"
+              href="mailto:tawanna@myrealtyline.com"
               className="text-brand-700 font-medium underline underline-offset-2"
             >
-              hello@myrealtyline.com
+              tawanna@myrealtyline.com
             </a>
             .
           </p>

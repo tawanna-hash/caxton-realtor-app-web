@@ -111,7 +111,7 @@ export default async function HomePage() {
           {' · '}
           <Link href="/faq" className="underline underline-offset-2">FAQ</Link>
           {' · '}
-          <a href="mailto:hello@myrealtyline.com" className="underline underline-offset-2">hello@myrealtyline.com</a>
+          <a href="mailto:tawanna@myrealtyline.com" className="underline underline-offset-2">tawanna@myrealtyline.com</a>
         </p>
       </div>
     </main>

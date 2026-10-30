@@ -38,7 +38,7 @@ stdout. Re-add both:
 
 ```
 EMAIL_PROVIDER       = resend                              (production, preview)
-EMAIL_FROM_ADDRESS   = hello@myrealtyline.com  (or your actual verified sender)  (production, preview)
+EMAIL_FROM_ADDRESS   = tawanna@myrealtyline.com  (or your actual verified sender)  (production, preview)
 EMAIL_FROM_NAME      = Realty News Now        (optional but recommended)         (production, preview)
 ```
 

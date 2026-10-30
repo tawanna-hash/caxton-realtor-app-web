@@ -581,7 +581,7 @@ export default function CheckoutForm({
           {slot.video?.kind === 'video' && (
             <>
               {' '}This placement also runs video ({slot.video.spec}). Upload a still image here, then email your
-              MP4 or MOV to hello@myrealtyline.com and we&apos;ll swap it in before launch.
+              MP4 or MOV to tawanna@myrealtyline.com and we&apos;ll swap it in before launch.
             </>
           )}
           {slot.video?.kind === 'gif' && (

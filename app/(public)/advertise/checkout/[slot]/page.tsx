@@ -158,7 +158,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
                   {slot.video.spec}.{' '}
                   <span className="font-normal text-gray-700">
                     {slot.video.kind === 'video'
-                      ? 'Running video? Upload a still image below, then email your video file to hello@myrealtyline.com and we will swap it in before launch.'
+                      ? 'Running video? Upload a still image below, then email your video file to tawanna@myrealtyline.com and we will swap it in before launch.'
                       : 'Upload your animated GIF or play-button banner below and include your video link in the click-through URL.'}
                   </span>{' '}
                   <Link href={VIDEO_SPECS_PATH} className="text-brand-700 underline">Video specs</Link>
@@ -180,7 +180,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
 
         <p className="text-center text-xs text-gray-500 mt-8">
           Need help? Email{' '}
-          <a href="mailto:hello@myrealtyline.com" className="underline">hello@myrealtyline.com</a>{' '}
+          <a href="mailto:tawanna@myrealtyline.com" className="underline">tawanna@myrealtyline.com</a>{' '}
           or call us — we&apos;ll book you manually.
         </p>
       </div>

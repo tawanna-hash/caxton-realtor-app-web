@@ -23,7 +23,7 @@ const SAME_AS = [
 
 const CONTACT = {
   '@type': 'ContactPoint',
-  email: 'hello@myrealtyline.com',
+  email: 'tawanna@myrealtyline.com',
   contactType: 'customer support',
   availableLanguage: 'English',
 };
@@ -131,13 +131,13 @@ export const FAQ_ITEMS: ReadonlyArray<{ q: string; a: string }> = [
   { q: "What does the app cover — RealtyLine, Newsline San Antonio, or both?", a: "Both. RealtyLine covers Austin and Central Texas; Newsline San Antonio covers San Antonio and South Texas. You can choose which publication's content you want to see in your feed, or follow both." },
   { q: "How do push notifications work?", a: "You can opt in during sign-up or in settings. You control which types of notifications you receive — new issues, upcoming events, giveaways, breaking news, or partner features." },
   { q: "How do I change or turn off notifications?", a: "Open the app, go to Settings → Notification Preferences, and toggle each category individually. Or turn them all off in one tap." },
-  { q: "How do I change my email address?", a: "Email us at hello@myrealtyline.com from your current email address and let us know the new one. We'll update your account and reverify." },
-  { q: "How do I delete my account?", a: "Email hello@myrealtyline.com with the subject line “Account Deletion Request.” We'll confirm and then deactivate your account within 7 business days." },
+  { q: "How do I change my email address?", a: "Email us at tawanna@myrealtyline.com from your current email address and let us know the new one. We'll update your account and reverify." },
+  { q: "How do I delete my account?", a: "Email tawanna@myrealtyline.com with the subject line “Account Deletion Request.” We'll confirm and then deactivate your account within 7 business days." },
   { q: "What happens to my data if I delete my account?", a: "Your personal information is removed from active systems. Some records may be retained for accounting, legal, or audit purposes — full details are in our Privacy Notice." },
   { q: "My magic link didn't arrive.", a: "Check your spam folder first — magic links sometimes get caught there. If it's still missing after a few minutes, request a new one. Each new request invalidates the previous link." },
   { q: "My magic link says it's expired or invalid.", a: "Links expire after a short time for security, and each one can only be used once. If yours expired, just go back to the sign-in screen and request a new one." },
-  { q: "I'm having trouble signing in.", a: "Email hello@myrealtyline.com with the email address you're trying to use, and we'll look into it." },
-  { q: "I found a bug or have a feature suggestion.", a: "We'd love to hear it. Email hello@myrealtyline.com and include a screenshot if you can." },
+  { q: "I'm having trouble signing in.", a: "Email tawanna@myrealtyline.com with the email address you're trying to use, and we'll look into it." },
+  { q: "I found a bug or have a feature suggestion.", a: "We'd love to hear it. Email tawanna@myrealtyline.com and include a screenshot if you can." },
 ];
 
 export function faqPage() {

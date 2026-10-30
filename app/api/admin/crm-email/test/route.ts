@@ -74,9 +74,9 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
   // RealtyLine tests send from the verified myrealtyline.com domain (its own
   // Resend team); every other scope keeps the existing default sender.
   const from = brand === 'realtyline'
-    ? `${input.from_name || 'Caxton Publications Inc.'} <hello@myrealtyline.com>`
+    ? `${input.from_name || 'Caxton Publications Inc.'} <tawanna@myrealtyline.com>`
     : input.from_name
-      ? `${input.from_name} <${(process.env.EMAIL_FROM ?? 'hello@newslinesa.com').replace(/^.*<|>$/g, '')}>`
+      ? `${input.from_name} <${(process.env.EMAIL_FROM ?? 'tawanna@newslinesa.com').replace(/^.*<|>$/g, '')}>`
       : undefined;
 
   try {

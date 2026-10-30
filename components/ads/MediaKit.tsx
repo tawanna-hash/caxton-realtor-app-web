@@ -649,10 +649,10 @@ function ContactSection() {
         We will recommend the best print, email, and digital mix.
       </p>
       <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        <a className="font-semibold text-brand-300 hover:underline" href="mailto:hello@myrealtyline.com?subject=RealtyLine%20Media%20Kit%20Request">
+        <a className="font-semibold text-brand-300 hover:underline" href="mailto:tawanna@myrealtyline.com?subject=RealtyLine%20Media%20Kit%20Request">
           RealtyLine Austin
         </a>
-        <a className="font-semibold text-brand-300 hover:underline" href="mailto:hello@newslinesa.com?subject=Newsline%20Media%20Kit%20Request">
+        <a className="font-semibold text-brand-300 hover:underline" href="mailto:tawanna@newslinesa.com?subject=Newsline%20Media%20Kit%20Request">
           Newsline San Antonio
         </a>
         <Link className="font-semibold text-brand-300 hover:underline" href="/advertise/portal">
