@@ -47,7 +47,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const selectCls = 'w-full appearance-none rounded-md border border-[color:var(--ds-ink)]/60 bg-white px-5 py-3.5 pr-10 text-sm text-[color:var(--ds-ink)] focus:border-[color:var(--ds-primary)] focus:outline-none';
 const Caret = () => null; // caret is now drawn globally on every select (app/globals.css)
 
-const wantsAll = () => typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('scope') === 'all' || window.location.pathname.endsWith('/billing-hub/invoices'));
+const wantsAll = () => {
+  if (typeof window === 'undefined') return false;
+  const sc = new URLSearchParams(window.location.search).get('scope');
+  if (sc === 'client') return false;
+  return sc === 'all' || window.location.pathname.endsWith('/billing-hub/invoices');
+};
 export default function BillingHub() {
   const advs = useJson('/api/admin/advertisers', (j) => (j.advertisers ?? []) as Adv[], none as Adv[]);
   const [clientId, setClientId] = useState<number | null>(null);
@@ -65,7 +70,7 @@ export default function BillingHub() {
     const p = new URLSearchParams(window.location.search);
     const fromUrl = Number(p.get('clientId'));
     const wanted = p.get('agreementId') ?? '';
-    const t = window.location.pathname.endsWith('/billing-hub/invoices') ? 'invoices' : p.get('tab'); if (TABS.some(([k]) => k === t)) setTab(t as Tab);
+    const t = p.get('tab') ?? (window.location.pathname.endsWith('/billing-hub/invoices') ? 'invoices' : null); if (TABS.some(([k]) => k === t)) setTab(t as Tab);
     // Legacy Get Paid invoice links: ?invoice=<id> opens that invoice, ?create=1 starts a new one.
     const invoiceId = p.get('invoice') ?? p.get('edit') ?? p.get('focus') ?? p.get('id');
     if (invoiceId && !fromUrl) {
@@ -96,7 +101,7 @@ export default function BillingHub() {
   const client = clients.find((c) => c.id === clientId) ?? null;
   // Keep the selected partner, tab and agreement in the URL so a refresh (or shared link) returns to the same view.
   useEffect(() => {
-    if (clientId == null || window.location.pathname.endsWith('/billing-hub/invoices')) return;
+    if (clientId == null) return;
     const u = new URL(window.location.href);
     u.searchParams.set('clientId', String(clientId));
     u.searchParams.set('tab', tab);
@@ -316,6 +321,13 @@ function PaymentTab({ client, agreement, onSaved }: { client: Adv; agreement: Ag
 /* ---------------- Invoices tab ---------------- */
 function InvoicesTab({ client, invoices, agreements, intent, onIntentDone }: { client: Adv; invoices: FullInv[]; agreements: Agr[]; intent: InvoiceIntent | null; onIntentDone: () => void }) {
   const [scope, setScope] = useState<'client' | 'all'>(intent || wantsAll() ? 'all' : 'client');
+  // Remember "This partner" vs "All partners" across refreshes.
+  useEffect(() => {
+    const u = new URL(window.location.href);
+    if (u.searchParams.get('scope') === scope) return;
+    u.searchParams.set('scope', scope);
+    window.history.replaceState(null, '', `${u.pathname}${u.search}`);
+  }, [scope]);
   const [focusQ, setFocusQ] = useState('');
   const [payIntent, setPayIntent] = useState<InvoiceIntent | null>(null);
   const [q, setQ] = useState(''); const [st, setSt] = useState<string[]>([]);
