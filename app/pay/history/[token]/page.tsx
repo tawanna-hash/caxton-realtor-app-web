@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
+import { PUBLICATIONS, isPublicationId, type Publication } from '@/lib/publications';
 import { verifyInvoiceHistoryToken } from '@/lib/server/invoice-history-token';
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +30,7 @@ export default async function InvoiceHistoryPage({ params }: { params: Promise<{
 
   await ensureSchema();
   const sql = getSql();
-  const adv = (await sql`SELECT name FROM advertisers WHERE id = ${advertiserId}`) as unknown as Array<{ name: string }>;
+  const adv = (await sql`SELECT name, publication FROM advertisers WHERE id = ${advertiserId}`) as unknown as Array<{ name: string; publication: string | null }>;
   if (!adv.length) notFound();
   const rows = (await sql`
     SELECT i.id, i.number, i.status, i.total_cents, i.issued_at, i.due_date,
@@ -45,6 +46,11 @@ export default async function InvoiceHistoryPage({ params }: { params: Promise<{
     ORDER BY i.issued_at DESC NULLS LAST, i.created_at DESC
   `) as unknown as Row[];
 
+  // Brand and market come from the partner's own publication, not a generic company header.
+  const keys = String(adv[0].publication ?? '').split(',').map((x) => x.trim().toLowerCase()).flatMap((x) => (x === 'both' ? ['austin', 'san_antonio'] : [x]));
+  const pubs = [...new Set(keys)].filter(isPublicationId).map((k) => PUBLICATIONS.find((p) => p.id === k)).filter((p): p is Publication => Boolean(p));
+  const brand = pubs.length ? pubs.map((p) => p.label).join(' · ') : 'RealtyLine · Newsline';
+  const marketTag = pubs.length ? ` (${pubs.map((p) => p.market).join(', ')})` : '';
   const open = rows.filter((r) => r.total_cents - r.paid_cents > 0);
   const paid = rows.filter((r) => r.total_cents - r.paid_cents <= 0);
   const owed = open.reduce((s, r) => s + (r.total_cents - r.paid_cents), 0);
@@ -82,9 +88,9 @@ export default async function InvoiceHistoryPage({ params }: { params: Promise<{
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-8">
       <header>
-        <p className="text-sm text-neutral-600">Caxton Publications, Inc. · RealtyLine · Newsline</p>
+        <p className="text-sm text-neutral-600">Caxton Publications, Inc. · {brand}</p>
         <h1 className="text-2xl font-semibold text-neutral-900">Invoice history</h1>
-        <p className="text-neutral-700">{adv[0].name}</p>
+        <p className="text-neutral-700">{adv[0].name}{marketTag}</p>
         <p className="mt-1 text-sm text-neutral-600">As of {day(new Date(), 'America/Chicago')} · Questions? Reply to your invoice email or contact accounting.</p>
       </header>
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
