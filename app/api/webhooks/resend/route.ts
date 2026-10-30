@@ -287,7 +287,7 @@ export async function POST(req: NextRequest) {
  * pairs (Svix may rotate signatures). We accept the request if ANY of
  * the provided v1 signatures match.
  */
-export function verifySvixSignature(
+function verifySvixSignature(
   secret: string,
   svixId: string,
   svixTimestamp: string,

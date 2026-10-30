@@ -72,3 +72,7 @@ ios/DerivedData/
 xcuserdata/
 
 .fix-notes/
+
+# Playwright output
+/test-results/
+/playwright-report/

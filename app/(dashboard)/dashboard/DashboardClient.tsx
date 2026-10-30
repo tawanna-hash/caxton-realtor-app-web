@@ -1238,4 +1238,4 @@ export default function DashboardClient({ signedOut = false }: { signedOut?: boo
 // longer invoked from Feed — MarketSwitcherSheet calls persistPub() and
 // hard-reloads to '/' directly. Keep the prop so parent typings remain
 // stable.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- legacy prop kept for parent typing stability
+ 

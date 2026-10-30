@@ -16,6 +16,10 @@ const eslintConfig = defineConfig([
     "ios/**",
     "resources/**",
     "scripts/generate-ios-*.mjs",
+    // Vendored/minified third-party bundle
+    "public/pdf.worker.min.mjs",
+    "test-results/**",
+    "playwright-report/**",
   ]),
   // Treat _-prefixed identifiers as intentionally unused. Established Node/TS convention;
   // eslint-config-next doesn't set this by default.

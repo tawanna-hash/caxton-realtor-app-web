@@ -57,7 +57,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
     // setState calls are batched inside an async chain (not
     // synchronously in the effect body) which is the recommended
     // pattern; suppress the over-eager rule for this hook.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setLoading(true);
     setError(null);
     fetchMagazines(publication)
