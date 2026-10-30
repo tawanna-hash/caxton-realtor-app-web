@@ -31,6 +31,11 @@ Video ads run on the Realty News Now website and app. They play automatically wi
 | Advertiser Directory Spotlight | Top of the Advertisers directory | 16:9 | 1920 x 1080 | 15 to 30 sec |
 | Calendar Event Sponsor | Pinned at the top of the Events calendar | 16:9 | 1920 x 1080 | 15 to 30 sec |
 | Giveaway Prize Sponsor | Giveaway cards and entry pages | 9:5 (feed card) | 1080 x 600 (16:9 at 1920 x 1080 also accepted) | 10 to 20 sec |
+| Splash / Welcome | Full-screen on app open, first session of the day | 9:16 | 1080 x 1920 | 5 to 10 sec (skip after 3 sec) |
+| Article Interstitial | Article reader pop-up (every 4th article tap) | 9:16 | 1080 x 1920 | 6 to 15 sec (skip after 5 sec) |
+| Article Top Leaderboard | Top of every article (video box) | 6:5 inline box (16:9 accepted) | 300 x 250 (1920 x 1080 accepted) | 6 to 15 sec |
+| Article Sidebar (Desktop) | Right rail on desktop articles | 9:16 or 1:1 | 300 x 600 or 300 x 250 | 10 to 30 sec |
+| Account Page Splash | Top of Profile / Account pages | 1080 x 400 banner (16:9 accepted) | 1080 x 400 (1920 x 1080 accepted) | 6 to 15 sec |
 
 ### Image-Only Placements
 
@@ -39,7 +44,6 @@ These placements accept static images only:
 - e-Blast Top Banner (600 x 300). Email inboxes can't play video. See the e-Blast Video Option below.
 - Feed Sticky Bottom (320 x 50 / 320 x 100)
 - Feed Top Banner and Calendar Top Banner (728 x 90 / 320 x 50)
-- Article Top Leaderboard
 - Push Notification Sponsor
 
 For these placements, send a static image (PNG, JPEG, WebP, or GIF, 10 MB max).

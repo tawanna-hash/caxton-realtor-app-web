@@ -319,7 +319,7 @@ export function CampaignForm({ initial }: Props) {
               )}
               {selectedCreative.media_type === 'video' &&
                 (spaces.find((sp) => sp.slug === adSpaceSlug)?.zone === 'newsletter' ||
-                  ['feed_sticky_bottom', 'feed_top_banner', 'calendar_top_banner', 'article_top_leaderboard', 'push_sponsorship'].includes(adSpaceSlug)) && (
+                  ['feed_sticky_bottom', 'feed_top_banner', 'calendar_top_banner', 'push_sponsorship'].includes(adSpaceSlug)) && (
                   <p className="text-xs text-[#661102] mt-1" role="alert">
                     This placement is image-only (email or thin banner). Pick a video-ready placement or use a static image.
                   </p>

@@ -35,6 +35,7 @@ import NativeNetworkBanner from '@/components/NativeNetworkBanner';
 import NativeAppLifecycle from '@/components/NativeAppLifecycle';
 import SwipeBackShell from '@/components/SwipeBackShell';
 import { AdSlot } from '@/components/ads/AdSlot';
+import { SplashWelcomeAd } from '@/components/ads/SplashWelcomeAd';
 import AdminQuickLinks from '@/components/admin/AdminQuickLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -588,6 +589,7 @@ export default function AppShell({
             </div>
           </div>
           <BottomNav info={null} onMoreClick={() => setDrawerOpen(true)} />
+          <SplashWelcomeAd />
         </>
       ) : null}
       {/* Admin chrome stays admin-only — the public Footer (RealtyLine /

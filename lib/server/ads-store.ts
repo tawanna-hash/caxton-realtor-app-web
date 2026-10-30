@@ -48,7 +48,6 @@ export const VIDEO_INCOMPATIBLE_SLUGS = new Set([
   'feed_sticky_bottom',
   'feed_top_banner',
   'calendar_top_banner',
-  'article_top_leaderboard',
   'push_sponsorship',
 ]);
 
@@ -414,7 +413,7 @@ export async function creativeSpaceConflict(
     return `${row.display_name ?? adSpaceSlug} is an email placement and cannot play video. Use a static image creative.`;
   }
   if (row.media_type === 'video' && VIDEO_INCOMPATIBLE_SLUGS.has(adSpaceSlug)) {
-    return `${row.display_name ?? adSpaceSlug} is a thin banner placement and is image-only. Use a static image, or book a video-ready placement (Featured Builder Strip, Advertiser Directory, Giveaway Sponsor, Calendar Event Sponsor).`;
+    return `${row.display_name ?? adSpaceSlug} is a thin banner placement and is image-only. Use a static image, or book a video-ready placement (any Premium app slot except Push Notification Sponsor).`;
   }
   return null;
 }
