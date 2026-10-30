@@ -94,6 +94,17 @@ export default function BillingHub() {
   }, [clients, clientId]);
 
   const client = clients.find((c) => c.id === clientId) ?? null;
+  // Keep the selected partner, tab and agreement in the URL so a refresh (or shared link) returns to the same view.
+  useEffect(() => {
+    if (clientId == null || window.location.pathname.endsWith('/billing-hub/invoices')) return;
+    const u = new URL(window.location.href);
+    u.searchParams.set('clientId', String(clientId));
+    u.searchParams.set('tab', tab);
+    if (agreementId) u.searchParams.set('agreementId', agreementId); else u.searchParams.delete('agreementId');
+    ['invoice', 'edit', 'focus', 'id', 'create', 'amount_cents', 'agreement_id'].forEach((k) => u.searchParams.delete(k));
+    const next = `${u.pathname}${u.search}`;
+    if (next !== `${window.location.pathname}${window.location.search}`) window.history.replaceState(null, '', next);
+  }, [clientId, tab, agreementId]);
   const agr = useJson(`/api/admin/agreements?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => (j.agreements ?? []) as Agr[], none as Agr[]);
   const inv = useJson(`/api/admin/invoices?advertiser_id=${clientId ?? ''}&v=${version}`, (j) => ((j.invoices ?? []) as FullInv[]).map((i) => ({
     ...i,
