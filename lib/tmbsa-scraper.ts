@@ -309,7 +309,15 @@ function parseWaEventPage(html: string, eventId: string): WaEvent | null {
   if (bodyMatch) {
     const bodyHtml = bodyMatch[1];
     const text = stripTags(bodyHtml).replace(/\s+/g, ' ').trim();
-    if (text) description = stripTags(bodyHtml);
+    if (text) {
+      description = stripTags(bodyHtml)
+        .replace(/\r\n?/g, '\n')
+        .split('\n')
+        .map((l) => l.trim())
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
     const img = /<img[^>]+src="([^"]+)"/i.exec(bodyHtml);
     if (img) {
       try {

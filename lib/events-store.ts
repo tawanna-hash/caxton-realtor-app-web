@@ -5,6 +5,7 @@
 
 import { ensureSchema, getSql } from './db';
 import type { EventScheduleItem, EventSpeaker } from './server/events-store';
+import { tidyDescription } from './events/text';
 
 export type Publication = import('@/lib/publications').PublicationId;
 export type EventSource =
@@ -265,7 +266,9 @@ export async function upsertEvents(
   let updated = 0;
 
   // Upserts run sequentially. For ~60 events that's fine on serverless.
-  for (const ev of events) {
+  for (const raw of events) {
+    // Preset description spacing for every imported event.
+    const ev = { ...raw, description: tidyDescription(raw.description) || null };
     const result = (await sql`
       INSERT INTO events (
         external_source, external_id, publication, title, description, link,

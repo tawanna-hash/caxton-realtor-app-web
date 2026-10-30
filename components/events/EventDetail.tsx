@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { PUB_META, type PubKey } from '@/lib/pub-meta';
 import { SW } from '@/lib/style-constants';
 import type { CalendarEvent } from '@/lib/events-store';
-import { decodeEntities } from '@/lib/events/text';
+import { decodeEntities, tidyDescription } from '@/lib/events/text';
+import EventDescription from './EventDescription';
 import { isSponsored } from '@/lib/events/sponsorship';
 import { formatEventDateLong, formatEventTimeRange } from '@/lib/events/dates';
 import { generateICS } from '@/lib/events/ics';
@@ -61,7 +62,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
 
   const sponsored = isSponsored(event);
   const title = decodeEntities(event.title);
-  const description = decodeEntities(event.description);
+  const description = tidyDescription(decodeEntities(event.description));
   const registrationUrl = event.link;
 
   // Action handlers
@@ -166,7 +167,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
         {/* DESCRIPTION section */}
         {description && description.length > 0 && (
           <DetailSection label="Description">
-            <p className="text-base text-gray-700 leading-relaxed font-light whitespace-pre-wrap">{description}</p>
+            <EventDescription text={description} />
           </DetailSection>
         )}
 
