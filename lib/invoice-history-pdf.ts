@@ -4,7 +4,7 @@ import { historyDay, historyMethod, historyMoney, type HistoryRow, type InvoiceH
 const W = 792, H = 612, M = 40;
 const DARK = rgb(0.09, 0.09, 0.09), MUTED = rgb(0.42, 0.42, 0.42), RULE = rgb(0.84, 0.84, 0.84), LIGHT = rgb(0.96, 0.96, 0.96);
 
-const clean = (v: string) => v.replace(/[\u2010-\u2015]/g, '-').replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/[\u00B7\u2022]/g, '-').replace(/[^\x20-\x7E\xA1-\xFF]/g, '*');
+const clean = (v: string) => v.replace(/\u2022{2,}\s*/g, 'ending ').replace(/[\u2010-\u2015]/g, '-').replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/[\u00B7\u2022]/g, '-').replace(/[^\x20-\x7E\xA1-\xFF]/g, '*');
 
 export async function generateInvoiceHistoryPdf(h: InvoiceHistory, asOf: string): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
