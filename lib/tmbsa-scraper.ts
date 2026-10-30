@@ -199,6 +199,7 @@ interface WaEvent {
   memberPrice: string | null;
   nonmemberPrice: string | null;
   description: string | null;
+  imageUrl: string | null;
   registerUrl: string;
 }
 
@@ -297,21 +298,26 @@ function parseWaEventPage(html: string, eventId: string): WaEvent | null {
     }
   }
 
-  // Description: text between the 2nd occurrence of the title (after the
-  // structured info block) and the "Want to become a member?" footer.
+  // Description + flyer image: Wild Apricot keeps the organizer-authored body
+  // in the `gadgetEventEditableArea` block. Many events only contain a flyer
+  // image there, so the description stays null instead of falling back to the
+  // When/Location/price-tier text (which the page already shows separately).
   let description: string | null = null;
-  const fullText = stripTags(html);
-  const titleEsc = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const titleOccurrences: number[] = [];
-  for (const m of fullText.matchAll(new RegExp(titleEsc, 'gi'))) {
-    titleOccurrences.push(m.index || 0);
-  }
-  if (titleOccurrences.length >= 2) {
-    const start = titleOccurrences[titleOccurrences.length - 1] + title.length;
-    const footerIdx = fullText.indexOf('Want to become a member', start);
-    const end = footerIdx > 0 ? footerIdx : fullText.length;
-    const raw = fullText.slice(start, end).trim();
-    if (raw) description = raw;
+  let imageUrl: string | null = null;
+  const bodyMatch =
+    /gadgetEventEditableArea[^>]*>([\s\S]*?)<div class="clearEndContainer">/.exec(html);
+  if (bodyMatch) {
+    const bodyHtml = bodyMatch[1];
+    const text = stripTags(bodyHtml).replace(/\s+/g, ' ').trim();
+    if (text) description = stripTags(bodyHtml);
+    const img = /<img[^>]+src="([^"]+)"/i.exec(bodyHtml);
+    if (img) {
+      try {
+        imageUrl = new URL(img[1].replace(/&amp;/g, '&'), WA_BASE).toString();
+      } catch {
+        imageUrl = null;
+      }
+    }
   }
 
   return {
@@ -324,6 +330,7 @@ function parseWaEventPage(html: string, eventId: string): WaEvent | null {
     memberPrice,
     nonmemberPrice,
     description,
+    imageUrl,
     registerUrl: `${WA_BASE}/event-${eventId}/Registration`,
   };
 }
@@ -370,7 +377,7 @@ function waToEventInput(ev: WaEvent): EventInput {
     courseNumber: null,
     memberPrice: ev.memberPrice,
     nonmemberPrice: ev.nonmemberPrice,
-    imageUrl: null,
+    imageUrl: ev.imageUrl,
     imageThumb: null,
     instructorName: null,
     instructorBio: null,

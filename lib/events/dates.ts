@@ -16,6 +16,9 @@ function formatEventTime(iso: string | null): string {
   if (isNaN(d.getTime())) return '';
   let hr = d.getHours();
   const min = d.getMinutes();
+  // Importers store all-day / time-unknown events as midnight; show no time
+  // instead of a misleading "12:00 AM".
+  if (hr === 0 && min === 0) return '';
   const ampm = hr >= 12 ? 'PM' : 'AM';
   hr = hr % 12 || 12;
   return min === 0 ? `${hr}:00 ${ampm}` : `${hr}:${String(min).padStart(2, '0')} ${ampm}`;
