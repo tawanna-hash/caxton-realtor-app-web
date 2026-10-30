@@ -9,6 +9,7 @@ import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import TrackPageView from '@/components/analytics/TrackPageView';
 import { VideoSpecsTables } from '@/components/ads/VideoSupport';
+import { VideoSpecsActions } from '@/components/ads/VideoSpecsActions';
 
 export const revalidate = 86400;
 
@@ -61,6 +62,9 @@ export default function VideoSpecsPage() {
               <Link href="/advertise/inquire" className="text-gray-600 hover:text-gray-900">
                 Questions? Talk to our team
               </Link>
+            </div>
+            <div className="mt-5">
+              <VideoSpecsActions />
             </div>
           </header>
 

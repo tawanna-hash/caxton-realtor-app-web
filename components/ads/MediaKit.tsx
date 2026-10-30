@@ -12,6 +12,10 @@ import PageTitle from '@/components/ui/PageTitle';
 import { VideoBadge, VideoSpecLine, VideoSpecsTables } from '@/components/ads/VideoSupport';
 import { VIDEO_SPECS_PATH } from '@/lib/media-kit';
 import { buildDigitalSlotsPdf } from '@/lib/digital-slots-pdf';
+import { digitalSlotsSheet } from '@/lib/ad-specs-export';
+import { ExportMenu } from '@/components/ads/ExportMenu';
+import { ShareButton } from '@/components/ads/ShareButton';
+import { VideoSpecsActions } from '@/components/ads/VideoSpecsActions';
 import {
   APP_AD_SLOTS,
   PACKAGES,
@@ -402,8 +406,18 @@ function SlotsPdfActions({ slots, pubLabel, mode }: { slots: AppAdSlot[]; pubLab
   };
   const btn = 'inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium ring-1 ring-[#42277C]/30 text-[#42277C] hover:bg-[#42277C]/5 disabled:opacity-50';
   return (
-    <div className="relative flex items-center gap-2">
+    <div className="relative flex flex-wrap items-center gap-2">
       <button type="button" className={btn} onClick={download} disabled={busy}>Download PDF</button>
+      <ExportMenu
+        sheets={() => [digitalSlotsSheet(slots)]}
+        basename={`digital-ad-slots-${pubLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+      />
+      <ShareButton
+        title={`${pubLabel} — Digital Ad Slots & Rates`}
+        text={`Digital ad slots, rates, and video options for ${pubLabel}.`}
+        path="/advertise#digital-ad-slots"
+        buildPdf={() => buildDigitalSlotsPdf(slots, pubLabel)}
+      />
       {mode === 'admin' && (
         <button type="button" className={btn} onClick={() => { setOpen((o) => !o); setMsg(null); }} disabled={busy}>Send PDF</button>
       )}
@@ -437,7 +451,7 @@ function DigitalSlotsSection({
     [activePub.mediaKitPub],
   );
   return (
-    <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
+    <section id="digital-ad-slots" className="scroll-mt-24 rounded-md bg-white ring-1 ring-gray-200 p-6">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Digital Ad Slots</h2>
@@ -532,9 +546,12 @@ function VideoAdsSection() {
             Book any video-ready placement below and send video instead of a static image.
           </p>
         </div>
-        <Link href={VIDEO_SPECS_PATH} className="text-sm text-[#42277C] hover:underline">
-          Full video specs {'\u2192'}
-        </Link>
+        <div className="flex items-center gap-3 flex-wrap">
+          <VideoSpecsActions />
+          <Link href={VIDEO_SPECS_PATH} className="text-sm text-[#42277C] hover:underline">
+            Full video specs {'\u2192'}
+          </Link>
+        </div>
       </div>
       <div className="mt-4">
         <VideoSpecsTables compact />
