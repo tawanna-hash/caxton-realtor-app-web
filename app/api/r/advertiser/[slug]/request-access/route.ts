@@ -96,7 +96,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
   } catch {
     return NextResponse.json({ error: 'invalid json' }, { status: 400 });
   }
-  const email = ((body && body.email) || '').trim().toLowerCase();
+  const rawEmail = body && typeof body.email === 'string' ? body.email : '';
+  const email = rawEmail.trim().toLowerCase();
   if (!email || !/.+@.+\..+/.test(email)) {
     return NextResponse.json({ error: 'invalid email' }, { status: 400 });
   }
