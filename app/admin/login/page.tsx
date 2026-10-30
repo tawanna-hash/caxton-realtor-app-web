@@ -84,8 +84,9 @@ function AdminLoginForm() {
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-700 mb-1.5">Email</label>
+            <label htmlFor="admin-email" className="block text-sm text-gray-700 mb-1.5">Email</label>
             <input
+              id="admin-email"
               type="email"
               required
               value={email}
@@ -111,9 +112,10 @@ function AdminLoginForm() {
             )}
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-1.5">Password</label>
+            <label htmlFor="admin-password" className="block text-sm text-gray-700 mb-1.5">Password</label>
             <div className="relative">
               <input
+                id="admin-password"
                 type={showPassword ? 'text' : 'password'}
                 required
                 value={password}

@@ -55,7 +55,7 @@ function FeedWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'feed_top_banner'}>
-          <div className="h-6 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+          <div className="h-6 bg-gray-200 rounded-md flex items-center justify-center text-gray-700">
             Feed top banner
           </div>
         </Highlight>
@@ -63,7 +63,7 @@ function FeedWireframe({ active }: { active: string }) {
       <div className="flex-1 px-2 py-2 space-y-2">
         <div className="h-7 bg-white rounded-md border border-gray-200" />
         <Highlight active={active === 'feed_inline_card'}>
-          <div className="h-7 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+          <div className="h-7 bg-gray-200 rounded-md flex items-center justify-center text-gray-700">
             Feed inline card
           </div>
         </Highlight>
@@ -72,12 +72,12 @@ function FeedWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pb-1">
         <Highlight active={active === 'feed_sticky_bottom'}>
-          <div className="h-5 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+          <div className="h-5 bg-gray-200 rounded-md flex items-center justify-center text-gray-700">
             Sticky bottom
           </div>
         </Highlight>
       </div>
-      <div className="h-5 bg-white border-t border-gray-200 flex items-center justify-around text-gray-500">
+      <div className="h-5 bg-white border-t border-gray-200 flex items-center justify-around text-gray-700">
         <span>Feed</span><span>Mag</span><span>Cal</span><span>Build</span><span>More</span>
       </div>
     </div>
@@ -92,7 +92,7 @@ function ArticleWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'article_top_leaderboard'}>
-          <div className="h-5 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+          <div className="h-5 bg-gray-200 rounded-md flex items-center justify-center text-gray-700">
             Top leaderboard 728×90
           </div>
         </Highlight>
@@ -100,27 +100,27 @@ function ArticleWireframe({ active }: { active: string }) {
       <div className="px-2 pt-2 text-[9px] font-bold text-gray-900 leading-tight">
         City leaders unveil plan to improve public transit
       </div>
-      <div className="px-2 text-gray-500">By Jane Doe · 5 min read</div>
+      <div className="px-2 text-gray-700">By Jane Doe · 5 min read</div>
       <div className="flex-1 grid grid-cols-3 gap-1 px-2 py-2">
         <div className="col-span-2 space-y-1">
           <div className="h-3 bg-gray-100 rounded-md" />
           <div className="h-3 bg-gray-100 rounded-md" />
           <Highlight active={active === 'article_mid_inline'}>
-            <div className="h-6 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+            <div className="h-6 bg-gray-200 rounded-md flex items-center justify-center text-gray-700">
               Mid inline 300×250
             </div>
           </Highlight>
           <div className="h-3 bg-gray-100 rounded-md" />
           <div className="h-3 bg-gray-100 rounded-md" />
           <Highlight active={active === 'article_bottom'}>
-            <div className="h-5 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+            <div className="h-5 bg-gray-200 rounded-md flex items-center justify-center text-gray-700">
               Article bottom
             </div>
           </Highlight>
         </div>
         <div>
           <Highlight active={active === 'article_sidebar_desktop'}>
-            <div className="h-16 bg-gray-200 rounded-md flex items-center justify-center text-gray-500 text-center px-1">
+            <div className="h-16 bg-gray-200 rounded-md flex items-center justify-center text-gray-700 text-center px-1">
               Sidebar 300×600
             </div>
           </Highlight>
@@ -145,7 +145,7 @@ function CalendarWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'calendar_top_banner'}>
-          <div className="h-6 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+          <div className="h-6 bg-gray-200 rounded-md flex items-center justify-center text-gray-700">
             Calendar top banner
           </div>
         </Highlight>
@@ -172,7 +172,7 @@ function AccountWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'account_splash'}>
-          <div className="h-12 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+          <div className="h-12 bg-gray-200 rounded-md flex items-center justify-center text-gray-700">
             Account page splash
           </div>
         </Highlight>
@@ -201,7 +201,7 @@ function NewsletterWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'newsletter_banner'}>
-          <div className="h-7 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+          <div className="h-7 bg-gray-200 rounded-md flex items-center justify-center text-gray-700">
             Email Banner 600×300
           </div>
         </Highlight>
@@ -239,7 +239,7 @@ function BuildersWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'featured_builder_strip'}>
-          <div className="h-7 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
+          <div className="h-7 bg-gray-200 rounded-md flex items-center justify-center text-gray-700">
             Featured builder strip 1200×200
           </div>
         </Highlight>
@@ -299,7 +299,7 @@ export function PlacementWireframe({ slug }: { slug: string }) {
   const renderer = WIREFRAME_BY_SLUG[slug];
   if (!renderer) {
     return (
-      <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">
+      <div className="w-full h-full flex items-center justify-center text-xs text-gray-700">
         Preview coming soon
       </div>
     );
