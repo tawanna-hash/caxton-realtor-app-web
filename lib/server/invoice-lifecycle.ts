@@ -76,7 +76,13 @@ export async function recalculateInvoiceFromLedger(
               ELSE 'sent'
             END,
             paid_at = CASE
-              WHEN $2 THEN COALESCE($3::timestamptz, paid_at, NOW())
+              WHEN $2 THEN COALESCE(
+                $3::timestamptz,
+                (SELECT (MAX(payment_date)::date + time '12:00') AT TIME ZONE 'UTC'
+                   FROM invoice_payments WHERE invoice_id = $1),
+                paid_at,
+                NOW()
+              )
               ELSE NULL
             END
       WHERE id = $1
