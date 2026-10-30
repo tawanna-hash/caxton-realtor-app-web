@@ -11,6 +11,7 @@ import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import { VideoBadge, VideoSpecLine, VideoSpecsTables } from '@/components/ads/VideoSupport';
 import { VIDEO_SPECS_PATH } from '@/lib/media-kit';
+import { buildDigitalSlotsPdf } from '@/lib/digital-slots-pdf';
 import {
   APP_AD_SLOTS,
   PACKAGES,
@@ -371,6 +372,59 @@ function PackageCard({ pkg }: { pkg: Package }) {
   );
 }
 
+function SlotsPdfActions({ slots, pubLabel, mode }: { slots: AppAdSlot[]; pubLabel: string; mode: 'admin' | 'public' }) {
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [to, setTo] = useState('');
+  const [note, setNote] = useState('');
+  const [msg, setMsg] = useState<string | null>(null);
+  if (slots.length === 0) return null;
+  const download = async () => {
+    setBusy(true);
+    try {
+      const { doc, filename } = await buildDigitalSlotsPdf(slots, pubLabel);
+      doc.save(filename);
+    } finally { setBusy(false); }
+  };
+  const send = async () => {
+    setBusy(true); setMsg(null);
+    try {
+      const { doc, filename } = await buildDigitalSlotsPdf(slots, pubLabel);
+      const pdfBase64 = doc.output('datauristring').split(',')[1] ?? '';
+      const res = await fetch('/api/admin/media-kit-pdf', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ to, note, pubLabel, filename, pdfBase64 }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.ok) { setMsg(`Sent to ${to}`); setTo(''); setNote(''); setOpen(false); }
+      else setMsg(j.error ?? 'Send failed');
+    } catch { setMsg('Send failed'); } finally { setBusy(false); }
+  };
+  const btn = 'inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium ring-1 ring-[#42277C]/30 text-[#42277C] hover:bg-[#42277C]/5 disabled:opacity-50';
+  return (
+    <div className="relative flex items-center gap-2">
+      <button type="button" className={btn} onClick={download} disabled={busy}>Download PDF</button>
+      {mode === 'admin' && (
+        <button type="button" className={btn} onClick={() => { setOpen((o) => !o); setMsg(null); }} disabled={busy}>Send PDF</button>
+      )}
+      {msg && !open && <span className="text-xs text-gray-700" role="status">{msg}</span>}
+      {open && (
+        <div className="absolute right-0 top-full z-20 mt-2 w-80 rounded-md bg-white p-3 shadow-lg ring-1 ring-gray-200">
+          <label className="block text-xs font-medium text-gray-700" htmlFor="slots-pdf-to">Recipient email</label>
+          <input id="slots-pdf-to" type="email" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm" placeholder="name@company.com" />
+          <label className="mt-2 block text-xs font-medium text-gray-700" htmlFor="slots-pdf-note">Note (optional)</label>
+          <textarea id="slots-pdf-note" value={note} onChange={(e) => setNote(e.target.value)} rows={3} className="mt-1 w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm" />
+          {msg && <div className="mt-1 text-xs text-red-700" role="alert">{msg}</div>}
+          <div className="mt-2 flex justify-end gap-2">
+            <button type="button" className="text-sm text-gray-700" onClick={() => setOpen(false)}>Cancel</button>
+            <button type="button" className="rounded-md bg-[#42277C] px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50" onClick={send} disabled={busy || !to}>{busy ? 'Sending…' : 'Send'}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DigitalSlotsSection({
   activePub,
   mode,
@@ -391,12 +445,15 @@ function DigitalSlotsSection({
             {slots.length} placement{slots.length === 1 ? '' : 's'} available on {activePub.label}. Weekly + monthly rates shown for 1 market; multi-market multipliers below.
           </p>
         </div>
-        <Link
-          href={mode === 'public' ? '/advertise/placements' : '/admin/ads/placements'}
-          className="text-sm text-[#42277C] hover:underline"
-        >
-          {mode === 'public' ? 'View placement guide' : 'View wireframes'} {'\u2192'}
-        </Link>
+        <div className="flex items-center gap-3 flex-wrap">
+          <SlotsPdfActions slots={slots} pubLabel={activePub.label} mode={mode} />
+          <Link
+            href={mode === 'public' ? '/advertise/placements' : '/admin/ads/placements'}
+            className="text-sm text-[#42277C] hover:underline"
+          >
+            {mode === 'public' ? 'View placement guide' : 'View wireframes'} {'\u2192'}
+          </Link>
+        </div>
       </div>
       {slots.length === 0 ? (
         <div className="mt-4 rounded-md bg-[#FEF8CC] ring-1 ring-[#FAD800]/30 p-4 text-sm text-[#645600]">No digital placements are configured for {activePub.label} yet.</div>

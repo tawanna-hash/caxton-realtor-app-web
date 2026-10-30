@@ -433,6 +433,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     monthlyBoth: 1800,
     sizes: '728×90 desktop · 320×50 mobile · 300×250 fallback',
     notes: '100% of article opens, above-the-fold.',
+    video: { kind: 'video', spec: '300×250 inline video (16:9 1920×1080 accepted) · 6–15s' },
   },
   {
     slug: 'article_interstitial',
@@ -445,6 +446,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     monthlyBoth: 1800,
     sizes: '1080×1920 mobile fullscreen · 970×250 desktop',
     notes: 'Every 4th article tap; never on first session. High friction — reserved.',
+    video: { kind: 'video', spec: '9:16 · 1080×1920 mobile fullscreen · 6–15s · skip after 5s' },
   },
   {
     slug: 'article_sidebar_desktop',
@@ -457,6 +459,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     monthlyBoth: 1700,
     sizes: '300×600 desktop · 300×250 stacked',
     notes: 'Desktop only (≥1024px). Long-dwell placement.',
+    video: { kind: 'video', spec: '300×600 or 300×250 · 9:16 or 1:1 · 10–30s' },
   },
   {
     slug: 'calendar_event_sponsor',
@@ -482,6 +485,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     monthlyBoth: 1600,
     sizes: '1080×400 banner · 970×250 desktop · 320×250 mobile',
     notes: 'Top of /account + /profile, every visit. Rotates per session.',
+    video: { kind: 'video', spec: '1080×400 banner video (16:9 1920×1080 accepted) · 6–15s' },
   },
   {
     rotates: true,
@@ -509,6 +513,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     monthlyBoth: 2400,
     sizes: '1080×1920 mobile fullscreen',
     notes: 'App-open moment, first session of the day. Never twice in 12h.',
+    video: { kind: 'video', spec: '9:16 · 1080×1920 mobile fullscreen · 5–10s · skip after 3s' },
   },
   {
     slug: 'push_sponsorship',

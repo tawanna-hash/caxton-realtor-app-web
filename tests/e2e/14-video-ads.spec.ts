@@ -79,8 +79,8 @@ test.describe('video ads — public docs', () => {
   test('/advertise/placements shows Video badges and links to the specs', async ({ page }) => {
     await skipMarketPicker(page);
     await page.goto('/advertise/placements');
-    // 3 video-ready rate-card slots + the intro legend badge.
-    await expect(page.locator('span', { hasText: /^Video$/ })).toHaveCount(4);
+    // 8 video-ready rate-card slots + the intro legend badge.
+    await expect(page.locator('span', { hasText: /^Video$/ })).toHaveCount(9);
     await expect(page.locator('span', { hasText: /^Video via GIF$/ }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /video ad specs/i })).toHaveAttribute('href', '/advertise/video-specs');
   });
