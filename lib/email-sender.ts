@@ -62,8 +62,14 @@ export function verifiedEmailFrom(
   const value = requested?.trim();
   const requestedDomain = value ? extractDomain(value) : undefined;
   if (value && requestedDomain && VERIFIED_DOMAINS.has(requestedDomain)) {
-    const mappedHello = resolveEmailSenderAddress(extractAddress(value));
-    if (mappedHello && extractAddress(value).startsWith('hello@')) return EMAIL_SENDERS[mappedHello];
+    const address = extractAddress(value);
+    const [localPart, domain] = address.split('@');
+    if (localPart?.toLowerCase() === 'hello') {
+      // Retired mailbox: always send as the publisher address on the same domain.
+      const sameDomain = `tawanna@${domain}`.toLowerCase();
+      if (sameDomain in EMAIL_SENDERS) return EMAIL_SENDERS[sameDomain as EmailSenderAddress];
+      return EMAIL_SENDERS[DEFAULT_EMAIL_SENDER];
+    }
     return value;
   }
   if (value) {
